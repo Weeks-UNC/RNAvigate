@@ -1,7 +1,9 @@
 
 import sys
-sys.path.append('../arcPlot/')
-sys.path.append('../RNATools/')
+import sys
+import os
+sys.path.append('{}/arcPlot/'.format(os.environ['HOME']))
+sys.path.append('{}/RNATools/'.format(os.environ['HOME']))
 
 import arcPlot as ap
 import RNAtools2 as RNAtools
