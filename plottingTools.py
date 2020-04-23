@@ -1,21 +1,42 @@
 
 import sys
-import os
-user = os.get_env('USER')
-sys.path.append('/nas/longleaf/home/{}/arcPlot/'.format(user))
-sys.path.append('/nas/longleaf/home/{}/RNATools/'.format(user))
+sys.path.append('../arcPlot/')
+sys.path.append('../RNATools/')
 
 import arcPlot as ap
 import RNAtools2 as RNAtools
 from pmanalysis import PairMap
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.stats import norm
-from scipy.stats import gaussian_kde
-from scipy.stats import ttest_ind
 import seaborn as sns
 import pandas as pd
-from sklearn import metrics
+
+##########################COPYPASTA FROM SHAPEMAPPER2
+from numpy import isnan, nan, sqrt
+from numpy import nanpercentile as percentile
+from math import ceil
+
+import matplotlib as mp
+mp.use('Agg')
+mp.rcParams["font.sans-serif"].insert(0,"Arial")
+mp.rcParams["font.family"] = "sans-serif"
+mp.rcParams["pdf.fonttype"] = 42 # use TrueType fonts when exporting PDFs
+                                 # (embeds most fonts - this is especially
+                                 #  useful when opening in Adobe Illustrator)
+mp.rcParams['xtick.direction'] = 'out'
+mp.rcParams['ytick.direction'] = 'out'
+mp.rcParams['legend.fontsize'] = 14
+mp.rcParams['grid.color'] = ".8"
+mp.rcParams['grid.linestyle'] = '-'
+mp.rcParams['grid.linewidth'] = 1
+mp.use('Agg')
+
+from matplotlib.patches import Rectangle
+
+rx_color = "red"
+bg_color = "blue"
+dc_color = "darkgoldenrod"
+#####################################################
 
 sns.set_style("ticks")
 sns.set_context("talk")
@@ -52,16 +73,39 @@ sns.set_context("talk")
 # 27 Norm_profile
 # 28 Norm_stderr
 
+def addSeqBar(axis, profile, yvalue=-0.01):
+    color_dict = {"A": "#f20000","U": "#f28f00","G": "#00509d","C": "#00c200"}
+    for n in ['A','U','C','G']:
+        mask = profile['Sequence']==n
+        x = profile['Nucleotide'][mask_18S]
+        axis.scatter(x, [-0.01 for x in x1], marker='.', c=color_dict[n])
 
 def plotReactivities(axis, sample, label, column='Reactivity_profile'):
     axis.plot(sample['Nucleotide'])
 
 
+def metric_abbreviate(num):
+    suffixes = {3:'k',
+                6:'M',
+                9:"G"}
+    s = str(num)
+    # replace trailing zeros with metric abbreviation
+    zero_count = len(s)-len(s.rstrip('0'))
+    suffix = ''
+    new_string = str(s)
+    for num_zeros in sorted(suffixes.keys()):
+        if num_zeros <= zero_count:
+            suffix = suffixes[num_zeros]
+            new_string = s[:-num_zeros]
+    new_string = new_string+suffix
+    return new_string
+
+
 def render_profiles(sample, name, qc_pass):
     num = sample['Nucleotide']
     seq = sample['Sequence']
-    reactivity = sample['Reactivity_profile']
-    stderr = sample['Std_err']
+    reactivity = sample['Norm_profile']
+    stderr = sample['Norm_stderr']
     rx_rates = sample['Modified_rate']
     bg_rates = sample['Untreated_rate']
     dc_rates = sample['Denatured_rate']
@@ -80,19 +124,19 @@ def render_profiles(sample, name, qc_pass):
     legend_labels = []
     if rx_rates is not None:
         legend_labels.append("Modified")
-        rx_err = sqrt(rx_rates) / sqrt(rx_depth)
+        rx_err = np.sqrt(rx_rates) / np.sqrt(rx_depth)
     else:
         rx_rates = np.zeros((len(rx_depth),))
         rx_err = np.zeros((len(rx_depth),))
     if bg_rates is not None:
         legend_labels.append("Untreated")
-        bg_err = sqrt(bg_rates) / sqrt(bg_depth)
+        bg_err = np.sqrt(bg_rates) / np.sqrt(bg_depth)
     else:
         bg_rates = np.zeros((len(rx_depth),))
         bg_err = np.zeros((len(rx_depth),))
     if dc_rates is not None:
         legend_labels.append("Denatured")
-        dc_err = sqrt(dc_rates) / sqrt(dc_depth)
+        dc_err = np.sqrt(dc_rates) / np.sqrt(dc_depth)
     else:
         dc_rates = np.zeros((len(rx_depth),))
         dc_err = np.zeros((len(rx_depth),))
@@ -133,7 +177,7 @@ def render_profiles(sample, name, qc_pass):
         red_nums = []
         red_errs = []
         for i in range(len(reactivity)):
-            if isnan(reactivity[i]):
+            if np.isnan(reactivity[i]):
                 gray_vals.append(-1)
                 gray_nums.append(num[i])
                 gray_errs.append(0)
@@ -265,7 +309,7 @@ def render_profiles(sample, name, qc_pass):
     ax1.get_xaxis().tick_bottom()   # remove unneeded ticks
     ax1.get_yaxis().tick_left()
 
-    ax1.tick_params(axis='y',which='minor',left='off')
+    ax1.tick_params(axis='y',which='minor',left=False)
     #ax1.tick_params(axis='x',which='minor')
 
     ax1.minorticks_on()
@@ -332,7 +376,7 @@ def render_profiles(sample, name, qc_pass):
     ax2.get_yaxis().tick_left()
 
     ax2.minorticks_on()
-    ax2.tick_params(axis='y',which='minor',left='off')
+    ax2.tick_params(axis='y',which='minor',left=False)
     #ax2.tick_params(axis='x',which='minor')
 
     #xlabels = ["%.2f"%v for v in xticks]
@@ -370,7 +414,7 @@ def render_profiles(sample, name, qc_pass):
     # choose a decent range for axis, excluding high-background positions
     good_indices = []
     for i in range(len(bg_rates)):
-        if bg_rates[i]<=0.05 or isnan(bg_rates[i]):
+        if bg_rates[i]<=0.05 or np.isnan(bg_rates[i]):
             good_indices.append(i)
     temp_rates = [rx_rates[i] for i in good_indices]
     near_top_rate = percentile(temp_rates,98.0)
@@ -410,7 +454,7 @@ def render_profiles(sample, name, qc_pass):
     ax3.get_yaxis().tick_left()
 
     ax3.minorticks_on()
-    ax3.tick_params(axis='y',which='minor',left='off')
+    ax3.tick_params(axis='y',which='minor',left=False)
 
     ticks = [x*100 for x in ax3.get_yticks()]
     ax3.set_yticklabels([str(val).rstrip('0').rstrip('.') for val in ticks])
