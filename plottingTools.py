@@ -44,7 +44,7 @@ sns.set_style("ticks")
 sns.set_context("talk")
 
 
-#
+# profile.txt header names and indices
 # 0 Nucleotide
 # 1 Sequence
 # 2 Modified_mutations
@@ -75,12 +75,20 @@ sns.set_context("talk")
 # 27 Norm_profile
 # 28 Norm_stderr
 
+def plotSkyline(axis, profile, label=None, column='Reactivity_profile'):
+    x = []
+    y = []
+    for n, r in zip(profile['Nucleotide'], profile[column]):
+        x.extend([n-0.5, n+0.5])
+        y.extend([r, r])
+    axis.plot(x, y, label=label)
+
 def addSeqBar(axis, profile, yvalue=-0.01):
     color_dict = {"A": "#f20000","U": "#f28f00","G": "#00509d","C": "#00c200"}
-    for n in ['A','U','C','G']:
-        mask = profile['Sequence']==n
-        x = profile['Nucleotide'][mask_18S]
-        axis.scatter(x, [-0.01 for x in x1], marker='.', c=color_dict[n])
+    for n in color_dict.keys():
+        mask = (profile['Sequence']==n) | (profile['Sequence']==n.lower())
+        x = profile['Nucleotide'][mask]
+        axis.scatter(x, [yvalue for i in x], marker='.', c=color_dict[n], label=n)
 
 def plotReactivities(axis, sample, label, column='Reactivity_profile'):
     axis.plot(sample['Nucleotide'])
