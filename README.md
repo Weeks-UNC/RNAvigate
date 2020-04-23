@@ -24,3 +24,8 @@ cd arcPlot
 cd ../RNATools
 2to3 -w RNAtools2.py
 ```
+
+Use in Longleaf
+------------------------------------------------------------------------------
+You can access a jupyter hub to create notebooks within longleaf by going
+[here](https://longleaf-jupyter.its.unc.edu/hub/login).
