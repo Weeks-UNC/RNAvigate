@@ -1,30 +1,31 @@
 
+from matplotlib.patches import Rectangle
+import matplotlib as mp
+from math import ceil
+from numpy import nanpercentile as percentile
+from numpy import isnan, nan, sqrt
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+import numpy as np
+from pmanalysis import PairMap
+import RNAtools2 as RNAtools
+import arcPlot as ap
 import sys
 import sys
 import os
 sys.path.append('{}/arcPlot/'.format(os.environ['HOME']))
 sys.path.append('{}/RNATools/'.format(os.environ['HOME']))
 
-import arcPlot as ap
-import RNAtools2 as RNAtools
-from pmanalysis import PairMap
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-import pandas as pd
 
-##########################COPYPASTA FROM SHAPEMAPPER2
-from numpy import isnan, nan, sqrt
-from numpy import nanpercentile as percentile
-from math import ceil
+# COPYPASTA FROM SHAPEMAPPER2
 
-import matplotlib as mp
 mp.use('Agg')
-mp.rcParams["font.sans-serif"].insert(0,"Arial")
+mp.rcParams["font.sans-serif"].insert(0, "Arial")
 mp.rcParams["font.family"] = "sans-serif"
-mp.rcParams["pdf.fonttype"] = 42 # use TrueType fonts when exporting PDFs
-                                 # (embeds most fonts - this is especially
-                                 #  useful when opening in Adobe Illustrator)
+mp.rcParams["pdf.fonttype"] = 42  # use TrueType fonts when exporting PDFs
+# (embeds most fonts - this is especially
+#  useful when opening in Adobe Illustrator)
 mp.rcParams['xtick.direction'] = 'out'
 mp.rcParams['ytick.direction'] = 'out'
 mp.rcParams['legend.fontsize'] = 14
@@ -33,7 +34,6 @@ mp.rcParams['grid.linestyle'] = '-'
 mp.rcParams['grid.linewidth'] = 1
 mp.use('Agg')
 
-from matplotlib.patches import Rectangle
 
 rx_color = "red"
 bg_color = "blue"
@@ -80,17 +80,22 @@ def plotSkyline(axis, profile, label=None, column='Reactivity_profile'):
     x = []
     y = []
     for n, r in zip(profile['Nucleotide'], profile[column]):
-        x.extend([n-0.5, n+0.5])
+        x.extend([n - 0.5, n + 0.5])
         y.extend([r, r])
     axis.plot(x, y, label=label)
 
+
 def addSeqBar(axis, profile, yvalue=-0.017):
-    font_prop = mp.font_manager.FontProperties(family = "monospace", style="normal",weight="bold",size="12")
-    color_dict = {"A": "#f20000","U": "#f28f00","G": "#00509d","C": "#00c200"}
+    font_prop = mp.font_manager.FontProperties(
+        family="monospace", style="normal", weight="bold", size="12")
+    color_dict = {"A": "#f20000", "U": "#f28f00",
+                  "G": "#00509d", "C": "#00c200"}
     for i, row in profile.iterrows():
         nuc = row['Sequence'].upper()
         col = color_dict[nuc]
-        axis.annotate(nuc, xy=(i+1, yvalue),fontproperties=font_prop,color=col,annotation_clip=False, horizontalalignment="center")
+        axis.annotate(nuc, xy=(i + 1, yvalue), fontproperties=font_prop,
+                      color=col, annotation_clip=False,
+                      horizontalalignment="center")
 
 
 def plotReactivities(axis, sample, label, column='Reactivity_profile'):
@@ -98,19 +103,19 @@ def plotReactivities(axis, sample, label, column='Reactivity_profile'):
 
 
 def metric_abbreviate(num):
-    suffixes = {3:'k',
-                6:'M',
-                9:"G"}
+    suffixes = {3: 'k',
+                6: 'M',
+                9: "G"}
     s = str(num)
     # replace trailing zeros with metric abbreviation
-    zero_count = len(s)-len(s.rstrip('0'))
+    zero_count = len(s) - len(s.rstrip('0'))
     suffix = ''
     new_string = str(s)
     for num_zeros in sorted(suffixes.keys()):
         if num_zeros <= zero_count:
             suffix = suffixes[num_zeros]
             new_string = s[:-num_zeros]
-    new_string = new_string+suffix
+    new_string = new_string + suffix
     return new_string
 
 
@@ -210,47 +215,48 @@ def render_profiles(sample, name, qc_pass):
     yMin, ymax = (-0.5, 4)
     left_inches = 0.9
     right_inches = 0.4
-    sp_width = len(num)*0.032
-    fig_width = max(7,sp_width+left_inches+right_inches)
-    fig = plt.figure(figsize=(fig_width,8))
+    sp_width = len(num) * 0.032
+    fig_width = max(7, sp_width + left_inches + right_inches)
+    fig = plt.figure(figsize=(fig_width, 8))
 
-    left_percent = left_inches/fig_width
-    right_percent = 1-right_inches/fig_width
+    left_percent = left_inches / fig_width
+    right_percent = 1 - right_inches / fig_width
     ax1 = plt.subplot(311)
     ax2 = plt.subplot(313)
     ax3 = plt.subplot(312)
-    plt.subplots_adjust(hspace=0.5, left=left_percent,right=right_percent,top=0.94)
+    plt.subplots_adjust(hspace=0.5, left=left_percent,
+                        right=right_percent, top=0.94)
 
-    near_black = (0,0,1/255.0)
+    near_black = (0, 0, 1 / 255.0)
 
     if reactivity is not None:
-        if len(gray_nums)>0:
-            ax1.bar(gray_nums,gray_vals,
-                     align="center",
-                     width=1.05, color="0.80", edgecolor="0.80",linewidth=0.0)
-        if len(black_nums)>0:
-            ax1.bar(black_nums,black_vals,
-                     align="center",
-                     width=1.05, color="black", edgecolor="black",linewidth=0.0,
-                     yerr=black_errs,ecolor=near_black,capsize=1)
-        if len(orange_nums)>0:
-            ax1.bar(orange_nums,orange_vals,
-                     align="center",
-                     width=1.05, color="orange",edgecolor="orange",linewidth=0.0,
-                     yerr=orange_errs,ecolor=near_black,capsize=1)
-        if len(red_nums)>0:
-            ax1.bar(red_nums,red_vals,
-                     align="center",
-                     width=1.05,color="red",edgecolor="red",linewidth=0.0,
-                     yerr=red_errs,ecolor=near_black,capsize=1)
+        if len(gray_nums) > 0:
+            ax1.bar(gray_nums, gray_vals,
+                    align="center",
+                    width=1.05, color="0.80", edgecolor="0.80", linewidth=0.0)
+        if len(black_nums) > 0:
+            ax1.bar(black_nums, black_vals, align="center", width=1.05,
+                    color="black", edgecolor="black", linewidth=0.0,
+                    yerr=black_errs, ecolor=near_black, capsize=1)
+        if len(orange_nums) > 0:
+            ax1.bar(orange_nums, orange_vals,
+                    align="center",
+                    width=1.05, color="orange", edgecolor="orange",
+                    linewidth=0.0,
+                    yerr=orange_errs, ecolor=near_black, capsize=1)
+        if len(red_nums) > 0:
+            ax1.bar(red_nums, red_vals,
+                    align="center",
+                    width=1.05, color="red", edgecolor="red", linewidth=0.0,
+                    yerr=red_errs, ecolor=near_black, capsize=1)
 
-    #print("title: "+name)
+    # print("title: "+name)
     ax1title = ax1.set_title(name, horizontalalignment="left", fontsize=16)
-    x,y = ax1title.get_position()
-    ax1title.set_position((0,y))
-    ax1.set_ylim(yMin,ymax)
-    ax1.set_xlim(1,len(num))
-    #ax1.set_yticks(fontsize=9)
+    x, y = ax1title.get_position()
+    ax1title.set_position((0, y))
+    ax1.set_ylim(yMin, ymax)
+    ax1.set_xlim(1, len(num))
+    # ax1.set_yticks(fontsize=9)
 
     if not qc_pass:
         msg = "Note: possible data quality issue - see log file"
@@ -258,19 +264,19 @@ def render_profiles(sample, name, qc_pass):
         if no_mapped:
             msg = "ERROR: no reads mapped to this RNA"
             return_flag = True
-        txt = plt.text(30,573,
-                 msg,
-                 ha='left', va='top',
-                 fontsize=16, color='red',
-                 transform=mp.transforms.IdentityTransform())
+        txt = plt.text(30, 573,
+                       msg,
+                       ha='left', va='top',
+                       fontsize=16, color='red',
+                       transform=mp.transforms.IdentityTransform())
         if return_flag:
             plt.show()
             return
 
-    #tickNums = range(num[0]+10,num[-1]+1,10)
-    #tickPos = range(num[0]+9,num[-1],10)
-    #ax1.set_xticks(tickPos,tickNums,fontsize=9,rotation=30)
-    #ax1.set_xticks(fontsize=9)
+    # tickNums = range(num[0]+10,num[-1]+1,10)
+    # tickPos = range(num[0]+9,num[-1],10)
+    # ax1.set_xticks(tickPos,tickNums,fontsize=9,rotation=30)
+    # ax1.set_xticks(fontsize=9)
 
     ax1.yaxis.grid(True)
     ax1.set_axisbelow(True)
@@ -287,12 +293,14 @@ def render_profiles(sample, name, qc_pass):
             spine.set_smart_bounds(True)
 
     # need to add labels after moving spines, otherwise they will disappear
-    ax1xlabel = ax1.set_xlabel("Nucleotide", horizontalalignment="left", fontsize=14, labelpad=0)
-    x,y = ax1xlabel.get_position()
-    ax1xlabel.set_position((0,y))
-    ax1ylabel = ax1.set_ylabel("Shape Reactivity", horizontalalignment="left", fontsize=14)
-    x,y = ax1ylabel.get_position()
-    ax1ylabel.set_position((x,0))
+    ax1xlabel = ax1.set_xlabel(
+        "Nucleotide", horizontalalignment="left", fontsize=14, labelpad=0)
+    x, y = ax1xlabel.get_position()
+    ax1xlabel.set_position((0, y))
+    ax1ylabel = ax1.set_ylabel(
+        "Shape Reactivity", horizontalalignment="left", fontsize=14)
+    x, y = ax1ylabel.get_position()
+    ax1ylabel.set_position((x, 0))
 
     if reactivity is not None:
         # add a SHAPE colorbar to the vertical axis
@@ -301,29 +309,32 @@ def render_profiles(sample, name, qc_pass):
         for loc, spine in ax1.spines.items():
             if loc == 'left':
                 trans = spine.get_transform()
-        pt = trans.transform_point([0,0])
+        pt = trans.transform_point([0, 0])
         pt2 = inv.transform_point(pt)
         rectX = pt2[0]
-        ptA = (0,0)
-        ptB = (6,0)
+        ptA = (0, 0)
+        ptB = (6, 0)
         ptA2 = inv.transform_point(ptA)
         ptB2 = inv.transform_point(ptB)
-        rectW = ptB2[0]-ptA2[0]
-        rect = Rectangle((rectX,-0.5), rectW, orange_thresh+0.5, facecolor="black", edgecolor="none")
+        rectW = ptB2[0] - ptA2[0]
+        rect = Rectangle((rectX, -0.5), rectW, orange_thresh +
+                         0.5, facecolor="black", edgecolor="none")
         ax1.add_patch(rect)
         rect.set_clip_on(False)
-        rect = Rectangle((rectX,orange_thresh), rectW, red_thresh-orange_thresh, facecolor="orange", edgecolor="none")
+        rect = Rectangle((rectX, orange_thresh), rectW, red_thresh -
+                         orange_thresh, facecolor="orange", edgecolor="none")
         ax1.add_patch(rect)
         rect.set_clip_on(False)
-        rect = Rectangle((rectX,red_thresh), rectW, 4-red_thresh, facecolor="red", edgecolor="none")
+        rect = Rectangle((rectX, red_thresh), rectW, 4 -
+                         red_thresh, facecolor="red", edgecolor="none")
         ax1.add_patch(rect)
         rect.set_clip_on(False)
 
     ax1.get_xaxis().tick_bottom()   # remove unneeded ticks
     ax1.get_yaxis().tick_left()
 
-    ax1.tick_params(axis='y',which='minor',left=False)
-    #ax1.tick_params(axis='x',which='minor')
+    ax1.tick_params(axis='y', which='minor', left=False)
+    # ax1.tick_params(axis='x',which='minor')
 
     ax1.minorticks_on()
 
@@ -343,9 +354,9 @@ def render_profiles(sample, name, qc_pass):
         line.set_markersize(5)
         line.set_markeredgewidth(1)
 
-
     # put nuc sequence below axis
-    font_prop = mp.font_manager.FontProperties(family = "monospace", style="normal",weight="bold",size="4.5")
+    font_prop = mp.font_manager.FontProperties(
+        family="monospace", style="normal", weight="bold", size="4.5")
     for i in range(seq.shape[0]):
         nuc = seq[i]
         if nuc == "T":
@@ -360,28 +371,40 @@ def render_profiles(sample, name, qc_pass):
             col = color_dict[nuc.upper()]
         else:
             col = "black"
-        ax1.annotate(nuc, xy=(i+1, -0.67),fontproperties=font_prop,color=col,annotation_clip=False, horizontalalignment="center")
+        ax1.annotate(nuc, xy=(i + 1, -0.67), fontproperties=font_prop,
+                     color=col, annotation_clip=False,
+                     horizontalalignment="center")
 
     handles = []
-    h, = ax2.plot(num, rx_simple_depth, linewidth = 1.5, color=rx_color, alpha=1.0)
-    ax2.plot(num, rx_depth, linewidth = 1.0, color=rx_color, alpha=0.3)
+    h, = ax2.plot(num, rx_simple_depth, linewidth=1.5,
+                  color=rx_color, alpha=1.0)
+    ax2.plot(num, rx_depth, linewidth=1.0, color=rx_color, alpha=0.3)
     handles.append(h)
-    h, = ax2.plot(num, bg_simple_depth, linewidth = 1.5, color=bg_color, alpha=1.0)
-    ax2.plot(num, bg_depth, linewidth = 1.0, color=bg_color, alpha=0.3)
+    h, = ax2.plot(num, bg_simple_depth, linewidth=1.5,
+                  color=bg_color, alpha=1.0)
+    ax2.plot(num, bg_depth, linewidth=1.0, color=bg_color, alpha=0.3)
     handles.append(h)
-    h, = ax2.plot(num, dc_simple_depth, linewidth = 1.5, color=dc_color, alpha=1.0)
-    ax2.plot(num, dc_depth, linewidth = 1.0, color=dc_color, alpha=0.3)
+    h, = ax2.plot(num, dc_simple_depth, linewidth=1.5,
+                  color=dc_color, alpha=1.0)
+    ax2.plot(num, dc_depth, linewidth=1.0, color=dc_color, alpha=0.3)
     handles.append(h)
-    ax2.set_xlim(1,len(num))
-    #ax2.legend(["+Reagent","Background","Denatured"], bbox_to_anchor=(1.1,1.1))
-    leg = ax2.legend(handles, legend_labels, loc=2, borderpad=0.8, handletextpad=0.2, framealpha=0.75)
+    ax2.set_xlim(1, len(num))
+    # ax2.legend(["+Reagent","Background","Denatured"],
+    # bbox_to_anchor=(1.1,1.1))
+    leg = ax2.legend(handles, legend_labels, loc=2,
+                     borderpad=0.8, handletextpad=0.2, framealpha=0.75)
     xmin, xmax, ymin, ymax = ax2.axis()
-    ax2.set_ylim(0,ymax)
-    #ax2.set_yscale('log')
-    #ax2.set_yscale('symlog')# useful, but disabled because of a matplotlib/pyparsing bug
-    ax2xlabel = ax2.set_xlabel("Nucleotide\n(note: effective read depths shown in lighter colors)", horizontalalignment="left", fontsize=14, labelpad=0)
-    x,y = ax2xlabel.get_position()
-    ax2xlabel.set_position((0,y))
+    ax2.set_ylim(0, ymax)
+    # ax2.set_yscale('log')
+    # ax2.set_yscale('symlog')# useful, but disabled because of a
+    # matplotlib/pyparsing bug
+    ax2xlabel = ax2.set_xlabel("Nucleotide\n" +
+                               "(note: effective read depths" +
+                               " shown in lighter colors)",
+                               horizontalalignment="left", fontsize=14,
+                               labelpad=0)
+    x, y = ax2xlabel.get_position()
+    ax2xlabel.set_position((0, y))
 
     ax2.spines["right"].set_visible(False)
     ax2.spines["top"].set_visible(False)
@@ -389,11 +412,11 @@ def render_profiles(sample, name, qc_pass):
     ax2.get_yaxis().tick_left()
 
     ax2.minorticks_on()
-    ax2.tick_params(axis='y',which='minor',left=False)
-    #ax2.tick_params(axis='x',which='minor')
+    ax2.tick_params(axis='y', which='minor', left=False)
+    # ax2.tick_params(axis='x',which='minor')
 
     #xlabels = ["%.2f"%v for v in xticks]
-    #ax3.set_xticks(xticks)
+    # ax3.set_xticks(xticks)
     #ax3.set_xticklabels(xlabels,rotation = -45, horizontalalignment='left')
 
     yticks = [int(y) for y in ax2.get_yticks()]
@@ -417,7 +440,8 @@ def render_profiles(sample, name, qc_pass):
     ax2.yaxis.grid(True)
     ax2.set_axisbelow(True)
 
-    ax2ylabel = ax2.set_ylabel("Read depth", horizontalalignment="left", fontsize=14)
+    ax2ylabel = ax2.set_ylabel(
+        "Read depth", horizontalalignment="left", fontsize=14)
     x, y = ax2ylabel.get_position()
     ax2ylabel.set_position((x, 0))
     # tried to make an offset, smaller font note about effective depths,
@@ -427,14 +451,14 @@ def render_profiles(sample, name, qc_pass):
     # choose a decent range for axis, excluding high-background positions
     good_indices = []
     for i in range(len(bg_rates)):
-        if bg_rates[i]<=0.05 or np.isnan(bg_rates[i]):
+        if bg_rates[i] <= 0.05 or np.isnan(bg_rates[i]):
             good_indices.append(i)
     temp_rates = [rx_rates[i] for i in good_indices]
-    near_top_rate = percentile(temp_rates,98.0)
-    maxes = [0.32,0.16,0.08,0.04,0.02,0.01]
+    near_top_rate = percentile(temp_rates, 98.0)
+    maxes = [0.32, 0.16, 0.08, 0.04, 0.02, 0.01]
     ymax = maxes[0]
     for i in range(len(maxes)):
-        if near_top_rate<maxes[i]:
+        if near_top_rate < maxes[i]:
             ymax = maxes[i]
 
     rx_upper = rx_rates + rx_err
@@ -444,22 +468,28 @@ def render_profiles(sample, name, qc_pass):
     dc_upper = dc_rates + dc_err
     dc_lower = dc_rates - dc_err
 
-    ax3xlabel = ax3.set_xlabel("Nucleotide", horizontalalignment="left", fontsize=14, labelpad=0)
-    x,y = ax3xlabel.get_position()
-    ax3xlabel.set_position((0,y))
-    ax3ylabel = ax3.set_ylabel("Mutation rate (%)", horizontalalignment="left", fontsize=14)
-    x,y = ax3ylabel.get_position()
-    ax3ylabel.set_position((x,0))
+    ax3xlabel = ax3.set_xlabel(
+        "Nucleotide", horizontalalignment="left", fontsize=14, labelpad=0)
+    x, y = ax3xlabel.get_position()
+    ax3xlabel.set_position((0, y))
+    ax3ylabel = ax3.set_ylabel(
+        "Mutation rate (%)", horizontalalignment="left", fontsize=14)
+    x, y = ax3ylabel.get_position()
+    ax3ylabel.set_position((x, 0))
 
     ax3.plot(num, rx_rates, zorder=3, color=rx_color, linewidth=1.5)
     ax3.plot(num, bg_rates, zorder=2, color=bg_color, linewidth=1.5)
     ax3.plot(num, dc_rates, zorder=2, color=dc_color, linewidth=1.5)
-    ax3.fill_between(num, rx_lower, rx_upper, edgecolor="none", alpha=0.5, facecolor=rx_color)
-    ax3.fill_between(num, bg_lower, bg_upper, edgecolor="none", alpha=0.5, facecolor=bg_color)
-    ax3.fill_between(num, dc_lower, dc_upper, edgecolor="none", alpha=0.5, facecolor=dc_color)
-    ax3.legend(legend_labels, loc=2, borderpad=0.8, handletextpad=0.2, framealpha=0.75)
-    ax3.set_xlim((1,len(rx_rates)))
-    ax3.set_ylim((0,ymax))
+    ax3.fill_between(num, rx_lower, rx_upper, edgecolor="none",
+                     alpha=0.5, facecolor=rx_color)
+    ax3.fill_between(num, bg_lower, bg_upper, edgecolor="none",
+                     alpha=0.5, facecolor=bg_color)
+    ax3.fill_between(num, dc_lower, dc_upper, edgecolor="none",
+                     alpha=0.5, facecolor=dc_color)
+    ax3.legend(legend_labels, loc=2, borderpad=0.8,
+               handletextpad=0.2, framealpha=0.75)
+    ax3.set_xlim((1, len(rx_rates)))
+    ax3.set_ylim((0, ymax))
 
     ax3.spines["right"].set_visible(False)
     ax3.spines["top"].set_visible(False)
@@ -467,9 +497,9 @@ def render_profiles(sample, name, qc_pass):
     ax3.get_yaxis().tick_left()
 
     ax3.minorticks_on()
-    ax3.tick_params(axis='y',which='minor',left=False)
+    ax3.tick_params(axis='y', which='minor', left=False)
 
-    ticks = [x*100 for x in ax3.get_yticks()]
+    ticks = [x * 100 for x in ax3.get_yticks()]
     ax3.set_yticklabels([str(val).rstrip('0').rstrip('.') for val in ticks])
 
     for line in ax3.get_yticklines():
@@ -487,8 +517,8 @@ def render_profiles(sample, name, qc_pass):
     ax3.yaxis.grid(True)
     ax3.set_axisbelow(True)
 
-    # TODO: add a tick for the first nuc - can't seem to add one without screwing
-    # up all the other ticks
+    # TODO: add a tick for the first nuc - can't seem to add one without
+    # screwing up all the other ticks
 
     plt.show()
 
@@ -516,5 +546,5 @@ def plotIgnoredCorrs(title, file):
                 x.extend(pair)
                 y.extend(pair[::-1])
     ax.scatter(x, y, marker='s', s=1)
-    ax.set(title=title+": Background Correlations")
+    ax.set(title=title + ": Background Correlations")
     return x, y
