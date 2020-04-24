@@ -75,6 +75,7 @@ sns.set_context("talk")
 # 27 Norm_profile
 # 28 Norm_stderr
 
+
 def plotSkyline(axis, profile, label=None, column='Reactivity_profile'):
     x = []
     y = []
@@ -83,12 +84,14 @@ def plotSkyline(axis, profile, label=None, column='Reactivity_profile'):
         y.extend([r, r])
     axis.plot(x, y, label=label)
 
-def addSeqBar(axis, profile, yvalue=-0.01):
+def addSeqBar(axis, profile, yvalue=-0.017):
+    font_prop = mp.font_manager.FontProperties(family = "monospace", style="normal",weight="bold",size="12")
     color_dict = {"A": "#f20000","U": "#f28f00","G": "#00509d","C": "#00c200"}
-    for n in color_dict.keys():
-        mask = (profile['Sequence']==n) | (profile['Sequence']==n.lower())
-        x = profile['Nucleotide'][mask]
-        axis.scatter(x, [yvalue for i in x], marker='.', c=color_dict[n], label=n)
+    for i, row in profile.iterrows():
+        nuc = row['Sequence'].upper()
+        col = color_dict[nuc]
+        axis.annotate(nuc, xy=(i+1, yvalue),fontproperties=font_prop,color=col,annotation_clip=False, horizontalalignment="center")
+
 
 def plotReactivities(axis, sample, label, column='Reactivity_profile'):
     axis.plot(sample['Nucleotide'])
