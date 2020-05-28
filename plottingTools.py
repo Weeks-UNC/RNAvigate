@@ -14,7 +14,6 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
-from pmanalysis import PairMap
 import RNAtools2 as RNAtools
 import arcPlot as ap
 
