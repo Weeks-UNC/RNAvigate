@@ -12,8 +12,8 @@ class BM():
         self.p = header2[1:]
         colnames = ["Nucleotide", "Sequence"]
         for i in range(self.components):
-            colnames.append("nReact"+i)
-            colnames.append("Raw"+i)
+            colnames.append("nReact"+str(i))
+            colnames.append("Raw"+str(i))
         self.reactivities = pd.read_csv(reactivities, sep='\t', header=2,
                                         names=colnames)
 
