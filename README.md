@@ -14,7 +14,7 @@ hide your code by default and produce a button which will toggle the code
 blocks off and on. This is useful for making a report more readable, and having
 the option to show the code if it is needed.
 
-```
+```python
 from IPython.display import HTML
 
 HTML('''<script>
@@ -38,7 +38,16 @@ Loading in modules
 Modules in your path can be imported easily. You will also need matplotlib,
 seaborn, and pandas. Import only the modules that you'll be using.
 
-```
+If you are working from the longleaf jupyter hub, you will first need to add
+JNBTools, arcPlot, and RNATools to your path. Edit this code to point to the
+right directory. These should go before the rest of your import statements.
+
+```python
+import sys
+sys.path.append("/nas/longleaf/home/<ONYEN>/JNBTools")
+sys.path.append("/nas/longleaf/home/<ONYEN>/arcPlot")
+sys.path.append("/nas/longleaf/home/<ONYEN>/RNATools")
+
 import plottingTools as pt
 import JNBarcPlot as ap
 import BMTools as bm
@@ -47,25 +56,21 @@ import seaborn as sns
 import pandas as pd
 ```
 
-You will also want to set up your plotting style defaults at the top of your
-notebook. Here are the ones that I use:
+Setting default plotting parameters
+------------------------------------------------------------------------------
+First, you need to tell Jupyter that you want to display your plots in the
+notebook, and not to open a separate window. You will also want to set up your
+plotting style defaults. Here are the ones that I use:
 
-```
+```python
+%matplotlib inline
+
 sns.set_style("ticks")
 sns.set_context("talk")
-colors = ['#a100ffff', '#edc600ff', '#0092edff', '#ff8300ff', '#ff48e9ff', '#3fd125ff']
+colors = ['#a100ffff', '#edc600ff',
+          '#0092edff', '#ff8300ff',
+          '#ff48e9ff', '#3fd125ff']
 sns.set_palette(colors)
-```
-
-If you are working from the longleaf jupyter hub, you will first need to add
-JNBTools, arcPlot, and RNATools to your path. Edit this code to point to the
-right directory. These should go before the rest of your import statements.
-
-```
-import sys
-sys.path.append("/nas/longleaf/home/<ONYEN>/JNBTools")
-sys.path.append("/nas/longleaf/home/<ONYEN>/arcPlot")
-sys.path.append("/nas/longleaf/home/<ONYEN>/RNATools")
 ```
 
 
@@ -73,7 +78,7 @@ Loading in data
 ------------------------------------------------------------------------------
 These functions all work using pandas DataFrames. Therefor, loading a file is an
 easy one-liner.
-```
+```python
 # for shapemapper profiles
 shapedata = pd.read_csv('example_RNA_profile.txt', sep='\t')
 
@@ -89,7 +94,7 @@ Example plot: Tried-and-true shapemapper plots
 ------------------------------------------------------------------------------
 Here is an example of how to make the standard shapemapper2 plots that we are
 all used to seeing.
-```
+```python
 fig, ax = plt.subplots(3, 1, figsize=(pt.getWidth(sample), 15))
 pt.plotProfile(ax[0], shapedata, 'Sample Name')
 pt.plotMutationRates(ax[1], shapedata)
@@ -108,7 +113,7 @@ isn't the case, then you will need to convert ArcPlot and RNATools2 to be
 compatible with Python 3. To do this, navigate to the directories that hold
 these scripts and run the following code.
 
-```
+```bash
 cd arcPlot
 2to3 -w arcPlot.py
 2to3 -w pmanalysis.py
