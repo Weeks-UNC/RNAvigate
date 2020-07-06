@@ -1,21 +1,10 @@
 
-import sys
-import os
-sys.path.append('{}/arcPlot/'.format(os.environ['HOME']))
-sys.path.append('{}/RNATools/'.format(os.environ['HOME']))
-sys.path.append('../arcPlot')
-sys.path.append('../RNATools')
 from matplotlib.patches import Rectangle
 import matplotlib as mp
-from math import ceil
 from numpy import nanpercentile as percentile
-from numpy import isnan, nan, sqrt
-import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
-import RNAtools2 as RNAtools
-import arcPlot as ap
 
 
 # COPYPASTA FROM SHAPEMAPPER2
@@ -309,18 +298,6 @@ def plotMutationRates(axis, sample):
 
     axis.yaxis.grid(True)
     axis.set_axisbelow(True)
-
-
-def arcPlot_pairmap(title, fa, ct, shapefile, pm):
-    ctStructNum = 0
-    filterNC = True
-    pairmapAll = False
-    aplot = ap.ArcPlot(title=title, fasta=fa)
-    aplot.addCT(RNAtools.CT(ct, structNum=ctStructNum, filterNC=filterNC),
-                panel=1)
-    aplot.addPairMap(PairMap(pm), panel=-1, plotall=pairmapAll)
-    aplot.readProfile(shapefile)
-    aplot.writePlot('show')
 
 
 def plotIgnoredCorrs(title, file):
