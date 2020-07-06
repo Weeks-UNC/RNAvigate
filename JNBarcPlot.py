@@ -2,6 +2,19 @@ import arcPlot as ap
 import RNAtools2 as RNAtools
 
 
+def plotIgnoredCorrs(ax, title, logfile):
+    x, y = [], []
+    with open(logfile) as f:
+        for line in f.readlines():
+            if line.startswith('Pair '):
+                pair = line.split()[1].strip('()').split(',')
+                x.extend(pair)
+                y.extend(pair[::-1])
+    ax.scatter(x, y, marker='s', s=1)
+    ax.set(title=title + ": Background Correlations")
+    return x, y
+
+
 def arcPlot(ct=False, fasta=False, refct=False, probability=False, ringz=False,
             ringsig=False, pairmap=False, compare_pairmap=False, ntshape=False,
             dmsprofile=False, bottom=False, title=False, showGrid=False,
