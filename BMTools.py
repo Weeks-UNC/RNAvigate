@@ -14,6 +14,8 @@ class BM():
         for i in range(self.components):
             colnames.append("nReact"+str(i))
             colnames.append("Raw"+str(i))
+            colnames.append("blank"+str(i))
+        colnames.append("Background")
         self.reactivities = pd.read_csv(reactivities, sep='\t', header=2,
                                         names=colnames)
 
@@ -23,5 +25,5 @@ class BM():
             pt.plotSkyline(axis, self.reactivities,
                            label="{}: {}".format(i, self.p[i]),
                            column="nReact{}".format(i))
-        pt.addSeqBar(axis, self.reactivities)
+        pt.addSeqBar(axis, self.reactivities, yvalue=-0.1)
         axis.legend(title="Component: Population")
