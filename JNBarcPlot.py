@@ -1,5 +1,6 @@
 import arcPlot as ap
 import RNAtools2 as RNAtools
+import numpy as np
 
 
 def plotIgnoredCorrs(ax, title, logfile):
@@ -14,6 +15,50 @@ def plotIgnoredCorrs(ax, title, logfile):
     ax.set(title=title + ": Background Correlations")
     return x, y
 
+
+def ctToBitmap(ctfile):
+    with open(ctfile) as f:
+        line1 = f.readline()
+        size = line1.strip().split()[0]
+        bitmap = np.ones((size, size))
+        for line in f.readlines():
+            line = [item.strip() for item in line.split()]
+            i = int(line[0])
+            j = int(line[4])
+            if j != 0 and i < j:
+                bitmap[i, j] = 0
+                nt = 0
+                helix = True
+                while helix:
+                    if bitmap[i-nt-1, j+nt+1] == 0:
+                        nt += 1
+                    else:
+                        helix = False
+                bitmap[i-nt:i+1, j:j+nt+1] = 0
+    return bitmap
+
+
+def pairmapToBitmap(pairfile, ctfile):
+    with open(ctfile) as f:
+        line1 = f.readline()
+        size = line1.strip().split()[0]
+        bitmap = np.zeros((size, size))
+    with open(pairfile) as f:
+        f.readline()
+        f.readline()
+        for line in f.readlines():
+            line = line.strip().split()
+            i = int(line[0])
+            j = int(line[1])
+            Class = int(line[3])
+            bitmap[i:i+3, j:j+3] = Class
+    null = (bitmap == 0)
+    primary = (bitmap == 1)
+    secondary = (bitmap == 2)
+    bitmap[null] = 0.5
+    bitmap[primary] = 0
+    bitmap[secondary] = 1
+    return bitmap
 
 def arcPlot(ct=False, fasta=False, refct=False, probability=False, ringz=False,
             ringsig=False, pairmap=False, compare_pairmap=False, ntshape=False,
