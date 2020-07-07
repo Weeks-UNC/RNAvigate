@@ -46,7 +46,7 @@ def ctToBitmap(ctfile):
     names = ['i', 'j']
     ct = pd.read_csv('RMRP.ct', sep='\s+', names=names,
                      header=0, usecols=[0, 4])
-    ct = ct[(ct['j'] != 0) & (ct['i'] > ct['j'])]
+    ct = ct[(ct['j'] != 0) & (ct['i'] < ct['j'])]
     for x in [-1, 0, 1]:
         for y in [-1, 0, 1]:
             bitmap[ct['i']+x, ct['j']+y] = 0
