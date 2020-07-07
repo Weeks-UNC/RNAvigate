@@ -63,6 +63,9 @@ def pairmapToBitmap(pairfile, ctfile):
         x = i % 3
         y = int(i/3)
         bitmap[secondary['i']+x, secondary['j']+y] = 1
+    for i in range(9):
+        x = i % 3
+        y = int(i/3)
         bitmap[primary['i']+x, primary['j']+y] = 0
     return bitmap
 
