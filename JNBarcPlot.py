@@ -1,28 +1,7 @@
 import arcPlot as ap
 import RNAtools2 as RNAtools
 import numpy as np
-
-
-def corrsToBitmap(corrfile, ctfile, window=1, limit=100):
-    size = ctLength(ctfile)
-    bitmap = np.zeros((size, size))
-    with open(corrfile) as f:
-        f.readline()
-        f.readline()
-        for line in f.readlines():
-            line = [item.strip() for item in line.split()]
-            i = int(line[0])
-            j = int(line[1])
-            sig = float(line[2])*int(line[3])
-            bitmap[i:i+window, j:j+window] = sig
-    bitmap[bitmap > limit] = limit
-    bitmap[bitmap < -limit] = -limit
-    bitmap = bitmap/limit
-    bitmap[0, 0] = 1
-    bitmap[0, 1] = -1
-    bitmap += 1
-    bitmap /= 2
-    return bitmap
+import pandas as pd
 
 
 def ctLength(ctfile):
@@ -43,44 +22,50 @@ def ignoredToBitmap(logfile, ctfile):
     return bitmap
 
 
+def corrsToBitmap(corrfile, ctfile, window=1, limit=100):
+    size = ctLength(ctfile)
+    bitmap = np.zeros((size, size))
+    corrs = pd.read_csv(corrfile, sep='\t', header=1)
+    for i in range(window*window):
+        x = i % window
+        y = int(i/window)
+        bitmap[corrs['i']+x, corrs['j']+y] += corrs['Statistic']*corrs['+/-']
+    bitmap[bitmap > limit] = limit
+    bitmap[bitmap < -limit] = -limit
+    bitmap = bitmap/limit
+    bitmap[0, 0] = 1
+    bitmap[0, 1] = -1
+    bitmap += 1
+    bitmap /= 2
+    return bitmap
+
+
 def ctToBitmap(ctfile):
     size = ctLength(ctfile)
     bitmap = np.ones((size, size))
-    with open(ctfile) as f:
-        f.readline()
-        for line in f.readlines():
-            line = [item.strip() for item in line.split()]
-            i = int(line[0])
-            j = int(line[4])
-            if j != 0 and i < j:
-                bitmap[i, j] = 0
-                nt = 0
-                helix = True
-                while helix:
-                    if bitmap[i-nt-1, j+nt+1] == 0:
-                        nt += 1
-                    else:
-                        helix = False
-                bitmap[i-nt:i+1, j:j+nt+1] = 0
+    names = ['i', 'j']
+    ct = pd.read_csv('RMRP.ct', sep='\s+', names=names,
+                     header=0, usecols=[0, 4])
+    ct = ct[(ct['j'] != 0) & (ct['i'] > ct['j'])]
+    for x in [-1, 0, 1]:
+        for y in [-1, 0, 1]:
+            bitmap[ct['i']+x, ct['j']+y] = 0
     return bitmap
 
 
 def pairmapToBitmap(pairfile, ctfile):
     size = ctLength(ctfile)
     bitmap = np.zeros((size, size))+0.5
-    classdict = {"0": 0.5,  # null (white with bwr)
-                 "1": 0,  # primary (blue with bwr)
-                 "2": 1}  # secondary (red with bwr)
-    with open(pairfile) as f:
-        f.readline()
-        f.readline()
-        for line in f.readlines():
-            line = line.strip().split()
-            i = int(line[0])
-            j = int(line[1])
-            Class = line[3]
-            bitmap[i:i+3, j:j+3] = classdict[Class]
+    pairs = pd.read_csv(pairfile, sep='\t', header=1)
+    primary = pairs[pairs['Class'] == 1]
+    secondary = pairs[pairs['Class'] == 2]
+    for i in range(9):
+        x = i % 3
+        y = int(i/3)
+        bitmap[secondary['i']+x, secondary['j']+y] = 1
+        bitmap[primary['i']+x, primary['j']+y] = 0
     return bitmap
+
 
 def arcPlot(ct=False, fasta=False, refct=False, probability=False, ringz=False,
             ringsig=False, pairmap=False, compare_pairmap=False, ntshape=False,
