@@ -3,6 +3,28 @@ import RNAtools2 as RNAtools
 import numpy as np
 
 
+def corrsToBitmap(corrfile, ctfile, window=1, limit=100):
+    size = ctLength(ctfile)
+    bitmap = np.zeros((size, size))
+    with open(corrfile) as f:
+        f.readline()
+        f.readline()
+        for line in f.readlines():
+            line = [item.strip() for item in line.split()]
+            i = int(line[0])
+            j = int(line[1])
+            sig = float(line[2])*int(line[3])
+            bitmap[i:i+window, j:j+window] = sig
+    bitmap[bitmap > limit] = limit
+    bitmap[bitmap < -limit] = -limit
+    bitmap = bitmap/limit
+    bitmap[0, 0] = 1
+    bitmap[0, 1] = -1
+    bitmap += 1
+    bitmap /= 2
+    return bitmap
+
+
 def ctLength(ctfile):
     with open(ctfile) as f:
         line1 = f.readline()
