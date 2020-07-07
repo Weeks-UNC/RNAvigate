@@ -3,24 +3,29 @@ import RNAtools2 as RNAtools
 import numpy as np
 
 
-def plotIgnoredCorrs(ax, title, logfile):
-    x, y = [], []
+def ctLength(ctfile):
+    with open(ctfile) as f:
+        line1 = f.readline()
+        length = int(line1.strip().split()[0])
+        return length
+
+
+def ignoredToBitmap(logfile, ctfile):
+    size = ctLength(ctfile)
+    bitmap = np.ones((size, size))
     with open(logfile) as f:
         for line in f.readlines():
             if line.startswith('Pair '):
                 pair = line.split()[1].strip('()').split(',')
-                x.extend(pair)
-                y.extend(pair[::-1])
-    ax.scatter(x, y, marker='s', s=1)
-    ax.set(title=title + ": Background Correlations")
-    return x, y
+                bitmap[pair[0], pair[1]] = 0
+    return bitmap
 
 
 def ctToBitmap(ctfile):
+    size = ctLength(ctfile)
+    bitmap = np.ones((size, size))
     with open(ctfile) as f:
-        line1 = f.readline()
-        size = int(line1.strip().split()[0])
-        bitmap = np.ones((size, size))
+        f.readline()
         for line in f.readlines():
             line = [item.strip() for item in line.split()]
             i = int(line[0])
@@ -39,10 +44,11 @@ def ctToBitmap(ctfile):
 
 
 def pairmapToBitmap(pairfile, ctfile):
-    with open(ctfile) as f:
-        line1 = f.readline()
-        size = int(line1.strip().split()[0])
-        bitmap = np.zeros((size, size))
+    size = ctLength(ctfile)
+    bitmap = np.zeros((size, size))+0.5
+    classdict = {"0": 0.5,  # null (white with bwr)
+                 "1": 0,  # primary (blue with bwr)
+                 "2": 1}  # secondary (red with bwr)
     with open(pairfile) as f:
         f.readline()
         f.readline()
@@ -50,14 +56,8 @@ def pairmapToBitmap(pairfile, ctfile):
             line = line.strip().split()
             i = int(line[0])
             j = int(line[1])
-            Class = int(line[3])
-            bitmap[i:i+3, j:j+3] = Class
-    null = (bitmap == 0)
-    primary = (bitmap == 1)
-    secondary = (bitmap == 2)
-    bitmap[null] = 0.5
-    bitmap[primary] = 0
-    bitmap[secondary] = 1
+            Class = line[3]
+            bitmap[i:i+3, j:j+3] = classdict[Class]
     return bitmap
 
 def arcPlot(ct=False, fasta=False, refct=False, probability=False, ringz=False,
