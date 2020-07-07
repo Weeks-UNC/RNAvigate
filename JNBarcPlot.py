@@ -41,7 +41,7 @@ def ctToBitmap(ctfile):
 def pairmapToBitmap(pairfile, ctfile):
     with open(ctfile) as f:
         line1 = f.readline()
-        size = line1.strip().split()[0]
+        size = int(line1.strip().split()[0])
         bitmap = np.zeros((size, size))
     with open(pairfile) as f:
         f.readline()
