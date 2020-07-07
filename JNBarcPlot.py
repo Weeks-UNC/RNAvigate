@@ -19,7 +19,7 @@ def plotIgnoredCorrs(ax, title, logfile):
 def ctToBitmap(ctfile):
     with open(ctfile) as f:
         line1 = f.readline()
-        size = line1.strip().split()[0]
+        size = int(line1.strip().split()[0])
         bitmap = np.ones((size, size))
         for line in f.readlines():
             line = [item.strip() for item in line.split()]
