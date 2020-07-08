@@ -82,18 +82,18 @@ def ctToBitmap(ctfile):
 
 def pairmapToBitmap(pairfile, ctfile):
     size = ctLength(ctfile)
-    bitmap = np.zeros((size, size))+0.5
+    bitmap = np.zeros((size, size))
     pairs = pd.read_csv(pairfile, sep='\t', header=1)
     primary = pairs[pairs['Class'] == 1]
     secondary = pairs[pairs['Class'] == 2]
     for i in range(9):
         x = i % 3
         y = int(i/3)
-        bitmap[secondary['i']+x, secondary['j']+y] = 1
+        bitmap[secondary['i']+x, secondary['j']+y] = 0.5
     for i in range(9):
         x = i % 3
         y = int(i/3)
-        bitmap[primary['i']+x, primary['j']+y] = 0
+        bitmap[primary['i']+x, primary['j']+y] = 1
     return bitmap
 
 
