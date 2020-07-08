@@ -23,35 +23,28 @@ def ignoredToBitmap(logfile, ctfile):
 
 
 def pairmapSensPPV(pairfile, ctfile):
-    tp1 = 0
-    fp1 = 0
-    tp2 = 0
-    fp2 = 0
-    ct = pd.read_csv('RMRP.ct', sep='\s+', names=['i', 'j'],
+    tp1 = 0.0
+    fp1 = 0.0
+    tp2 = 0.0
+    fp2 = 0.0
+    ct = pd.read_csv(ctfile, sep='\s+', names=['i', 'j'],
                      header=0, usecols=[0, 4])
-    ct = ct[(ct['j'] != 0) & (ct['i'] < ct['j'])]
     pairs = pd.read_csv(pairfile, sep='\t', header=1)
     primary = pairs[pairs['Class'] == 1]
     secondary = pairs[pairs['Class'] == 2]
-    for pair in primary:
-        if pair['i'] in ct['i']:
-            if pair['j'] == ct[ct['i'] == pair['i']]['j']:
-                tp1 += 1
-            else:
-                fp1 += 1
+    for index, pair in primary.iterrows():
+        if pair['j']+1 == ct.loc[pair['i']]['j']:
+            tp1 += 1
         else:
             fp1 += 1
-    for pair in secondary:
-        if pair['i'] in ct['i']:
-            if pair['j'] == ct[ct['i'] == pair['i']]['j']:
-                tp2 += 1
-            else:
-                fp2 += 1
+    for index, pair in secondary.iterrows():
+        if pair['j']+1 == ct.loc[pair['i']]['j']:
+            tp2 += 1
         else:
             fp2 += 1
-    sens1 = tp1/len(ct)
+    sens1 = tp1/len(ct[ct['j'] != 0])
     ppv1 = tp1/len(primary)
-    sens2 = (tp1+tp2)/len(ct)
+    sens2 = (tp1+tp2)/len(ct[ct['j'] != 0])
     ppv2 = (tp1+tp2)/(len(primary)+len(secondary))
     return sens1, ppv1, sens2, ppv2
 
