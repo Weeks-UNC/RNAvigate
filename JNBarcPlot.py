@@ -4,6 +4,21 @@ import numpy as np
 import pandas as pd
 
 
+def fastaToMask(fastafile):
+    with open(fastafile) as f:
+        f.readline()
+        seq = ""
+        for line in f.readlines():
+            seq.append(line.strip())
+    size = len(seq)
+    mask = np.zeros((size, size))
+    for i in range(size):
+        for j in range(size):
+            if (i > j) or seq[i].islower() or seq[j].islower():
+                mask[i, j] = 1
+    return mask
+
+
 def ctLength(ctfile):
     with open(ctfile) as f:
         line1 = f.readline()
