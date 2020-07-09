@@ -31,7 +31,7 @@ def pairmapSensPPV(pairfile, ctfile):
     # read in pairmap primary signals
     pm = pd.read_csv(pairfile, sep='\t', header=1)
     primary = pm[pm['Class'] == 1]
-    pm_pairs = [(pair['i'], pair['j']) for index, pair in primary.iterrows()]
+    pm_pairs = [(pair['i'], pair['j']+2) for index, pair in primary.iterrows()]
 
     # initialize true positives and false positives
     tp_ppv = 0.0
@@ -43,7 +43,7 @@ def pairmapSensPPV(pairfile, ctfile):
     for i, j in pm_pairs:
         matches = 0
         for x in range(-1, 4):
-            if (i+x, j+x) in ct_pairs:
+            if (i+x, j-x) in ct_pairs:
                 matches += 1
         if matches >= 3:
             tp_ppv += 1
