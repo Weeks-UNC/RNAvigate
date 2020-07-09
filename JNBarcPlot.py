@@ -2,6 +2,31 @@ import arcPlot as ap
 import RNAtools2 as RNA
 import numpy as np
 import pandas as pd
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+
+
+def getCmaps():
+    cmap = plt.get_cmap('Greens')
+    my_cmap = cmap(np.arange(cmap.N))
+    my_cmap[:, -1] = np.concatenate((np.linspace(0, 1, cmap.N/2),
+                                     np.linspace(1, 0, cmap.N/2)), axis=None)
+    ct_cmap = mpl.colors.ListedColormap(my_cmap)
+
+    my_cmap[:, -1] = np.linspace(0.2, 0.2, cmap.N)
+    mask_cmap = mpl.colors.listedColormap(my_cmap)
+
+    N = 256
+    vals = np.ones((N, 4))
+    vals[:, 0] = np.concatenate((np.linspace(1, 0, N/2),
+                                 np.linspace(0, 1, N/2)), axis=None)
+    vals[:, 1] = np.concatenate((np.linspace(1, 0, N/2),
+                                 np.linspace(0, 0, N/2)), axis=None)
+    vals[:, 2] = np.concatenate((np.linspace(1, 1, N/2),
+                                 np.linspace(1, 0, N/2)), axis=None)
+    pm_cmap = mpl.colors.ListedColormap(vals)
+
+    return ct_cmap, mask_cmap, pm_cmap
 
 
 def fastaToMask(fastafile):
