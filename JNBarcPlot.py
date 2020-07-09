@@ -6,15 +6,30 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 
+def plotCorrs2D(axis, pairmap=None, allcorrs=None, bg_corrs=None, ct=None, mask=None):
+    ct_cmap, mask_cmap, pm_cmap = getCmaps()
+    if type(allcorrs) is np.ndarray:
+        axis.imshow(allcorrs, cmap='bwr', interpolation='bicubic')
+    if type(bg_corrs) is np.ndarray:
+        axis.imshow(bg_corrs, cmap='gray', interpolation='bicubic')
+    if type(pairmap) is np.ndarray:
+        axis.imshow(pairmap, cmap=pm_cmap)
+    if type(ct) is np.ndarray:
+        axis.imshow(ct, cmap=ct_cmap, interpolation='bicubic')
+    if type(mask) is np.ndarray:
+        axis.imshow(mask, cmap=mask_cmap)
+
+
 def getCmaps():
     cmap = plt.get_cmap('Greens')
-    my_cmap = cmap(np.arange(cmap.N))
-    my_cmap[:, -1] = np.concatenate((np.linspace(0, 1, cmap.N/2),
+    ct_cmap = cmap(np.arange(cmap.N))
+    ct_cmap[:, -1] = np.concatenate((np.linspace(0, 1, cmap.N/2),
                                      np.linspace(1, 0, cmap.N/2)), axis=None)
-    ct_cmap = mpl.colors.ListedColormap(my_cmap)
+    ct_cmap = mpl.colors.ListedColormap(ct_cmap)
 
-    my_cmap[:, -1] = np.linspace(0.2, 0.2, cmap.N)
-    mask_cmap = mpl.colors.listedColormap(my_cmap)
+    mask_cmap = cmap(np.arange(cmap.N))
+    mask_cmap[:, -1] = np.linspace(0, 0.2, cmap.N)
+    mask_cmap = mpl.colors.ListedColormap(mask_cmap)
 
     N = 256
     vals = np.ones((N, 4))
@@ -34,7 +49,7 @@ def fastaToMask(fastafile):
         f.readline()
         seq = ""
         for line in f.readlines():
-            seq.append(line.strip())
+            seq += line.strip()
     size = len(seq)
     mask = np.zeros((size, size))
     for i in range(size):
