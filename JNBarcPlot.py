@@ -42,10 +42,16 @@ def pairmapSensPPV(pairfile, ctfile):
             tp2 += 1
         else:
             fp2 += 1
-    sens1 = tp1/len(ct[ct['j'] != 0])
-    ppv1 = tp1/len(primary)
-    sens2 = (tp1+tp2)/len(ct[ct['j'] != 0])
-    ppv2 = (tp1+tp2)/(len(primary)+len(secondary))
+    if len(primary) == 0:
+        sens1, ppv1 = 0
+    else:
+        sens1 = tp1/len(ct[ct['j'] != 0])
+        ppv1 = tp1/len(primary)
+    if len(secondary) == 0:
+        sens2, ppv2 = 0
+    else:
+        sens2 = (tp1+tp2)/len(ct[ct['j'] != 0])
+        ppv2 = (tp1+tp2)/(len(primary)+len(secondary))
     return sens1, ppv1, sens2, ppv2
 
 
