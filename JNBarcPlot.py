@@ -1,5 +1,5 @@
 import arcPlot as ap
-import RNAtools2 as RNAtools
+import RNAtools2 as RNA
 import numpy as np
 import pandas as pd
 
@@ -23,36 +23,48 @@ def ignoredToBitmap(logfile, ctfile):
 
 
 def pairmapSensPPV(pairfile, ctfile):
-    tp1 = 0.0
-    fp1 = 0.0
-    tp2 = 0.0
-    fp2 = 0.0
-    ct = pd.read_csv(ctfile, sep='\s+', names=['i', 'j'],
-                     header=0, usecols=[0, 4])
-    pairs = pd.read_csv(pairfile, sep='\t', header=1)
-    primary = pairs[pairs['Class'] == 1]
-    secondary = pairs[pairs['Class'] == 2]
-    for index, pair in primary.iterrows():
-        if pair['j']+1 == ct.loc[pair['i']]['j']:
-            tp1 += 1
-        else:
-            fp1 += 1
-    for index, pair in secondary.iterrows():
-        if pair['j']+1 == ct.loc[pair['i']]['j']:
-            tp2 += 1
-        else:
-            fp2 += 1
+    # read in ct values
+    ct = RNA.CT(ctfile)
+    ct_pairs = ct.pairList()
+    ct_helices = ct.extractHelices()
+
+    # read in pairmap primary signals
+    pm = pd.read_csv(pairfile, sep='\t', header=1)
+    primary = pm[pm['Class'] == 1]
+    pm_pairs = [(pair['i'], pair['j']) for index, pair in primary.iterrows()]
+
+    # initialize true positives and false positives
+    tp_ppv = 0.0
+    total_ppv = len(primary)
+    tp_sens = 0.0
+    total_sens = len(ct_helices)
+
+    # determine number pairmap signals that correspond to helices (tp_ppv)
+    for i, j in pm_pairs:
+        matches = 0
+        for x in range(-1, 4):
+            if (i+x, j+x) in ct_pairs:
+                matches += 1
+        if matches >= 3:
+            tp_ppv += 1
+
+    # determine number of helices predicted by a pairmap signal (tp_sens)
+    for helix in ct_helices.values():
+        matches = 0
+        for pair in helix[0:-2]:
+            if pair in pm_pairs:
+                matches += 1
+        if matches > 0:
+            tp_sens += 1
+
+    # calculate and return sensitivity and ppv
     if len(primary) == 0:
-        sens1, ppv1 = 0
+        sens = 0
+        ppv = 0
     else:
-        sens1 = tp1/len(ct[ct['j'] != 0])
-        ppv1 = tp1/len(primary)
-    if len(secondary) == 0:
-        sens2, ppv2 = 0
-    else:
-        sens2 = (tp1+tp2)/len(ct[ct['j'] != 0])
-        ppv2 = (tp1+tp2)/(len(primary)+len(secondary))
-    return sens1, ppv1, sens2, ppv2
+        sens = tp_sens/total_sens
+        ppv = tp_ppv/total_ppv
+    return sens, ppv
 
 
 def corrsToBitmap(corrfile, ctfile, window=1, limit=100):
@@ -240,21 +252,21 @@ def arcPlot(ct=False, fasta=False, refct=False, probability=False, ringz=False,
 
     if ct:
         if refct:
-            aplot.compareCTs(RNAtools.CT(refct,
+            aplot.compareCTs(RNA.CT(refct,
                                          structNum=refctstructnum,
                                          filterNC=filternc),
-                             RNAtools.CT(ct, structNum=ctstructnum,
+                             RNA.CT(ct, structNum=ctstructnum,
                                          filterNC=filternc),
                              panel=panel)
         else:
-            aplot.addCT(RNAtools.CT(ct, structNum=ctstructnum,
+            aplot.addCT(RNA.CT(ct, structNum=ctstructnum,
                                     filterNC=filternc),
                         panel=panel)
 
         panel *= -1
 
     if probability:
-        aplot.addPairProb(RNAtools.DotPlot(probability),
+        aplot.addPairProb(RNA.DotPlot(probability),
                           panel=panel, bins=prob_bins)
         panel *= -1
 
