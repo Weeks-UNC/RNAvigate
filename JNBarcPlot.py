@@ -129,7 +129,7 @@ def ctToBitmap(ctfile):
     size = ctLength(ctfile)
     bitmap = np.ones((size, size))
     names = ['i', 'j']
-    ct = pd.read_csv('RMRP.ct', sep='\s+', names=names,
+    ct = pd.read_csv(ctfile, sep='\s+', names=names,
                      header=0, usecols=[0, 4])
     ct = ct[(ct['j'] != 0) & (ct['i'] < ct['j'])]
     for x in [-1, 0, 1]:
