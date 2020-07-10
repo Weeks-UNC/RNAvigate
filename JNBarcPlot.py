@@ -4,9 +4,57 @@ import numpy as np
 import pandas as pd
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import plottingTools as pt
 
 
-def plotCorrs2D(axis, pairmap=None, allcorrs=None, bg_corrs=None, ct=None, mask=None):
+def pairmapPlot(ax, ctfile, pairmapfile, profilefile):
+    ct = RNA.CT(ctfile)
+    ct_pairs = ct.pairList()
+    pm = pd.read_csv(pairmapfile, sep='\t', header=1)
+    primary = pm[pm['Class'] == 1]
+    primary = zip(primary['i'], primary['j'])
+    secondary = pm[pm['Class'] == 2]
+    secondary = zip(secondary['i'], secondary['j'])
+    profile = pd.read_csv(profilefile, sep='\t')
+
+    for i, j in ct_pairs:
+        arc = mpl.patches.Wedge(((i+j)/2, 0), (j-i)/2, 0, 180,
+                                color='black', width=1)
+        ax.add_patch(arc)
+    for i, j in secondary:
+        arc = mpl.patches.Wedge(((i+j+2)/2, -2), 1+(j-i)/2, 180, 0, width=3,
+                                ec='none', color=(0, 0, 1, 0.2))
+        ax.add_patch(arc)
+    for i, j in primary:
+        arc = mpl.patches.Wedge(((i+j+2)/2, -2), 1+(j-i)/2, 180, 0, width=3,
+                                ec='none', color=(1, 0, 0, 0.8))
+        ax.add_patch(arc)
+    ax.set_aspect('equal')
+    ax.set(ylim=[-40, 40],
+           xlim=[0, 267])
+    ax.yaxis.set_visible(False)
+    ax.spines['left'].set_color('none')
+    ax.spines['right'].set_color('none')
+    ax.spines['bottom'].set_position('zero')
+    ax.spines['top'].set_color('none')
+    pt.addSeqBar(ax, profile, yvalue=-1.5)
+
+    near_black = (0, 0, 1 / 255.0)
+    orange_thresh = 0.4
+    red_thresh = 0.85
+    cindex = np.zeros(len(profile['Norm_profile']), dtype=int)
+    cindex[np.array(np.logical_not(np.isnan(profile['Norm_profile'])),
+                    dtype=bool)] += 1
+    cindex[np.array(profile["Norm_profile"] > orange_thresh, dtype=bool)] += 1
+    cindex[np.array(profile['Norm_profile'] > red_thresh, dtype=bool)] += 1
+    colormap = np.array(["0.80", "black", "orange", "red"])[cindex]
+    ax.bar(profile['Nucleotide'], profile['Norm_profile']*5, align="center",
+           width=1.05, color=colormap, edgecolor=colormap, linewidth=0.0,
+           yerr=profile['Norm_stderr'], ecolor=near_black, capsize=1)
+
+
+def plotCorrs2D(axis, pairmap=None, allcorrs=None, bg_corrs=None, ct=None,
+                mask=None):
     ct_cmap, mask_cmap, pm_cmap = getCmaps()
     if type(allcorrs) is np.ndarray:
         axis.imshow(allcorrs, cmap='bwr', interpolation='bicubic')
@@ -24,9 +72,12 @@ def getBitmapLegendHandles():
     handles = {}
     handles['Primary'] = mpl.patches.Patch(color='red', label='Primary')
     handles['Secondary'] = mpl.patches.Patch(color='blue', label='Secondary')
-    handles['No Data'] = mpl.patches.Patch(color='green', label='No Data', alpha=0.2)
-    handles['Helices'] = mpl.patches.Patch(edgecolor='green', fill=False, label='Known Helices')
-    handles['BG Correlations'] = mpl.patches.Patch(color='black', label='BG correlations')
+    handles['No Data'] = mpl.patches.Patch(color='green', label='No Data',
+                                           alpha=0.2)
+    handles['Helices'] = mpl.patches.Patch(edgecolor='green', fill=False,
+                                           label='Known Helices')
+    handles['BG Correlations'] = mpl.patches.Patch(color='black',
+                                                   label='BG correlations')
     return handles
 
 
