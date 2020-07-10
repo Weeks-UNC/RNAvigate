@@ -31,7 +31,7 @@ def pairmapPlot(ax, ctfile, pairmapfile, profilefile):
         ax.add_patch(arc)
     ax.set_aspect('equal')
     ax.set(ylim=[-40, 40],
-           xlim=[0, 267])
+           xlim=[0, ctLength(ctfile)])
     ax.yaxis.set_visible(False)
     ax.spines['left'].set_color('none')
     ax.spines['right'].set_color('none')
