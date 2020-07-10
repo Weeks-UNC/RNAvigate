@@ -20,6 +20,16 @@ def plotCorrs2D(axis, pairmap=None, allcorrs=None, bg_corrs=None, ct=None, mask=
         axis.imshow(mask, cmap=mask_cmap)
 
 
+def getBitmapLegendHandles():
+    handles = {}
+    handles['Primary'] = mpl.patches.Patch(color='red', label='Primary')
+    handles['Secondary'] = mpl.patches.Patch(color='blue', label='Secondary')
+    handles['No Data'] = mpl.patches.Patch(color='green', label='No Data', alpha=0.2)
+    handles['Helices'] = mpl.patches.Patch(edgecolor='green', fill=False, label='Known Helices')
+    handles['BG Correlations'] = mpl.patches.Patch(color='black', label='BG correlations')
+    return handles
+
+
 def getCmaps():
     cmap = plt.get_cmap('Greens')
     ct_cmap = cmap(np.arange(cmap.N))
