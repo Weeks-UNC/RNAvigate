@@ -9,17 +9,17 @@ import plottingTools as pt
 
 def addArc(ax, i, j, window, color, alpha, panel):
     if panel == "top":
-        center = ((i+j)/2, 0)
+        center = ((i+j)/2., 0)
         theta1 = 0
         theta2 = 180
     if panel == "bottom":
-        center = ((i+j)/2, -3)
+        center = ((i+j+window-1)/2., -2)
         theta1 = 180
         theta2 = 360
-    radius = 1+(j-i)/2
+    radius = 0.5+(j+window-1-i)/2.
     arc = mpl.patches.Wedge(center, radius, theta1, theta2, color=color,
                             alpha=alpha, width=window, ec='none')
-    ax.addPath(arc)
+    ax.add_patch(arc)
 
 
 def getCTPairs(ctpath):
@@ -37,7 +37,7 @@ def addCT(ax, ctpath):
 
 def addCTCompare(ax, ctpath1, ctpath2):
     ct1 = getCTPairs(ctpath1)
-    ct2 = getCTPairs(ctpath1)
+    ct2 = getCTPairs(ctpath2)
     shared = ct1.union(ct2)
     ref = ct1.difference(ct2)
     comp = ct2.difference(ct1)
@@ -76,9 +76,9 @@ def addPairmap(ax, pairmappath, window=3):
     secondary = pm[pm['Class'] == 2]
     secondary = zip(secondary['i'], secondary['j'])
     for i, j in secondary:
-        addArc(ax, i, j, window, (30/255, 194/255, 1), 0.4, 'bottom')
+        addArc(ax, i, j, window, (30/255., 194/255., 1.), 0.2, 'bottom')
     for i, j in primary:
-        addArc(ax, i, j, window, (0, 0, 243/255), 0.8, 'bottom')
+        addArc(ax, i, j, window, (0., 0., 243/255.), 0.7, 'bottom')
 
 
 def setArcPlot(ax):
