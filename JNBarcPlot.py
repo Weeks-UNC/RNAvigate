@@ -26,7 +26,7 @@ def getCTPairs(ctpath):
     names = ['i', 'j']
     ct = pd.read_csv(ctpath, sep='\s+', usecols=[0, 4], names=names, header=1)
     ct = ct[ct.j > ct.i]
-    return {{tuple(pair) for pair in zip(ct.i, ct.j)}}
+    return {tuple(pair) for pair in zip(ct.i, ct.j)}
 
 
 def addCT(ax, ctpath):
