@@ -18,7 +18,7 @@ def pairmapPlot(ax, ctfile, pairmapfile, profilefile):
     profile = pd.read_csv(profilefile, sep='\t')
 
     for i, j in ct_pairs:
-        arc = mpl.patches.Wedge(((i+j)/2, 0), (j-i)/2, 0, 180,
+        arc = mpl.patches.Wedge(((i+j)/2, 0), 1+(j-i)/2, 0, 180,
                                 color='black', width=1)
         ax.add_patch(arc)
     for i, j in secondary:
