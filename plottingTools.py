@@ -1,7 +1,7 @@
 import matplotlib as mp
 import seaborn as sns
 import pandas as pd
-
+from scipy import stats
 
 sns.set_style("ticks")
 sns.set_context("talk")
@@ -36,6 +36,21 @@ sns.set_context("talk")
 # 26 HQ_stderr
 # 27 Norm_profile
 # 28 Norm_stderr
+
+
+def plotRegression(ax, p1, p2, ctfile='None'):
+    ax.plot([0,1], [0,1], color='black')
+    gradient, intercept, r_value, p_value, std_err = stats.linregress(p1, p2)
+    ax.text(0.1, 0.8, 'R^2 = {:.2f}\nslope = {:.2f}'.format(r_value**2,
+            gradient), transform=ax.transAxes)
+    if ctfile != 'None':
+        ct = pd.read_csv(ctfile, sep='\s+', usecols=[4], names=['j'], header=1)
+        paired = ct.j != 0
+        unpaired = ct.j == 0
+        ax.scatter(p1[paired], p2[paired], label="Paired")
+        ax.scatter(p1[unpaired], p2[unpaired], label="Unpaired")
+    else:
+        ax.scatter(p1, p2)
 
 
 def readHistograms(logfile):
