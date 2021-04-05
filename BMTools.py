@@ -28,4 +28,4 @@ class BM():
                            column="nReact{}".format(i))
         pt.addSeqBar(axis, self.reactivities, yvalue=-0.1)
         axis.legend(title="Component: Population", loc=1)
-    axis.set_xlim(0, len(self.reactivities))
+        axis.set_xlim(0, len(self.reactivities))

@@ -72,9 +72,9 @@ def addProfile(ax, profilepath):
 def addPairmap(ax, pairmappath, window=3):
     pm = pd.read_csv(pairmappath, sep='\t', header=1)
     primary = pm[pm['Class'] == 1]
-    primary = zip(primary['i'], primary['j'])
+    primary = list(zip(primary['i'], primary['j']))
     secondary = pm[pm['Class'] == 2]
-    secondary = zip(secondary['i'], secondary['j'])
+    secondary = list(zip(secondary['i'], secondary['j']))
     for i, j in secondary:
         addArc(ax, i, j, window, (30/255., 194/255., 1.), 0.2, 'bottom')
     for i, j in primary:
@@ -143,7 +143,7 @@ def getCmaps():
 def toBitmap(filepath, ctpath='none', type='none', window=1, limit=200):
     valid_types = ['fasta', 'ct', 'corr', 'log', 'pairmap']
     if type not in valid_types:
-        print('Please provide a valid type: ' + ', '.join(valid_types))
+        print(('Please provide a valid type: ' + ', '.join(valid_types)))
         return
     elif type == 'fasta':
         with open(filepath) as f:

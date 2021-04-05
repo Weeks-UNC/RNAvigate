@@ -56,7 +56,7 @@ def plotProfile(axis, sample, name):
     # add a SHAPE colorbar to the vertical axis
     # uses a little transformation magic to place correctly
     inv = axis.transData.inverted()
-    for loc, spine in axis.spines.items():
+    for loc, spine in list(axis.spines.items()):
         if loc == 'left':
             trans = spine.get_transform()
     tp = trans.transform_point([0, 0])

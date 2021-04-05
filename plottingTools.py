@@ -39,10 +39,11 @@ sns.set_context("talk")
 
 
 def plotRegression(ax, p1, p2, ctfile='None'):
-    ax.plot([0,1], [0,1], color='black')
+    ax.plot([0, 1], [0, 1], color='black')
     gradient, intercept, r_value, p_value, std_err = stats.linregress(p1, p2)
-    ax.text(0.1, 0.8, 'R^2 = {:.2f}\nslope = {:.2f}'.format(r_value**2,
-            gradient), transform=ax.transAxes)
+    ax.text(0.1, 0.8,
+            'R^2 = {:.2f}\nslope = {:.2f}'.format(r_value**2, gradient),
+            transform=ax.transAxes)
     if ctfile != 'None':
         ct = pd.read_csv(ctfile, sep='\s+', usecols=[4], names=['j'], header=1)
         paired = ct.j != 0
@@ -77,7 +78,7 @@ def readHistograms(logfile):
                             '(600,649)', '(650,699)', '(700,749)', '(750,799)',
                             '(800,849)', '(850,899)', '(900,949)', '(950,999)',
                             '>1000'],
-            'Mutation_count': range(21),
+            'Mutation_count': list(range(21)),
             'Modified_read_length': modlength,
             'Modified_mutations_per_molecule': modmuts,
             'Untreated_read_length': untlength,
