@@ -24,7 +24,7 @@ def addArc(ax, i, j, window, color, alpha, panel):
 
 def getCTPairs(ctpath):
     names = ['i', 'j']
-    ct = pd.read_csv(ctpath, sep='\s+', usecols=[0, 4], names=names, header=1)
+    ct = pd.read_csv(ctpath, sep=r'\s+', usecols=[0, 4], names=names, header=1)
     ct = ct[ct.j > ct.i]
     return {tuple(pair) for pair in zip(ct.i, ct.j)}
 
@@ -59,7 +59,7 @@ def addProfile(ax, profilepath):
     red_thresh = 0.85
     cindex = np.zeros(len(profile['Norm_profile']), dtype=int)
     cindex[np.array(np.logical_not(np.isnan(profile['Norm_profile'])),
-           dtype=bool)] += 1
+                    dtype=bool)] += 1
     cindex[np.array(profile["Norm_profile"] > orange_thresh, dtype=bool)] += 1
     cindex[np.array(profile['Norm_profile'] > red_thresh, dtype=bool)] += 1
     colormap = np.array(["0.80", "black", "orange", "red"])[cindex]
@@ -161,7 +161,7 @@ def toBitmap(filepath, ctpath='none', type='none', window=1, limit=200):
         size = ctLength(filepath)
         bitmap = np.ones((size, size))
         names = ['i', 'j']
-        ct = pd.read_csv(filepath, sep='\s+', names=names,
+        ct = pd.read_csv(filepath, sep=r'\s+', names=names,
                          header=0, usecols=[0, 4])
         ct = ct[ct.i < ct.j]
         for x in [-1, 0, 1]:
