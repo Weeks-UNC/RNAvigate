@@ -24,7 +24,7 @@ def addArc(ax, i, j, window, color, alpha, panel):
 
 def getCTPairs(ctpath):
     names = ['i', 'j']
-    ct = pd.read_csv(ctpath, sep=r'\s+', usecols=[0, 4], names=names, header=1)
+    ct = pd.read_csv(ctpath, sep=r'\s+', usecols=[0, 4], names=names, header=0)
     ct = ct[ct.j > ct.i]
     return {tuple(pair) for pair in zip(ct.i, ct.j)}
 
@@ -57,13 +57,17 @@ def addProfile(ax, profilepath):
     near_black = (0, 0, 1 / 255.0)
     orange_thresh = 0.4
     red_thresh = 0.85
-    cindex = np.zeros(len(profile['Norm_profile']), dtype=int)
-    cindex[np.array(np.logical_not(np.isnan(profile['Norm_profile'])),
-                    dtype=bool)] += 1
-    cindex[np.array(profile["Norm_profile"] > orange_thresh, dtype=bool)] += 1
-    cindex[np.array(profile['Norm_profile'] > red_thresh, dtype=bool)] += 1
+    values = profile['Norm_profile']
+    cindex = np.zeros(len(values), dtype=int)
+    # where values are not NaNs, add 1 to color index array
+    cindex[np.array(np.logical_not(np.isnan(values)), dtype=bool)] += 1
+    # where values excede orange threshold (0.4), add 1 to color index array
+    cindex[np.array(values > orange_thresh, dtype=bool)] += 1
+    # where values excede red threshold (0.85), add 1 to color index array
+    cindex[np.array(values > red_thresh, dtype=bool)] += 1
+    # create color map array based on cindex
     colormap = np.array(["0.80", "black", "orange", "red"])[cindex]
-    ax.bar(profile['Nucleotide'], profile['Norm_profile']*5, align="center",
+    ax.bar(profile['Nucleotide'], values*5, align="center",
            width=1.05, color=colormap, edgecolor=colormap, linewidth=0.0,
            yerr=profile['Norm_stderr'], ecolor=near_black, capsize=1)
     pt.addSeqBar(ax, profile, yvalue=-1.5)
