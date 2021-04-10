@@ -38,13 +38,24 @@ sns.set_context("talk")
 # 28 Norm_stderr
 
 
-def plotRegression(ax, p1, p2, ctfile='None'):
+def plotRegression(ax, p1, p2, ctfile=None):
+    """Plots scatter plot of reactivity profile vs. reactivity profile and
+    computes regression metrics R^2 and slope, which are annotated on the axis.
+    If a ctfile is provided, paired and unpaired nucleotides will have distinct
+    colors.
+
+    Args:
+        ax (pyplot axis): axis on which scatter plot appears
+        p1 (numpy array): array containing reactivity profile values
+        p2 (numpy array): second array containing reactivity profile values
+        ctfile (str, optional): path to ct file. Defaults to 'None'.
+    """
     ax.plot([0, 1], [0, 1], color='black')
-    gradient, intercept, r_value, p_value, std_err = stats.linregress(p1, p2)
+    gradient, _, r_value, _, _ = stats.linregress(p1, p2)
     ax.text(0.1, 0.8,
             'R^2 = {:.2f}\nslope = {:.2f}'.format(r_value**2, gradient),
             transform=ax.transAxes)
-    if ctfile != 'None':
+    if ctfile is not None:
         ct = pd.read_csv(ctfile, sep='\s+', usecols=[4], names=['j'], header=1)
         paired = ct.j != 0
         unpaired = ct.j == 0
@@ -55,6 +66,18 @@ def plotRegression(ax, p1, p2, ctfile='None'):
 
 
 def readHistograms(logfile):
+    """Parses the shapemapper_log.txt file for read length and mutations per
+    molecule histograms. Requires '--per-read-histograms' flag when running
+    shapemapper
+
+    Args:
+        logfile (string): path to shapemapper_log.txt file
+
+    Returns:
+        dataFrame: a dataFrame containing [Read_length, Mutation_count,
+            Modified_read_length, Modified_mutations_per_molecule,
+            Untreated_read_length, Untreated_mutations_per_molecule]
+    """
     with open(logfile, 'r') as f:
         flist = list(f)
         for i, line in enumerate(flist):
@@ -87,30 +110,100 @@ def readHistograms(logfile):
 
 
 def plotSkyline(axis, profile, label=None, column='Reactivity_profile'):
+    """Creates a skyline plot on the given axis from the profile and column name
+    passed. Label is the sample name that should appear on the legend.
+
+    Args:
+        axis (pyplot axis): axis on which to plot skyline
+        profile (dataFrame): dataFrame containing profile information
+        label (string, optional): Label given to plot on legend. Defaults to None.
+        column (str, optional): Column to plot. Defaults to 'Reactivity_profile'.
+    """
     x = []
     y = []
+    # converts standard plot to skyline plot.
     for n, r in zip(profile['Nucleotide'], profile[column]):
         x.extend([n - 0.5, n + 0.5])
         y.extend([r, r])
     axis.plot(x, y, label=label)
 
 
-def addSeqBar(axis, profile, yvalue=-0.017):
+def addSeqBar(axis, profile, yvalue=0.005):
+    """Takes a profile and adds a colored sequence bar along the bottom of the
+    given axis. ylim may need to be adjusted to accomodate. ylim must be set
+    before calling this function.
+
+    Args:
+        axis (pyplot axis): axis to which sequence bar will be added
+        profile (Pandas dataFrame): dataFrame containing profile data
+        yvalue (float, optional): y data value at which sequence bar is added.
+            Defaults to 0.005. (barely above x-axis)
+    """
+    # set font style and colors for each nucleotide
     font_prop = mp.font_manager.FontProperties(
         family="monospace", style="normal", weight="bold", size="12")
     color_dict = {"A": "#f20000", "U": "#f28f00",
                   "G": "#00509d", "C": "#00c200"}
-    for i, row in profile.iterrows():
-        col = color_dict[row['Sequence'].upper()]
-        axis.annotate(row['Sequence'], xy=(i + 1, yvalue),
+    ymin, ymax = axis.get_ylim()
+    yvalue = (ymax-ymin)*yvalue + ymin
+    for i, seq in profile["Sequence"]:
+        col = color_dict[seq.upper()]
+        axis.annotate(seq, xy=(i + 1, yvalue), xycoords='data'
                       fontproperties=font_prop,
-                      color=col, annotation_clip=False,
-                      horizontalalignment="center")
+                      color=col, horizontalalignment="center")
 
 
 def getWidth(sample):
+    """Takes a dataFrame object and returns the appropriate plot width to pass
+    to figsize based on the length of your RNA. For example:
+    fig, ax = plt.subplots(1, figsize=(pt.getWidth(profile), 7))
+
+    Args:
+        sample (dataFrame object): Pandas dataFrame containing profile info.
+
+    Returns:
+        float: appropriate figure width for the size of RNA.
+    """
     left_inches = 0.9
     right_inches = 0.4
     sp_width = len(sample['Nucleotide']) * 0.1
     fig_width = max(7, sp_width + left_inches + right_inches)
     return fig_width
+
+
+def plotBMprofiles(ax, reactivities):
+    """Reads in a BM file and plots a skyline of each population on a
+    single axis. Population percentages are included in the legend.
+    Also adds sequence bar along the bottom and sets the width of x axis.
+
+    Args:
+        ax (pyplot axis): ax to which skylines will be plotted
+        reactivities (string): path to BM file with population reactivities
+    """
+
+    # read in 2 line header
+    with open(reactivities) as inf:
+        header1 = inf.readline().strip().split()
+        header2 = inf.readline().strip().split()
+    # number of components
+    self.components = int(header1[0])
+    # population percentage of each component
+    self.p = header2[1:]
+    # build column names for reading in BM file
+    colnames = ["Nucleotide", "Sequence"]
+    for i in range(self.components):
+        colnames.append("nReact"+str(i))
+        colnames.append("Raw"+str(i))
+        colnames.append("blank"+str(i))
+    colnames.append("Background")
+    # read in BM file
+    self.reactivities = pd.read_csv(reactivities, sep='\t', header=2,
+                                    names=colnames)
+    # Add skylines, seqbar, and legend to axis. Set axis width.
+    for i in range(self.components):
+        pt.plotSkyline(axis, self.reactivities,
+                       label="{}: {}".format(i, self.p[i]),
+                       column="nReact{}".format(i))
+    pt.addSeqBar(axis, self.reactivities, yvalue=-0.1)
+    axis.legend(title="Component: Population", loc=1)
+    axis.set_xlim(0, len(self.reactivities))
