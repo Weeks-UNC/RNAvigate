@@ -3,6 +3,7 @@ import matplotlib as mp
 import seaborn as sns
 import pandas as pd
 from scipy import stats
+import numpy as np
 
 sns.set_style("ticks")
 sns.set_context("talk")
@@ -52,14 +53,19 @@ def plotRegression(ax, p1, p2, ctfile=None):
         ctfile (str, optional): path to ct file. Defaults to 'None'.
     """
     ax.plot([0, 1], [0, 1], color='black')
+    notNans = ~np.isnan(p1) & ~np.isnan(p2)
+    p1 = p1[notNans]
+    p2 = p2[notNans]
     gradient, _, r_value, _, _ = stats.linregress(p1, p2)
     ax.text(0.1, 0.8,
             'R^2 = {:.2f}\nslope = {:.2f}'.format(r_value**2, gradient),
             transform=ax.transAxes)
     if ctfile is not None:
-        ct = pd.read_csv(ctfile, sep='\s+', usecols=[4], names=['j'], header=1)
+        ct = pd.read_csv(ctfile, sep='\s+', usecols=[4], names=['j'], header=0)
         paired = ct.j != 0
         unpaired = ct.j == 0
+        paired = paired[notNans]
+        unpaired = unpaired[notNans]
         ax.scatter(p1[paired], p2[paired], label="Paired")
         ax.scatter(p1[unpaired], p2[unpaired], label="Unpaired")
     else:
@@ -147,9 +153,9 @@ def addSeqBar(axis, profile, yvalue=0.005):
                   "G": "#00509d", "C": "#00c200"}
     ymin, ymax = axis.get_ylim()
     yvalue = (ymax-ymin)*yvalue + ymin
-    for i, seq in profile["Sequence"]:
+    for i, seq in enumerate(profile["Sequence"]):
         col = color_dict[seq.upper()]
-        axis.annotate(seq, xy=(i + 1, yvalue), xycoords='data'
+        axis.annotate(seq, xy=(i + 1, yvalue), xycoords='data',
                       fontproperties=font_prop,
                       color=col, horizontalalignment="center")
 
@@ -172,7 +178,7 @@ def getWidth(sample):
     return fig_width
 
 
-def plotBMprofiles(ax, reactivities):
+def plotBMprofiles(axis, reactivityfile):
     """Reads in a BM file and plots a skyline of each population on a
     single axis. Population percentages are included in the legend.
     Also adds sequence bar along the bottom and sets the width of x axis.
@@ -183,28 +189,28 @@ def plotBMprofiles(ax, reactivities):
     """
 
     # read in 2 line header
-    with open(reactivities) as inf:
+    with open(reactivityfile) as inf:
         header1 = inf.readline().strip().split()
         header2 = inf.readline().strip().split()
     # number of components
-    self.components = int(header1[0])
+    components = int(header1[0])
     # population percentage of each component
-    self.p = header2[1:]
+    p = header2[1:]
     # build column names for reading in BM file
     colnames = ["Nucleotide", "Sequence"]
-    for i in range(self.components):
+    for i in range(components):
         colnames.append("nReact"+str(i))
         colnames.append("Raw"+str(i))
         colnames.append("blank"+str(i))
     colnames.append("Background")
     # read in BM file
-    self.reactivities = pd.read_csv(reactivities, sep='\t', header=2,
-                                    names=colnames)
+    reactivities = pd.read_csv(reactivityfile, sep='\t', header=2,
+                               names=colnames)
     # Add skylines, seqbar, and legend to axis. Set axis width.
-    for i in range(self.components):
-        pt.plotSkyline(axis, self.reactivities,
-                       label="{}: {}".format(i, self.p[i]),
-                       column="nReact{}".format(i))
-    pt.addSeqBar(axis, self.reactivities, yvalue=-0.1)
+    for i in range(components):
+        plotSkyline(axis, reactivities,
+                    label="{}: {}".format(i, p[i]),
+                    column="nReact{}".format(i))
+    addSeqBar(axis, reactivities)
     axis.legend(title="Component: Population", loc=1)
-    axis.set_xlim(0, len(self.reactivities))
+    axis.set_xlim(0, len(reactivities))
