@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import pmanalysis as pma
 import RNAtools2 as RNA
 import numpy as np

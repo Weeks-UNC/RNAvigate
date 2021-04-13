@@ -1,7 +1,7 @@
+#!/usr/bin/env python
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
-from scipy import stats
 import RNAtools2 as RNA
 import numpy as np
 

@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import matplotlib as mp
 from numpy import nanpercentile as percentile
 import numpy as np
