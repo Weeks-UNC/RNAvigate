@@ -71,7 +71,7 @@ def addProfile(ax, profilepath):
     ax.bar(profile['Nucleotide'], values*5, align="center",
            width=1.05, color=colormap, edgecolor=colormap, linewidth=0.0,
            yerr=profile['Norm_stderr'], ecolor=near_black, capsize=1)
-    pt.addSeqBar(ax, profile, yvalue=-1.5)
+    pt.addSeqBar(ax, profile, yvalue=0.5)
 
 
 def addPairmap(ax, pairmappath, window=3):
