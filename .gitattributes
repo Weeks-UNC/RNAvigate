@@ -1,0 +1,2 @@
+# Ignores notebooks when describing language breakdown of repo.
+*.ipynb linguist-documentation
