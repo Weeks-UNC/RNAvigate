@@ -104,10 +104,24 @@ class SecondaryStructure():
     def resetRingsFilter(self):
         self.rings_filtered = self.rings.copy()
 
-    def filterRings(self, contactDistance=None, statistic=None, zscore=None, ctfile=None, structureCassettes=False):
+    def filterRings(self, contactDistance=None, statistic=None, zscore=None,
+                    ctfile=None, structureCassettes=False):
         self.resetRingsFilter()
-        if contactDistance is not None and ctfile is not None:
-            ct = RNA.CT(ctfile)
+        if structureCassettes:
+            start = 14
+            end = self.length - 43
+            mask = []
+            for i, j in zip(self.rings_filtered["i"], self.rings_filtered["j"]):
+                iinrange = start < i < end
+                jinrange = start < j < end
+                mask.append(iinrange and jinrange)
+            self.rings_filtered = self.rings_filtered[mask]
+            self.rings_filtered["i"] -= start
+            self.rings_filtered["j"] -= start
+        if contactDistance is not None:
+            pairs = [tuple(pair) for pair in self.pairs]
+            ct = RNA.CT()
+            ct.pair2CT(pairs=pairs, seq=self.sequence)
             mask = []
             for i, j in zip(self.rings_filtered["i"], self.rings_filtered["j"]):
                 mask.append(ct.contactDistance(i, j) > contactDistance)
@@ -122,17 +136,6 @@ class SecondaryStructure():
             for zij in self.rings_filtered["Zij"]:
                 mask.append(zij > zscore)
             self.rings_filtered = self.rings_filtered[mask]
-        if structureCassettes:
-            start = 14
-            end = self.length - 43
-            mask = []
-            for i, j in zip(self.rings_filtered["i"], self.rings_filtered["j"]):
-                iinrange = start < i < end
-                jinrange = start < j < end
-                mask.append(iinrange and jinrange)
-            self.rings_filtered = self.rings_filtered[mask]
-            self.rings_filtered["i"] -= start
-            self.rings_filtered["j"] -= start
 
     def plotRings(self, ax, statistic="Statistic", bins=None):
         cmap = plt.get_cmap("coolwarm")
@@ -167,8 +170,7 @@ class SecondaryStructure():
 
     def setPlot(self, ax):
         ax.set_aspect('equal')
-        ax.yaxis.set_visible(False)
-        ax.xaxis.set_visible(False)
+        ax.axis('off')
 
     def plotSS(self, ax):
         for pair in self.pairs:
@@ -177,7 +179,7 @@ class SecondaryStructure():
             ycoords = [self.ycoordinates[pair[0]-1],
                        self.ycoordinates[pair[1]-1]]
             ax.plot(xcoords, ycoords, color='grey')
-        ax.plot(self.xcoordinates, self.ycoordinates, color='grey')
+        ax.plot(self.xcoordinates, self.ycoordinates, color='grey', zorder=0)
 
     def plotPositions(self, ax, spacing=20):
         for i in range(0, self.length, spacing):
@@ -200,10 +202,10 @@ class SecondaryStructure():
             profcolors.append(sum([b < x for b in bins]))
         self.colors = np.array([cmap[val] for val in profcolors])
 
-    def plotSequence(self, ax, colorby="profile"):
+    def plotSequence(self, ax, colorby=None):
         if colorby == "profile":
             self.setColorsByProfile()
-        elif colorby == "nuc":
+        elif colorby == "sequence":
             self.setColorsByNucleotide()
         for nuc in "GUAC":
             mask = [nt == nuc for nt in self.sequence]
@@ -212,13 +214,14 @@ class SecondaryStructure():
             ax.scatter(xcoords, ycoords, marker="$" +
                        nuc+"$", c=self.colors[mask])
 
-    def makePlot(self, ax, setPlot=True, ss=True, positions=True, rings=True, sequence=True):
+    def makePlot(self, ax, setPlot=True, ss=True, positions=True, rings=True,
+                 sequence=True, colorby='sequence'):
         if setPlot == True:
             self.setPlot(ax)
         if ss == True:
             self.plotSS(ax)
         if sequence == True:
-            self.plotSequence(ax)
+            self.plotSequence(ax, colorby=colorby)
         if positions == True:
             self.plotPositions(ax)
         if hasattr(self, "rings") and rings == True:

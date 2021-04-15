@@ -32,6 +32,6 @@ JNBarcPlot.py [examples](JNB-example/JNBarcPlot-example.md)
   * dotplot figures
 * Get pairmap sensitivity and PPV.
 
-secondaryStructure.py
+secondaryStructure.py [examples](JNB-example/secondaryStructure-example.md)
 * Make secondary structure graphs from XRNA or Structure Editor
 * Add Rings, filtered by statistic or contact distance.

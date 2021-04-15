@@ -1,3 +1,0 @@
-325	Window=1	Metric=APC
-i	j	Statistic	+/-	Zij	Zi	Zj	Mod_Depth	Mod_Comuts	Unt_Depth	Unt_Comuts
-125	132	174.26	1	5.84	3.46	8.22	39604	195	717845	17
