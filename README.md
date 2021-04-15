@@ -7,13 +7,6 @@ issue in the issues tab, or email me: psirving@email.unc.edu
 For more in-depth exploration of the functions and example plots, see the
 [wiki](https://github.com/Weeks-UNC/JNBTools/wiki).
 
-TODO list:
-* Create function to set ylims for arc plots.
-* Create a class structure for arc plots.
-* Add handling of deletion files to secondary structure.
-* Make default secondary structure plots prettier.
-* Add example usage notebook for secondary structures.
-
 plottingTools.py [examples](JNB-example/plottingTools-example.md)
 * Make Skyline plots for comparing nt-by-nt data.
 * Add a sequence bar to your plots.
@@ -35,3 +28,13 @@ JNBarcPlot.py [examples](JNB-example/JNBarcPlot-example.md)
 secondaryStructure.py [examples](JNB-example/secondaryStructure-example.md)
 * Make secondary structure graphs from XRNA or Structure Editor
 * Add Rings, filtered by statistic or contact distance.
+
+TODO list:
+- [ ] Create function to set ylims for arc plots.
+- [ ] Make the API consistent across figure types.
+- [ ] Add comments and docstrings to plottingTools.
+- [ ] Add comments and docstrings to JNBarcPlot.
+- [ ] Add comments and docstrings to secondaryStructure.
+- [ ] Add comments and docstrings to shapemapperPlots.
+- [ ] Add handling of deletion files to secondary structure.
+- [x] Add example usage notebook for secondary structures.
