@@ -9,6 +9,17 @@ import plottingTools as pt
 
 
 def addArc(ax, i, j, window, color, alpha, panel):
+    """internal function used to add arcs based on data
+
+    Args:
+        ax (pyplot axis): axis to which arc will be added
+        i (int): leftmost position of left side
+        j (int): leftmost position of right side
+        window (int): number of nucleotides included in arc
+        color (color): color of arc
+        alpha (float): transparency value [0-1]
+        panel (str): "top" or "bottom" panel of arc plot
+    """
     if panel == "top":
         center = ((i+j)/2., 0)
         theta1 = 0
@@ -24,6 +35,14 @@ def addArc(ax, i, j, window, color, alpha, panel):
 
 
 def getCTPairs(ctpath):
+    """From a ct file, extract the i,j pairs and return as a list of tuples
+
+    Args:
+        ctpath (str): path to ct file
+
+    Returns:
+        list of tuples: list of i,j pairs, example: [(1, 20), (2, 19), (3, 18)]
+    """
     names = ['i', 'j']
     ct = pd.read_csv(ctpath, sep=r'\s+', usecols=[0, 4], names=names, header=0)
     ct = ct[ct.j > ct.i]
@@ -31,12 +50,25 @@ def getCTPairs(ctpath):
 
 
 def addCT(ax, ctpath):
+    """Adds arc plot representation of the ct structure to given axis
+
+    Args:
+        ax (pyplot axis): axis to which structure will be added
+        ctpath (str): path to ct file
+    """
     ct_pairs = getCTPairs(ctpath)
     for i, j in ct_pairs:
         addArc(ax, i, j, 1, 'black', 0.7, 'top')
 
 
 def addCTCompare(ax, ctpath1, ctpath2):
+    """Adds structure comparison arc plot to the given axis
+
+    Args:
+        ax (pyplot axis): axis to which structure comparison is added
+        ctpath1 (str): path to first ct file
+        ctpath2 (str): path to second ct file
+    """
     ct1 = getCTPairs(ctpath1)
     ct2 = getCTPairs(ctpath2)
     shared = ct1.union(ct2)
@@ -54,6 +86,12 @@ def addCTCompare(ax, ctpath1, ctpath2):
 
 
 def addProfile(ax, profilepath):
+    """Adds bar graph of normalize reactivity profile to given axis
+
+    Args:
+        ax (pyplot axis): axis to which reactivity profile is added
+        profilepath (str): path to profile.txt file
+    """
     profile = pd.read_csv(profilepath, sep='\t')
     near_black = (0, 0, 1 / 255.0)
     orange_thresh = 0.4
@@ -75,6 +113,13 @@ def addProfile(ax, profilepath):
 
 
 def addPairmap(ax, pairmappath, window=3):
+    """add PAIR-MaP data to the given axis
+
+    Args:
+        ax (pyplot axis): axis to which PAIR data is added
+        pairmappath (str): path to PairMapper data file
+        window (int, optional): Window size used in pairmapper. Defaults to 3.
+    """
     pm = pd.read_csv(pairmappath, sep='\t', header=1)
     primary = pm[pm['Class'] == 1]
     primary = list(zip(primary['i'], primary['j']))
@@ -87,6 +132,11 @@ def addPairmap(ax, pairmappath, window=3):
 
 
 def setArcPlot(ax):
+    """Sets the aspect ratio to equal, removes y-axis, and sets x-axis at zero
+
+    Args:
+        ax (pyplot axis): axis to be set up for arc plot
+    """
     ax.set_aspect('equal')
     ax.yaxis.set_visible(False)
     ax.spines['left'].set_color('none')
