@@ -1,4 +1,10 @@
 #!/usr/bin/env python
+
+# TODO: read in varna/xrna/nsd more elegantly
+# TODO: Add no coloring option for sequence
+# TODO: Add option for circles vs. sequence or both
+# TODO: Add option for custom color nucleotides
+
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
@@ -59,6 +65,7 @@ class SecondaryStructure():
                         pairs.append([i+x, j-x])
         self.pairs = np.array(pairs)
         self.length = len(self.sequence)
+        self.type = 'xrna'
 
     def readCteFile(self, ctefile):
         names = ['nuc', 'seq', 'pair', 'xcoords', 'ycoords']
@@ -71,6 +78,7 @@ class SecondaryStructure():
         self.ycoordinates = [float(ycoord) for ycoord in ct['ycoords']]
         ct = ct[ct.nuc < ct.pair]
         self.pairs = [[int(x), int(y)] for x, y in zip(ct.nuc, ct.pair)]
+        self.type = 'cte'
 
     def readNsdFile(self, nsdfile):
         with open(nsdfile, 'r') as file:
@@ -100,6 +108,7 @@ class SecondaryStructure():
                     pairs = line[1].split(":")[1:]
                     pair = [int(nuc.strip('"')) for nuc in pairs]
                     np.append(self.pairs, [pair])
+        self.type = 'nsd'
 
     def resetRingsFilter(self):
         self.rings_filtered = self.rings.copy()
@@ -138,6 +147,7 @@ class SecondaryStructure():
             self.rings_filtered = self.rings_filtered[mask]
 
     def plotRings(self, ax, statistic="Statistic", bins=None):
+        # Blue to light gray to red.
         cmap = plt.get_cmap("coolwarm")
 
         if statistic == 'z':
@@ -150,7 +160,8 @@ class SecondaryStructure():
                 bins = [-1e10, -100, -20, 0, 20, 100, 1e10]
             else:
                 bins = [-1e-10, -bins[1], -bins[0], 0, bins[0], bins[1], 1e10]
-
+        # rings are plotted from lowest to highest
+        # TODO: this order could be more sophisticated.
         self.rings_filtered.sort_values(by=['Statistic'], inplace=True)
 
         for i, j, stat, sign in zip(self.rings_filtered['i'], self.rings_filtered['j'], self.rings_filtered[statistic], self.rings_filtered["+/-"]):
@@ -226,3 +237,30 @@ class SecondaryStructure():
             self.plotPositions(ax)
         if hasattr(self, "rings") and rings == True:
             self.plotRings(ax)
+
+    def writeCTE(self, outputPath):
+        """writes the current structure out to CTE format for Structure Editor.
+
+        Args:
+            outputPath (string): path to output cte file to be created
+        """
+        pairs = [tuple(pair) for pair in self.pairs]
+        ct = RNA.CT()
+        ct.pair2CT(pairs=pairs, seq=self.sequence)
+        # set scaling factors based on data source.
+        # TODO: figure out varna scaling factor
+        xscale = {'xrna': 1.5, 'varna': 1, 'nsd': 1, 'cte': 1}[self.type]
+        yscale = {'xrna': -1.5, 'varna': 1, 'nsd': 1, 'cte': 1}[self.type]
+        ctlen = len(ct.num)
+        w = open(outputPath, 'w')
+        w.write('{0:6d} {1}\n'.format(ctlen, ct.name))
+        line = '{0:5d} {1} {2:5d} {3:5d} {4:5d} {0:5d} ;! X: {5:5d} Y: {6:5d}\n'
+        for i in range(ctlen):
+            xcoord = int(xscale*self.xcoordinates[i])
+            ycoord = int(yscale*self.ycoordinates[i])
+            num, seq, cti = ct.num[i], ct.seq[i], ct.ct[i]
+            # no nums after ctlen, resets to zero
+            nextnum = (num+1) % (ctlen+1)
+            cols = [num, seq, num-1, nextnum, cti, xcoord, ycoord]
+            w.write(line.format(*cols))
+        w.close()
