@@ -172,7 +172,7 @@ plt.tight_layout();
 ```
 
 
-![svg](images/output_10_0.svg)
+![svg](images/plottingTools-example_10_0.svg)
 
 
 Default ShapeMapper2 plots
@@ -191,7 +191,7 @@ smp.plotDepth(ax[2], profile['example1'])
 ```
 
 
-![svg](images/output_12_0.svg)
+![svg](images/plottingTools-example_12_0.svg)
 
 
 Skyline Plots
@@ -215,7 +215,7 @@ ax.legend();
 ```
 
 
-![svg](images/output_14_0.svg)
+![svg](images/plottingTools-example_14_0.svg)
 
 
 Regression Plots
@@ -238,7 +238,7 @@ ax.set(xscale='log',
 ```
 
 
-![svg](images/output_16_0.svg)
+![svg](images/plottingTools-example_16_0.svg)
 
 
 Automatic plotting of ensemble reactivities as skyline plot
@@ -252,4 +252,4 @@ pt.plotBMprofiles(ax, path+"example_rnasep-reactivities.txt")
 ```
 
 
-![svg](images/output_18_0.svg)
+![svg](images/plottingTools-example_18_0.svg)

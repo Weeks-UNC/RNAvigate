@@ -75,7 +75,7 @@ arc.addPairmap(ax, pairmappath)
 ```
 
 
-![svg](images/pair-arc-plot.svg)
+![svg](images/JNBarcPlot-example_6_0.svg)
 
 
 Make arc plot with RInG data
