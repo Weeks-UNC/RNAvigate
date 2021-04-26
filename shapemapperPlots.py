@@ -29,25 +29,28 @@ dc_color = "darkgoldenrod"
 #####################################################
 
 
-def plotProfile(axis, sample, name):
+def plotProfile(axis, profile, name):
     yMin, ymax = (-0.5, 4)
     near_black = (0, 0, 1 / 255.0)
     orange_thresh = 0.4
     red_thresh = 0.85
-    cindex = np.zeros(len(sample['Norm_profile']), dtype=int)
-    cindex[np.logical_not(np.isnan(sample['Norm_profile']))] += 1
-    cindex[sample["Norm_profile"] > orange_thresh] += 1
-    cindex[sample['Norm_profile'] > red_thresh] += 1
+    # define what color each bar will be
+    length = profile.length
+    cindex = np.zeros(length, dtype=int)
+    sample = profile.profile['Norm_profile'].copy()
+    cindex[np.logical_not(np.isnan(sample))] += 1
+    cindex[sample > orange_thresh] += 1
+    cindex[sample > red_thresh] += 1
     colormap = np.array(["0.80", "black", "orange", "red"])[cindex]
-    profile = sample['Norm_profile'].copy()
-    profile[np.isnan(profile)] = -1
-    axis.bar(sample['Nucleotide'], profile, align="center",
+
+    sample[np.isnan(sample)] = -1
+    axis.bar(profile.profile['Nucleotide'], sample, align="center",
              width=1.05, color=colormap, edgecolor=colormap, linewidth=0.0,
-             yerr=sample['Norm_stderr'], ecolor=near_black, capsize=1)
+             yerr=profile.profile['Norm_stderr'], ecolor=near_black, capsize=1)
 
     axis.set_title(name, fontsize=16)
     axis.set_ylim(yMin, ymax)
-    axis.set_xlim(1, len(sample['Nucleotide']))
+    axis.set_xlim(1, profile.length)
 
     axis.yaxis.grid(True)
     axis.set_axisbelow(True)
@@ -104,17 +107,19 @@ def plotProfile(axis, sample, name):
         line.set_markersize(5)
         line.set_markeredgewidth(1)
 
-    pt.addSeqBar(axis, sample, yvalue=-0.67)  # put nuc sequence below axis
+    # put nuc sequence below axis
+    profile.addSeqBar(axis)
 
 
-def plotDepth(axis, sample):
+def plotDepth(axis, profile):
+    sample = profile.profile
     axis.plot(sample['Nucleotide'], sample['Modified_read_depth'],
               linewidth=1.5, color=rx_color, alpha=1.0, label="Modified")
     axis.plot(sample['Nucleotide'], sample['Untreated_read_depth'],
               linewidth=1.5, color=bg_color, alpha=1.0, label="Untreated")
     axis.plot(sample['Nucleotide'], sample['Denatured_read_depth'],
               linewidth=1.5, color=dc_color, alpha=1.0, label="Denatured")
-    axis.set_xlim(1, len(sample['Nucleotide']))
+    axis.set_xlim(1, profile.length)
     axis.legend(loc=2, borderpad=0.8, handletextpad=0.2, framealpha=0.75)
     axis.plot(sample['Nucleotide'], sample['Modified_effective_depth'],
               linewidth=1.0, color=rx_color, alpha=0.3)
@@ -159,7 +164,8 @@ def plotDepth(axis, sample):
     # For now just putting in xaxis label
 
 
-def plotMutationRates(axis, sample):
+def plotMutationRates(axis, profile):
+    sample = profile.profile
     # choose a decent range for axis, excluding high-background positions
     temp_rates = sample['Modified_rate'][sample['Untreated_rate'] <= 0.05]
     near_top_rate = percentile(temp_rates, 98.0)
