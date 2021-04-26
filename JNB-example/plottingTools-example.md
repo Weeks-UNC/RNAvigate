@@ -71,7 +71,7 @@ not normally in your path.
 %matplotlib inline
 import sys
 sys.path.append('/nas/longleaf/home/psirving/JNBTools')
-import plottingTools as pt
+from plottingTools import shapeMapperLog, ReactivityProfile
 import numpy as np
 import matplotlib.pyplot as plt
 import shapemapperPlots as smp
@@ -88,7 +88,7 @@ This changes the defaults for pyplot and seaborn. Colors is just a colorscheme t
 # Set up plotting defaults
 
 sns.set_style("ticks")
-sns.set_context("talk") # "poster" is good if you want clearer label
+sns.set_context("talk") # "poster" is good if you want bigger labels
 colors = [
     '#a100ffff',  #Purple
     '#edc600ff',  #Yellow
@@ -125,10 +125,10 @@ the data frame object first.
 
 path = 'data/'
 samples = ['example1', 'example2']
-profile = {sample: pd.read_csv(path+sample+"_rnasep_profile.txt", sep='\t') for sample in samples}
+profile = {sample: ReactivityProfile(path+sample+"_rnasep_profile.txt", sample=sample) for sample in samples}
 
 # Only for example1
-log = pt.shapeMapperLog(logfile=path+"example_shapemapper_log.txt")
+log = shapeMapperLog(logfile=path+"example_shapemapper_log.txt")
 ```
 
 Quality Control: Mutations per molecule, read length distributions, and boxplots.
@@ -151,11 +151,7 @@ log.plotReadLength(ax[1], sample="Untreated", n=2, of=2)
 log.setReadLength(ax[1], labels=["Modified", "Untreated"])
 
 # plot 3: Mutation rate boxplots
-ax[2] = sns.boxplot(data=profile['example1'][['Untreated_rate', 'Modified_rate']], orient='v')
-ax[2].set(yscale='log',
-          ylim=(0.0005, 0.5),
-          ylabel='Mutation rate',
-          title='Mutation rate boxplots')
+profile['example1'].boxplot(ax[2], samples=[profile['example2']])
 
 plt.tight_layout();
 ```
@@ -172,7 +168,7 @@ Note: Error bars are there, but they are really small in this example.
 
 
 ```python
-fig, ax = plt.subplots(3, 1, figsize=(pt.getWidth(profile['example1']), 14))
+fig, ax = plt.subplots(3, 1, figsize=profile['example1'].figsize(3,1))
 
 smp.plotProfile(ax[0], profile['example1'], 'Example')
 smp.plotMutationRates(ax[1], profile['example1'])
@@ -189,16 +185,16 @@ These types of plots make it easy to compare 2 or more reactivity profiles.
 
 
 ```python
-fig, ax = plt.subplots(1, 1, figsize=(pt.getWidth(profile['example1']),7))
+fig, ax = plt.subplots(1, 1, figsize=profile['example1'].figsize(1,1))
 
 for sample in ['example1', 'example2']:
-    pt.plotSkyline(ax, profile[sample], label=sample) # column defaults to 'Reactivity_profile'
+    profile[sample].plotSkyline(ax) # column defaults to 'Reactivity_profile'
 
 ax.set(title='Raw Reactivity Profiles',
          xlim=[0,326],
          ylim=[-0.005, 0.12],
          xticks=range(0, 340, 20))
-pt.addSeqBar(ax, profile['example1']) # ylim needs to be set before adding seq bar
+profile['example1'].addSeqBar(ax) # ylim needs to be set before adding seq bar
 
 ax.legend();
 ```
@@ -216,7 +212,7 @@ If a ct file is provided, paired and unpaired nucleotides are colored seperately
 ```python
 fig, ax = plt.subplots(1, 1, figsize=(7,7))
 
-pt.plotRegression(ax, profile['example1']['Reactivity_profile'], profile['example2']['Reactivity_profile'], ctfile=path+'RNaseP.ct')
+profile['example1'].plotRegression(ax, profile['example2'], ctfile=path+'RNaseP.ct')
 ax.set(xscale='log',
        xlim=[0.0001,0.15],
        xlabel='Example1',
@@ -235,11 +231,16 @@ Automatic plotting of ensemble reactivities as skyline plot
 
 
 ```python
-fig, ax = plt.subplots(1, 1, figsize=(pt.getWidth(profile['example1']),7))
+fig, ax = plt.subplots(1, 1, figsize=profile['example1'].figsize(1,1))
 
-pt.plotBMprofiles(ax, path+"example_rnasep-reactivities.txt")
+ReactivityProfile().plotBMprofiles(ax, path+"example_rnasep-reactivities.txt")
 ```
 
 
 ![svg](plottingTools-example_files/plottingTools-example_18_0.svg)
 
+
+
+```python
+
+```
