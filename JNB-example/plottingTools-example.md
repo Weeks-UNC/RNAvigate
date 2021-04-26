@@ -88,7 +88,7 @@ This changes the defaults for pyplot and seaborn. Colors is just a colorscheme t
 # Set up plotting defaults
 
 sns.set_style("ticks")
-sns.set_context("talk")
+sns.set_context("talk") # "poster" is good if you want clearer label
 colors = [
     '#a100ffff',  #Purple
     '#edc600ff',  #Yellow
@@ -121,45 +121,34 @@ the data frame object first.
 # samples = ['Sample1, Sample2, Sample3, Sample4]
 
 # profiles = {sample: pd.read_csv(path+'shapemapper_out/'+sample+profile_suffix, sep='\t') for sample in samples}
-# histograms = {sample: pt.readHistograms(path+sample+'_shapemapper_log.txt') for sample in samples}
+# logs = {sample: pt.shapeMapperLog(logfile=path+sample+'_shapemapper_log.txt') for sample in samples}
 
 path = 'data/'
 samples = ['example1', 'example2']
 profile = {sample: pd.read_csv(path+sample+"_rnasep_profile.txt", sep='\t') for sample in samples}
 
 # Only for example1
-histograms = pt.readHistograms(path+"example_shapemapper_log.txt")
+log = pt.shapeMapperLog(logfile=path+"example_shapemapper_log.txt")
 ```
 
 Quality Control: Mutations per molecule, read length distributions, and boxplots.
 ---------------------------------------------------------------------------------
 I like to start with some quality control. Let's plot some summary metrics of our data.
 
-I make these plots often, so at some point a class may be added to make these easier.
-
 
 ```python
-# Make Mutations per Molecule plots
 fig, ax = plt.subplots(1,3, figsize=(21,7))
 
-# plot 1: mutations per molecule
-ax[0].plot(histograms['Mutation_count'][0:10], histograms['Untreated_mutations_per_molecule'][0:10], label="Untreated")
-ax[0].plot(histograms['Mutation_count'][0:10], histograms['Modified_mutations_per_molecule'][0:10], label="Modified")
-ax[0].legend()
-ax[0].set(xlabel='Mutations per Molecule',
-          ylabel='Percentage of Reads',
-          title='Mutations per molecule distribution')
+log.plotMutsPerMol(ax[0], sample="Modified")
+log.plotMutsPerMol(ax[0], sample="Untreated")
+log.setMutsPerMol(ax[0], labels=["Modified", "Untreated"])
 
-# plot 2: read length distribution
-width=0.35
-ax[1].bar(np.arange(10)+width/2, histograms["Untreated_read_length"][0:10], width, label="Untreated")
-ax[1].bar(np.arange(10)-width/2, histograms["Modified_read_length"][0:10], width, label="Modified")
-ax[1].legend()
-ax[1].set(xticks=range(10),
-          xlabel='Read Length',
-          ylabel='Percentage of Reads',
-          title='Read length distribution')
-ax[1].set_xticklabels(histograms["Read_length"], rotation = 45, ha="right")
+# "n" indicates the sample order.
+# "of" indicates the total number of samples on the given plot.
+# Together, they set the bar width and x position of each bar.
+log.plotReadLength(ax[1], sample="Modified", n=1, of=2)
+log.plotReadLength(ax[1], sample="Untreated", n=2, of=2)
+log.setReadLength(ax[1], labels=["Modified", "Untreated"])
 
 # plot 3: Mutation rate boxplots
 ax[2] = sns.boxplot(data=profile['example1'][['Untreated_rate', 'Modified_rate']], orient='v')
@@ -172,7 +161,7 @@ plt.tight_layout();
 ```
 
 
-![svg](images/plottingTools-example_10_0.svg)
+![svg](plottingTools-example_files/plottingTools-example_10_0.svg)
 
 
 Default ShapeMapper2 plots
@@ -191,7 +180,7 @@ smp.plotDepth(ax[2], profile['example1'])
 ```
 
 
-![svg](images/plottingTools-example_12_0.svg)
+![svg](plottingTools-example_files/plottingTools-example_12_0.svg)
 
 
 Skyline Plots
@@ -215,7 +204,7 @@ ax.legend();
 ```
 
 
-![svg](images/plottingTools-example_14_0.svg)
+![svg](plottingTools-example_files/plottingTools-example_14_0.svg)
 
 
 Regression Plots
@@ -238,7 +227,7 @@ ax.set(xscale='log',
 ```
 
 
-![svg](images/plottingTools-example_16_0.svg)
+![svg](plottingTools-example_files/plottingTools-example_16_0.svg)
 
 
 Automatic plotting of ensemble reactivities as skyline plot
@@ -252,4 +241,5 @@ pt.plotBMprofiles(ax, path+"example_rnasep-reactivities.txt")
 ```
 
 
-![svg](images/plottingTools-example_18_0.svg)
+![svg](plottingTools-example_files/plottingTools-example_18_0.svg)
+
