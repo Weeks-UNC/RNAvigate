@@ -1,0 +1,76 @@
+import MaPplotlib as MaP
+
+Include 'stylesheet' appropriate for jupyter and slide shows.
+
+def display_toggle_code_button()
+
+class RNA()
+    ct1
+    ct2
+    structure2d
+    samples = {'sample1':MaP_experiment(),
+               'sample2':MaP_experiment(),
+               etc.}
+
+    get_ap_figsize
+    get_ss_figsize
+    get_skyline_figsize
+
+    set_skyline
+    plot_skyline
+    plot_sequence
+
+    regression plots (1x1 for 2 samples, 2x2 for 3 samples, etc.)
+    boxplot
+    quality control
+
+    set_skyline
+    plot_skyline
+    plot_sequence
+
+    plot_log_mutsPerMol
+    plot_log_readLength
+
+    plot_sm_profile
+    plot_sm_depth
+    plot_sm_mutationRate
+
+    set_ap
+    plot_ap_ct
+    plot_ap_ctcompare
+    plot_ap_rings
+    plot_ap_pairs
+    plot_ap_probabilities
+    plot_ap_sequence
+    make_ap_plot
+        set and plot based on data in sample
+
+    set_ss
+    plot_ss_structure
+    plot_ss_sequence
+    plot_ss_rings
+    plot_ss_positions
+    make_ss_plot
+
+
+class MaP_experiment()
+
+    ct1
+    ct2
+    structure2d
+
+    label
+    logfile
+    profile
+    pairing_probs
+    rings
+    pairs
+    dances = {i:dance_state, etc.}
+
+class dance_state():
+
+    population
+    profile
+    rings
+    pairs
+    binned_depth
