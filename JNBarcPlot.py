@@ -92,11 +92,11 @@ def addProfile(ax, profilepath):
         ax (pyplot axis): axis to which reactivity profile is added
         profilepath (str): path to profile.txt file
     """
-    profile = pd.read_csv(profilepath, sep='\t')
+    profile = pt.ReactivityProfile(profilepath)
     near_black = (0, 0, 1 / 255.0)
     orange_thresh = 0.4
     red_thresh = 0.85
-    values = profile['Norm_profile']
+    values = profile.profile['Norm_profile']
     cindex = np.zeros(len(values), dtype=int)
     # where values are not NaNs, add 1 to color index array
     cindex[np.array(np.logical_not(np.isnan(values)), dtype=bool)] += 1
@@ -106,10 +106,10 @@ def addProfile(ax, profilepath):
     cindex[np.array(values > red_thresh, dtype=bool)] += 1
     # create color map array based on cindex
     colormap = np.array(["0.80", "black", "orange", "red"])[cindex]
-    ax.bar(profile['Nucleotide'], values*5, align="center",
+    ax.bar(profile.profile['Nucleotide'], values*5, align="center",
            width=1.05, color=colormap, edgecolor=colormap, linewidth=0.0,
-           yerr=profile['Norm_stderr'], ecolor=near_black, capsize=1)
-    pt.addSeqBar(ax, profile, yvalue=0.5)
+           yerr=profile.profile['Norm_stderr'], ecolor=near_black, capsize=1)
+    profile.addSeqBar(ax, yvalue=0.5)
 
 
 def addPairmap(ax, pairmappath, window=3):
@@ -266,7 +266,7 @@ def ctLength(ctpath):
     with open(ctpath) as f:
         line1 = f.readline()
         length = int(line1.strip().split()[0])
-        return length
+    return length
 
 
 def pairmapSensPPV(pairpath, ctpath):
