@@ -21,8 +21,8 @@ class SecondaryStructure():
     from nsd, cte, or xrna files, and plotting various data on top of it.
     """
 
-    def __init__(self, nsdfile=None, xrnafile=None, ctefile=None,
-                 ringfile=None, profile=None, structureCassettes=False):
+    def __init__(self, structure_file=None, ringfile=None, profile=None,
+                 structureCassettes=False):
         self.sequence = np.array([])
         self.length = 0
         self.nucleotide = np.array([])
@@ -31,13 +31,15 @@ class SecondaryStructure():
         self.pairs = np.array([])
         self.colors = np.array([])
         self.structureCassettes = structureCassettes
-
-        if nsdfile is not None:
-            self.readNsdFile(nsdfile)
-        elif ctefile is not None:
-            self.readCteFile(ctefile)
-        elif xrnafile is not None:
-            self.readXrnaFile(xrnafile)
+        self.ss_filetype = structure_file.split('.')[-1]
+        if self.ss_filetype == 'nsd':
+            self.readNsdFile(structure_file)
+        elif self.ss_filetype == 'cte':
+            self.readCteFile(ctstructure_fileefile)
+        elif self.ss_filetype == 'xrna':
+            self.readXrnaFile(structure_file)
+        else:
+            "{} file type not recognized".format(self.ss_filetype)
         if profile is not None:
             self.readProfile(profile)
         if ringfile is not None:
@@ -67,7 +69,6 @@ class SecondaryStructure():
                         pairs.append([i+x, j-x])
         self.pairs = np.array(pairs)
         self.length = len(self.sequence)
-        self.type = 'xrna'
 
     def readCteFile(self, ctefile):
         names = ['nuc', 'seq', 'pair', 'xcoords', 'ycoords']
@@ -80,7 +81,6 @@ class SecondaryStructure():
         self.ycoordinates = [float(ycoord) for ycoord in ct['ycoords']]
         ct = ct[ct.nuc < ct.pair]
         self.pairs = [[int(x), int(y)] for x, y in zip(ct.nuc, ct.pair)]
-        self.type = 'cte'
 
     def readNsdFile(self, nsdfile):
         with open(nsdfile, 'r') as file:
@@ -110,7 +110,6 @@ class SecondaryStructure():
                     pairs = line[1].split(":")[1:]
                     pair = [int(nuc.strip('"')) for nuc in pairs]
                     np.append(self.pairs, [pair])
-        self.type = 'nsd'
 
     def writeCTE(self, outputPath):
         """writes the current structure out to CTE format for Structure Editor.
