@@ -67,7 +67,7 @@ Any valid matplotlib marker can be passed to marker. You can also pass "sequence
 
 
 ```
-RNaseP = ss.SecondaryStructure(xrnafile=xrnapath, profile=profilepath, structureCassettes=True)
+RNaseP = ss.SecondaryStructure(structure_file=xrnapath, profile=profilepath, structureCassettes=True)
 
 # for figsize, use RNA.figsize(rows,columns)
 fig, ax = plt.subplots(1,4, figsize=RNaseP.figsize(1,4))
@@ -102,7 +102,7 @@ Ring coordinates can be adjusted for structure cassettes, filtered by contact di
 
 
 ```
-RNaseP = ss.SecondaryStructure(xrnafile=xrnapath, ringfile=ringpath, profile=profilepath, structureCassettes=True)
+RNaseP = ss.SecondaryStructure(structure_file=xrnapath, ringfile=ringpath, profile=profilepath, structureCassettes=True)
 
 # use secondaryStructure.figsize(rows, columns) to get appropriate figure size
 fig, ax = plt.subplots(1,4, figsize=RNaseP.figsize(1,4))
@@ -129,8 +129,3 @@ RNaseP.makePlot(ax[3], colorby='profile', positions=False)
 
 ![svg](secondaryStructure-example_files/secondaryStructure-example_8_0.svg)
 
-
-
-```
-
-```

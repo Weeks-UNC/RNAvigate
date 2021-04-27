@@ -42,7 +42,6 @@ For JNBarcPlot.py, only the file paths are needed.
 path = 'data/'
 ctpath = path+'RNaseP.ct'
 profilepath = path+'example1_rnasep_profile.txt'
-profileobj = pd.read_csv(profilepath, sep='\t') # only needed to set the dimensions of the plot
 pairmappath = path+'example-rnasep-pairmap.txt'
 ```
 
@@ -63,7 +62,10 @@ TODO: Create a function to set ylims appropriately.
 
 
 ```python
-dims = pt.getWidth(profileobj)
+# This is messy and will be fixed later. Figsize method of ReactivityProfile returns appropriate dimensions for a skyline plot.
+# I'm taking the width and applying it to width and height for an arcPlot
+dims = pt.ReactivityProfile(profilepath).figsize(1,1)[0]
+
 fig, ax = plt.subplots(1,1, figsize=(dims, dims))
 
 arc.setArcPlot(ax)
@@ -75,7 +77,7 @@ arc.addPairmap(ax, pairmappath)
 ```
 
 
-![svg](images/JNBarcPlot-example_6_0.svg)
+![svg](JNBarcPlot-example_files/JNBarcPlot-example_6_0.svg)
 
 
 Make arc plot with RInG data
