@@ -7,6 +7,11 @@ issue in the issues tab, or email me: psirving@email.unc.edu
 For more in-depth exploration of the functions and example plots, see the
 [wiki](https://github.com/Weeks-UNC/JNBTools/wiki).
 
+Coming soon: plotmapper.py [examples](JNB-example/plotmapper-example.md)
+* Will contain all functionality from the other scripts
+* Higher level plotting functions
+* Simplier API for loading data and plotting
+
 plottingTools.py [examples](JNB-example/plottingTools-example.md)
 * Make Skyline plots for comparing nt-by-nt data.
 * Add a sequence bar to your plots.
