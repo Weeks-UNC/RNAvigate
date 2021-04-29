@@ -3,7 +3,6 @@
 # general python packages
 import matplotlib.colors as mc
 import matplotlib as mp
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import seaborn as sns
@@ -34,6 +33,7 @@ def create_code_button():
 
 
 # STYLE SHEET
+###############################################################################
 sns.set_context("talk")
 sns.set_style("ticks")
 colors = [
@@ -46,8 +46,10 @@ colors = [
 ]
 sns.set_palette(colors)
 
-# COPIED FROM SHAPEMAPPER2
-
+# COPIED FROM SHAPEMAPPER2 some of this might be inappropriately applied
+# to all plots
+# TODO: look into passing dict to mp.rc()
+###############################################################################
 mp.rcParams["font.sans-serif"].insert(0, "Arial")
 mp.rcParams["font.family"] = "sans-serif"
 mp.rcParams["pdf.fonttype"] = 42  # use TrueType fonts when exporting PDFs
@@ -65,20 +67,26 @@ mp.use('Agg')
 rx_color = "red"
 bg_color = "blue"
 dc_color = "darkgoldenrod"
-#####################################################
+###############################################################################
 
 
 class Sample():
 
-    def __init__(self, sample=None, profile=None, ctfile=None, structure=None,
-                 logfile=None, ringfile=None, pairfile=None,
-                 dance_reactivities=None, structure_cassettes=False,):
+    def __init__(self,
+                 sample=None,
+                 profile=None,
+                 ctfile=None,
+                 structure=None,
+                 logfile=None,
+                 ringfile=None,
+                 pairfile=None,
+                 dance_reactivities=None,
+                 structure_cassettes=False,
+                 clip=[0, 0]):
         if structure_cassettes:
             self.clip = [14, -43]
-        elif clip is not None:
-            self.clip = clip
         else:
-            self.clip = [0, 0]
+            self.clip = clip
         self.sample = sample
         if profile is not None:
             self.profile = pd.read_csv(profile, sep='\t')
@@ -108,9 +116,19 @@ class Sample():
 
 ###############################################################################
 # Parsing data files
-#     structure (xrna, cte, nsd)
-#     rings, pairs
-#     Future: varna, deletions, RNP, shannon, deltaShape, etc.
+#   structure files
+#       read_xrna
+#       read_cte
+#       read_nsd
+#   MaP data files
+#       read_rings
+#       read_pairs
+#       read_log
+#       read_dance_reactivities
+#   Future:
+#       read_varna
+#       read_jumpdeletions
+#       etc.
 ###############################################################################
 
     def read_xrna(self, xrnafile):
@@ -249,6 +267,7 @@ class Sample():
 #     plot_skyline
 #     plot_sequence
 #     make_skyline
+#     make_dance_skyline
 #     Future:
 #         set_skyline
 ###############################################################################
@@ -337,13 +356,15 @@ class Sample():
                xlabel="Nucleotide",
                ylabel="Profile")
 
-
 ###############################################################################
 # ShapeMapper Log plotting functions
 #     plot_log_MutsPerMol
 #     set_log_MutsPerMol
+#     make_log_MutsPerMol
 #     plot_log_ReadLength
 #     set_log_ReadLength
+#     make_log_ReadLength
+#     make_log_qc
 ###############################################################################
 
     def plot_log_MutsPerMol(self, ax, sample="Modified", upper_limit=10):
@@ -391,13 +412,14 @@ class Sample():
 
 ###############################################################################
 # Arc Plot plotting functions
+#     _add_arc
 #     get_ap_figsize
 #     set_ap
 #     plot_ap_ct
 #     plot_ap_ctcompare
 #     plot_ap_profile
 #     plot_ap_pairs
-#     make_ap_plot
+#     make_ap
 #     Future:
 #         plot_ap_probabilities
 #         plot_ap_rings
@@ -424,8 +446,8 @@ class Sample():
             theta1 = 180
             theta2 = 360
         radius = 0.5+(j+window-1-i)/2.
-        arc = mpl.patches.Wedge(center, radius, theta1, theta2, color=color,
-                                alpha=alpha, width=window, ec='none')
+        arc = mp.patches.Wedge(center, radius, theta1, theta2, color=color,
+                               alpha=alpha, width=window, ec='none')
         ax.add_patch(arc)
 
     def get_ap_figsize(self, rows, cols):
@@ -545,10 +567,15 @@ class Sample():
 #     get_ss_figsize
 #     set_ss
 #     plot_ss_structure
+#     set_ss_seqcolors
+#     setColorsByProfile
+#     setColorsByNucleotide
+#     setColorsByPosition
 #     plot_ss_sequence
+#     filterRings
 #     plot_ss_rings
 #     plot_ss_positions
-#     make_ss_plot
+#     make_ss
 ###############################################################################
 
     def get_ss_figsize(self, rows, cols):
@@ -728,7 +755,8 @@ class Sample():
 #     plot_sm_profile
 #     plot_sm_depth
 #     plot_sm_mutationRate
-#     make_sm_plot
+#     metric_abbreviate
+#     make_shapemapper
 ###############################################################################
 
     def plot_sm_profile(self, axis):
@@ -917,9 +945,8 @@ class Sample():
 
 ##############################################################################
 # CONSTRUCTION ZONE
-#     BM profiles plot
-#     regression plot (doesn't make sense without container class)
-#     boxplot (likewise)
+#     plotRegression (doesn't make sense without container class)
+#     boxplot (broken for multiple samples)
 ##############################################################################
 
     def plotRegression(self, ax, comp_profile, ctfile=None, column="Reactivity_profile"):
