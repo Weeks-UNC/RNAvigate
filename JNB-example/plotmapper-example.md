@@ -49,19 +49,33 @@ MaP.create_code_button()
 
 Initializing MaP sample
 -----------------------
+If you have consistently named files, (which you should), you can use a function to create a dictionary of keyword arguments (kwargs). Then, "unpack" the dictionary using the double asterisk.
 
 
 ```python
 path = 'data/'
-profile = path+"example1_rnasep_profile.txt"
-ctfile = path+"RNaseP.ct"
-structure = path+"RC_CRYSTAL_STRUCTURE.xrna"
-ringfile = path+"example-rnasep.corrs"
-pairfile = path+"example-rnasep-pairmap.txt"
-logfile = path+"example_shapemapper_log.txt"
-dance_reactivities = path+"example_rnasep-reactivities.txt"
+def kwargs(sample):
+    kwargs = {}
+    kwargs["profile"] = path+sample+"_rnasep_profile.txt"
+    kwargs["ctfile"] = path+"RNaseP.ct"
+    kwargs["structure"] = path+"RC_CRYSTAL_STRUCTURE.xrna"
+    kwargs["ringfile"] = path+sample+"-rnasep.corrs"
+    kwargs["pairfile"] = path+sample+"-rnasep-pairmap.txt"
+    kwargs["logfile"] = path+sample+"_shapemapper_log.txt"
+    kwargs["dance_reactivities"] = path+sample+"_rnasep-reactivities.txt"
+    return kwargs
 
-example = MaP.Sample(sample="example", profile=profile, ctfile=ctfile, structure=structure, ringfile=ringfile, pairfile=pairfile, logfile=logfile, dance_reactivities=dance_reactivities, structure_cassettes=True)
+example = MaP.Sample(sample="example", **kwargs("example"), structure_cassettes=True)
+# equivalent to:
+# example = MaP.Sample(sample="example",
+#                      profile='data/example_rnasep_profile.txt',
+#                      ctfile='data/RNaseP.ct',
+#                      structure='data/RC_CRYSTAL_STRUCTURE.xrna',
+#                      ringfile='data/example-rnasep.corrs',
+#                      pairfile='data/exampleexample-rnasep-pairmap.txt',
+#                      logfile='data/example_shapemapper_log.txt',
+#                      dance_reactivities='data/example_rnasep-reactivities.txt',
+#                      structure_cassettes=True)
 ```
 
     Note: T nucleotides have been recoded as U
@@ -76,6 +90,7 @@ ShapeMapper QC
 
 ```python
 example.make_log_qc()
+
 ```
 
 
@@ -100,6 +115,14 @@ Skyline Plots
 
 ```python
 example.make_skyline()
+# def make_skyline(self, column="Reactivity_profile"):
+#         fig, ax = plt.subplots(1, figsize=self.get_skyline_figsize(1, 1))
+#         self.plot_skyline(ax)
+#         self.plot_sequence(ax)
+#         ax.set(title="Raw Reactivity Profile",
+#                xlim=[0, self.length],
+#                xticks=range(0, self.length, 20))
+#         ax.legend(title="Samples")
 ```
 
 
