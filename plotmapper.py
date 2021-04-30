@@ -46,8 +46,8 @@ colors = [
 ]
 sns.set_palette(colors)
 
-# COPIED FROM SHAPEMAPPER2 some of this might be inappropriately applied
-# to all plots
+# COPIED FROM SHAPEMAPPER2
+# some of this might be inappropriately applied to all plots
 # TODO: look into passing dict to mp.rc()
 ###############################################################################
 mp.rcParams["font.sans-serif"].insert(0, "Arial")
@@ -116,10 +116,11 @@ class Sample():
 
 ###############################################################################
 # Parsing data files
+# TODO: make xrna and nsd functions less sucky. add varna functionality
 #   structure files
-#       read_xrna
+#       read_xrna Kludgey AF
 #       read_cte
-#       read_nsd
+#       read_nsd Kludgey AF
 #   MaP data files
 #       read_rings
 #       read_pairs
@@ -273,15 +274,15 @@ class Sample():
 ###############################################################################
 
     def get_skyline_figsize(self, rows, cols):
-        """Takes a dataFrame object and returns the appropriate plot width to pass
-        to figsize based on the length of your RNA. For example:
-        fig, ax = plt.subplots(1, figsize=(pt.getWidth(profile), 7))
+        """Pass this function call to figsize within pyplot.subplots() to set
+        an appropriate figure width and height for skyline plots.
 
         Args:
-            sample (dataFrame object): Pandas dataFrame containing profile info.
+            rows (int): number of rows in pyplot figure
+            cols (int): number of columns in pyplot figure
 
         Returns:
-            float: appropriate figure width for the size of RNA.
+            tuple: (width, height) appropriate figsize for pyplot figure
         """
         left_inches = 0.9
         right_inches = 0.4
@@ -290,7 +291,7 @@ class Sample():
         return (fig_width*cols, 6*rows)
 
     def plot_skyline(self, axis, column='Reactivity_profile', label=None):
-        """Creates a skyline plot on the given axis from the profile and column
+        """Plots a skyline on the given axis from the profile file and column
         passed. Label is the sample name that should appear on the legend.
 
         Args:
@@ -314,12 +315,12 @@ class Sample():
 
     def plot_sequence(self, axis, yvalue=0.005):
         """Adds a colored sequence bar along the bottom of the given axis.
-        ylim may need to be adjusted to accomodate. ylim must be set
-        before calling this function.
+        ylim must be set before calling this function.
 
         Args:
             axis (pyplot axis): axis to which sequence bar will be added
-            yvalue (float, optional): y data value at which sequence bar is added.
+            yvalue (float, optional): y value as a fraction of the ylimits set
+                at which sequence bar is added.
                 Default: 0.005. (barely above x-axis)
         """
         # set font style and colors for each nucleotide
@@ -327,6 +328,7 @@ class Sample():
             family="monospace", style="normal", weight="bold", size="12")
         color_dict = {"A": "#f20000", "U": "#f28f00",
                       "G": "#00509d", "C": "#00c200"}
+        # transform yvalue to a y-axis data value
         ymin, ymax = axis.get_ylim()
         yvalue = (ymax-ymin)*yvalue + ymin
         for i, seq in enumerate(self.profile["Sequence"]):
@@ -336,6 +338,13 @@ class Sample():
                           color=col, horizontalalignment="center")
 
     def make_skyline(self, column="Reactivity_profile"):
+        """Creates a skyline figure, including sequence, title, legend, and
+        axis labels.
+
+        Args:
+            column (str, optional): Name of column from profile.txt to plot.
+                Defaults to "Reactivity_profile".
+        """
         fig, ax = plt.subplots(1, figsize=self.get_skyline_figsize(1, 1))
         self.plot_skyline(ax)
         self.plot_sequence(ax)
@@ -345,6 +354,9 @@ class Sample():
         ax.legend(title="Samples")
 
     def make_dance_skyline(self):
+        """Creates a skyline figure representing the component reactivities of
+        the ensemble.
+        """
         fig, ax = plt.subplots(1, figsize=self.get_skyline_figsize(1, 1))
         for i in range(self.dance_components):
             self.plot_skyline(ax, label=f"{i}: {self.dance_percents[i]}",
@@ -358,6 +370,7 @@ class Sample():
 
 ###############################################################################
 # ShapeMapper Log plotting functions
+# TODO: add docstrings and comments
 #     plot_log_MutsPerMol
 #     set_log_MutsPerMol
 #     make_log_MutsPerMol
@@ -407,11 +420,12 @@ class Sample():
         fig, ax = plt.subplots(1, 3, figsize=(21, 7))
         self.make_log_MutsPerMol(ax[0])
         self.make_log_ReadLength(ax[1])
-        self.boxplot(ax[2])
+        self.plot_boxplot(ax[2])
         plt.tight_layout()
 
 ###############################################################################
 # Arc Plot plotting functions
+# TODO: add rings and probability functionality
 #     _add_arc
 #     get_ap_figsize
 #     set_ap
@@ -451,6 +465,16 @@ class Sample():
         ax.add_patch(arc)
 
     def get_ap_figsize(self, rows, cols):
+        """Pass this function call to figsize within pyplot.subplots() to set
+        an appropriate figure width and height for arc plots.
+
+        Args:
+            rows (int): number of rows in pyplot figure
+            cols (int): number of columns in pyplot figure
+
+        Returns:
+            tuple: (width, height) appropriate figsize for pyplot figure
+        """
         dim = self.length * 0.1 + 1
         return (dim*cols, dim*rows)
 
@@ -552,6 +576,14 @@ class Sample():
             self._add_arc(ax, i, j, window, (0., 0., 243/255.), 0.7, 'bottom')
 
     def make_ap(self, type=None):
+        """Creates figure with arc plot. Includes ct, profile, sequence, and
+        data type passed to type. [rings, pairs, probabilities]
+
+        Args:
+            type (str, optional): datatype for bottom panel. Can be rings, pairs,
+                or probabilities.
+                Defaults to None.
+        """
         fig, ax = plt.subplots(1, figsize=self.get_ap_figsize(1, 1))
         self.set_ap(ax)
         self.plot_ap_ct(ax)
@@ -564,6 +596,7 @@ class Sample():
 
 ###############################################################################
 # Secondary Structure graph plotting functions
+# TODO: add docstrings and code comments
 #     get_ss_figsize
 #     set_ss
 #     plot_ss_structure
@@ -760,6 +793,11 @@ class Sample():
 ###############################################################################
 
     def plot_sm_profile(self, axis):
+        """Plots classic ShapeMapper normalized reactivity on the given axis
+
+        Args:
+            axis (pyplot axis): axis on which to add plot
+        """
         yMin, ymax = (-0.5, 4)
         near_black = (0, 0, 1 / 255.0)
         orange_thresh = 0.4
@@ -829,6 +867,11 @@ class Sample():
         self.plot_sequence(axis)
 
     def plot_sm_depth(self, axis):
+        """Plots classic ShapeMapper read depth on the given axis
+
+        Args:
+            axis (pyplot axis): axis on which to add plot
+        """
         sample = self.profile
         axis.plot(sample['Nucleotide'], sample['Modified_read_depth'],
                   linewidth=1.5, color=rx_color, alpha=1.0, label="Modified")
@@ -873,6 +916,11 @@ class Sample():
         # For now just putting in xaxis label
 
     def plot_sm_rates(self, axis):
+        """Plots classic ShapeMapper mutation rates on the given axis
+
+        Args:
+            axis (pyplot axis): axis on which to add plot
+        """
         sample = self.profile
         # choose a decent range for axis, excluding high-background positions
         temp_rates = sample['Modified_rate'][sample['Untreated_rate'] <= 0.05]
@@ -922,6 +970,14 @@ class Sample():
         axis.set_axisbelow(True)
 
     def metric_abbreviate(self, num):
+        """takes a large number and applies an appropriate abbreviation
+
+        Args:
+            num (int): number to be abbreviated
+
+        Returns:
+            str: abbreviated number
+        """
         suffixes = {3: 'k',
                     6: 'M',
                     9: "G"}
@@ -938,6 +994,8 @@ class Sample():
         return new_string
 
     def make_shapemapper(self):
+        """Creates a figure with the three classic Shapemapper plots.
+        """
         fig, ax = plt.subplots(3, 1, figsize=self.get_skyline_figsize(3, 1))
         self.plot_sm_profile(ax[0])
         self.plot_sm_rates(ax[1])
@@ -949,57 +1007,93 @@ class Sample():
 #     boxplot (broken for multiple samples)
 ##############################################################################
 
-    def plotRegression(self, ax, comp_profile, ctfile=None, column="Reactivity_profile"):
+    def plot_regression(self, ax, comp_sample, colorby="ct",
+                        column="Reactivity_profile"):
         """Plots scatter plot of reactivity profile vs. reactivity profile and
-        computes regression metrics R^2 and slope, which are annotated on the axis.
-        If a ctfile is provided, paired and unpaired nucleotides will have distinct
-        colors.
+        computes regression metrics R^2 and slope, which are annotated on the
+        axis. Can color scatter plot by nucleotide or by paired status.
 
         Args:
             ax (pyplot axis): axis on which scatter plot appears
-            p1 (numpy array): array containing reactivity profile values
-            p2 (numpy array): second array containing reactivity profile values
-            ctfile (str, optional): path to ct file. Defaults to 'None'.
+            comp_sample (plotmapper sample): sample to be compared
+            colorby (str, optional): How to color the scatter plot. Options are
+                "nucleotide" or "ct".
+                Defaults to None
+            column (str, optional): column from profile to be compared
+                Defaults to "Reactivity_profile".
         """
         p1 = self.profile[column].copy()
-        p2 = comp_profile.profile[column].copy()
+        p2 = comp_sample.profile[column].copy()
 
         ax.plot([0, 1], [0, 1], color='black')
         notNans = ~np.isnan(p1) & ~np.isnan(p2)
         p1 = p1[notNans]
         p2 = p2[notNans]
         gradient, _, r_value, _, _ = stats.linregress(p1, p2)
-        ax.text(0.1, 0.8,
-                'R^2 = {:.2f}\nslope = {:.2f}'.format(r_value**2, gradient),
+        ax.text(0.1, 0.8, f'R^2 = {r_value**2:.2f}\nslope = {gradient:.2f}',
                 transform=ax.transAxes)
-        if ctfile is not None:
-            ct = pd.read_csv(ctfile, sep='\s+',
-                             usecols=[4], names=['j'], header=0)
-            paired = ct.j != 0
-            unpaired = ct.j == 0
-            paired = paired[notNans]
-            unpaired = unpaired[notNans]
-            ax.scatter(p1[paired], p2[paired], label="Paired")
-            ax.scatter(p1[unpaired], p2[unpaired], label="Unpaired")
+        if colorby == "ct":
+            paired_list = self.ct.pairedResidueList()
+            paired_mask = np.zeros(self.length, dtype=bool)
+            for i in paired_list:
+                paired_mask[i] = True
+            paired_mask = paired_mask[notNans]
+            unpaired_mask = ~paired_mask
+            ax.scatter(p1[paired_mask], p2[paired_mask], label="Paired")
+            ax.scatter(p1[unpaired_mask], p2[unpaired_mask], label="Unpaired")
+        if colorby == "nucleotide":
+            for nuc in "GUAC":
+                sequence = self.profile["Sequence"][notNans]
+                nuc_mask = [nt == nuc for nt in sequence]
+                ax.scatter(p1[nuc_mask], p2[nuc_mask], label=nuc)
         else:
             ax.scatter(p1, p2)
+        s1, s2 = self.sample, comp_sample.sample
+        ax.set(xscale='log',
+               xlim=[0.0001, 0.3],
+               xlabel=s1,
+               yscale='log',
+               ylim=[0.0001, 0.3],
+               ylabel=s2,
+               title=f'{s1} vs. {s2}: {column}')
+        ax.legend(title=colorby)
 
-    def boxplot(self, ax, samples=None):
-        cols = ["Modified_rate", "Untreated_rate"]
-        if samples is not None:
-            profs = [self.profile[cols].assign(Sample=1)]
-            for i, d in enumerate(samples):
-                profs.append(d.profile[cols].assign(Sample=i+2))
-            data = pd.concat(profs)
-        else:
-            data = self.profile[["Modified_rate", "Untreated_rate"]]
-            data = data.assign(Sample=1)
-            xticklabels = [self.sample]
+    def get_boxplot_data(self, sample=1,
+                         cols=["Modified_rate", "Untreated_rate"]):
+        """Returns slice of profile with additional ID column "Sample" for easy
+        use with sns.boxplot
+
+        Args:
+            sample (int, optional): x-value for this sample's boxplot.
+                Defaults to 1.
+            cols (list, optional): list of columns from profile to use.
+                Defaults to ["Modified_rate", "Untreated_rate"].
+
+        Returns:
+            DataFrame: slice of profile formatted for sns.boxplot
+        """
+        data = self.profile[cols].copy()
+        data = data.assign(Sample=sample)
+        return data
+
+    def plot_boxplot(self, ax, other_samples=[]):
+        """Plots a boxplot for self and other samples on the given axis.
+
+        Args:
+            ax (pyplot axis): axis on which to add plot
+            other_samples (list, optional): list of other MaP Samples to plot.
+                Defaults to empty list.
+        """
+        data = [self.get_boxplot_data(sample=1)]
+        xticklabels = [self.sample]
+        for i, sample in enumerate(other_samples):
+            data.append(sample.get_boxplot_data(sample=i+2))
+            xticklabels.append(sample.sample)
+        data = pd.concat(data)
         data = pd.melt(data, id_vars=['Sample'], var_name=['Rate'])
         data.head()
         ax = sns.boxplot(x="Sample", y="value",
                          hue='Rate', data=data, orient='v')
-        # import MaPplotlib as MaP
         ax.set(yscale='log',
                ylim=(0.0005, 0.5),
                ylabel="Mutation Rate",
