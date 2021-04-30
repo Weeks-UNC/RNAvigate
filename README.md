@@ -35,11 +35,5 @@ secondaryStructure.py [examples](JNB-example/secondaryStructure-example.md)
 * Add Rings, filtered by statistic or contact distance.
 
 TODO list:
-- [ ] Create function to set ylims for arc plots.
-- [ ] Make the API consistent across figure types.
-- [ ] Add comments and docstrings to plottingTools.
-- [ ] Add comments and docstrings to JNBarcPlot.
-- [ ] Add comments and docstrings to secondaryStructure.
-- [ ] Add comments and docstrings to shapemapperPlots.
-- [ ] Add handling of deletion files to secondary structure.
-- [x] Add example usage notebook for secondary structures.
+- [ ] Add comments and docstrings to plotmapper.py.
+- [ ] Add handling of deletion files to plotmapper.py.
