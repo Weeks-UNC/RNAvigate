@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 # general python packages
-import matplotlib.colors as mc
 import matplotlib as mp
+import matplotlib.colors as mc
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import seaborn as sns
@@ -1098,3 +1098,132 @@ class Sample():
                ylim=(0.0005, 0.5),
                ylabel="Mutation Rate",
                xticklabels=xticklabels)
+
+
+###############################################################################
+# Heatmap plotting functions
+# TODO: This code needs to be reworked.
+#     plotCorrs2D
+#     getBitmapLegendHandles
+#     getCmaps
+#     get_bitmap
+#
+# ! Example usage, because you will never figure this out on your own.
+# # Create the plot
+# fig, ax = plt.subplots(1, figsize=(10, 10))
+# # Make and plot the bitmaps
+# ct = example.get_bitmap('ct')
+# mask = example.get_bitmap('fasta')
+# pairmap = example.get_bitmap('rings')
+# example.plotCorrs2D(axis=ax, pairmap=pairmap, ct=ct, mask=mask)
+# # Get legend handles and create legend and title
+# handles = example.getBitmapLegendHandles()
+# handles = [handles['Primary'], handles['Secondary'],
+#            handles['Helices'], handles['No Data']]
+# ax.legend(handles=handles, bbox_to_anchor=(-0.06, 1.01, 1., 1.01), loc='lower left',
+#           ncol=4, borderaxespad=0.)
+# ax.set_title("Example PAIR-MaP", y=1.07, fontsize=40)
+###############################################################################
+
+    def plotCorrs2D(self, axis, pairmap=0, allcorrs=0, bg_corrs=0, ct=0, mask=0):
+        ct_cmap, mask_cmap, pm_cmap = self.getCmaps()
+        if type(allcorrs) is np.ndarray:
+            axis.imshow(allcorrs, cmap='bwr')
+        if type(bg_corrs) is np.ndarray:
+            axis.imshow(bg_corrs, cmap='gray')
+        if type(pairmap) is np.ndarray:
+            axis.imshow(pairmap, cmap=pm_cmap)
+        if type(ct) is np.ndarray:
+            axis.imshow(ct, cmap=ct_cmap, interpolation='bicubic')
+        if type(mask) is np.ndarray:
+            axis.imshow(mask, cmap=mask_cmap)
+
+    def getBitmapLegendHandles(self):
+        handles = {}
+        handles['Primary'] = mp.patches.Patch(color='red', label='Primary')
+        handles['Secondary'] = mp.patches.Patch(
+            color='blue', label='Secondary')
+        handles['No Data'] = mp.patches.Patch(color='green', label='No Data',
+                                              alpha=0.2)
+        handles['Helices'] = mp.patches.Patch(edgecolor='green', fill=False,
+                                              label='Known Helices')
+        handles['BG Correlations'] = mp.patches.Patch(color='black',
+                                                      label='BG correlations')
+        return handles
+
+    def getCmaps(self):
+        cmap = plt.get_cmap('Greens')
+        ct_cmap = cmap(np.arange(cmap.N))
+        ct_cmap[:, -1] = np.concatenate((np.linspace(0, 1, cmap.N/2),
+                                         np.linspace(1, 0, cmap.N/2)), axis=None)
+        ct_cmap = mp.colors.ListedColormap(ct_cmap)
+
+        mask_cmap = cmap(np.arange(cmap.N))
+        mask_cmap[:, -1] = np.linspace(0, 0.2, cmap.N)
+        mask_cmap = mp.colors.ListedColormap(mask_cmap)
+
+        N = 256
+        vals = np.ones((N, 4))
+        vals[:, 0] = np.concatenate((np.linspace(1, 0, N/2),
+                                     np.linspace(0, 1, N/2)), axis=None)
+        vals[:, 1] = np.concatenate((np.linspace(1, 0, N/2),
+                                     np.linspace(0, 0, N/2)), axis=None)
+        vals[:, 2] = np.concatenate((np.linspace(1, 1, N/2),
+                                     np.linspace(1, 0, N/2)), axis=None)
+        pm_cmap = mp.colors.ListedColormap(vals)
+        return ct_cmap, mask_cmap, pm_cmap
+
+    def get_bitmap(self, type, window=1, limit=200):
+        valid_types = ['fasta', 'ct', 'rings', 'log', 'pairs']
+        assert type in valid_types, f'Please provide valid type: {valid_types}'
+
+        size = self.length
+        if type == 'fasta':
+            seq = self.profile['Sequence'].copy()
+            bitmap = np.zeros((size, size))
+            for i in range(size):
+                for j in range(size):
+                    if (i > j) or seq[i].islower() or seq[j].islower():
+                        bitmap[i, j] = 1
+        elif type == 'ct':
+            bitmap = np.ones((size, size))
+            basepairs = self.ct.pairList()
+            for x in [-1, 0, 1]:
+                for y in [-1, 0, 1]:
+                    for i, j in basepairs:
+                        bitmap[i+x-1, j+y-1] = 0
+        elif type == 'rings':
+            bitmap = np.zeros((size, size))
+            corrs = self.rings
+            for i in range(window*window):
+                x = i % window
+                y = int(i/window)
+                bitmap[corrs.i+x, corrs.j+y] += corrs.Statistic*corrs['+/-']
+            bitmap[bitmap > limit] = limit
+            bitmap[bitmap < -limit] = -limit
+            bitmap = bitmap/limit
+            bitmap[0, 0] = 1
+            bitmap[0, 1] = -1
+            bitmap += 1
+            bitmap /= 2
+        elif type == 'log':
+            bitmap = np.ones((size, size))
+            with open(type) as f:
+                for line in f.readlines():
+                    if line.startswith('Pair '):
+                        pair = line.split()[1].strip('()').split(',')
+                        bitmap[pair[0], pair[1]] = 0
+        elif type == 'pairs':
+            bitmap = np.zeros((size, size))
+            pairs = self.pairs
+            primary = pairs[pairs['Class'] == 1]
+            secondary = pairs[pairs['Class'] == 2]
+            for i in range(9):
+                x = i % 3
+                y = int(i/3)
+                bitmap[secondary['i']+x, secondary['j']+y] = 0.5
+            for i in range(9):
+                x = i % 3
+                y = int(i/3)
+                bitmap[primary['i']+x, primary['j']+y] = 1
+        return bitmap
