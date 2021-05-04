@@ -59,7 +59,6 @@ mp.rcParams['legend.fontsize'] = 14
 mp.rcParams['grid.color'] = ".8"
 mp.rcParams['grid.linestyle'] = '-'
 mp.rcParams['grid.linewidth'] = 1
-mp.use('Agg')
 
 
 rx_color = "red"
@@ -1594,7 +1593,7 @@ def array_ap(samples=[], rows_cols=None, **kwargs):
     rcn = rows*100 + columns*10
     axes = [fig.add_subplot(rcn+i+1) for i in range(len(samples))]
     for i, sample in enumerate(samples):
-        sample.make_ap(ax=axes[i], type='rings', **kwargs)
+        sample.make_ap(ax=axes[i], **kwargs)
 
 
 def array_qc(samples=[]):
@@ -1631,3 +1630,9 @@ def array_ss(samples, **kwargs):
     fig, ax = plt.subplots(1, 4, figsize=samples[0].get_ss_figsize(1, 4))
     for i, sample in enumerate(samples):
         sample.make_ss(ax[i], **kwargs)
+
+###############################################################################
+# Parsing arguments
+#
+#
+###############################################################################
