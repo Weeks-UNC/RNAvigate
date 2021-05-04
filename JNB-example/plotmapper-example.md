@@ -58,24 +58,23 @@ def kwargs(sample):
     kwargs = {}
     kwargs["profile"] = path+sample+"_rnasep_profile.txt"
     kwargs["ctfile"] = path+"RNaseP.ct"
-    kwargs["structure"] = path+"RC_CRYSTAL_STRUCTURE.xrna"
+    kwargs["ss"] = path+"RC_CRYSTAL_STRUCTURE.xrna"
     kwargs["ringfile"] = path+sample+"-rnasep.corrs"
     kwargs["pairfile"] = path+sample+"-rnasep-pairmap.txt"
     kwargs["logfile"] = path+sample+"_shapemapper_log.txt"
     kwargs["dance_reactivities"] = path+sample+"_rnasep-reactivities.txt"
     return kwargs
 
-example = MaP.Sample(sample="example", **kwargs("example"), structure_cassettes=True)
+example = MaP.Sample(sample="example", **kwargs("example"))
 # equivalent to:
 # example = MaP.Sample(sample="example",
 #                      profile='data/example_rnasep_profile.txt',
 #                      ctfile='data/RNaseP.ct',
-#                      structure='data/RC_CRYSTAL_STRUCTURE.xrna',
+#                      ss='data/RC_CRYSTAL_STRUCTURE.xrna',
 #                      ringfile='data/example-rnasep.corrs',
 #                      pairfile='data/exampleexample-rnasep-pairmap.txt',
 #                      logfile='data/example_shapemapper_log.txt',
-#                      dance_reactivities='data/example_rnasep-reactivities.txt',
-#                      structure_cassettes=True)
+#                      dance_reactivities='data/example_rnasep-reactivities.txt')
 ```
 
     Note: T nucleotides have been recoded as U
@@ -103,6 +102,7 @@ Classic ShapeMapper Plots
 
 ```python
 example.make_shapemapper()
+
 ```
 
 
@@ -116,13 +116,13 @@ Skyline Plots
 ```python
 example.make_skyline()
 # def make_skyline(self, column="Reactivity_profile"):
-#         fig, ax = plt.subplots(1, figsize=self.get_skyline_figsize(1, 1))
-#         self.plot_skyline(ax)
-#         self.plot_sequence(ax)
-#         ax.set(title="Raw Reactivity Profile",
-#                xlim=[0, self.length],
-#                xticks=range(0, self.length, 20))
-#         ax.legend(title="Samples")
+#     fig, ax = plt.subplots(1, figsize=self.get_skyline_figsize(1, 1))
+#     self.plot_skyline(ax)
+#     self.plot_sequence(ax)
+#     ax.set(title="Raw Reactivity Profile",
+#            xlim=[0, self.length],
+#            xticks=range(0, self.length, 20))
+#     ax.legend(title="Samples")
 ```
 
 
