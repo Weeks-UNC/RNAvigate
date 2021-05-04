@@ -7,15 +7,11 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import seaborn as sns
 import pandas as pd
-from scipy import stats
 import numpy as np
-from numpy import nanpercentile as percentile
-import xml.etree.ElementTree as xmlet
-from Bio.pairwise2 import align, format_alignment
+from scipy import stats
 
 # packages from github.com/Weeks-UNC
 import RNAtools2 as rna
-import pmanalysis as pm
 
 
 def create_code_button():
@@ -84,6 +80,14 @@ class Sample():
                  rings=None,
                  pairs=None,
                  dance_reactivities=None):
+        self.paths = {"profile": profile,
+                      "ct": ct,
+                      "comptct": compct,
+                      "ss": ss,
+                      "log": log,
+                      "rings": rings,
+                      "pairs": pairs,
+                      "dance_reactivities": dance_reactivities}
         self.sample = sample
         if profile is not None:
             self.profile = pd.read_csv(profile, sep='\t')
@@ -133,6 +137,7 @@ class Sample():
 ###############################################################################
 
     def read_xrna(self, xrnafile):
+        import xml.etree.ElementTree as xmlet
         tree = xmlet.parse(xrnafile)
         root = tree.getroot()
         # extract sequence, x and y coordinates
@@ -166,6 +171,7 @@ class Sample():
         self.ycoordinates = np.array(ycoords)/20
 
     def read_varna(self, varnafile):
+        import xml.etree.ElementTree as xmlet
         tree = xmlet.parse(varnafile)
         root = tree.getroot()
         # extract sequence, y and x coordinates
@@ -800,7 +806,7 @@ class Sample():
                     linestyle=(0, (1, 1)), zorder=0)
         ax.plot(self.xcoordinates, self.ycoordinates, color='grey', zorder=0)
 
-    def set_ss_seqcolors(self):
+    def get_ss_seqcolors(self, colors):
         """creates an array of white and black that contrasts well with the
         given color array
         """
@@ -815,7 +821,8 @@ class Sample():
                 return 'white'
             else:
                 return 'black'
-        self.letter_colors = np.apply_along_axis(whiteOrBlack, 0, self.colors)
+        letter_colors = np.apply_along_axis(whiteOrBlack, 0, colors)
+        return letter_colors
 
     def plot_ss_sequence(self, ax, colorby='sequence', markers='o'):
         """plots the location of nucleotides on top of the secondary structure
@@ -1081,7 +1088,7 @@ class Sample():
         sample = self.profile
         # choose a decent range for axis, excluding high-background positions
         temp_rates = sample['Modified_rate'][sample['Untreated_rate'] <= 0.05]
-        near_top_rate = percentile(temp_rates, 98.0)
+        near_top_rate = np.nanpercentile(temp_rates, 98.0)
         maxes = np.array([0.32, 0.16, 0.08, 0.04, 0.02, 0.01])
         ymax = np.amin(maxes[maxes > near_top_rate])
         rx_err = sample['Modified_rate'] / sample['Modified_effective_depth']
@@ -1160,10 +1167,50 @@ class Sample():
 
 ##############################################################################
 # CONSTRUCTION ZONE
+#     writeCTE
 #     plot_regression
 #     get_boxplot_data
 #     plot_boxplot
 ##############################################################################
+
+    def get_pairs_sens_PPV(self):
+        "Returns sensitivity and PPV for pair data to the ct structure"
+        import pmanalysis as pma
+        pm = pma.PairMap(self.paths["pairs"])
+        ct = self.ct.copy()
+        ct.filterNC()
+        ct.filterSingleton()
+        p, s = pm.ppvsens_duplex(ct, ptype=1, exact=False)
+        return p, s
+
+    def writeCTE(self, outputPath):
+        """writes the current structure out to CTE format for Structure Editor.
+
+        Args:
+            outputPath (string): path to output cte file to be created
+        """
+        pairs = [tuple(pair) for pair in self.pairs]
+        ct = RNA.CT()
+        ct.pair2CT(pairs=pairs, seq=self.sequence)
+        # set scaling factors based on data source.
+        xscale = {'xrna': 1.525, 'varna': 0.469,
+                  'nsd': 1, 'cte': 1}[self.ss_type]
+        yscale = {'xrna': -1.525, 'varna': 0.469,
+                  'nsd': 1, 'cte': 1}[self.ss_type]
+        ctlen = len(ct.num)
+        w = open(outputPath, 'w')
+        w.write('{0:6d} {1}\n'.format(ctlen, ct.name))
+        line = ('{0:5d} {1} {2:5d} {3:5d} {4:5d} {0:5d}' +
+                ' ;! X: {5:5d} Y: {6:5d}\n')
+        for i in range(ctlen):
+            xcoord = round(xscale*self.xcoordinates[i])
+            ycoord = round(yscale*self.ycoordinates[i])
+            num, seq, cti = ct.num[i], ct.seq[i], ct.ct[i]
+            # no nums after ctlen, resets to zero
+            nextnum = (num+1) % (ctlen+1)
+            cols = [num, seq, num-1, nextnum, cti, xcoord, ycoord]
+            w.write(line.format(*cols))
+        w.close()
 
     def plot_regression(self, comp_sample, ax=None, colorby="ct",
                         column="Reactivity_profile"):
@@ -1260,6 +1307,7 @@ class Sample():
                xticklabels=xticklabels)
 
 ###############################################################################
+# CONSTRUCTION ZONE
 # Heatmap plotting functions
 # TODO: This code needs to be reworked.
 #     plotCorrs2D
@@ -1402,6 +1450,7 @@ class Sample():
 ###############################################################################
 
     def get_alignment(self, fit_this, to_that):
+        from Bio.pairwise2 import align, format_alignment
         this_sequence = getattr(self, f"{fit_this}_sequence").upper()
         that_sequence = getattr(self, f"{to_that}_sequence").upper()
         alignment = align.globalxs(this_sequence, that_sequence, -1, -0.1,
