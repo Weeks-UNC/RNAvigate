@@ -7,9 +7,16 @@ data types.
 
 To-Do List
 ----------
-- [ ] read pdb, clip_pad and compute 3d distances
+- [ ] add command line interface
 - [ ] read deletion files and add to arc plots and secondary structure
-- [ ] rename variables profile, ct, ss to map, 1d, 2d
+- [ ] implement for pdb:
+  - [ ] read data
+  - [ ] assign clip_pad
+  - [ ] compute 3d distances
+  - [ ] add contacts to heatmap, arc plot, or secondary structure
+  - [ ] make py3dmol view
+  - [ ] add data to view using addLine or addCylinder
+    - [ ] rings, deletions, maybe pairs
 - [ ] Make qc plot for multiple samples less ugly.
 
 Features
