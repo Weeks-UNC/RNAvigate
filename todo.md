@@ -7,16 +7,9 @@ data types.
 
 To-Do List
 ----------
-- [ ] add command line interface
-- [ ] read deletion files and add to arc plots and secondary structure
+- [ ] remove seperate plot data functions for ap and ss
 - [ ] implement for pdb:
-  - [ ] read data
-  - [ ] assign clip_pad
-  - [ ] compute 3d distances
   - [ ] add contacts to heatmap, arc plot, or secondary structure
-  - [ ] make py3dmol view
-  - [ ] add data to view using addLine or addCylinder
-    - [ ] rings, deletions, maybe pairs
 - [ ] Make qc plot for multiple samples less ugly.
 
 Features
@@ -35,16 +28,16 @@ A python interface and CLI interface for all of the following:
 | QC plots  | Y   | Y        | ---   | ---   | ---   | ---       | ---       | Y     |
 | Regression| --- | Y        |       | ---   | ---   | ---       | ---       |       |
 | skyline   | --- | Y        | Y     | ---   | ---   | ---       |           | Y     |
-| arc plots | --- | Y        | ---   | Y     | Y     |           |           | Y     |
-| secondary | --- | Y        | ---   | Y     | ???   |           |           | Y     |
-| tertiary  | --- |          | ---   |       |       |           |           |       |
+| arc plots | --- | Y        | ---   | Y     | Y     | Y         |           | Y     |
+| secondary | --- | Y        | ---   | Y     | Y     | Y         |           | Y     |
+| tertiary  | --- | Y        | ---   | Y     | Y     | Y         |           |       |
 | heatmaps  | --- |          |       | meh   | meh   |           |           |       |
 
 - Reading in structural information
 
 | ct | compct | xrna | varna | nsd | cte | pdb |
 |----|--------|------|-------|-----|-----|-----|
-| Y  | Y      | Y    | Y     | Y   | Y   |     |
+| Y  | Y      | Y    | Y     | Y   | Y   | Y   |
 
 - Analyses
   - [ ] RNP-MaP

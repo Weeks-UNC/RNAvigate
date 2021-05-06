@@ -14,6 +14,8 @@ plotmapper.py
 Examples:
 * [single sample plots](JNB-example/plotmapper-example.md)
 * [multiple samples plots](JNB-example/plotmapper-multiple-examples.md)
+* [Arc Plot options](JNB-example/ap_test.md)
+* [Secondary Structure options](JNB-example/ss_test.md)
 
 ### Old code
 The old code that made up this repo is still being stored here, but has been
