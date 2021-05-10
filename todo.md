@@ -7,10 +7,12 @@ data types.
 
 To-Do List
 ----------
-- [ ] remove seperate plot data functions for ap and ss
 - [ ] implement for pdb:
   - [ ] add contacts to heatmap, arc plot, or secondary structure
 - [ ] Make qc plot for multiple samples less ugly.
+- [ ] add colorbar for ap, ss, pdb plots
+- [ ] pairwise regression scatterplots with kde along diagonal.
+- [ ] support for filtering by ct and compct simultaneously.
 
 Features
 --------
@@ -24,14 +26,14 @@ A python interface and CLI interface for all of the following:
 
 | plot type | log | profiles | dance | rings | pairs | deletions | frag-jump | array |
 |-----------|-----|----------|-------|-------|-------|-----------|-----------|-------|
-| load data | Y   | Y        | Y     | Y     | Y     |           |           | ----- |
+| load data | Y   | Y        | Y     | Y     | Y     | Y         |           | ----- |
 | QC plots  | Y   | Y        | ---   | ---   | ---   | ---       | ---       | Y     |
 | Regression| --- | Y        |       | ---   | ---   | ---       | ---       |       |
 | skyline   | --- | Y        | Y     | ---   | ---   | ---       |           | Y     |
 | arc plots | --- | Y        | ---   | Y     | Y     | Y         |           | Y     |
 | secondary | --- | Y        | ---   | Y     | Y     | Y         |           | Y     |
 | tertiary  | --- | Y        | ---   | Y     | Y     | Y         |           |       |
-| heatmaps  | --- |          |       | meh   | meh   |           |           |       |
+| heatmaps  | --- |          |       | Y     | Y     |           |           |       |
 
 - Reading in structural information
 
