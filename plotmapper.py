@@ -9,6 +9,7 @@ import seaborn as sns
 import pandas as pd
 import numpy as np
 from scipy import stats
+import math
 
 # packages from github.com/Weeks-UNC
 import RNAtools2 as rna
@@ -43,6 +44,61 @@ colors = [
     '#3fd125ff'  # Green
 ]
 sns.set_palette(colors)
+
+# Hard coded defaults
+###############################################################################
+
+
+def get_default_fill(metric):
+    fill = {'Class': -1,
+            'Statistic': 0.0,
+            'Zij': 0.0,
+            'Metric': 0.0,
+            'Distance': 1000,
+            'Percentile': 0.0}[metric]
+    return fill
+
+
+def get_default_cmap(metric):
+    cmap = {'Class': mp.colors.ListedColormap([[0.3, 0.3, 0.3, 0.2],
+                                               [0.0, 0.0, 0.95, 0.6],
+                                               [0.12, 0.76, 1.0, 0.6]]),
+            'Statistic': 'bwr',
+            'Zij': 'bwr',
+            'Metric': 'YlGnBu',
+            'Distance': 'cool',
+            'Percentile': 'YlGnBu'
+            }[metric]
+    cmap = plt.get_cmap(cmap)
+    cmap = cmap(np.arange(cmap.N))
+    cmap[:, -1] = np.full((len(cmap)), 0.6)  # set default alpha to 0.6
+    if metric == 'Class':
+        cmap[0, -1] = 0.2  # alpha of non primary and secondary pairs to 0.2
+    if metric == 'Distance':
+        # set color of max distance and no data distances to gray
+        cmap[-1, :] = np.array([80/255., 80/255., 80/255., 0.2])
+    cmap = mp.colors.ListedColormap(cmap)
+    return cmap
+
+
+def get_default_metric(attribute):
+    metric = {'rings': 'Statistic',
+              'pairs': 'Class',
+              'deletions': 'Percentile'
+              }[attribute]
+    return metric
+
+
+def get_default_min_max(metric):
+    min_max = {'Percentile': [0.98, 1.0],
+               "Statistic": [-100, 100],
+               'Zij': [-50, 50],
+               "Class": [0, 2],
+               "Metric": [0, 0.001],
+               'Distance': [0, 50]
+               }[metric]
+    return min_max
+
 
 # COPIED FROM SHAPEMAPPER2
 # some of this might be inappropriately applied to all plots
@@ -108,15 +164,17 @@ class Sample():
             self.compct_length = len(self.compct.seq)
             self.compct_sequence = ''.join(self.compct.seq)
         if rings is not None:
+            assert hasattr(self, "profile"), "Rings plotting requires profile."
             self.read_ring(rings)
             self.rings_sequence = self.profile_sequence
             self.rings_length = self.profile_length
         if pairs is not None:
+            assert hasattr(self, "profile"), "Pairs plotting requires profile."
             self.read_pair(pairs)
             self.pairs_sequence = self.profile_sequence
             self.pairs_length = self.profile_length
         if deletions is not None:
-            assert fasta is not None, "deletions requires reference fasta"
+            assert fasta is not None, "Deletions plotting requires fasta"
             self.read_deletions(deletions, fasta)
         if ss is not None:
             # get and check file extension, then read
@@ -131,7 +189,7 @@ class Sample():
         if dance_reactivities is not None:
             self.read_dance_reactivities(dance_reactivities)
         if pdb is not None:
-            assert pdb_name is not None, "pdb parsing requires pdb_name"
+            assert pdb_name is not None, "pdb parsing requires PDB entry name"
             import Bio.PDB
             parser = Bio.PDB.PDBParser()
             self.pdb = parser.get_structure(pdb_name, pdb)
@@ -154,12 +212,10 @@ class Sample():
 #       read_nsd Kludgey AF
 #   MaP data files
 #       read_ring
+#       read_deletions
 #       read_pair
 #       read_log
 #       read_dance_reactivities
-#   Future:
-#       read_jumpdeletions
-#       etc.
 ###############################################################################
 
     def read_xrna(self, xrnafile):
@@ -291,8 +347,10 @@ class Sample():
     def read_log(self, log):
         with open(log, 'r') as f:
             flist = list(f)
+            log_format_test = 0
             for i, line in enumerate(flist):
                 if line.startswith("  |MutationCounter_Modified"):
+                    log_format_test += 1
                     modlength = []
                     for x in flist[i+6:i+27]:
                         modlength.append(float(x.strip().split('\t')[1]))
@@ -300,12 +358,16 @@ class Sample():
                     for x in flist[i+32:i+53]:
                         modmuts.append(float(x.strip().split('\t')[1]))
                 if line.startswith("  |MutationCounter_Untreated"):
+                    log_format_test += 1
                     untlength = []
                     for x in flist[i+6:i+27]:
                         untlength.append(float(x.strip().split('\t')[1]))
                     untmuts = []
                     for x in flist[i+32:i+53]:
                         untmuts.append(float(x.strip().split('\t')[1]))
+        message = ("Histogram data missing from log file. Requires" +
+                   " --per-read-histogram flag when running ShapeMapper.")
+        assert log_format_test >= 2, message
         data = {'Read_length': ['0-49', '50-99', '100-149', '150-199',
                                 '200-249', '250-299', '300-349', '350-399',
                                 '400-449', '450-499', '500-549', '550-599',
@@ -463,6 +525,8 @@ class Sample():
 #     set_log_ReadLength
 #     make_log_ReadLength
 #     make_log_qc
+#     get_boxplot_data
+#     plot_boxplot
 ###############################################################################
 
     def plot_log_MutsPerMol(self, ax, sample="Modified", upper_limit=10):
@@ -561,6 +625,47 @@ class Sample():
         self.plot_boxplot(ax[2])
         plt.tight_layout()
 
+    def get_boxplot_data(self, sample=1,
+                         cols=["Modified_rate", "Untreated_rate"]):
+        """Returns slice of profile with additional ID column "Sample" for easy
+        use with sns.boxplot
+
+        Args:
+            sample (int, optional): x-value for this sample's boxplot.
+                Defaults to 1.
+            cols (list, optional): list of columns from profile to use.
+                Defaults to ["Modified_rate", "Untreated_rate"].
+
+        Returns:
+            DataFrame: slice of profile formatted for sns.boxplot
+        """
+        data = self.profile[cols].copy()
+        data = data.assign(Sample=sample)
+        return data
+
+    def plot_boxplot(self, ax, other_samples=[]):
+        """Plots a boxplot for self and other samples on the given axis.
+
+        Args:
+            ax (pyplot axis): axis on which to add plot
+            other_samples (list, optional): list of other MaP Samples to plot.
+                Defaults to empty list.
+        """
+        data = [self.get_boxplot_data(sample=1)]
+        xticklabels = [self.sample]
+        for i, sample in enumerate(other_samples):
+            data.append(sample.get_boxplot_data(sample=i+2))
+            xticklabels.append(sample.sample)
+        data = pd.concat(data)
+        data = pd.melt(data, id_vars=['Sample'], var_name=['Rate'])
+        data.head()
+        ax = sns.boxplot(x="Sample", y="value",
+                         hue='Rate', data=data, orient='v')
+        ax.set(yscale='log',
+               ylim=(0.0005, 0.5),
+               ylabel="Mutation Rate",
+               xticklabels=xticklabels)
+
 ###############################################################################
 # Arc Plot plotting functions
 #     add_arc
@@ -569,14 +674,13 @@ class Sample():
 #     plot_ap_ct
 #     plot_ap_ctcompare
 #     plot_ap_profile
-#     plot_ap_rings
-#     plot_ap_pairs
+#     plot_ap_data
 #     make_ap
 #     Future:
 #         plot_ap_probabilities
 ###############################################################################
 
-    def add_arc(self, ax, i, j, window, color, alpha, panel):
+    def add_arc(self, ax, i, j, window, color, panel):
         """internal function used to add arcs based on data
 
         Args:
@@ -585,7 +689,6 @@ class Sample():
             j (int): leftmost position of right side
             window (int): number of nucleotides included in arc
             color (color): color of arc
-            alpha (float): transparency value [0-1]
             panel (str): "top" or "bottom" panel of arc plot
         """
         if panel == "top":
@@ -598,7 +701,7 @@ class Sample():
             theta2 = 360
         radius = 0.5+(j+window-1-i)/2.
         arc = mp.patches.Wedge(center, radius, theta1, theta2, color=color,
-                               alpha=alpha, width=window, ec='none')
+                               width=window, ec='none')
         ax.add_patch(arc)
 
     def get_ap_figsize(self, rows, cols, sequence="profile"):
@@ -632,7 +735,7 @@ class Sample():
         ax.set(xlim=(0, self.ct_length),
                ylim=(-height-5, height+1))
 
-    def plot_ap_ct(self, ax):
+    def plot_ap_ct(self, ax, panel='top'):
         """Adds arc plot representation of the ct structure to given axis
 
         Args:
@@ -641,7 +744,7 @@ class Sample():
         """
         ct_pairs = self.ct.pairList()
         for i, j in ct_pairs:
-            self.add_arc(ax, i, j, 1, 'black', 0.7, 'top')
+            self.add_arc(ax, i, j, 1, (0.1, 0.1, 0.1, 0.7), panel)
 
     def plot_ap_ctcompare(self, ax, panel='top'):
         """Adds structure comparison arc plot to the given axis
@@ -656,15 +759,15 @@ class Sample():
         shared = ct1.union(ct2)
         ref = ct1.difference(ct2)
         comp = ct2.difference(ct1)
-        sharedcolor = (150/255., 150/255., 150/255.)
-        refcolor = (38/255., 202/255., 145/255.)
-        compcolor = (153/255., 0.0, 1.0)
+        sharedcolor = (150/255., 150/255., 150/255., 0.7)
+        refcolor = (38/255., 202/255., 145/255., 0.7)
+        compcolor = (153/255., 0.0, 1.0, 0.7)
         for i, j in comp:
-            self.add_arc(ax, i, j, 1, compcolor, 0.7, panel)
+            self.add_arc(ax, i, j, 1, compcolor, panel)
         for i, j in ref:
-            self.add_arc(ax, i, j, 1, refcolor, 0.7, panel)
+            self.add_arc(ax, i, j, 1, refcolor, panel)
         for i, j in shared:
-            self.add_arc(ax, i, j, 1, sharedcolor, 0.7, panel)
+            self.add_arc(ax, i, j, 1, sharedcolor, panel)
         handles = [mp.patches.Patch(color=sharedcolor, alpha=0.7),
                    mp.patches.Patch(color=refcolor, alpha=0.7),
                    mp.patches.Patch(color=compcolor, alpha=0.7)]
@@ -696,20 +799,17 @@ class Sample():
                yerr=self.profile['Norm_stderr'], ecolor=near_black, capsize=1)
         self.plot_sequence(ax, 'ct', yvalue=0.5)
 
-    def plot_ap_data(self, ax, attribute, metric=None, all_pairs=False, **kwargs):
-        self.filter_ij_data(attribute, "ct", **kwargs)
+    def plot_ap_data(self, ax, attribute, metric=None, all_pairs=False,
+                     **kwargs):
+        self.filter_ij_data(attribute, "ct", all_pairs=all_pairs, **kwargs)
         ij_colors = self.get_ij_colors(attribute, metric)
-        alpha = 0.6
         if attribute in ['rings', 'pairs']:
             window = getattr(self, attribute+"_window")
         else:
             window = 1
         for i, j, color in zip(*ij_colors):
-            if color == 'gray':
-                if all_pairs is True or metric == "distance":
-                    self.add_arc(ax, i, j, window, color, 0.2, "bottom")
-            else:
-                self.add_arc(ax, i, j, window, color, 0.6, "bottom")
+            self.add_arc(ax, i, j, window, color, "bottom")
+
         # TODO: create invisible axis and create colorbar
         # from mpl_toolkits.axes_grid1.inset_locator import inset_axes
         # axins1 = inset_axes(ax, width="5%", height="5%", loc='lower left')
@@ -718,65 +818,6 @@ class Sample():
         # fig.colorbar(im1, cax=axins2, ticks=min_max)
         # axins2.set_title(metric)
         # axins1.set_visible(False)
-
-    def plot_ap_deletions(self, ax, column='Percentile', **kwargs):
-        self.filter_ij_data("deletions", "ct", **kwargs)
-        cmap = plt.get_cmap("YlGnBu")
-        filtered = self.deletions[self.deletions['mask']].copy()
-        filtered = filtered.sort_values(by=['Metric'])
-        filtered[column] = filtered[column].rank(method="max", pct=True)
-        for i, j, column in zip(filtered['i_offset'], filtered['j_offset'],
-                                filtered[column]):
-            self.add_arc(ax, i, j, 1, cmap(column), 0.6, 'bottom')
-
-    def plot_ap_rings(self, ax, column="Statistic", min_max=None, **kwargs):
-        """Adds ring correlation information to the arc plot
-
-        Args:
-            ax (pyplot axis): axis on which to add data
-            statistic (str, optional): Options are 'z' or 'Statistic'.
-                    Defaults to "Statistic".
-            min_max (list of 2 ints, optional): min and max value for colormap
-                    Defaults to [-50, 50] for 'z', [-100, 100] for 'Statistic'.
-        """
-        # Blue to light gray to red.
-        self.filter_ij_data("rings", "ct", **kwargs)
-        cmap = plt.get_cmap("coolwarm")
-        if min_max is None:
-            min_max = {'z': [-5, 5], 'Statistic': [-100, 100]}[column]
-        # rings are plotted from lowest to highest
-        masked = self.rings[self.rings['mask']].copy()
-        # create new column to hold values and scale to 0-1 for coloring
-        masked['Val'] = masked[column]*masked["+/-"]
-        masked = masked.sort_values("Val")
-        masked[masked['Val'] < min_max[0]] = min_max[0]
-        masked[masked['Val'] > min_max[1]] = min_max[1]
-        masked['Val'] = masked['Val'].rank(method="max", pct=True)
-        # add arcs
-        for i, j, m in zip(masked.i_offset, masked.j_offset, masked.Val):
-            self.add_arc(ax, i, j, self.rings_window, cmap(m), 0.5, 'bottom')
-
-    def plot_ap_pairs(self, ax, all=False):
-        """add PAIR-MaP data to the given axis
-
-        Args:
-            ax (pyplot axis): axis to which PAIR data is added
-            pairmappath (str): path to PairMapper data file
-            window (int, optional): Window size used in pairmapper.
-                    Defaults to 3.
-        """
-        window = self.pairs_window
-        pairs = self.pairs
-        colors = ['gray', (0., 0., 243/255.), (30/255., 194/255., 1.)]
-        alphas = [0.1, 0.7, 0.4]
-        # group: 0=others, 1=primary, 2=secondary
-        for group, i, j, in zip(pairs.Class, pairs.i, pairs.j):
-            color = colors[group]
-            alpha = alphas[group]
-            if group in [1, 2]:
-                self.add_arc(ax, i, j, window, color, alpha, 'bottom')
-            if all and group == 0:
-                self.add_arc(ax, i, j, window, color, alpha, 'bottom')
 
     def make_ap(self, ax=None, attribute=None, metric=None, all_pairs=False,
                 ctcompare=True, **kwargs):
@@ -798,18 +839,21 @@ class Sample():
             self.plot_ap_ct(ax)
         if hasattr(self, "profile"):
             self.plot_ap_profile(ax)
+        if metric == "Distance":
+            self.set_3d_distances(attribute)
         if attribute is not None:
             self.plot_ap_data(ax, attribute, metric, all_pairs, **kwargs)
         self.plot_sequence(ax, "ct", yvalue=0.5)
         ax.annotate(self.sample, xy=(0.1, 0.9),
                     xycoords="axes fraction", fontsize=60, ha='center')
+        return ax
 
 ###############################################################################
 # Secondary Structure graph plotting functions
 #     get_ss_figsize
 #     set_ss
 #     plot_ss_structure
-#     set_ss_seqcolors
+#     get_ss_seqcolors
 #     plot_ss_sequence
 #     plot_ss_rings
 #     plot_ss_positions
@@ -916,77 +960,24 @@ class Sample():
             ax.scatter(self.xcoordinates, self.ycoordinates, marker=markers,
                        c=colors)
 
-    def add_ss_lines(self, ax, i, j, color, alpha):
+    def add_ss_lines(self, ax, i, j, color, linewidth=1.5):
         xi = self.xcoordinates[i-1]
         yi = self.ycoordinates[i-1]
         xj = self.xcoordinates[j-1]
         yj = self.ycoordinates[j-1]
-        ax.plot([xi, xj], [yi, yj], color=color, alpha=alpha)
+        ax.plot([xi, xj], [yi, yj], color=color, linewidth=linewidth)
 
     def plot_ss_data(self, ax, attribute, metric=None, all_pairs=False,
                      **kwargs):
-        self.filter_ij_data(attribute, "ss", **kwargs)
+        self.filter_ij_data(attribute, "ss", all_pairs=all_pairs, **kwargs)
         ij_colors = self.get_ij_colors(attribute, metric)
-        alpha = 0.6
         for i, j, color in zip(*ij_colors):
-            if color == 'gray':
-                if all_pairs is True or metric == "distance":
-                    self.add_ss_lines(ax, i, j, color, 0.2)
+            if attribute == 'pairs':
+                for w in range(self.pairs_window):
+                    self.add_ss_lines(ax, i+w, j+self.pairs_window-1-w,
+                                      color, linewidth=6)
             else:
-                self.add_ss_lines(ax, i, j, color, alpha)
-
-    def plot_ss_deletions(self, ax, column='Percentile', **kwargs):
-        self.filter_ij_data("deletions", "ss", **kwargs)
-        cmap = plt.get_cmap("YlGnBu")
-        filtered = self.deletions[self.deletions['mask']].copy()
-        filtered = filtered.sort_values(by=['Metric'])
-        filtered[column] = filtered[column].rank(method="max", pct=True)
-        for i, j, column in zip(filtered['i_offset'], filtered['j_offset'],
-                                filtered[column]):
-            self.add_arc(ax, i, j, 1, cmap(column), 0.6, 'bottom')
-
-    def plot_ss_rings(self, ax, statistic="Statistic", bins=None, **kwargs):
-        """Adds ring correlations as colored lines to the secondary structure
-        graph.
-
-        Args:
-            ax (pyplot axis): axis on which to add data
-            statistic (str, optional): Options are 'z' or 'Statistic'.
-                    Defaults to "Statistic".
-            bins (list of 2 ints, optional): statistic bins used for coloring.
-                    Defaults to None (5, 50 for 'z', 20, 100 for 'Statistic').
-        """
-        # Blue to light gray to red.
-        self.filter_ij_data("rings", "ss", **kwargs)
-        cmap = plt.get_cmap("coolwarm")
-
-        if statistic == 'z':
-            if bins is None:
-                bins = [-50, -5, -1, 0, 1, 5, 50]
-            else:
-                bins = [-1e10, -bins[1], -bins[0], 0, bins[0], bins[1], 1e10]
-        else:
-            if bins is None:
-                bins = [-1e10, -100, -20, 0, 20, 100, 1e10]
-            else:
-                bins = [-1e-10, -bins[1], -bins[0], 0, bins[0], bins[1], 1e10]
-        # rings are plotted from lowest to highest
-        filtered = self.rings[self.rings['mask']].sort_values(by=['Statistic'])
-        for i, j, stat, sign in zip(filtered['i_offset'], filtered['j_offset'],
-                                    filtered[statistic], filtered["+/-"]):
-            xcoords = [self.xcoordinates[i-1],
-                       self.xcoordinates[j-1+self.rings_window]]
-            ycoords = [self.ycoordinates[i-1],
-                       self.ycoordinates[j-1+self.rings_window]]
-            stat = stat*sign
-            if stat < bins[1]:
-                stat = 0.0
-            elif stat > bins[5]:
-                stat = 1.0
-            else:
-                stat = (stat - bins[1]) / (bins[5] - bins[1])
-            ax.plot(xcoords, ycoords,
-                    color=cmap(stat), alpha=0.5)
+                self.add_ss_lines(ax, i, j, color)
 
     def plot_ss_positions(self, ax, spacing=20):
         """adds position labels to the secondary structure graph
@@ -1003,36 +994,39 @@ class Sample():
                         xycoords='data', fontsize=16,
                         bbox=dict(fc="white", ec='none', pad=0.3))
 
-    def make_ss(self, ax=None, ss=True, positions=True, attribute=None,
-                metric=None, sequence=True, colorby='profile', markers='o',
-                all_pairs=False, **kwargs):
+    def make_ss(self, ax=None, attribute=None, metric=None, positions=True,
+                colorby='sequence', markers='o', all_pairs=False, **kwargs):
         """Creates a full secondary structure graph with data plotted
 
         Args:
-            ss (bool, optional): whether to plot skeleton.
-                    Defaults to True.
+            ax (pyplot axis, option): axis to plot
+            attribute (str, optional): string matching the attribute to plot.
+                    Options: rings, pairs, deletions.
+            metric (str, optional): string matching a column name of the
+                    attribute dataframe. Defaults defined at top of file.
             positions (bool, optional): whether to label positions.
                     Defaults to True.
-            rings (bool, optional): whether to plot rings.
-                    Defaults to True.
-            sequence (bool, optional): whether to add nucleotide markers.
-                    Defaults to True.
             colorby (str, optional): method used to color nucleotides.
-                    Defaults to 'profile'.
+                    Options: sequence, profile, positions
+                    Defaults to 'profile',
+                    If profile is missing, sequence is used.
             markers (str, optional): marker type to use for nucleotides.
-                    Defaults to 'o'.
+                    Defaults to 'o'. (dots)
         """
         if ax is None:
             fig, ax = plt.subplots(1, figsize=self.get_ss_figsize(1, 1))
         self.set_ss(ax)
-        if ss is True:
-            self.plot_ss_structure(ax)
-        if sequence is True:
-            self.plot_ss_sequence(ax, colorby=colorby, markers=markers)
+        self.plot_ss_structure(ax)
+        if hasattr(self, "profile"):
+            colorby = "profile"
+        self.plot_ss_sequence(ax, colorby=colorby, markers=markers)
         if positions is True:
             self.plot_ss_positions(ax)
+        if metric == "Distance":
+            self.set_3d_distances(attribute)
         if attribute is not None:
             self.plot_ss_data(ax, attribute, metric, all_pairs, **kwargs)
+        return ax
 
 ###############################################################################
 # Standard ShapeMapper plotting functions
@@ -1043,12 +1037,14 @@ class Sample():
 #     make_shapemapper
 ###############################################################################
 
-    def plot_sm_profile(self, axis):
+    def plot_sm_profile(self, axis=None):
         """Plots classic ShapeMapper normalized reactivity on the given axis
 
         Args:
             axis (pyplot axis): axis on which to add plot
         """
+        if axis is None:
+            _, axis = plt.subplots(figsize=self.get_skyline_figsize(1, 1))
         yMin, ymax = (-0.5, 4)
         near_black = (0, 0, 1 / 255.0)
         orange_thresh = 0.4
@@ -1100,7 +1096,8 @@ class Sample():
 
         yticks = axis.get_yticks()
         stripped_ticks = [str(int(val)) for val in yticks]
-        axis.set_yticklabels(stripped_ticks)
+        axis.set(yticks=yticks,
+                 yticklabels=stripped_ticks)
 
         for line in axis.get_yticklines():
             line.set_markersize(6)
@@ -1117,12 +1114,14 @@ class Sample():
         # put nuc sequence below axis
         self.plot_sequence(axis, "profile")
 
-    def plot_sm_depth(self, axis):
+    def plot_sm_depth(self, axis=None):
         """Plots classic ShapeMapper read depth on the given axis
 
         Args:
             axis (pyplot axis): axis on which to add plot
         """
+        if axis is None:
+            _, axis = plt.subplots(figsize=self.get_skyline_figsize(1, 1))
         sample = self.profile
         axis.plot(sample['Nucleotide'], sample['Modified_read_depth'],
                   linewidth=1.5, color=rx_color, alpha=1.0, label="Modified")
@@ -1146,10 +1145,8 @@ class Sample():
         axis.minorticks_on()
         axis.tick_params(axis='y', which='minor', left=False)
         yticks = [int(y) for y in axis.get_yticks()]
-        formatted_ticks = []
-        for val in yticks:
-            formatted_ticks.append(self.metric_abbreviate(val))
-        axis.set_yticklabels(formatted_ticks)
+        formatted_ticks = [self.metric_abbreviate(val) for val in yticks]
+        axis.set(yticks=yticks, yticklabels=formatted_ticks)
         for line in axis.get_yticklines():
             line.set_markersize(6)
             line.set_markeredgewidth(1)
@@ -1166,12 +1163,14 @@ class Sample():
         # but couldn't get positioning/transforms to work properly.
         # For now just putting in xaxis label
 
-    def plot_sm_rates(self, axis):
+    def plot_sm_rates(self, axis=None):
         """Plots classic ShapeMapper mutation rates on the given axis
 
         Args:
             axis (pyplot axis): axis on which to add plot
         """
+        if axis is None:
+            _, axis = plt.subplots(figsize=self.get_skyline_figsize(1, 1))
         sample = self.profile
         # choose a decent range for axis, excluding high-background positions
         temp_rates = sample['Modified_rate'][sample['Untreated_rate'] <= 0.05]
@@ -1206,8 +1205,9 @@ class Sample():
         axis.set_ylim((0, ymax))
         axis.minorticks_on()
         axis.tick_params(axis='y', which='minor', left=False)
-        ticks = [x * 100 for x in axis.get_yticks()]
-        axis.set_yticklabels([str(int(val)) for val in ticks])
+        yticks = axis.get_yticks()
+        yticklabels = [str(int(x*100)) for x in yticks]
+        axis.set(yticks=yticks, yticklabels=yticklabels)
         for line in axis.get_yticklines():
             line.set_markersize(6)
             line.set_markeredgewidth(1)
@@ -1261,17 +1261,32 @@ class Sample():
         return xyz
 
     def get_3d_distance(self, i, j):
-        xi, yi, zi = self.get_xyz_coord(i)
-        xj, yj, zj = self.get_xyz_coord(j)
-        distance = ((xi-xj)**2 + (yi-yj)**2 + (zi-zj)**2)**0.5
+        valid = [nt.get_id()[1] for nt in self.pdb[0]["A"].get_residues()]
+        if i in valid and j in valid:
+            xi, yi, zi = self.get_xyz_coord(i)
+            xj, yj, zj = self.get_xyz_coord(j)
+            distance = ((xi-xj)**2 + (yi-yj)**2 + (zi-zj)**2)**0.5
+        else:
+            distance = 1000
         return distance
+
+    def set_3d_distances(self, attribute):
+        self.filter_ij_data(attribute, "pdb")
+        data = getattr(self, attribute).copy()
+        if "Distance" not in data:
+            distances = []
+            for _, i, j in data[["i_offset", "j_offset"]].itertuples():
+                distances.append(self.get_3d_distance(i, j))
+            data["Distance"] = distances
+        setattr(self, attribute, data)
 
     def add_3d_lines(self, view, i, j, color, viewer=None):
         xi, yi, zi = self.get_xyz_coord(i)
         xj, yj, zj = self.get_xyz_coord(j)
         cylinder_specs = {"start": {"x": xi, "y": yi, "z": zi},
                           "end":  {"x": xj, "y": yj, "z": zj},
-                          "radius": 0.5, "fromCap": 1,
+                          "radius": 0.5,
+                          "fromCap": 2,
                           "toCap": 2,
                           "color": color}
         if viewer is not None:
@@ -1282,42 +1297,60 @@ class Sample():
     def plot_3d_data(self, view, attribute, metric=None, viewer=None,
                      **kwargs):
         self.filter_ij_data(attribute, "pdb", **kwargs)
+        valid = [nt.get_id()[1] for nt in self.pdb[0]["A"].get_residues()]
         ij_colors = self.get_ij_colors(attribute, metric)
         for i, j, color in zip(*ij_colors):
             color = mp.colors.rgb2hex(color)
             color = "0x"+color[1:]
-            i, j = int(i), int(j)
-            self.add_3d_lines(view, i, j, color, viewer)
+            if attribute in ['rings', 'pairs']:
+                window = getattr(self, attribute+"_window")
+                for w in range(window):
+                    io = i+w
+                    jo = j+window-1-w
+                    if io in valid and jo in valid:
+                        self.add_3d_lines(view, io, jo, color, viewer)
+            else:
+                self.add_3d_lines(view, i, j, color, viewer)
 
-    def make_3d(self, view=None, viewer=None, attribute=None, metric=None,
-                colorby="profile", **kwargs):
-        import py3Dmol
-        if view is None:
-            view = py3Dmol.view(query="pdb:"+self.pdb_name)
+    def set_3d_colors(self, view, colorby, viewer=None):
         colorby_function = getattr(self, "get_colorby_"+colorby)
         colors = colorby_function("pdb")
         for i, atom in enumerate(self.pdb.get_atoms()):
             nucleotide = atom.get_parent().get_id()[1]
             color = colors[nucleotide-1]
-            view.setStyle({'model': -1, 'serial': i+1},
-                          {"cartoon": {'color': color, 'opacity': 0.7}})
+            selector = {'model': -1, 'serial': i+1}
+            style = {"cartoon": {"color": color, "opacity": 0.8}}
+            if viewer is None:
+                view.setStyle(selector, style)
+            else:
+                view.setStyle(selector, style, viewer=viewer)
+
+    def make_3d(self, view=None, viewer=None, attribute=None, metric=None,
+                colorby="sequence", **kwargs):
+        import py3Dmol
+        if view is None:
+            view = py3Dmol.view(query="pdb:"+self.pdb_name)
+        if hasattr(self, "profile"):
+            colorby = "profile"
+        self.set_3d_colors(view, colorby, viewer)
+        if metric == "Distance":
+            self.set_3d_distances(attribute)
         if attribute is not None:
             self.plot_3d_data(view, attribute, metric, viewer, **kwargs)
         return view
 
 ##############################################################################
 # CONSTRUCTION ZONE
+#     get_pairs_sens_PPV
 #     writeCTE
 #     plot_regression
-#     get_boxplot_data
-#     plot_boxplot
 ##############################################################################
 
-    def get_pairs_sens_PPV(self):
+    def get_pairs_sens_PPV(self, ct="ct"):
         "Returns sensitivity and PPV for pair data to the ct structure"
         import pmanalysis as pma
         pm = pma.PairMap(self.paths["pairs"])
-        ct = self.ct.copy()
+        ct = getattr(self, ct).copy()
         ct.filterNC()
         ct.filterSingleton()
         p, s = pm.ppvsens_duplex(ct, ptype=1, exact=False)
@@ -1405,240 +1438,130 @@ class Sample():
                title=f'{s1} vs. {s2}: {column}')
         ax.legend(title=colorby)
 
-    def get_boxplot_data(self, sample=1,
-                         cols=["Modified_rate", "Untreated_rate"]):
-        """Returns slice of profile with additional ID column "Sample" for easy
-        use with sns.boxplot
-
-        Args:
-            sample (int, optional): x-value for this sample's boxplot.
-                Defaults to 1.
-            cols (list, optional): list of columns from profile to use.
-                Defaults to ["Modified_rate", "Untreated_rate"].
-
-        Returns:
-            DataFrame: slice of profile formatted for sns.boxplot
-        """
-        data = self.profile[cols].copy()
-        data = data.assign(Sample=sample)
-        return data
-
-    def plot_boxplot(self, ax, other_samples=[]):
-        """Plots a boxplot for self and other samples on the given axis.
-
-        Args:
-            ax (pyplot axis): axis on which to add plot
-            other_samples (list, optional): list of other MaP Samples to plot.
-                Defaults to empty list.
-        """
-        data = [self.get_boxplot_data(sample=1)]
-        xticklabels = [self.sample]
-        for i, sample in enumerate(other_samples):
-            data.append(sample.get_boxplot_data(sample=i+2))
-            xticklabels.append(sample.sample)
-        data = pd.concat(data)
-        data = pd.melt(data, id_vars=['Sample'], var_name=['Rate'])
-        data.head()
-        ax = sns.boxplot(x="Sample", y="value",
-                         hue='Rate', data=data, orient='v')
-        ax.set(yscale='log',
-               ylim=(0.0005, 0.5),
-               ylabel="Mutation Rate",
-               xticklabels=xticklabels)
-
 ###############################################################################
 # CONSTRUCTION ZONE
 # Heatmap plotting functions
-# TODO: This code needs to be reworked.
-#     plotCorrs2D
-#     getBitmapLegendHandles
-#     getCmaps
-#     get_bitmap
-#
-# ! Example usage, because you will never figure this out on your own.
-# # Create the plot
-# fig, ax = plt.subplots(1, figsize=(10, 10))
-# # Make and plot the bitmaps
-# ct = example.get_bitmap('ct')
-# mask = example.get_bitmap('fasta')
-# pairmap = example.get_bitmap('rings')
-# example.plotCorrs2D(axis=ax, pairmap=pairmap, ct=ct, mask=mask)
-# # Get legend handles and create legend and title
-# handles = example.getBitmapLegendHandles()
-# handles = [handles['Primary'], handles['Secondary'],
-#            handles['Helices'], handles['No Data']]
-# ax.legend(handles=handles, loc='lower left')
-# ax.set_title("Example PAIR-MaP", y=1.07, fontsize=40)
+#     get_distance_matrix
+#     plot_contour_distances
+#     plot_heatmap_data
+#     make_heatmap
+#     Future:
+#       set_heatmap
 ###############################################################################
 
-    def plotCorrs2D(self, axis, pairmap=0, allcorrs=0, bg_corrs=0, ct=0,
-                    mask=0):
-        ct_cmap, mask_cmap, pm_cmap = self.getCmaps()
-        if type(allcorrs) is np.ndarray:
-            axis.imshow(allcorrs, cmap='bwr')
-        if type(bg_corrs) is np.ndarray:
-            axis.imshow(bg_corrs, cmap='gray')
-        if type(pairmap) is np.ndarray:
-            axis.imshow(pairmap, cmap=pm_cmap)
-        if type(ct) is np.ndarray:
-            axis.imshow(ct, cmap=ct_cmap, interpolation='bicubic')
-        if type(mask) is np.ndarray:
-            axis.imshow(mask, cmap=mask_cmap)
+    def get_distance_matrix(self, structure):
+        if not hasattr(self, structure+"_distances"):
+            length = getattr(self, structure+"_length")
+            fill = get_default_fill('Distance')
+            data = np.full([length, length], fill)
+            dist_function = {"ct": self.ct.contactDistance,
+                             "pdb": self.get_3d_distance
+                             }[structure]
+            for i in range(length):
+                for j in range(length):
+                    if data[i, j] == fill:
+                        data[i, j] = dist_function(i+1, j+1)
+                        data[j, i] = data[i, j]
+            setattr(self, structure+"_distances", data)
+        distance_matrix = getattr(self, structure+"_distances")
+        return distance_matrix
 
-    def getBitmapLegendHandles(self):
-        handles = {}
-        handles['Primary'] = mp.patches.Patch(color='red', label='Primary')
-        handles['Secondary'] = mp.patches.Patch(
-            color='blue', label='Secondary')
-        handles['No Data'] = mp.patches.Patch(color='green', label='No Data',
-                                              alpha=0.2)
-        handles['Helices'] = mp.patches.Patch(edgecolor='green', fill=False,
-                                              label='Known Helices')
-        handles['BG Correlations'] = mp.patches.Patch(color='black',
-                                                      label='BG correlations')
-        return handles
+    def plot_contour_distances(self, ax, structure, attribute, levels):
+        clip_pad = self.get_clip_pad(structure, attribute)
+        length = getattr(self, structure+"_length")+sum(clip_pad[1])
+        fill = get_default_fill('Distance')
+        distances = np.full([length, length], fill)
+        start = clip_pad[1][0]
+        end = length - clip_pad[1][1]
+        distances[start:end, start:end] = self.get_distance_matrix(structure)
+        if levels is None:
+            levels = {"ct": [5], "pdb": [20, 500]}[structure]
+        cmap = mp.colors.LinearSegmentedColormap.from_list('contours',
+                                                           ['black', 'gray'])
+        x_y = list(range(1, length+1))
+        ax.contour(x_y, x_y, distances, levels=levels, cmap=cmap,
+                   linewidths=0.5)
 
-    def getCmaps(self):
-        cmap = plt.get_cmap('Greens')
-        ct_cmap = cmap(np.arange(cmap.N))
-        ct_cmap[:, -1] = np.concatenate((np.linspace(0, 1, cmap.N/2),
-                                         np.linspace(1, 0, cmap.N/2)),
-                                        axis=None)
-        ct_cmap = mp.colors.ListedColormap(ct_cmap)
-
-        mask_cmap = cmap(np.arange(cmap.N))
-        mask_cmap[:, -1] = np.linspace(0, 0.2, cmap.N)
-        mask_cmap = mp.colors.ListedColormap(mask_cmap)
-
-        N = 256
-        vals = np.ones((N, 4))
-        vals[:, 0] = np.concatenate((np.linspace(1, 0, N/2),
-                                     np.linspace(0, 1, N/2)), axis=None)
-        vals[:, 1] = np.concatenate((np.linspace(1, 0, N/2),
-                                     np.linspace(0, 0, N/2)), axis=None)
-        vals[:, 2] = np.concatenate((np.linspace(1, 1, N/2),
-                                     np.linspace(1, 0, N/2)), axis=None)
-        pm_cmap = mp.colors.ListedColormap(vals)
-        return ct_cmap, mask_cmap, pm_cmap
-
-    def get_bitmap(self, type, window=1, limit=200):
-        valid_types = ['fasta', 'ct', 'rings', 'log', 'pairs']
-        assert type in valid_types, f'Please provide valid type: {valid_types}'
-
-        size = self.profile_length
-        if type == 'fasta':
-            seq = self.profile['Sequence'].copy()
-            bitmap = np.zeros((size, size))
-            for i in range(size):
-                for j in range(size):
-                    if (i > j) or seq[i].islower() or seq[j].islower():
-                        bitmap[i, j] = 1
-        elif type == 'ct':
-            bitmap = np.ones((size, size))
-            basepairs = self.ct.pairList()
-            for x in [-1, 0, 1]:
-                for y in [-1, 0, 1]:
-                    for i, j in basepairs:
-                        bitmap[i+x-1, j+y-1] = 0
-        elif type == 'rings':
-            bitmap = np.zeros((size, size))
-            corrs = self.rings
-            for i in range(window*window):
-                x = i % window
-                y = int(i/window)
-                bitmap[corrs.i+x, corrs.j+y] += corrs.Statistic*corrs['+/-']
-            bitmap[bitmap > limit] = limit
-            bitmap[bitmap < -limit] = -limit
-            bitmap = bitmap/limit
-            bitmap[0, 0] = 1
-            bitmap[0, 1] = -1
-            bitmap += 1
-            bitmap /= 2
-        elif type == 'log':
-            bitmap = np.ones((size, size))
-            with open(type) as f:
-                for line in f.readlines():
-                    if line.startswith('Pair '):
-                        pair = line.split()[1].strip('()').split(',')
-                        bitmap[pair[0], pair[1]] = 0
-        elif type == 'pairs':
-            bitmap = np.zeros((size, size))
-            pairs = self.pairs
-            primary = pairs[pairs['Class'] == 1]
-            secondary = pairs[pairs['Class'] == 2]
-            for i in range(9):
-                x = i % 3
-                y = int(i/3)
-                bitmap[secondary['i']+x, secondary['j']+y] = 0.5
-            for i in range(9):
-                x = i % 3
-                y = int(i/3)
-                bitmap[primary['i']+x, primary['j']+y] = 1
-        return bitmap
-
-###############################################################################
-# filters, clipping, paddings, and coloring functions
-# TODO:      filter_pairs
-#   get_clip_pad
-#   filter_rings
-#   get_colorby_profile
-#   get_colorby_sequence
-#   get_colorby_position
-#   Future:
-#       filter_ct?
-#       filter_profile?
-###############################################################################
-
-    def get_alignment(self, fit_this, to_that):
-        from Bio.pairwise2 import align, format_alignment
-        this_sequence = getattr(self, f"{fit_this}_sequence").upper()
-        that_sequence = getattr(self, f"{to_that}_sequence").upper()
-        alignment = align.globalxs(this_sequence, that_sequence, -1, -0.1,
-                                   penalize_end_gaps=False)
-        print(format_alignment(*alignment[0]))
-
-    def get_clip_pad(self, fit_this, to_that):
-        attribute = f"{fit_this}_{to_that}_clip_pad"
-        if hasattr(self, attribute):
-            return getattr(self, attribute)
-        this_sequence = getattr(self, f"{fit_this}_sequence")
-        that_sequence = getattr(self, f"{to_that}_sequence")
-        this_length = getattr(self, f"{fit_this}_length")
-        that_length = getattr(self, f"{to_that}_length")
-        # find the best match
-        str1, str2 = this_sequence, that_sequence
-        if len(str1) < len(str2):
-            str1, str2 = str2, str1
-        len1 = len(str1)
-        len2 = len(str2)
-        scores = []
-        for i in range(len1 - len2 + 1):
-            substr1 = str1[i:]
-            count = 0
-            for nt in range(len2):
-                if substr1[nt] == str2[nt]:
-                    count += 1
-            score = count/len2
-            scores.append(score)
-        best_match = max(scores)
-        good_match = 0.9
-        bad_match_message = f"{fit_this}:{to_that} sequences don't match well."
-        assert best_match > good_match, bad_match_message
-        # assign clip and pad and return
-        index = scores.index(best_match)
-        if this_length == that_length:
-            clip = [0, that_length]
-            pad = [0, 0]
-        elif this_length > that_length:
-            clip = [index, index + that_length]
-            pad = [0, 0]
+    def plot_heatmap_data(self, ax, attribute, structure, metric=None):
+        clip_pad = self.get_clip_pad(attribute, structure)
+        data = getattr(self, attribute).copy()
+        if metric is None:
+            metric = get_default_metric(attribute)
+        columns = ["i", "j", metric]
+        if attribute == "rings":
+            data = data[columns+["+/-"]]
+            data[metric] = data[metric]*data["+/-"]
+            data = data[columns]
         else:
-            clip = [0, that_length]
-            pad = [index-1, that_length - this_length - index + 1]
-        setattr(self, attribute, [clip, pad])
-        return [clip, pad]
+            data = data[columns]
+        data[["i", "j"]] += clip_pad[1][0]
+        length = getattr(self, attribute+"_length") + sum(clip_pad[1])
+        fill = get_default_fill(metric)
+        data_im = np.full([length, length], fill)
+        for _, i, j, value in data.itertuples():
+            if attribute in ["rings", "pairs"]:
+                window = getattr(self, attribute+"_window")
+                for iw in range(window):
+                    io = i-1+iw
+                    for jw in range(window):
+                        jo = j+window-2-jw
+                        data_im[io, jo] = value
+                        data_im[jo, io] = value
+            else:
+                data_im[i-1, j-1] = value
+                data_im[j-1, i-1] = value
+        min_max = get_default_min_max(metric)
+        if metric == "Percentile":
+            min_max = [0, 1]
+            cmap = plt.get_cmap("turbo")
+            cmap = cmap(np.linspace(0, 1, 256))
+            cmap[:, -1] = 0.6
+        elif metric == "Class":
+            data_im = data_im + 1
+            min_max = [0, 3]
+            cmap = get_default_cmap(metric)
+            cmap = cmap(np.arange(cmap.N))
+            no_data = np.array([1, 1, 1, 0])
+            cmap = np.vstack((no_data, cmap))
+        else:
+            cmap = get_default_cmap(metric)
+            cmap = cmap(np.arange(cmap.N))
+        if attribute != "rings":
+            cmap[0, :] = [1, 1, 1, 0]
+        cmap = mp.colors.ListedColormap(cmap)
+        ax.imshow(data_im, cmap=cmap, vmin=min_max[0], vmax=min_max[1],
+                  interpolation='none')
+
+    def make_heatmap(self, attribute, structure, metric=None, ax=None,
+                     levels=None):
+        if ax is None:
+            fig, ax = plt.subplots(1, figsize=(10, 10))
+        # self.set_heatmap(ax)
+        self.plot_heatmap_data(ax, attribute, structure, metric)
+        self.plot_contour_distances(ax, structure, attribute, levels)
+
+###############################################################################
+# i,j data filters and coloring functions
+#   get_cd_mask
+#   set_mask_offset
+#   filter_ij_data
+#   get_ij_colors
+###############################################################################
 
     def get_cd_mask(self, data, fit_to_sequence, cdAbove=None, cdBelow=None):
+        """creates a mask for filtering i,j data based on contact distance.
+
+        Args:
+            data (str): string matching ij data attribute to be masked
+            fit_to_sequence (string): the structure to derive contact distance
+            cdAbove (int, optional): lower limit of contact distance
+                    Defaults to None.
+            cdBelow (int, optional): upper limit of contact distance
+                    Defaults to None.
+
+        Returns:
+            boolean list: mask to be applied to data
+        """
         if fit_to_sequence == 'ss':
             basepairs = [tuple(pair) for pair in self.basepairs]
             ct = rna.CT()
@@ -1665,6 +1588,14 @@ class Sample():
         return mask
 
     def set_mask_offset(self, attribute, fit_to_sequence):
+        """Creates 3 new columns of the attribute dataFrame: mask, i_offset,
+        and j_offset. These are the clipped and padded values to fit to the
+        given sequence.
+
+        Args:
+            attribute (str): string matching i, j data attribute.
+            fit_to_sequence (str): string matching sequence to fit data to.
+        """
         clip_pad = self.get_clip_pad(attribute, fit_to_sequence)
         start = clip_pad[0][0]
         end = clip_pad[0][1]
@@ -1680,7 +1611,20 @@ class Sample():
         data['j_offset'] = j+offset
 
     def filter_ij_data(self, attribute, fit_to_sequence, cdAbove=None,
-                       cdBelow=None, **kwargs):
+                       cdBelow=None, all_pairs=False, **kwargs):
+        """Apply given filters to i,j data attribute.
+
+        Args:
+            attribute (str): string matching i,j data attribute
+            fit_to_sequence (str): string matching attribute to fit to
+            cdAbove (int, optional): lower bound of contact distance
+                    Defaults to None.
+            cdBelow (int, optional): upper bound of contact distance
+                    Defaults to None.
+            **kwargs:
+                Keywords should be column names of the given attribute.
+                Arguments should be value of the lower bound for that column.
+        """
         data = getattr(self, attribute)
         self.set_mask_offset(attribute, fit_to_sequence)
         if fit_to_sequence == 'pdb':
@@ -1695,6 +1639,8 @@ class Sample():
             cd_mask = self.get_cd_mask(attribute, fit_to_sequence,
                                        cdAbove, cdBelow)
             data['mask'] = data['mask'] & cd_mask
+        if not all_pairs and attribute == 'pairs':
+            data["mask"] = data["mask"] & (data["Class"] != 0)
         data = getattr(self, attribute)
         for key in kwargs.keys():
             try:
@@ -1704,66 +1650,134 @@ class Sample():
                 print(f"{key} is not a valid column of {attribute} dataFrame")
 
     def get_ij_colors(self, attribute, metric=None, min_max=None):
-        if metric is None:
-            metric = {'rings': 'Statistic',
-                      'deletions': 'Percentile',
-                      'pairs': 'Class'}[attribute]
+        """get lists for i_offset, j_offset, and mpl colors for the given
+        i,j data attribute and metric.
 
+        Args:
+            attribute (str): string matching i,j data attribute
+            metric (str, optional): column of i,j data attribute or "distance
+                    Defaults to None.
+            min_max (list of 2 ints, optional): min and max value for coloring
+                    Defaults to None.
+
+        Returns:
+            3 lists: offset i and j values, and mpl colors
+        """
+        if metric is None:
+            metric = get_default_metric(attribute)
+        if min_max is None:
+            min_max = get_default_min_max(metric)
         columns = ["i_offset", "j_offset"]
-        data = getattr(self, attribute).copy()
-        if metric == 'distance':
-            data = data.loc[data['mask'], columns]
-            valid = [nt.get_id()[1] for nt in self.pdb[0]["A"].get_residues()]
-            dis = []
-            for _, i, j in data.itertuples():
-                if i in valid and j in valid:
-                    dis.append(self.get_3d_distance(i, j))
-                else:
-                    dis.append(np.nan)
-            data[metric] = dis
-        elif attribute == 'rings':
+        data = getattr(self, attribute)
+        if attribute == 'rings':
             columns.extend([metric, "+/-"])
             data = data[data["mask"]][columns].copy()
             data[metric] = data[metric]*data["+/-"]
         else:
             columns.append(metric)
             data = data[data["mask"]][columns].copy()
-
-        def pairs_cmap(n):
-            color = ['gray', (0., 0., 243/255.), (30/255., 194/255., 1.)][n]
-            return color
-        cmap = {'Statistic': plt.get_cmap('coolwarm'),
-                'Zij': plt.get_cmap('coolwarm'),
-                'Metric': plt.get_cmap('YlGnBu'),
-                'Class': pairs_cmap,
-                'distance': plt.get_cmap('cool'),
-                'Percentile': plt.get_cmap('YlGnBu')
-                }[metric]
-        if min_max is None:
-            min_max = {'Percentile': [0.98, 1.0],
-                       "Statistic": [-100, 100],
-                       'Zij': [-50, 50],
-                       "Class": [0, 2],
-                       "Metric": [0, 0.001],
-                       'distance': [15, 80]
-                       }[metric]
-        if attribute is not 'pairs':
+        if metric != 'Class':  # Normalize to between 0 and 1
             data.loc[data[metric] < min_max[0], metric] = min_max[0]
             data.loc[data[metric] > min_max[1], metric] = min_max[1]
-            ascending = metric not in ['distance']
+            ascending = metric not in ['Distance']  # high distance is bad
             data = data.sort_values(by=metric, ascending=ascending)
-            data[metric] = (data[metric]-min_max[0])/(min_max[1]-min_max[0])
+            data[metric] = (data[metric]-min_max[0]) / (min_max[1]-min_max[0])
+        else:  # Class data have a weird order
+            data = pd.concat([data[data[metric] == 0],
+                              data[data[metric] == 2],
+                              data[data[metric] == 1]])
         i = data["i_offset"].values
         j = data["j_offset"].values
-        colors = []
-        for value in data[metric].values:
-            if np.isnan(value):
-                colors.append('gray')
-            else:
-                colors.append(cmap(value))
+        cmap = get_default_cmap(metric)
+        colors = cmap(data[metric].values)
         return i, j, colors
 
+###############################################################################
+# filters, clipping, paddings, and coloring functions
+#   get_alignment
+#   get_clip_pad
+#   get_colorby_profile
+#   get_colorby_sequence
+#   get_colorby_position
+###############################################################################
+
+    def get_alignment(self, fit_this, to_that):
+        """Might be used instead of clip/pad in the future. Would allow more
+        flexibility for fitting data from different, but similar sequences.
+
+        Args:
+            fit_this (str): string matching attribute to be filtered
+            to_that (str): string matching attribute to be fit to
+        """
+        from Bio.pairwise2 import align, format_alignment
+        this_sequence = getattr(self, f"{fit_this}_sequence").upper()
+        that_sequence = getattr(self, f"{to_that}_sequence").upper()
+        alignment = align.globalxs(this_sequence, that_sequence, -1, -0.1,
+                                   penalize_end_gaps=False)
+        print(format_alignment(*alignment[0]))
+
+    def get_clip_pad(self, fit_this, to_that):
+        """Takes two attributes as strings, and returns a 5' and 3' clip and
+        pad for the first to fit the data to the second.
+
+        Args:
+            fit_this (str): String matching attribute to be clipped/padded
+            to_that (str): String matching attribute to be fit to
+
+        Returns:
+            [2x2 list]: 5' and 3' clip and 5' and 3' pad
+        """
+        attribute = f"{fit_this}_{to_that}_clip_pad"
+        if hasattr(self, attribute):
+            return getattr(self, attribute)
+        this_sequence = getattr(self, f"{fit_this}_sequence")
+        that_sequence = getattr(self, f"{to_that}_sequence")
+        this_length = getattr(self, f"{fit_this}_length")
+        that_length = getattr(self, f"{to_that}_length")
+        # find the best match
+        str1, str2 = this_sequence, that_sequence
+        if len(str1) < len(str2):
+            str1, str2 = str2, str1
+        len1 = len(str1)
+        len2 = len(str2)
+        scores = []
+        for i in range(len1 - len2 + 1):
+            substr1 = str1[i:]
+            count = 0
+            for nt in range(len2):
+                if substr1[nt] == str2[nt]:
+                    count += 1
+            score = count/len2
+            scores.append(score)
+        # Assertion error if sequences don't match well
+        best_match = max(scores)
+        good_match = 0.9
+        bad_match_message = f"{fit_this}:{to_that} sequences don't match well."
+        assert best_match > good_match, bad_match_message
+        # assign clip and pad and return
+        index = scores.index(best_match)
+        if this_length == that_length:
+            clip = [0, that_length]
+            pad = [0, 0]
+        elif this_length > that_length:
+            clip = [index, index + that_length]
+            pad = [0, 0]
+        else:
+            clip = [0, that_length]
+            pad = [index-1, that_length - this_length - index + 1]
+        setattr(self, attribute, [clip, pad])
+        return [clip, pad]
+
     def get_colorby_profile(self, sequence):
+        """Returns list of colors representing reactivity profile, matched to
+        the given sequence.
+
+        Args:
+            sequence (str): string matching attribute with sequence to fit to.
+
+        Returns:
+            list of mpl colors: colors representing reactivity profile data
+        """
         clip_pad = self.get_clip_pad("profile", sequence)
         if clip_pad is not None:
             start, end = clip_pad[0]
@@ -1781,6 +1795,18 @@ class Sample():
         return colors
 
     def get_colorby_sequence(self, sequence, colors='new'):
+        """Returns list of mpl colors representing sequence.
+
+        Args:
+            sequence (str): string matching attribute with sequence to color
+            colors (str, optional): Options are "new" or "old".
+                    "new": A=blue, U=light blue, G=red, C=light red
+                    "old": A=red, U=yellow, G=blue, C=green
+                    Defaults to 'new'.
+
+        Returns:
+            list of mpl colors: color list representing sequence
+        """
         nuc_colors = {"old": {"A": "#f20000", "U": "#f28f00",
                               "G": "#00509d", "C": "#00c200"},
                       "new": {"A": "#366ef0", "U": "#9bb9ff",
@@ -1790,6 +1816,16 @@ class Sample():
         return colors
 
     def get_colorby_position(self, sequence, cmap='rainbow'):
+        """Returns list of mpl colors that spans the rainbow. Fits length of
+        given sequence.
+
+        Args:
+            sequence (str): string matching sequence to fit colorlist to
+            cmap (str, optional): mpl colormap to use. Defaults to 'rainbow'.
+
+        Returns:
+            list of mpl colors: spectrum of colors with same length as sequence
+        """
         length = getattr(self, f"{sequence}_length")
         cmap = plt.get_cmap(cmap)
         colors = np.array([cmap(n/length) for n in range(length)])
@@ -1803,21 +1839,30 @@ class Sample():
 ###############################################################################
 
 
-def array_ap(samples=[], rows_cols=None, **kwargs):
-    if rows_cols is None:
-        if len(samples) > 9:
+def get_rows_columns(number_of_samples, rows=None, cols=None):
+    if isinstance(rows, int) and cols is None:
+        cols = math.ceil(number_of_samples / rows)
+    elif isinstance(cols, int) and rows is None:
+        rows = math.ceil(number_of_samples / cols)
+    else:
+        if number_of_samples > 9:
             rows = 3
-            columns = round(len(samples)/3)
-        elif len(samples) > 2:
+            cols = math.ceil(number_of_samples / 3)
+        elif number_of_samples > 2:
             rows = 2
-            columns = round(len(samples)/2)
+            cols = math.ceil(number_of_samples / 2)
         else:
             rows = 1
-            columns = len(samples)
-    fig = plt.figure(figsize=samples[0].get_ap_figsize(rows, columns))
-    gs = fig.add_gridspec(rows, columns, hspace=0.01, wspace=0.1)
+            cols = number_of_samples
+    return rows, cols
+
+
+def array_ap(samples=[], rows=None, cols=None, **kwargs):
+    rows, cols = get_rows_columns(len(samples), rows, cols)
+    fig = plt.figure(figsize=samples[0].get_ap_figsize(rows, cols))
+    gs = fig.add_gridspec(rows, cols, hspace=0.01, wspace=0.1)
     for i, sample in enumerate(samples):
-        row = int(i/columns)
+        row = int(i/cols)
         col = i % rows
         ax = fig.add_subplot(gs[row, col])
         sample.make_ap(ax=ax, **kwargs)
@@ -1857,6 +1902,21 @@ def array_ss(samples, **kwargs):
     fig, ax = plt.subplots(1, 4, figsize=samples[0].get_ss_figsize(1, 4))
     for i, sample in enumerate(samples):
         sample.make_ss(ax[i], **kwargs)
+
+
+def array_3d(samples, rows=None, cols=None, **kwargs):
+    import py3Dmol
+    rows, cols = get_rows_columns(len(samples), rows, cols)
+    view = py3Dmol.view(query="pdb:"+samples[0].pdb_name,
+                        viewergrid=(rows, cols),
+                        width=400*rows,
+                        height=400*cols)
+    for i, sample in enumerate(samples):
+        row = int(i/cols)
+        col = i % rows
+        view = sample.make_3d(view, (row, col), **kwargs)
+    return view
+
 
 ###############################################################################
 # Parsing arguments
