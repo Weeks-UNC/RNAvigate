@@ -66,7 +66,7 @@ def get_default_cmap(metric):
             'Statistic': 'bwr',
             'Zij': 'bwr',
             'Metric': 'YlGnBu',
-            'Distance': 'cool',
+            'Distance': 'turbo',
             'Percentile': 'YlGnBu'
             }[metric]
     cmap = plt.get_cmap(cmap)
@@ -95,7 +95,7 @@ def get_default_min_max(metric):
                'Zij': [-50, 50],
                "Class": [0, 2],
                "Metric": [0, 0.001],
-               'Distance': [0, 50]
+               'Distance': [10, 80]
                }[metric]
     return min_max
 
@@ -1833,9 +1833,11 @@ class Sample():
 
 ###############################################################################
 # Plotting functions that accept a list of samples
+#   array_qc
+#   array_skyline
 #   array_ap
 #   array_ss
-#
+#   array_3d
 ###############################################################################
 
 
