@@ -136,9 +136,12 @@ class Sample():
                  rings=None,
                  deletions=None,
                  pairs=None,
-                 dance_reactivities=None,
                  pdb=None,
-                 pdb_name=None):
+                 pdb_name=None,
+                 dance_prefix=None,
+                 dance_pairs=False,
+                 dance_rings=False,
+                 dance_ct=False):
         self.paths = {"fasta": fasta,
                       "profile": profile,
                       "ct": ct,
@@ -148,13 +151,14 @@ class Sample():
                       "rings": rings,
                       "deletions": deletions,
                       "pairs": pairs,
-                      "dance_reactivities": dance_reactivities,
                       "pdb": pdb}
         self.sample = sample
         if profile is not None:
             self.profile = pd.read_csv(profile, sep='\t')
             self.profile_length = len(self.profile)
             self.profile_sequence = ''.join(self.profile["Sequence"].values)
+            self.profile_sequence = self.profile_sequence.upper().replace("T",
+                                                                          "U")
         if ct is not None:
             self.ct = rna.CT(ct)
             self.ct_length = len(self.ct.seq)
@@ -186,8 +190,6 @@ class Sample():
             read_file(ss)
         if log is not None:
             self.read_log(log)
-        if dance_reactivities is not None:
-            self.read_dance_reactivities(dance_reactivities)
         if pdb is not None:
             assert pdb_name is not None, "pdb parsing requires PDB entry name"
             import Bio.PDB
@@ -201,6 +203,8 @@ class Sample():
                         self.pdb_sequence += ''.join(line[4:])
             self.pdb_length = len(self.pdb_sequence)
             self.pdb_name = pdb_name
+        if dance_prefix is not None:
+            self.init_dance(dance_prefix, dance_pairs, dance_rings, dance_ct)
 
 ###############################################################################
 # Parsing data files
@@ -329,7 +333,7 @@ class Sample():
         from Bio import SeqIO
         fasta = list(SeqIO.parse(open(fasta), 'fasta'))
         self.deletions_gene = fasta[0].id
-        self.deletions_sequence = str(fasta[0].seq)
+        self.deletions_sequence = str(fasta[0].seq).upper().replace("T", "U")
         self.deletions_length = len(self.deletions_sequence)
         column_names = ['Gene', 'i', 'j', 'Metric']
         self.deletions = pd.read_csv(deletions, sep='\t', names=column_names,
@@ -381,7 +385,8 @@ class Sample():
                 'Untreated_mutations_per_molecule': untmuts}
         self.log = pd.DataFrame(data)
 
-    def read_dance_reactivities(self, reactivityfile):
+    def init_dance(self, prefix, fold_prefix, pairs, rings, ct):
+        reactivityfile = f"{prefix}-reactivities.txt"
         # read in 2 line header
         with open(reactivityfile) as inf:
             header1 = inf.readline().strip().split()
@@ -390,17 +395,32 @@ class Sample():
         self.dance_components = int(header1[0])
         # population percentage of each component
         self.dance_percents = header2[1:]
+        # dance is a list containing one sample for each component
+        self.dance = [Sample() for _ in range(self.dance_components)]
         # build column names for reading in BM file
-        colnames = ["Nucleotide", "Sequence"]
-        for i in range(self.dance_components):
-            colnames.append("nReact"+str(i))
-            colnames.append("Raw"+str(i))
-            colnames.append("blank"+str(i))
-        colnames.append("Background")
-        # read in BM file
-        dance_reactivities = pd.read_csv(reactivityfile, sep='\t',
-                                         header=2, names=colnames)
-        self.profile = self.profile.join(dance_reactivities, rsuffix='_dance')
+        for i, sample in enumerate(self.dance):
+            sample.sample = f"{i} - {self.dance_percents[i]}"
+            sample.paths = {"profile": reactivityfile,
+                            "rings": f"{prefix}-{i}-rings.txt",
+                            "pairs": f"{prefix}-{i}-pairmap.txt",
+                            "ct": f"{prefix}-{i}.f.ct"}
+            # read in "profile" from reactivities
+            colnames = ["Nucleotide", "Sequence", "Reactivity_profile",
+                        "Reactivity", "Background"]
+            col_offset = 3 * i
+            last_col = 3 * self.dance_components + 2
+            columns = [0, 1, 2 + col_offset, 3 + col_offset, last_col]
+            sample.profile = pd.read_csv(reactivityfile, sep='\t', header=2,
+                                         names=colnames, columns=columns)
+            sample.profile_sequence = ''.join(self.profile['Sequence'].values)
+            sample.profile_length = len(sample.profile_sequence)
+            # read in other attributes
+            if rings:
+                sample.read_ring(sample.paths["rings"])
+            if pairs:
+                sample.read_pair(sample.paths["pairs"])
+            if ct:
+                sample.ct = rna.CT(sample.paths["ct"])
 
 ###############################################################################
 # Skyline plotting functions
@@ -506,13 +526,12 @@ class Sample():
         """
         if ax is None:
             fig, ax = plt.subplots(1, figsize=self.get_skyline_figsize(1, 1))
-        for i in range(self.dance_components):
-            self.plot_skyline(ax, label=f"{i}: {self.dance_percents[i]}",
-                              column=f"nReact{i}")
+        for i, sample in enumerate(self.dance):
+            sample.plot_skyline(ax, label=f"{i} - {self.dance_percents[i]}")
         self.plot_sequence(ax, sequence="profile")
         ax.legend(title="Component: Population", loc=1)
         ax.set(xlim=(0, self.profile_length),
-               title="DANCE-MaP Reactivities",
+               title=f"{self.sample}: DANCE-MaP Reactivities",
                xlabel="Nucleotide",
                ylabel="Profile")
 
@@ -751,8 +770,6 @@ class Sample():
 
         Args:
             ax (pyplot axis): axis to which structure comparison is added
-            ctpath1 (str): path to first ct file
-            ctpath2 (str): path to second ct file
         """
         ct1 = set(self.ct.pairList())
         ct2 = set(self.compct.pairList())
@@ -1815,7 +1832,7 @@ class Sample():
         colors = np.array([nuc_colors[nuc.upper()] for nuc in seq])
         return colors
 
-    def get_colorby_position(self, sequence, cmap='rainbow'):
+    def get_colorby_position(self, sequence, cmap='turbo'):
         """Returns list of mpl colors that spans the rainbow. Fits length of
         given sequence.
 
@@ -1846,16 +1863,13 @@ def get_rows_columns(number_of_samples, rows=None, cols=None):
         cols = math.ceil(number_of_samples / rows)
     elif isinstance(cols, int) and rows is None:
         rows = math.ceil(number_of_samples / cols)
+    elif number_of_samples < 10:
+        rows, cols = [(0, 0), (1, 1), (1, 2), (1, 3), (2, 2),  # 0-4 samples
+                      (2, 3), (2, 3), (3, 3), (3, 3), (3, 3)  # 5-9 samples
+                      ][number_of_samples]
     else:
-        if number_of_samples > 9:
-            rows = 3
-            cols = math.ceil(number_of_samples / 3)
-        elif number_of_samples > 2:
-            rows = 2
-            cols = math.ceil(number_of_samples / 2)
-        else:
-            rows = 1
-            cols = number_of_samples
+        cols = 4
+        rows = math.ceil(number_of_samples / cols)
     return rows, cols
 
 
