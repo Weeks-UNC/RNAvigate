@@ -66,7 +66,7 @@ def get_default_cmap(metric):
             'Statistic': 'bwr',
             'Zij': 'bwr',
             'Metric': 'YlGnBu',
-            'Distance': 'turbo',
+            'Distance': 'jet',
             'Percentile': 'YlGnBu'
             }[metric]
     cmap = plt.get_cmap(cmap)
@@ -153,12 +153,16 @@ class Sample():
                       "pairs": pairs,
                       "pdb": pdb}
         self.sample = sample
+        # TODO: possible alternative structures
+        # This might make code more readable, testable, extendible
+        # instead of getattr(self, f"{data}_sequence"), self.sequence[data]
+        # getattr() will work on any attribute, but sequence[data] checks type
+        self.sequence = {} # add all as key:value pairs
+        self.ij_data = {} # add rings, pairs, deletions as key:value pairs
+        self.profile = {} # add shape, frag, rnp as key:value pairs
+        self.structure = {"ct":{}, "ss":{}, "pdb":{}} # add ct's, ss's, pdb's
         if profile is not None:
-            self.profile = pd.read_csv(profile, sep='\t')
-            self.profile_length = len(self.profile)
-            self.profile_sequence = ''.join(self.profile["Sequence"].values)
-            self.profile_sequence = self.profile_sequence.upper().replace("T",
-                                                                          "U")
+            self.read_profile(profile)
         if ct is not None:
             self.ct = rna.CT(ct)
             self.ct_length = len(self.ct.seq)
@@ -323,6 +327,12 @@ class Sample():
         self.xcoordinates = np.array(xcoordinates)/30.5
         self.ycoordinates = np.array(ycoordinates)/30.5
 
+    def read_profile(self, profile)
+        self.profile = pd.read_csv(profile, sep='\t')
+        self.profile_length = len(self.profile)
+        sequence = ''.join(self.profile["Sequence"].values)
+        self.profile_sequence = sequence.upper().replace("T", "U")
+
     def read_ring(self, rings):
         with open(rings, 'r') as file:
             header = file.readline().split('\t')
@@ -385,7 +395,7 @@ class Sample():
                 'Untreated_mutations_per_molecule': untmuts}
         self.log = pd.DataFrame(data)
 
-    def init_dance(self, prefix, fold_prefix, pairs, rings, ct):
+    def init_dance(self, prefix, pairs, rings, ct):
         reactivityfile = f"{prefix}-reactivities.txt"
         # read in 2 line header
         with open(reactivityfile) as inf:
@@ -1530,7 +1540,7 @@ class Sample():
         min_max = get_default_min_max(metric)
         if metric == "Percentile":
             min_max = [0, 1]
-            cmap = plt.get_cmap("turbo")
+            cmap = plt.get_cmap("jet")
             cmap = cmap(np.linspace(0, 1, 256))
             cmap[:, -1] = 0.6
         elif metric == "Class":
@@ -1832,7 +1842,7 @@ class Sample():
         colors = np.array([nuc_colors[nuc.upper()] for nuc in seq])
         return colors
 
-    def get_colorby_position(self, sequence, cmap='turbo'):
+    def get_colorby_position(self, sequence, cmap='jet'):
         """Returns list of mpl colors that spans the rainbow. Fits length of
         given sequence.
 
