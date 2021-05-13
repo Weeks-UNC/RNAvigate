@@ -157,10 +157,11 @@ class Sample():
         # This might make code more readable, testable, extendible
         # instead of getattr(self, f"{data}_sequence"), self.sequence[data]
         # getattr() will work on any attribute, but sequence[data] checks type
-        self.sequence = {} # add all as key:value pairs
-        self.ij_data = {} # add rings, pairs, deletions as key:value pairs
-        self.profile = {} # add shape, frag, rnp as key:value pairs
-        self.structure = {"ct":{}, "ss":{}, "pdb":{}} # add ct's, ss's, pdb's
+        self.sequence = {}  # add all as key:value pairs
+        self.ij_data = {}  # add rings, pairs, deletions as key:value pairs
+        self.profile = {}  # add shape, frag, rnp as key:value pairs
+        self.structure = {"ct": {}, "ss": {},
+                          "pdb": {}}  # add ct's, ss's, pdb's
         if profile is not None:
             self.read_profile(profile)
         if ct is not None:
@@ -327,7 +328,7 @@ class Sample():
         self.xcoordinates = np.array(xcoordinates)/30.5
         self.ycoordinates = np.array(ycoordinates)/30.5
 
-    def read_profile(self, profile)
+    def read_profile(self, profile):
         self.profile = pd.read_csv(profile, sep='\t')
         self.profile_length = len(self.profile)
         sequence = ''.join(self.profile["Sequence"].values)
@@ -421,7 +422,7 @@ class Sample():
             last_col = 3 * self.dance_components + 2
             columns = [0, 1, 2 + col_offset, 3 + col_offset, last_col]
             sample.profile = pd.read_csv(reactivityfile, sep='\t', header=2,
-                                         names=colnames, columns=columns)
+                                         names=colnames, usecols=columns)
             sample.profile_sequence = ''.join(self.profile['Sequence'].values)
             sample.profile_length = len(sample.profile_sequence)
             # read in other attributes
