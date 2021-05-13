@@ -7,12 +7,14 @@ data types.
 
 To-Do List
 ----------
-- [ ] implement for pdb:
-  - [ ] add contacts to heatmap, arc plot, or secondary structure
 - [ ] Make qc plot for multiple samples less ugly.
-- [ ] add colorbar for ap, ss, pdb plots
+- [ ] add colorbar and legends for ap, ss, pdb plots
 - [ ] pairwise regression scatterplots with kde along diagonal.
-- [ ] support for filtering by ct and compct simultaneously.
+- [ ] support for filtering by multiple cts simultaneously.
+- [ ] easy and robust installation guidelines
+- [ ] guide for more custom use cases.
+- [ ] Class and method descriptions.
+- [ ] include RNATools3 in path
 
 Features
 --------
