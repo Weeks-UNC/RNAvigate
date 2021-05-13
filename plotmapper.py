@@ -196,18 +196,7 @@ class Sample():
         if log is not None:
             self.read_log(log)
         if pdb is not None:
-            assert pdb_name is not None, "pdb parsing requires PDB entry name"
-            import Bio.PDB
-            parser = Bio.PDB.PDBParser()
-            self.pdb = parser.get_structure(pdb_name, pdb)
-            self.pdb_sequence = ''
-            with open(pdb) as file:
-                for line in file.readlines():
-                    line = [field.strip() for field in line.split()]
-                    if line[0] == "SEQRES":
-                        self.pdb_sequence += ''.join(line[4:])
-            self.pdb_length = len(self.pdb_sequence)
-            self.pdb_name = pdb_name
+            self.read_pdb(pdb_name, pdb)
         if dance_prefix is not None:
             self.init_dance(dance_prefix, dance_pairs, dance_rings, dance_ct)
 
@@ -215,6 +204,7 @@ class Sample():
 # Parsing data files
 # TODO: make read_nsd function less sucky. I think it's YAML.
 #   structure files
+#       read_pdb
 #       read_xrna
 #       read_varna
 #       read_cte
@@ -226,6 +216,25 @@ class Sample():
 #       read_log
 #       read_dance_reactivities
 ###############################################################################
+
+    def read_pdb(self, pdb_name, pdb):
+        assert pdb_name is not None, "pdb parsing requires PDB entry name"
+        import Bio.PDB
+        parser = Bio.PDB.PDBParser()
+        self.pdb = parser.get_structure(pdb_name, pdb)
+        self.pdb_sequence = ''
+        with open(pdb) as file:
+            for line in file.readlines():
+                line = [field.strip() for field in line.split()]
+                if line[0] == "SEQRES":
+                    self.pdb_sequence += ''.join(line[4:])
+        self.pdb_validres = []
+        for res in self.pdb[0]["A"].get_residues():
+            res_id = res.get_id()
+            if res_id[0] == " ":
+                self.pdb_validres.append(res_id[1])
+        self.pdb_length = len(self.pdb_sequence)
+        self.pdb_name = pdb_name
 
     def read_xrna(self, xrnafile):
         import xml.etree.ElementTree as xmlet
@@ -1325,7 +1334,6 @@ class Sample():
     def plot_3d_data(self, view, attribute, metric=None, viewer=None,
                      **kwargs):
         self.filter_ij_data(attribute, "pdb", **kwargs)
-        valid = [nt.get_id()[1] for nt in self.pdb[0]["A"].get_residues()]
         ij_colors = self.get_ij_colors(attribute, metric)
         for i, j, color in zip(*ij_colors):
             color = mp.colors.rgb2hex(color)
@@ -1335,7 +1343,7 @@ class Sample():
                 for w in range(window):
                     io = i+w
                     jo = j+window-1-w
-                    if io in valid and jo in valid:
+                    if io in self.pdb_validres and jo in self.pdb_validres:
                         self.add_3d_lines(view, io, jo, color, viewer)
             else:
                 self.add_3d_lines(view, i, j, color, viewer)
@@ -1344,10 +1352,13 @@ class Sample():
         colorby_function = getattr(self, "get_colorby_"+colorby)
         colors = colorby_function("pdb")
         for i, atom in enumerate(self.pdb.get_atoms()):
-            nucleotide = atom.get_parent().get_id()[1]
-            color = colors[nucleotide-1]
+            res = atom.get_parent().get_id()
             selector = {'model': -1, 'serial': i+1}
-            style = {"cartoon": {"color": color, "opacity": 0.8}}
+            if res[0] == " ":
+                color = colors[res[1]-1]
+                style = {"cartoon": {"color": color, "opacity": 0.8}}
+            else:
+                style = {"cross": {"hidden": "true"}}
             if viewer is None:
                 view.setStyle(selector, style)
             else:
@@ -1656,11 +1667,9 @@ class Sample():
         data = getattr(self, attribute)
         self.set_mask_offset(attribute, fit_to_sequence)
         if fit_to_sequence == 'pdb':
-            valid_nt = [res.get_id()[1]
-                        for res in self.pdb[0]["A"].get_residues()]
             mask = []
             for i, j in zip(data["i_offset"], data["j_offset"]):
-                mask.append(i in valid_nt and j in valid_nt)
+                mask.append(i in self.pdb_validres and j in self.pdb_validres)
             mask = np.array(mask, dtype=bool)
             data["mask"] = data["mask"] & mask
         if cdAbove is not None or cdBelow is not None:
@@ -1843,7 +1852,7 @@ class Sample():
         colors = np.array([nuc_colors[nuc.upper()] for nuc in seq])
         return colors
 
-    def get_colorby_position(self, sequence, cmap='jet'):
+    def get_colorby_position(self, sequence, cmap='rainbow'):
         """Returns list of mpl colors that spans the rainbow. Fits length of
         given sequence.
 
