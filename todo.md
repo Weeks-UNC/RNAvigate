@@ -14,7 +14,6 @@ To-Do List
 - [ ] easy and robust installation guidelines
 - [ ] guide for more custom use cases.
 - [ ] Class and method descriptions.
-- [ ] include RNATools3 in path
 
 Features
 --------
