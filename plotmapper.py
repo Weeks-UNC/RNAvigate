@@ -12,7 +12,7 @@ from scipy import stats
 import math
 
 # scripts in JNBTools
-import RNAtools2 as rna
+import RNAtools3 as rna
 
 
 def create_code_button():
