@@ -11,7 +11,7 @@ import numpy as np
 from scipy import stats
 import math
 
-# packages from github.com/Weeks-UNC
+# scripts in JNBTools
 import RNAtools2 as rna
 
 
@@ -1489,21 +1489,23 @@ class Sample():
 ###############################################################################
 
     def get_distance_matrix(self, structure):
-        if not hasattr(self, structure+"_distances"):
-            length = getattr(self, structure+"_length")
-            fill = get_default_fill('Distance')
-            data = np.full([length, length], fill)
-            dist_function = {"ct": self.ct.contactDistance,
-                             "pdb": self.get_3d_distance
-                             }[structure]
-            for i in range(length):
-                for j in range(length):
-                    if data[i, j] == fill:
-                        data[i, j] = dist_function(i+1, j+1)
-                        data[j, i] = data[i, j]
-            setattr(self, structure+"_distances", data)
-        distance_matrix = getattr(self, structure+"_distances")
-        return distance_matrix
+        if hasattr(self, structure+"_distances"):
+            matrix = getattr(self, structure+"_distances")
+        else:
+            if structure == "ct":
+                matrix = self.ct.get_distance_matrix()
+                self.ct_distances = matrix
+            elif structure == "pdb":
+                length = self.pdb_length
+                fill = get_default_fill('Distance')
+                matrix = np.full([length, length], fill)
+                for i in range(length):
+                    for j in range(length):
+                        if matrix[i, j] == fill:
+                            matrix[i, j] = self.get_3d_distance(i+1, j+1)
+                            matrix[j, i] = matrix[i, j]
+                self.pdb_distances = matrix
+        return matrix
 
     def plot_contour_distances(self, ax, structure, attribute, levels):
         clip_pad = self.get_clip_pad(structure, attribute)
