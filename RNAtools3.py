@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 ###############################################################################
 # GPL statement:
 # This file is part of SuperFold.
@@ -48,7 +49,7 @@
 #
 #   v0.8    numpy dotplot functions added
 #
-#   Added get_distance_matrix based on contactDistance, but faster for all pairs
+#   Added get_distance_matrix based on contactDistance, faster for all pairs.
 #   made compatible with python 3
 #   formatting changes in keeping with JNBTools project
 
@@ -63,8 +64,6 @@ class CT(object):
         if givin an input file .ct construct the ct object automatically
         """
         if fIN:
-            #self.name = fIN
-            #self.num,self.seq,self.ct = self.readCT(fIN)
             self.readCT(fIN, **kwargs)
 
     def __str__(self):
@@ -81,24 +80,28 @@ class CT(object):
             inp.readline()  # pop off the header
             for line in inp:
                 if line[0] == '>':
-                    print(
-                        ("WARNING: Multiple sequences in {}. Using the first sequence.".format(fastapath)))
+                    print(f"WARNING: Multiple sequences in {fastapath}. "
+                          "Using the first sequence.")
                     break
                 seq += line.strip()
 
         if 'T' in seq or 't' in seq:
-            print(("WARNING: replacing 'T' with 'U' from {}".format(fastapath)))
+            print(f"WARNING: replacing 'T' with 'U' from {fastapath}")
             seq = seq.replace('T', 'U')
             seq = seq.replace('t', 'u')
 
         self.seq = list(seq)
 
     def readCT(self, fIN, structNum=0, filterNC=False, filterSingle=False):
-        """
-        reads a ct file, !requires header!
-        structNum allows selection of a given SS if multiple are stored in the same file
-        filterNC will check the bps and filter out any between NC
-        filterSingle will filter out any singleton bps
+        """Loads CT information from a given ct file. Requires a header!
+
+        Args:
+            structNum (int, optional): If ct file contains multiple structures,
+                uses the given structure. Defaults to 0.
+        filterNC (bool, optional): If True, will filter out non-canonical base
+            pairs. Defaults to False.
+        filterSingle (bool, optional): If True, will filter out any singleton
+            base pairs. Defaults to False.
         """
         num, seq, bp, mask = [], [], [], []
 
@@ -134,7 +137,7 @@ class CT(object):
                         else:
                             mask.append(0)
 
-        except Exception as e:
+        except Exception:
             raise IOError(
                 "{0} has invalid format or does not exist".format(fIN))
 
@@ -151,8 +154,8 @@ class CT(object):
                 p1 = (i+1, bp[i])
                 p2 = (bp[bp[i]-1], bp[i])
                 if p1 != p2:
-                    print(
-                        ("WARNING: Inconsistent pair {0[0]}-{0[1]} vs. {1[0]}-{1[1]}".format(p1, p2)))
+                    print("WARNING: Inconsistent pair "
+                          f"{p1[0]}-{p1[1]} vs. {p2[0]}-{p2[1]}")
 
         self.name = fIN
         self.header = header
@@ -264,7 +267,7 @@ class CT(object):
 
     def pairList(self):
         """
-        #returns a list of base pairs i<j as a array of tuples:
+        # returns a list of base pairs i<j as a array of tuples:
         [(19,50),(20,49)....]
         """
         out = []
@@ -274,7 +277,12 @@ class CT(object):
         return out
 
     def pairedResidueList(self, paired=True):
-        """ return a list of residues that are paired (or single-stranded, if paired=False)"""
+        """Returns a list of residues that are paired.
+
+        Args:
+            paired (bool, optional): It False, returns single-stranded list.
+                Defaults to True.
+        """
 
         out = []
         for i, nt in enumerate(self.ct):
@@ -284,7 +292,12 @@ class CT(object):
         return out
 
     def junctionResidues(self, incGU=False):
-        """ return a list of residues at junctions. Write in functionality to include opiton of GU pairs"""
+        """Returns a list of residues at junctions.
+
+        Args:
+            incGU (bool, optional): If True, includes GU pairs.
+                Defaults to False.
+        """
 
         jun = []
         for i, nt in enumerate(self.ct):
@@ -482,7 +495,7 @@ class CT(object):
     def get_distance_matrix(self, recalculate="False"):
         """Based on Tom's contactDistance function above, but instead returns
         the all pairs shortest paths matrix, and stores it as an attribute. If
-        the attribute has already been set, it returns the attribute. This is 
+        the attribute has already been set, it returns the attribute. This is
         faster than calling contactDistance pairwise to fill the matrix.
 
         Args:
@@ -491,7 +504,7 @@ class CT(object):
                 been made.
         """
         if hasattr(self, "distance_matrix") and not recalculate:
-            return distance_matrix
+            return self.distance_matrix
         # this method will be used later to make sure a nucleotide hasn't
         # been visited and is within the bounds of the RNA
 
@@ -536,7 +549,7 @@ class CT(object):
         self.distance_matrix = distance_matrix
         return self.distance_matrix
 
-    def contactDistance(self, i, j, matrix="False"):
+    def contactDistance(self, i, j):
         """
         Caclulates the contact distance between pairs i,j in
         the RNA using the RNAtools CT Object. This is different
@@ -546,6 +559,10 @@ class CT(object):
 
         Added by Tom Christy
         """
+        if hasattr(self, "distance_matrix"):
+            i_index = self.num.index(i)
+            j_index = self.num.index(j)
+            return self.distance_matrix[i_index, j_index]
 
         # this method will be used later to make sure a nucleotide hasn't
         # been visited and is within the bounds of the RNA
@@ -617,7 +634,7 @@ class CT(object):
         (2013).
 
 
-        THIS FUNCTION IS BROKEN. It doesn't handle multi helix 
+        THIS FUNCTION IS BROKEN. It doesn't handle multi helix
         junctions correctly and will often return a longer distance
         than the real answer.
         """
@@ -664,7 +681,7 @@ class CT(object):
             # nonpaired nucleotides are single beads
             if self.ct[k] == 0:
                 k += 1
-                #count += 6.5
+                # count += 6.5
                 count += 1
 
             # branches through helices can't be skipped
@@ -684,13 +701,13 @@ class CT(object):
                         if count + back < tempBack:
                             tempBack = count + back
                 k += 1
-                #count += 6.5
+                # count += 6.5
                 count += 1
 
             # simple stepping
             elif self.ct[k] < i + 1:
                 k += 1
-                #count += 6.5
+                # count += 6.5
                 count += 1
 
             elif self.ct[k] < k+1:
@@ -710,8 +727,8 @@ class CT(object):
                     break
 
                 # one count for jumping the helix
-                #count += 15.0
-                #count += 1
+                # count += 15.0
+                # count += 1
             # print i,k,j
         finalCount = min(count, tempBack)
         return finalCount
@@ -893,28 +910,24 @@ class CT(object):
         """
         try:
             writeSHAPE(self.shape, fOUT)
-        except:
+        except AttributeError:
             print("No SHAPE data present")
             return
 
     def computePPVSens(self, compCT, exact=True, mask=False):
         """
         compute the ppv and sensitivity between the current CT and the passed CT
-        exact = True will require BPs to be exactly correct. 
+        exact = True will require BPs to be exactly correct.
                 False allows +/-1 bp slippage (RNAstructure convention)
         mask = True will exclude masked regions from calculation
         """
 
         # check mask is properly set up if using
         if mask:
-            try:
-                if len(self.mask) != len(self.ct):
-                    raise AttributeError()
-            except:
-                raise AttributeError('Mask is not properly initialized')
+            assert hasattr(self, "mask"), "Mask has not been defined."
+            assert len(self.mask) != len(self.ct), "Mask is incorrect length"
 
-        if len(self.ct) != len(compCT.ct):
-            raise IndexError('CT objects are different sizes')
+        assert len(self.ct) == len(compCT.ct), 'CT objects are different sizes'
 
         # compute totals
         totr, totc = 0, 0
@@ -956,7 +969,7 @@ class CT(object):
         return sens, ppv, (sharedpairs, totc, totr)
 
     def writeSTO(self, outfile, name='seq'):
-        """"write structure file out into Stockholm (STO) file format 
+        """"write structure file out into Stockholm (STO) file format
         for use for infernal searches"""
 
         with open(outfile, 'w') as out:
@@ -1104,7 +1117,7 @@ def readSeq(fIN, type='RNAstructure'):
         if i == '1':
             break
         seq.append(i)
-    return processed, name
+    return seq, name
 
 
 #################################################################################
@@ -1144,7 +1157,7 @@ class DotPlot:
             if self.partfun[nt-1]['log10'][index] < log10cut:
                 return self.partfun[nt-1]['pair'][index]+1
 
-        except ValueError as e:
+        except ValueError:
             pass
 
         return 0
@@ -1244,7 +1257,7 @@ class DotPlot:
 
     def requireProb(self, minProb, maxProb=1.0):
         """
-        return a new DP object where basepairs below a min prob have been trimed      
+        return a new DP object where basepairs below a min prob have been trimed
         """
 
         maxlogBP = -np.log10(minProb)
@@ -1441,7 +1454,7 @@ class DotPlot:
         """
 
         dotPlot = self.dp
-        #dotPlotCopy = {'logBP':copy.deepcopy(dotPlot['logBP'])}
+        # dotPlotCopy = {'logBP':copy.deepcopy(dotPlot['logBP'])}
 
         # this is the value in -log10(prob), 2 = a prob of 0.01
         slippedCutoff = 2
