@@ -16,33 +16,3 @@ Examples:
 * [multiple samples plots](JNB-example/plotmapper-multiple-examples.md)
 * [Arc Plot options](JNB-example/ap_test.md)
 * [Secondary Structure options](JNB-example/ss_test.md)
-
-### Old code
-The old code that made up this repo is still being stored here, but has been
-moved to the old-code directory.
-
-#### plottingTools.py
-[examples](old-code/plottingTools-example.md)
-* Make Skyline plots for comparing nt-by-nt data.
-* Add a sequence bar to your plots.
-* Fetch histogram data from shapemapper log files.
-* Set figure width based on sequence length.
-
-#### shapemapperPlots.py
-[examples](old-code/plottingTools-example.md)
-* Make standard shapemapper output plots:
-  * Normalized profile
-  * Raw mutation rates
-  * Read depth and effective read depth
-
-#### JNBarcPlot.py
-[examples](old-code/JNBarcPlot-example.md)
-* Make plots of correlation data:
-  * arcPlot figures
-  * dotplot figures
-* Get pairmap sensitivity and PPV.
-
-#### secondaryStructure.py
-[examples](old-code/secondaryStructure-example.md)
-* Make secondary structure graphs from XRNA or Structure Editor
-* Add Rings, filtered by statistic or contact distance.
