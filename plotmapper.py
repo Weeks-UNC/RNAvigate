@@ -10,6 +10,17 @@ import pandas as pd
 import numpy as np
 from scipy import stats
 import math
+import xml.etree.ElementTree as xmlet
+
+# Special python packages
+try:
+    import Bio.PDB
+except ModuleNotFoundError:
+    print("Biopython package is missing. Reading PDB files will not work.")
+try:
+    import py3Dmol
+except ModuleNotFoundError:
+    print("py3Dmol package is missing. Plotting 3D structures will not work.")
 
 # scripts in JNBTools
 import RNAtools3 as rna
@@ -100,6 +111,52 @@ def get_default_min_max(metric):
     return min_max
 
 
+def view_colormap(attribute=None, metric=None, ticks=None, values=None,
+                  title=None, cmap=None):
+    """Given an attribute (ij data) will display a colorbar for the default
+    values (metric, cmap, min_max).
+
+    Args:
+        attribute (str, optional): string matching an ij data type.
+            Options are "rings", "pairs" or "deletions".
+            Defaults to None.
+        metric (str, optional): string matching column name of ij data.
+            Default determined by get_default_metric.
+        ticks (list, optional): locations to add ticks. scale is 0-10.
+            Defaults to [0.5, 0.95], or [10/6, 30/6/, 50/6] for "Class" metric.
+        title (str, optional): string for title of colorbar.
+            Defaults to "{attribute}: {metric}"
+        cmap (str, optional): string matching a valid matplotlib colormap.
+            Default determined by get_default_cmap.
+    """
+    if metric is None:
+        metric = get_default_metric(attribute)
+    if ticks is None:
+        if metric == "Class":
+            ticks = [10/6, 30/6, 50/6]
+        else:
+            ticks = [0.2, 9.8]
+    if values is None:
+        if metric == "Class":
+            values = ['Complementary', 'Primary', 'Secondary']
+        else:
+            values = get_default_min_max(metric)
+    if title is None:
+        title = f"{attribute}: {metric}"
+    if cmap is None:
+        cmap = get_default_cmap(metric)
+    else:
+        cmap = plt.get_cmap(cmap)
+    colors = cmap(np.arange(cmap.N))
+
+    _, ax = plt.subplots(1, figsize=(6, 2))
+    ax.imshow([colors], extent=[0, 10, 0, 1])
+    ax.set_title(title)
+    ax.set_xticks(ticks)
+    ax.set_xticklabels(values)
+    ax.set_yticks([])
+
+
 # COPIED FROM SHAPEMAPPER2
 # some of this might be inappropriately applied to all plots
 # TODO: look into passing dict to mp.rc()
@@ -158,41 +215,29 @@ class Sample():
         # instead of getattr(self, f"{data}_sequence"), self.sequence[data]
         # getattr() will work on any attribute, but sequence[data] checks type
         self.sequence = {}  # add all as key:value pairs
+        self.length = {}  # stores length of sequences
         self.ij_data = {}  # add rings, pairs, deletions as key:value pairs
         self.profile = {}  # add shape, frag, rnp as key:value pairs
-        self.structure = {"ct": {}, "ss": {},
+        self.structure = {"ct": {},
+                          "ss": {},
                           "pdb": {}}  # add ct's, ss's, pdb's
         if profile is not None:
             self.read_profile(profile)
         if ct is not None:
-            self.ct = rna.CT(ct)
-            self.ct_length = len(self.ct.seq)
-            self.ct_sequence = ''.join(self.ct.seq)
+            self.read_ct("ct", ct)
         if compct is not None:
-            self.compct = rna.CT(compct)
-            self.compct_length = len(self.compct.seq)
-            self.compct_sequence = ''.join(self.compct.seq)
+            self.read_ct("compct", ct)
         if rings is not None:
             assert hasattr(self, "profile"), "Rings plotting requires profile."
             self.read_ring(rings)
-            self.rings_sequence = self.profile_sequence
-            self.rings_length = self.profile_length
         if pairs is not None:
             assert hasattr(self, "profile"), "Pairs plotting requires profile."
             self.read_pair(pairs)
-            self.pairs_sequence = self.profile_sequence
-            self.pairs_length = self.profile_length
         if deletions is not None:
             assert fasta is not None, "Deletions plotting requires fasta"
             self.read_deletions(deletions, fasta)
         if ss is not None:
-            # get and check file extension, then read
-            self.ss_type = ss.split('.')[-1].lower()
-            valid_type = self.ss_type in ['xrna', 'varna', 'nsd', 'cte']
-            message = f"stucture file type {self.ss_type} not supported"
-            assert valid_type, message
-            read_file = getattr(self, f"read_{self.ss_type}")
-            read_file(ss)
+            self.read_ss("ss", ss)
         if log is not None:
             self.read_log(log)
         if pdb is not None:
@@ -205,10 +250,7 @@ class Sample():
 # TODO: make read_nsd function less sucky. I think it's YAML.
 #   structure files
 #       read_pdb
-#       read_xrna
-#       read_varna
-#       read_cte
-#       read_nsd Kludgey AF
+#       read_ss          Note: nsd portion is kludgey AF should use yaml
 #   MaP data files
 #       read_ring
 #       read_deletions
@@ -217,144 +259,151 @@ class Sample():
 #       read_dance_reactivities
 ###############################################################################
 
+    def read_ct(self, ct_name, ct):
+        setattr(self, ct_name, rna.CT(ct))
+        self.sequence[ct_name] = ''.join(self.ct.seq)
+        self.length[ct_name] = len(self.sequence["ct"])
+
     def read_pdb(self, pdb_name, pdb):
         assert pdb_name is not None, "pdb parsing requires PDB entry name"
-        import Bio.PDB
         parser = Bio.PDB.PDBParser()
         self.pdb = parser.get_structure(pdb_name, pdb)
-        self.pdb_sequence = ''
+        self.sequence["pdb"] = ''
         with open(pdb) as file:
             for line in file.readlines():
                 line = [field.strip() for field in line.split()]
                 if line[0] == "SEQRES":
-                    self.pdb_sequence += ''.join(line[4:])
+                    self.sequence["pdb"] += ''.join(line[4:])
         self.pdb_validres = []
         for res in self.pdb[0]["A"].get_residues():
             res_id = res.get_id()
             if res_id[0] == " ":
                 self.pdb_validres.append(res_id[1])
-        self.pdb_length = len(self.pdb_sequence)
+        self.length["pdb"] = len(self.sequence["pdb"])
         self.pdb_name = pdb_name
 
-    def read_xrna(self, xrnafile):
-        import xml.etree.ElementTree as xmlet
-        tree = xmlet.parse(xrnafile)
-        root = tree.getroot()
-        # extract sequence, x and y coordinates
-        nucList = root.findall('./Complex/RNAMolecule/')
-        nucLists = []
-        for i in nucList:
-            if i.tag == 'NucListData':
-                nucLists.append(i)
-        sequence, xcoords, ycoords = '', [], []
-        for nt in nucLists[0].text.split('\n'):
-            if nt == '':
-                continue
-            line = nt.split()
-            sequence += line[0]
-            xcoords.append(float(line[1]))
-            ycoords.append(float(line[2]))
-        # extract pairing information
-        basepairs = []
-        for helix in root.findall('./Complex/RNAMolecule/BasePairs'):
-            i_outter = int(helix.get('nucID'))
-            j_outter = int(helix.get('bpNucID'))
-            length = int(helix.get('length'))
-            helix_list = [(i_outter+nt, j_outter-nt) for nt in range(length)]
-            basepairs.extend(helix_list)
-        # make expected arrays
-        self.ss_length = len(sequence)
-        self.nucleotides = np.arange(self.ss_length)+1
-        self.basepairs = np.array(basepairs)
-        self.ss_sequence = sequence
-        self.xcoordinates = np.array(xcoords)/20
-        self.ycoordinates = np.array(ycoords)/20
-
-    def read_varna(self, varnafile):
-        import xml.etree.ElementTree as xmlet
-        tree = xmlet.parse(varnafile)
-        root = tree.getroot()
-        # extract sequence, y and x coordinates
-        sequence, xcoords, ycoords = "", [], []
-        for nt in root.findall('./RNA/bases/nt'):
-            base = nt.find('base').text
-            sequence += base
-            for i in nt:
-                if i.get('r') == 'pos':
-                    xcoords.append(float(i.get('x')))
-                    ycoords.append(float(i.get('y')))
-        # extract pairing information
-        basepairs = []
-        for pair in root.findall('./RNA/BPs/bp'):
-            i = int(pair.get('part5'))+1
-            j = int(pair.get('part3'))+1
-            basepairs.append((i, j))
-        self.ss_length = len(sequence)
-        self.nucleotides = np.arange(self.ss_length)
+    def read_ss(self, ss_name, ss):
+        # get and check file extension, then read
+        self.ss_type = ss.split('.')[-1].lower()
+        valid_type = self.ss_type in ['xrna', 'varna', 'nsd', 'cte']
+        message = f"stucture file type {self.ss_type} not supported"
+        assert valid_type, message
+        # Parse file and get sequence, xcoords, ycoords, and list of pairs.
+        if self.ss_type == "xrna":
+            tree = xmlet.parse(ss)
+            root = tree.getroot()
+            # extract sequence, x and y coordinates
+            nucList = root.findall('./Complex/RNAMolecule/')
+            nucLists = []
+            for i in nucList:
+                if i.tag == 'NucListData':
+                    nucLists.append(i)
+            sequence, xcoords, ycoords = '', [], []
+            for nt in nucLists[0].text.split('\n'):
+                if nt == '':
+                    continue
+                line = nt.split()
+                sequence += line[0]
+                xcoords.append(float(line[1]))
+                ycoords.append(float(line[2]))
+            # extract pairing information
+            basepairs = []
+            for helix in root.findall('./Complex/RNAMolecule/BasePairs'):
+                i_outter = int(helix.get('nucID'))
+                j_outter = int(helix.get('bpNucID'))
+                length = int(helix.get('length'))
+                helix_list = [(i_outter+nt, j_outter-nt)
+                              for nt in range(length)]
+                basepairs.extend(helix_list)
+            # make expected arrays
+            xcoords = np.array(xcoords)
+            ycoords = np.array(ycoords)
+        elif self.ss_type == "varna":
+            tree = xmlet.parse(ss)
+            root = tree.getroot()
+            # extract sequence, y and x coordinates
+            sequence, xcoords, ycoords = "", [], []
+            for nt in root.findall('./RNA/bases/nt'):
+                base = nt.find('base').text
+                sequence += base
+                for i in nt:
+                    if i.get('r') == 'pos':
+                        xcoords.append(float(i.get('x')))
+                        ycoords.append(float(i.get('y')))
+            # extract pairing information
+            basepairs = []
+            for pair in root.findall('./RNA/BPs/bp'):
+                i = int(pair.get('part5'))+1
+                j = int(pair.get('part3'))+1
+                basepairs.append((i, j))
+            xcoords = np.array(xcoords)
+            ycoords = np.array(ycoords)
+        elif self.ss_type == "cte":
+            names = ['nuc', 'seq', 'pair', 'xcoords', 'ycoords']
+            ct = pd.read_csv(ss, sep=r'\s+', usecols=[0, 1, 4, 8, 10],
+                             names=names, header=0)
+            sequence = ''.join(list(ct['seq']))
+            xcoords = np.array([float(x) for x in ct.xcoords])
+            ycoords = np.array([float(y) for y in ct.ycoords])
+            ct = ct[ct.nuc < ct.pair]
+            basepairs = [[int(i), int(j)] for i, j in zip(ct.nuc, ct.pair)]
+        elif self.ss_type == "nsd":
+            basepairs, sequence, xcoords, ycoords = [], '', [], []
+            with open(ss, 'r') as file:
+                item = ""
+                for line in file.readlines():
+                    line = line.strip().split(' ')
+                    if "Strand:[" in line:
+                        item = "strand"
+                        continue
+                    elif "]" in line:
+                        item = ""
+                    elif "Pairs:[" in line:
+                        item = "pairs"
+                        continue
+                    if item == "strand":
+                        nt = [item.split(':') for item in line]
+                        sequence += nt[2][1]
+                        xcoords.append(float(nt[4][1]))
+                        ycoords.append(float(nt[5][1]))
+                    elif item == "pairs":
+                        pairs = line[1].split(":")[1:]
+                        basepair = [int(nuc.strip('"')) for nuc in pairs]
+                        basepairs.append(basepair)
+            xcoords = np.array(xcoords)
+            ycoords = np.array(ycoords)
+        # store attributes
+        coord_scale_factor = {"xrna": 1/20,
+                              "varna": 1/65,
+                              "cte": 1/30.5,
+                              "nsd": 1/30.5}[self.ss_type]
+        self.sequence[ss_name] = sequence
+        self.length[ss_name] = len(sequence)
         self.basepairs = basepairs
-        self.ss_sequence = sequence
-        self.xcoordinates = np.array(xcoords)/65
-        self.ycoordinates = np.array(ycoords)/65
-
-    def read_cte(self, ctefile):
-        names = ['nuc', 'seq', 'pair', 'xcoords', 'ycoords']
-        ct = pd.read_csv(ctefile, sep=r'\s+', usecols=[0, 1, 4, 8, 10],
-                         names=names, header=0)
-        self.ss_sequence = ''.join(list(ct['seq']))
-        self.ss_length = len(self.ss_sequence)
-        self.nucleotides = [int(nuc) for nuc in ct.nuc]
-        self.xcoordinates = np.array([float(x) for x in ct.xcoords])/30.5
-        self.ycoordinates = np.array([float(y) for y in ct.ycoords])/30.5
-        ct = ct[ct.nuc < ct.pair]
-        self.basepairs = [[int(i), int(j)] for i, j in zip(ct.nuc, ct.pair)]
-
-    def read_nsd(self, nsdfile):
-        basepairs, sequence, xcoordinates, ycoordinates = [], '', [], []
-        with open(nsdfile, 'r') as file:
-            item = ""
-            for line in file.readlines():
-                line = line.strip().split(' ')
-                if "Strand:[" in line:
-                    item = "strand"
-                    continue
-                elif "]" in line:
-                    item = ""
-                elif "Pairs:[" in line:
-                    item = "pairs"
-                    continue
-                if item == "strand":
-                    nt = [item.split(':') for item in line]
-                    sequence += nt[2][1]
-                    xcoordinates.append(float(nt[4][1]))
-                    ycoordinates.append(float(nt[5][1]))
-                elif item == "pairs":
-                    pairs = line[1].split(":")[1:]
-                    basepair = [int(nuc.strip('"')) for nuc in pairs]
-                    basepairs.append(basepair)
-        self.ss_sequence = sequence
-        self.ss_length = len(self.ss_sequence)
-        self.basepairs = np.array(basepairs)
-        self.xcoordinates = np.array(xcoordinates)/30.5
-        self.ycoordinates = np.array(ycoordinates)/30.5
+        self.xcoordinates = xcoords*coord_scale_factor
+        self.ycoordinates = ycoords*coord_scale_factor
 
     def read_profile(self, profile):
         self.profile = pd.read_csv(profile, sep='\t')
-        self.profile_length = len(self.profile)
         sequence = ''.join(self.profile["Sequence"].values)
-        self.profile_sequence = sequence.upper().replace("T", "U")
+        self.sequence["profile"] = sequence.upper().replace("T", "U")
+        self.length["profile"] = len(self.sequence["profile"])
 
     def read_ring(self, rings):
         with open(rings, 'r') as file:
             header = file.readline().split('\t')
         self.rings_window = int(header[1].split('=')[1])
         self.rings = pd.read_csv(rings, sep='\t', header=1)
+        self.sequence["rings"] = self.sequence["profile"]
+        self.length["rings"] = self.length["profile"]
 
     def read_deletions(self, deletions, fasta):
         from Bio import SeqIO
         fasta = list(SeqIO.parse(open(fasta), 'fasta'))
         self.deletions_gene = fasta[0].id
-        self.deletions_sequence = str(fasta[0].seq).upper().replace("T", "U")
-        self.deletions_length = len(self.deletions_sequence)
+        self.sequence["deletions"] = str(fasta[0].seq).upper().replace("T",
+                                                                       "U")
+        self.length["deletions"] = len(self.sequence["deletions"])
         column_names = ['Gene', 'i', 'j', 'Metric']
         self.deletions = pd.read_csv(deletions, sep='\t', names=column_names,
                                      header=0)
@@ -367,6 +416,8 @@ class Sample():
             header = file.readline().split('\t')
         self.pairs_window = int(header[1].split('=')[1])
         self.pairs = pd.read_csv(pairs, sep='\t', header=1)
+        self.sequence["pairs"] = self.sequence["profile"]
+        self.length["pairs"] = self.length["profile"]
 
     def read_log(self, log):
         with open(log, 'r') as f:
@@ -432,8 +483,8 @@ class Sample():
             columns = [0, 1, 2 + col_offset, 3 + col_offset, last_col]
             sample.profile = pd.read_csv(reactivityfile, sep='\t', header=2,
                                          names=colnames, usecols=columns)
-            sample.profile_sequence = ''.join(self.profile['Sequence'].values)
-            sample.profile_length = len(sample.profile_sequence)
+            sample.sequence["profile"] = self.sequence['profile']
+            sample.length["profile"] = len(sample.sequence["profile"])
             # read in other attributes
             if rings:
                 sample.read_ring(sample.paths["rings"])
@@ -466,7 +517,7 @@ class Sample():
         """
         left_inches = 0.9
         right_inches = 0.4
-        ax_width = self.profile_length * 0.1
+        ax_width = self.length["profile"] * 0.1
         fig_height = 6
         fig_width = max(7, ax_width + left_inches + right_inches)
         return (fig_width*columns, fig_height*rows)
@@ -512,7 +563,7 @@ class Sample():
         # transform yvalue to a y-axis data value
         ymin, ymax = axis.get_ylim()
         yvalue = (ymax-ymin)*yvalue + ymin
-        sequence = getattr(self, f"{sequence}_sequence")
+        sequence = self.sequence[sequence]
         for i, seq in enumerate(sequence):
             col = color_dict[seq.upper()]
             axis.annotate(seq, xy=(i + 1, yvalue), xycoords='data',
@@ -521,9 +572,9 @@ class Sample():
 
     def set_skyline(self, ax, title="Raw Reactivity Profile"):
         ax.set(title=title,
-               xlim=[0, self.profile_length],
-               xticks=range(0, self.profile_length, 20))
-        ax.set_xticks(range(0, self.profile_length, 5), minor=True)
+               xlim=[0, self.length["profile"]],
+               xticks=range(0, self.length["profile"], 20))
+        ax.set_xticks(range(0, self.length["profile"], 5), minor=True)
         ax.legend(title="Samples")
 
     def make_skyline(self, ax=None, column="Reactivity_profile"):
@@ -550,7 +601,7 @@ class Sample():
             sample.plot_skyline(ax, label=f"{i} - {self.dance_percents[i]}")
         self.plot_sequence(ax, sequence="profile")
         ax.legend(title="Component: Population", loc=1)
-        ax.set(xlim=(0, self.profile_length),
+        ax.set(xlim=(0, self.length["profile"]),
                title=f"{self.sample}: DANCE-MaP Reactivities",
                xlabel="Nucleotide",
                ylabel="Profile")
@@ -743,7 +794,7 @@ class Sample():
                                width=window, ec='none')
         ax.add_patch(arc)
 
-    def get_ap_figsize(self, rows, cols, sequence="profile"):
+    def get_ap_figsize(self, rows, cols, sequence="ct"):
         """Pass this function call to figsize within pyplot.subplots() to set
         an appropriate figure width and height for arc plots.
 
@@ -754,7 +805,7 @@ class Sample():
         Returns:
             tuple: (width, height) appropriate figsize for pyplot figure
         """
-        dim = getattr(self, sequence+"_length") * 0.1 + 1
+        dim = len(self.sequence[sequence]) * 0.1 + 1
         return (dim*cols, dim*rows)
 
     def set_ap(self, ax):
@@ -771,7 +822,7 @@ class Sample():
         ax.spines['top'].set_color('none')
         pairs = self.ct.pairList()
         height = max([abs(i-j) for i, j in pairs])/2
-        ax.set(xlim=(0, self.ct_length),
+        ax.set(xlim=(0, self.length["ct"]),
                ylim=(-height-5, height+1))
 
     def plot_ap_ct(self, ax, panel='top'):
@@ -975,7 +1026,7 @@ class Sample():
                     'sequence', which uses the sequence letters as markers.
                     Defaults to 'o' (a filled circle).
         """
-        if isinstance(colorby, list) and len(colorby) == self.ss_length:
+        if isinstance(colorby, list) and len(colorby) == self.length["ss"]:
             self.colors = np.array(colorby)
         try:
             colors = getattr(self, f"get_colorby_{colorby}")("ss")
@@ -986,7 +1037,7 @@ class Sample():
             self.get_colorby_sequence("ss")
         if markers == "sequence":
             for nuc in "GUAC":
-                mask = [nt == nuc for nt in self.ss_sequence]
+                mask = [nt == nuc for nt in self.sequence["ss"]]
                 xcoords = self.xcoordinates[mask]
                 ycoords = self.ycoordinates[mask]
                 marker = "$"+nuc+"}$"
@@ -1024,7 +1075,7 @@ class Sample():
             spacing (int, optional): labels every nth nucleotide.
                     Defaults to 20.
         """
-        for i in range(0, self.ss_length, spacing):
+        for i in range(0, self.length["ss"], spacing):
             ax.annotate(i+1, xy=(self.xcoordinates[i], self.ycoordinates[i]),
                         horizontalalignment="center",
                         verticalalignment="center",
@@ -1032,7 +1083,7 @@ class Sample():
                         bbox=dict(fc="white", ec='none', pad=0.3))
 
     def make_ss(self, ax=None, attribute=None, metric=None, positions=True,
-                colorby='sequence', markers='o', all_pairs=False, **kwargs):
+                colorby=None, markers='o', all_pairs=False, **kwargs):
         """Creates a full secondary structure graph with data plotted
 
         Args:
@@ -1051,11 +1102,14 @@ class Sample():
                     Defaults to 'o'. (dots)
         """
         if ax is None:
-            fig, ax = plt.subplots(1, figsize=self.get_ss_figsize(1, 1))
+            _, ax = plt.subplots(1, figsize=self.get_ss_figsize(1, 1))
         self.set_ss(ax)
         self.plot_ss_structure(ax)
-        if hasattr(self, "profile"):
-            colorby = "profile"
+        if colorby == None:
+            if hasattr(self, "profile"):
+                colorby = "profile"
+            else:
+                colorby = "sequence"
         self.plot_ss_sequence(ax, colorby=colorby, markers=markers)
         if positions is True:
             self.plot_ss_positions(ax)
@@ -1095,7 +1149,7 @@ class Sample():
                  ecolor=near_black, capsize=1)
         axis.set_title(self.sample, fontsize=16)
         axis.set_ylim(yMin, ymax)
-        axis.set_xlim(1, self.profile_length)
+        axis.set_xlim(1, self.length["profile"])
         axis.yaxis.grid(True)
         axis.set_axisbelow(True)
         axis.set_xlabel("Nucleotide", fontsize=14, labelpad=0)
@@ -1166,7 +1220,7 @@ class Sample():
                   linewidth=1.5, color=bg_color, alpha=1.0, label="Untreated")
         axis.plot(sample['Nucleotide'], sample['Denatured_read_depth'],
                   linewidth=1.5, color=dc_color, alpha=1.0, label="Denatured")
-        axis.set_xlim(1, self.profile_length)
+        axis.set_xlim(1, self.length["profile"])
         axis.legend(loc=2, borderpad=0.8, handletextpad=0.2, framealpha=0.75)
         axis.plot(sample['Nucleotide'], sample['Modified_effective_depth'],
                   linewidth=1.0, color=rx_color, alpha=0.3)
@@ -1366,7 +1420,6 @@ class Sample():
 
     def make_3d(self, view=None, viewer=None, attribute=None, metric=None,
                 colorby="sequence", **kwargs):
-        import py3Dmol
         if view is None:
             view = py3Dmol.view(query="pdb:"+self.pdb_name)
         if hasattr(self, "profile"):
@@ -1403,7 +1456,7 @@ class Sample():
         """
         pairs = [tuple(pair) for pair in self.basepairs]
         ct = rna.CT()
-        ct.pair2CT(pairs=pairs, seq=self.ss_sequence)
+        ct.pair2CT(pairs=pairs, seq=self.sequence["ss"])
         # set scaling factors based on data source.
         xscale = {'xrna': 1.525, 'varna': 0.469,
                   'nsd': 1, 'cte': 1}[self.ss_type]
@@ -1453,7 +1506,7 @@ class Sample():
                 transform=ax.transAxes)
         if colorby == "ct":
             paired_list = self.ct.pairedResidueList()
-            paired_mask = np.zeros(self.profile_length, dtype=bool)
+            paired_mask = np.zeros(self.length["profile"], dtype=bool)
             for i in paired_list:
                 paired_mask[i] = True
             paired_mask = paired_mask[notNans]
@@ -1478,7 +1531,6 @@ class Sample():
         ax.legend(title=colorby)
 
 ###############################################################################
-# CONSTRUCTION ZONE
 # Heatmap plotting functions
 #     get_distance_matrix
 #     plot_contour_distances
@@ -1496,7 +1548,7 @@ class Sample():
                 matrix = self.ct.get_distance_matrix()
                 self.ct_distances = matrix
             elif structure == "pdb":
-                length = self.pdb_length
+                length = self.length["pdb"]
                 fill = get_default_fill('Distance')
                 matrix = np.full([length, length], fill)
                 for i in range(length):
@@ -1509,7 +1561,7 @@ class Sample():
 
     def plot_contour_distances(self, ax, structure, attribute, levels):
         clip_pad = self.get_clip_pad(structure, attribute)
-        length = getattr(self, structure+"_length")+sum(clip_pad[1])
+        length = self.length[structure]+sum(clip_pad[1])
         fill = get_default_fill('Distance')
         distances = np.full([length, length], fill)
         start = clip_pad[1][0]
@@ -1536,7 +1588,7 @@ class Sample():
         else:
             data = data[columns]
         data[["i", "j"]] += clip_pad[1][0]
-        length = getattr(self, attribute+"_length") + sum(clip_pad[1])
+        length = self.length[attribute] + sum(clip_pad[1])
         fill = get_default_fill(metric)
         data_im = np.full([length, length], fill)
         for _, i, j, value in data.itertuples():
@@ -1606,7 +1658,7 @@ class Sample():
         if fit_to_sequence == 'ss':
             basepairs = [tuple(pair) for pair in self.basepairs]
             ct = rna.CT()
-            ct.pair2CT(pairs=basepairs, seq=self.ss_sequence)
+            ct.pair2CT(pairs=basepairs, seq=self.sequence["ss"])
         elif fit_to_sequence == 'ct':
             ct = self.ct
         data = getattr(self, data)
@@ -1749,8 +1801,8 @@ class Sample():
             to_that (str): string matching attribute to be fit to
         """
         from Bio.pairwise2 import align, format_alignment
-        this_sequence = getattr(self, f"{fit_this}_sequence").upper()
-        that_sequence = getattr(self, f"{to_that}_sequence").upper()
+        this_sequence = self.sequence[fit_this].upper()
+        that_sequence = self.sequence[to_that].upper()
         alignment = align.globalxs(this_sequence, that_sequence, -1, -0.1,
                                    penalize_end_gaps=False)
         print(format_alignment(*alignment[0]))
@@ -1769,10 +1821,10 @@ class Sample():
         attribute = f"{fit_this}_{to_that}_clip_pad"
         if hasattr(self, attribute):
             return getattr(self, attribute)
-        this_sequence = getattr(self, f"{fit_this}_sequence")
-        that_sequence = getattr(self, f"{to_that}_sequence")
-        this_length = getattr(self, f"{fit_this}_length")
-        that_length = getattr(self, f"{to_that}_length")
+        this_sequence = self.sequence[fit_this]
+        that_sequence = self.sequence[to_that]
+        this_length = self.length[fit_this]
+        that_length = self.length[to_that]
         # find the best match
         str1, str2 = this_sequence, that_sequence
         if len(str1) < len(str2):
@@ -1850,7 +1902,7 @@ class Sample():
                               "G": "#00509d", "C": "#00c200"},
                       "new": {"A": "#366ef0", "U": "#9bb9ff",
                               "G": "#f04c4c", "C": "#ffa77c"}}[colors]
-        seq = getattr(self, f"{sequence}_sequence")
+        seq = self.sequence[sequence]
         colors = np.array([nuc_colors[nuc.upper()] for nuc in seq])
         return colors
 
@@ -1865,7 +1917,7 @@ class Sample():
         Returns:
             list of mpl colors: spectrum of colors with same length as sequence
         """
-        length = getattr(self, f"{sequence}_length")
+        length = len(self.sequence[sequence])
         cmap = plt.get_cmap(cmap)
         colors = np.array([cmap(n/length) for n in range(length)])
         return colors
@@ -1943,21 +1995,26 @@ def array_ss(samples, **kwargs):
 
 
 def array_3d(samples, rows=None, cols=None, **kwargs):
-    import py3Dmol
+    """Given a list of samples, creates a grid of py3Dmol views. Kwargs passed
+    to samples[0].make_3d(). Samples must all use the same structure.
+
+    Args:
+        samples (List of Sample objects): Sample objects from which to display.
+        rows (int, optional): number of rows for figure.
+            Default determined by get_rows_columns.
+        cols (int, optional): number of columns for figure.
+            Default determined by get_rows_columns.
+
+    Returns:
+        [type]: [description]
+    """
     rows, cols = get_rows_columns(len(samples), rows, cols)
     view = py3Dmol.view(query="pdb:"+samples[0].pdb_name,
                         viewergrid=(rows, cols),
                         width=400*rows,
                         height=400*cols)
     for i, sample in enumerate(samples):
-        row = int(i/cols)
+        row = i // cols
         col = i % rows
         view = sample.make_3d(view, (row, col), **kwargs)
     return view
-
-
-###############################################################################
-# Parsing arguments
-#
-#
-###############################################################################
