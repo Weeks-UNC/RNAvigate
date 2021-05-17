@@ -52,6 +52,7 @@
 #   Added get_distance_matrix based on contactDistance, faster for all pairs.
 #   made compatible with python 3
 #   formatting changes in keeping with JNBTools project
+#   separated CT and dotplot data structures.
 
 import sys
 import numpy as np
@@ -231,27 +232,17 @@ class CT(object):
 
         w = open(fOUT, 'w')
         w.write('{0:6d} {1}\n'.format(len(self.num), self.name))
-        for i in range(len(self.num)-1):
-
+        for i in range(len(self.num)):
+            nt = self.num[i]
+            prev = nt-1
+            next = nt+1 % len(self.ct+1)  # last nt goes back to zero
+            seq = self.seq[i]
+            ct = self.ct[i]
             if mask and self.mask[i]:
-                line = '{0:5d} {1} {2:5d} {3:5d} {4:5d} {0:5d} 1\n'.format(
-                    self.num[i], self.seq[i], self.num[i]-1, self.num[i]+1, self.ct[i])
+                line = f'{nt:5d} {seq} {prev:5d} {next:5d} {ct:5d} {nt:5d} 1\n'
             else:
-                line = '{0:5d} {1} {2:5d} {3:5d} {4:5d} {0:5d}\n'.format(
-                    self.num[i], self.seq[i], self.num[i]-1, self.num[i]+1, self.ct[i])
+                line = f'{nt:5d} {seq} {prev:5d} {next:5d} {ct:5d} {nt:5d}\n'
             w.write(line)
-
-        # last line is different
-        i = len(self.num)-1
-
-        if mask and self.mask[i]:
-            line = '{0:5d} {1} {2:5d} {3:5d} {4:5d} {0:5d} 1\n'.format(
-                self.num[i], self.seq[i], self.num[i]-1, 0, self.ct[i])
-        else:
-            line = '{0:5d} {1} {2:5d} {3:5d} {4:5d} {0:5d}\n'.format(
-                self.num[i], self.seq[i], self.num[i]-1, 0, self.ct[i])
-
-        w.write(line)
         w.close()
 
     def copy(self):
@@ -307,13 +298,11 @@ class CT(object):
 
             pi = self.num.index(nt)
 
-            try:
-                if self.ct[i-1] == 0 or self.ct[i+1] == 0 or \
-                        self.ct[pi-1] == 0 or self.ct[pi+1] == 0:
-                    jun.append(self.num[i])
-
-            except IndexError:
-                # this means we're at the beginning or end of the chain, hence must be junction
+            neighbors = [i-1, i+1, pi-1, pi+1]
+            neighbors_paired = any(self.ct[neighbors] == 0)
+            neighbors_not_in_chain = any(
+                [x not in self.num for x in neighbors])
+            if neighbors_paired or neighbors_not_in_chain:
                 jun.append(self.num[i])
 
         return jun
@@ -404,8 +393,9 @@ class CT(object):
     def maskCT(self, start, end, nocross=True, inverse=False):
         """return a copy of the original CT file, but with the specified region
         masked out (ie base pairs set to 0)
-        if inverse = True, do the inverse -- ie return a CT with base pairs only
-        involving the specified region"""
+        if inverse = True, do the inverse -- ie return a CT with base pairs
+        only involving the specified region
+        """
 
         # in case numbering differs from indexing, go by indexes
         out = self.copy()
@@ -440,8 +430,8 @@ class CT(object):
         return out
 
     def cutCT(self, start, end):
-        """
-        returns a new ct file containing only base pairs within the specified region
+        """Returns a new ct file containing only base pairs within the
+        specified region
         """
 
         sel = self.getNTslice(start, end)
@@ -587,32 +577,38 @@ class CT(object):
         # The default value of -1 also means that an nt hasn't been visited.
         level = np.zeros(len(self.num) + 1)
         level = level - 1
-        # each index matches to the nt number, so index 0 is just an empty place holder
+        # each index matches to the nt number,
+        # so index 0 is just an empty place holder
 
         # create the queue and add nt i, set its level as 0
         queue = list()
         queue.append(i)
         level[i] = 0
-        # while the queue has members, keep popping and searching until the NT is found
+        # while the queue has members,
+        # keep popping and searching until the NT is found
         notFound = True
         contactDistance = 0
         while len(queue) > 0 and notFound:
             currentNT = queue.pop(0)
-            # if the current nucleotide is the one we're searching for, record it's level as the contact distance
+            # if the current nucleotide is the one we're searching for,
+            # record it's level as the contact distance
             # and break out of the search
             if(currentNT == j):
                 contactDistance = level[currentNT]
                 notFound = False
                 break
 
-            # grab all the neighbors of the current NT and determine if they are inbounds and unvisited
+            # grab all the neighbors of the current NT
+            # and determine if they are inbounds and unvisited
             # If so, add them to the queue and set their levels.
             NTBack = currentNT - 1
             NTUp = currentNT + 1
-            # get the pair of NT -1 b/c of the weird way coded the ct file, it's off by 1
+            # get the pair of NT -1 b/c of the weird way coded the ct file,
+            # it's off by 1
             NTPair = self.ct[currentNT-1]
 
-            # check all the neighbors to see if they should be added to the search, and if so, record their level(ie their Contact Distance)
+            # check all the neighbors to see if they should be added to the
+            # search, and if so, record their level(ie their Contact Distance)
             if viable(NTBack, self):
                 queue.append(NTBack)
                 level[NTBack] = level[currentNT] + 1
@@ -626,123 +622,15 @@ class CT(object):
         # return the contactDistance from the search
         return contactDistance
 
-    def GreggContactDistance(self, i, j):
-        """
-        calculates the contact distance between pairs i,j in
-        in the RNA using the RNAtools CT object. Method for
-        calculating the contact is described in Hajdin et al
-        (2013).
-
-
-        THIS FUNCTION IS BROKEN. It doesn't handle multi helix
-        junctions correctly and will often return a longer distance
-        than the real answer.
-        """
-
-        print("WARNING: GreggContactDistance is broken and should not be used!!!")
-
-        # correct for indexing offset
-        i, j = i-1, j-1
-
-        # error out if nucleotide out of range
-        if max(i, j) > len(self.ct):
-            print('Error!, nucleotide {0} out of range!'.format(max(i, j)+1))
-            return
-
-        # i must always be less than j, correct for this
-        if j < i:
-            i, j = j, i
-
-        count = 0.0
-        tempBack = 10000.0
-        k = int(i)
-
-        def backTrace(rna, j, k):
-            bcount = 2
-            k -= 1
-            if k-1 == j:
-                return bcount
-            bcount += 1
-            while k > j:
-                if rna.ct[k] == 0:
-                    k -= 1
-                    bcount += 1
-                # if not single stranded, exit the backtrace
-                else:
-                    return None
-            return bcount
-        # search forward through sequence
-        while k < j:
-            # debuging stuff, prevent infinite loop
-            # if count > 200:
-            #    print i,j
-            #    break
-
-            # nonpaired nucleotides are single beads
-            if self.ct[k] == 0:
-                k += 1
-                # count += 6.5
-                count += 1
-
-            # branches through helices can't be skipped
-            # treated as single beads
-            elif self.ct[k] > j + 1:
-                # try backtracing a few if it is close (within 10)
-                if self.ct[k] - 10 < j:
-                    back = backTrace(self, j, self.ct[k])
-                    # if the backtracing is able to reach
-                    # your nt, add its length to the count
-                    # and break
-                    if back:
-                        # print 'backitup'
-                        # store the backtracing count for later
-                        # if it ends up being lower than the final
-                        # we will use it instead
-                        if count + back < tempBack:
-                            tempBack = count + back
-                k += 1
-                # count += 6.5
-                count += 1
-
-            # simple stepping
-            elif self.ct[k] < i + 1:
-                k += 1
-                # count += 6.5
-                count += 1
-
-            elif self.ct[k] < k+1:
-                k += 1
-                count += 1
-                # print "Backtracking prevented, going forward to "+str(k+1)
-
-            # handle branching, jumping the base of a helix is only 1
-            else:
-                # one count for the step to the next
-                count += 1
-                k = self.ct[k] - 1
-
-                # if by jumping you land on your nt
-                # stop counting
-                if k - 1 == j:
-                    break
-
-                # one count for jumping the helix
-                # count += 15.0
-                # count += 1
-            # print i,k,j
-        finalCount = min(count, tempBack)
-        return finalCount
-
     def extractHelices(self, fillPairs=True, splitHelixByBulge=True):
-        """
-        returns a list of helices in a given CT file and the nucleotides
+        """Returns a list of helices in a given CT file and the nucleotides
         making up the list as a dict object. e.g. {0:[(1,50),(2,49),(3,48)}
 
         defaults to filling 1,1 and 2,2 mismatches
 
-        Since April 20, 2018 an option has been added to no longer split helices by single
-        nucleotide bulges. Prior to this option bulges on the 5' of the helix split the helix
-        but those on the 3' end did not.
+        Since April 20, 2018 an option has been added to no longer split
+        helices by single nucleotide bulges. Prior to this option bulges on the
+        5' of the helix split the helix but those on the 3' end did not.
         """
         # first step is to find all the helices
         rna = self.copy()
@@ -767,7 +655,8 @@ class CT(object):
 
                 previous = rna.ct[nt]
 
-                # this is the default behavior which splits helices that are separated by a single nucleotide bulge
+                # this is the default behavior which splits helices that are
+                # separated by a single nucleotide bulge
                 if splitHelixByBulge:
                     while stillHelix:
                         # see if the helix juts up against another one
@@ -783,14 +672,14 @@ class CT(object):
 
                 else:
                     while stillHelix:
-                        if rna.ct[nt] != 0 and not(abs(rna.ct[nt] - previous) > 2):
-                            tempPairs.append((nt+1, rna.ct[nt]))
-                            previous = rna.ct[nt]
+                        # Handle bulges on the 3' end of the helix
+                        pair = rna.ct[nt]
+                        if pair != 0 and not(abs(pair - previous) > 2):
+                            tempPairs.append((nt+1, pair))
+                            previous = pair
                             nt += 1
-                        # This if statement handles bulges on the 5' end of the helix by reading through them
-                        # The prior if statement handles them on the 3' end of the helix
+                        # Handle bulges on the 5' end of the helix
                         elif rna.ct[nt+1] == rna.ct[nt-1]-1:
-
                             nt += 1
                         else:
                             break
@@ -836,9 +725,13 @@ class CT(object):
             # only need to check one set of pairs from each
             # of the helices. Test is to see if they form
             # a cross hatching pattern
-            if max(h1[0]) > min(h2[0]) > min(h1[0]) and max(h2[0]) > max(h1[0]):
+            h1_max = max(h1[0])
+            h1_min = min(h1[0])
+            h2_max = max(h2[0])
+            h2_min = min(h2[0])
+            if h1_max > h2_min > h1_min and h2_max > h1_max:
                 return True
-            if max(h2[0]) > min(h1[0]) > min(h2[0]) and max(h1[0]) > max(h2[0]):
+            if h2_max > h1_min > h2_min and h1_max > h2_max:
                 return True
 
             return False
@@ -897,16 +790,16 @@ class CT(object):
         return padCT(self, referenceCT, giveAlignment)
 
     def readSHAPE(self, fIN):
-        """
-        utilizes the global readSHAPE method and appends a the data to the object as .shape
+        """utilizes the global readSHAPE method and appends a the data to the
+        object as self.shape
         """
         self.shape, seq = readSHAPE(fIN)
         if len(self.shape) < len(self.ct):
             print("warning! shape array is smaller than the CT range")
 
     def writeSHAPE(self, fOUT):
-        """
-        utilizes the global writeSHAPE method, and writes the .shape array attached to the object to a file
+        """utilizes the global writeSHAPE method, and writes the .shape array
+        attached to the object to a file
         """
         try:
             writeSHAPE(self.shape, fOUT)
@@ -915,8 +808,9 @@ class CT(object):
             return
 
     def computePPVSens(self, compCT, exact=True, mask=False):
-        """
-        compute the ppv and sensitivity between the current CT and the passed CT
+        """compute the ppv and sensitivity between the current CT and the
+        passed CT
+
         exact = True will require BPs to be exactly correct.
                 False allows +/-1 bp slippage (RNAstructure convention)
         mask = True will exclude masked regions from calculation
@@ -952,9 +846,9 @@ class CT(object):
             try:
                 if v == compCT.ct[i]:
                     sharedpairs += 1
-                elif not exact and (v == compCT.ct[i]-1 or v == compCT.ct[i]+1):
+                elif not exact and (v in [compCT.ct[i]-1, compCT.ct[i]+1]):
                     sharedpairs += 1
-                elif not exact and (v == compCT.ct[i-1] or v == compCT.ct[i+1]):
+                elif not exact and (v in [compCT.ct[i-1], compCT.ct[i+1]]):
                     sharedpairs += 1
 
             except IndexError:
@@ -1002,9 +896,9 @@ class CT(object):
             out.write('{0}1'.format(''.join(self.seq)))
 
 
-#################################################################################
+###############################################################################
 # end of CT class
-#################################################################################
+###############################################################################
 
 
 def padCT(targetCT, referenceCT, giveAlignment=False):
@@ -1060,8 +954,8 @@ def padCT(targetCT, referenceCT, giveAlignment=False):
 
 
 def readSHAPE(fIN):
-    """
-    reads an RNA structure .shape or .map file. Returns an array of the SHAPE data
+    """reads an RNA structure .shape or .map file.
+    Returns an array of the SHAPE data
     """
     shape = []
     seq = ''
@@ -1119,460 +1013,6 @@ def readSeq(fIN, type='RNAstructure'):
         seq.append(i)
     return seq, name
 
-
-#################################################################################
-# Start dotp class
-#################################################################################
-
-
-class DotPlot:
-    """ Modified by Tony Mustoe to be more efficient at caclulations by rearranging data structure
-    This increases the memory footprint, but greatly reduces looping
-    """
-
-    def __init__(self, fIN=None):
-        # if givin an input file construct the dotplot object automatically
-        self.name = None
-        self.length = None
-        self.partfun = None
-        self.sequence = None
-
-        if fIN:
-            self.name = fIN
-            self.readDP(fIN)
-
-    def __str__(self):
-
-        entries = np.sum([len(self.partfun[x]['pair'])
-                          for x in range(self.length)])/2
-        a = '{{ Name= {0}, len(RNA)= {1}, entries(DotPlot)= {2} }}'.format(
-            self.name, self.length, entries)
-        return a
-
-    def getMaxPair(self, nt, log10cut=1e10):
-        """ uses 1-based coords """
-
-        try:
-            index = self.partfun[nt-1]['log10'].argmin()
-            if self.partfun[nt-1]['log10'][index] < log10cut:
-                return self.partfun[nt-1]['pair'][index]+1
-
-        except ValueError:
-            pass
-
-        return 0
-
-    def readDP(self, fIN):
-
-        fhandle = open(fIN)
-
-        # read the expected two lines of headers
-        length = int(fhandle.readline().split()[0])
-
-        if self.length is not None and length != self.length:
-            sys.exit('Dotp file is not the same length as existing dotp object')
-
-        if self.partfun is not None:
-            # need to convert log10 and pair to lists
-            # convert to numpy array
-            partfun = []
-            for i, v in enumerate(self.partfun):
-                partfun.append({'nt': v['nt']})
-                for j in ('log10', 'pair'):
-                    partfun[i][j] = list(v[j])
-
-        else:
-            # make an array element for every nt
-            partfun = [{'log10': [], 'pair':[], 'nt':x} for x in range(length)]
-
-        # pop off the second header line
-        fhandle.readline()
-
-        # now read in data
-        for line in fhandle:
-            spl = line.split()
-            i = int(spl[0])
-            j = int(spl[1])
-            logBP = float(spl[2])
-
-            # i,j are anticipated to be 1-indexed
-            partfun[i-1]['log10'].append(logBP)
-            partfun[j-1]['log10'].append(logBP)
-            partfun[i-1]['pair'].append(j-1)
-            partfun[j-1]['pair'].append(i-1)
-
-        fhandle.close()
-
-        # convert to numpy array
-        for i, v in enumerate(partfun):
-            for j in ('log10', 'pair'):
-                partfun[i][j] = np.array(v[j])
-
-        self.length = length
-        self.partfun = partfun
-
-    def writeDP(self, filename):
-        """write the DP object to file in DP format"""
-
-        out = open(filename, 'w')
-
-        out.write("%d\n" % self.length)
-        out.write("i\tj\t-log10(Probability)\n")
-
-        for nt in self.partfun:
-            num = nt['nt']
-
-            for i, pnum in enumerate(nt['pair']):
-
-                if pnum > num:
-                    # need to add one since internal indexing is 0-based
-                    out.write("%d %d %f\n" % (num+1, pnum+1, nt['log10'][i]))
-
-        out.close()
-
-    def returnCT(self, probcut=0.5, skipConflicting=True, filterNC=True, filterSingle=True):
-        """
-        return a CT object constructed from base pairs above a given pair. prob
-        """
-
-        newDP = self.requireProb(probcut)
-
-        newCT = CT()
-        newCT.pair2CT(newDP.pairList(), ['n']*self.length,
-                      skipConflicting=skipConflicting, filterNC=filterNC, filterSingle=filterSingle)
-
-        return newCT
-
-    def pairList(self):
-        # returns a list of base pairs i< j from the dotplot
-        out = []
-        for nt in self.partfun:
-
-            mask = (nt['pair'] > nt['nt'])
-            pairs = [(nt['nt']+1, x+1) for x in nt['pair'][mask]]
-            if len(pairs) > 0:
-                out.extend(pairs)
-
-        return out
-
-    def requireProb(self, minProb, maxProb=1.0):
-        """
-        return a new DP object where basepairs below a min prob have been trimed
-        """
-
-        maxlogBP = -np.log10(minProb)
-        minlogBP = -np.log10(maxProb)
-
-        out = DotPlot()
-        out.length = self.length
-        out.name = self.name
-
-        partfun = []
-
-        # select which nts are between a certain cutoff
-        for nt in self.partfun:
-            mask = (nt['log10'] <= maxlogBP) & (nt['log10'] > minlogBP)
-            partfun.append({'log10': nt['log10'][mask],
-                            'pair': nt['pair'][mask],
-                            'nt': nt['nt']})
-
-        out.partfun = partfun
-
-        return out
-
-    def trimEnds(self, trimSize, which='both'):
-
-        which = which.lower()
-        prime5 = 0
-        prime3 = self.length
-
-        if which == '5prime' or which == 'both':
-            prime5 += trimSize
-        if which == '3prime' or which == 'both':
-            prime3 -= trimSize
-
-        out = DotPlot()
-        out.length = self.length
-        out.name = self.name
-
-        partfun = []
-
-        for i, nt in partfun:
-            if nt['nt'] < prime5 or nt['nt'] > prime3:
-                partfun.append(
-                    {'log10': np.array([]), 'pair': np.array([]), 'nt': nt['nt']})
-
-            else:
-                mask = (nt['pair'] >= prime5) & (nt['pair'] <= prime3)
-
-                partfun.append({'log10': nt['log10'][mask],
-                                'pair': nt['pair'][mask],
-                                'nt': nt['nt']})
-
-        out.partfun = partfun
-
-        return out
-
-    def calcShannon(self, printOut=False, toFile=None):
-
-        partfun = self.partfun
-
-        if toFile:
-            outf = open(toFile, 'w')
-
-        shannon = np.zeros(self.length)
-
-        for i, nt in enumerate(partfun):
-
-            nlogn = nt['log10']*10**(-nt['log10'])  # this is -log(p)*p
-            ntsum = np.sum(nlogn)
-
-            # catch rounding errors:
-            if ntsum < 0:
-                ntsum = 0
-
-            shannon[i] = ntsum
-
-            if printOut:
-                print(nt['nt'], ntsum)
-
-            if toFile:
-                outf.write("%s\t%.3e\n" % (nt['nt'], ntsum))
-
-        if toFile:
-            outf.close()
-
-        return np.array(shannon)
-
-    def partfunDifference(self, comp, region=None):
-        """ region is 1-based, inclusive; i.e. nt numbering"""
-
-        if region is None:
-            region = [1, self.length]
-
-        sumdiff, numnts = 0.0, 0
-        sarr = np.zeros(self.length)
-        carr = np.zeros(self.length)
-
-        for i in range(region[0]-1, region[1]):
-
-            snt = self.partfun[i]
-            cnt = comp.partfun[i]
-            sarr[:] = 0
-            carr[:] = 0
-
-            for pindex, j in enumerate(snt['pair']):
-                sarr[j] = 10**(-snt['log10'][pindex])
-
-            for pindex, j in enumerate(cnt['pair']):
-                carr[j] = 10**(-cnt['log10'][pindex])
-
-            diff = sarr-carr
-            d1 = np.sum(diff[diff > 0])
-            diff = carr-sarr
-            d2 = np.sum(diff[diff > 0])
-
-            # get the geometeric average for each nt.
-            sumdiff += np.sqrt(d1*d2)
-            numnts += 1
-
-        return sumdiff/numnts
-
-    def hack_Gunfold(self, region):
-        """This is a hacky (i.e. very unrigorous) but quick way to estimate unfolding
-        free energy for a specified region of nts
-        Region is 1-based, inclusive; i.e. nt numbering
-        """
-
-        if self.sequence is None:
-            AttributeError("Sequence is not defined")
-
-        bpenergy = {'AT': 1, 'TA': 1, 'GC': 2, 'CG': 2, 'TG': 1, 'GT': 1}
-
-        unfold = 0
-
-        # shift each by -1 since want to convert to 0-based index, and then +1 to region[1]
-        for i in range(region[0]-1, region[1]):
-
-            nt = self.partfun[i]
-            seqi = self.sequence[i]
-
-            for pindex, j in enumerate(nt['pair']):
-
-                # make sure that each pair is only counted once. If k < i, but outside the
-                # region, we don't have to worry about double counting
-                if region[0] <= j < i:
-                    continue
-
-                seqj = self.sequence[j]
-                try:
-                    eij = bpenergy[seqi+seqj]
-                except KeyError:
-                    print(seqi, seqj, i, j)
-                    eij = 0
-
-                # this is pij * Gij
-                unfold += 10**(-nt['log10'][pindex]) * eij
-
-        return unfold
-
-    def calcPairProb(self):
-        """ return the pairing probability of each nt"""
-        partfun = self.partfun
-
-        prob = np.zeros(self.length)
-
-        # do sum the niave way since we aren't worried about small prob diffs with this calculation
-        # Note that it is likely numerically unstable for small probs though...
-        for i, nt in enumerate(partfun):
-            prob[i] = np.sum(10**(-nt['log10']))
-
-        return np.array(prob)
-
-    def maxProb(self):
-        """return the max pairing prob of each nt"""
-
-        partfun = self.partfun
-        prob = np.zeros(self.length)
-
-        for i, nt in enumerate(partfun):
-            try:
-                prob[i] = 10**(-1*np.min(nt['log10']))
-            except ValueError:
-                prob[i] = 0.0
-
-        return np.array(prob)
-
-    def averageSlippedBPs(self, struct=None, predictedOnly=True):
-        """
-        replaces PlusandMinus script. If a helix in a predicted structure is slipped +/-1 nt
-        we need to sum the predicted probabilities otherwise the predicted Shannon entropy
-        will be artificially high.
-
-        turning off predicted only will go through all i<j basepairs and merge them in preference
-        of liklihood. This is more compuationally intensive
-        """
-
-        dotPlot = self.dp
-        # dotPlotCopy = {'logBP':copy.deepcopy(dotPlot['logBP'])}
-
-        # this is the value in -log10(prob), 2 = a prob of 0.01
-        slippedCutoff = 2
-        slipped = []
-
-        # if a reference structure is given, merge pairs to it first
-        if struct:
-            for pair in range(1, len(struct.ct)-1):
-                # define the base pairs
-                pair_i = pair+1
-                pair_j = struct.ct[pair]
-
-                # skip non-paired nucleotides
-                if pair_j == 0:
-                    continue
-                # skip pairs i > j so we don't double count
-                if pair_j < pair_i:
-                    continue
-
-                # create some search filters
-                filter_i = dotPlot['i'] == pair_i
-                filter_j = dotPlot['j'] == pair_j
-
-                filter_i_before = dotPlot['i'] == pair_i - 1
-                filter_i_after = dotPlot['i'] == pair_i + 1
-
-                filter_j_before = dotPlot['j'] == pair_j - 1
-                filter_j_after = dotPlot['j'] == pair_j + 1
-
-                # find i,j union before, at, and after
-                filterDP = {}
-                filterDP['before_j'] = filter_j_before * filter_i
-                filterDP['before_i'] = filter_j * filter_i_before
-
-                filterDP['after_j'] = filter_j_after * filter_i
-                filterDP['after_i'] = filter_j * filter_i_after
-
-                # define current point
-                at = filter_j * filter_i
-
-                # handle slippage, first define base prob
-                prob_at = 10**(-dotPlot['logBP'][at])
-
-                # cycle through all filter combinations
-                for filterPair in list(filterDP.keys()):
-
-                    # shorthand variable for current filter
-                    curr = filterDP[filterPair]
-
-                    # if pair exists ...
-                    if np.sum(curr) == 1:
-                        # add it to predicted pair probability
-                        prob_at += 10**(-dotPlot['logBP'][curr])
-
-                        # add pair to slipped list if it meets slip criteria
-                        if dotPlot['logBP'][curr] < slippedCutoff:
-                            slipped.append((pair_i, pair_j))
-
-                        # now set it to a very low probability for zero
-                        dotPlot['logBP'][curr] = 50
-
-                # return to -log10 format
-                dotPlot['logBP'][at] = -np.log10(prob_at)
-
-        if not predictedOnly:
-            # go through all i<j basepair combinations and check to see if there is a slipped base pair
-            for i, j in self.pairList():
-
-                # correct for python counting starting at 0
-                pair_i, pair_j = int(i+0), int(j+0)
-
-                # see if there exists a basepair for this combination
-                filter_i = (dotPlot['i'] == pair_i)
-                filter_j = (dotPlot['j'] == pair_j)
-
-                filter_union = (filter_i * filter_j)
-
-                # only continue if the pair is reasonably likely (>1% chance of forming)
-                if np.sum(filter_union) == 1 and dotPlot['logBP'][filter_union] < 3:
-                    filterList = {}
-
-                    # define the various types of slippage
-                    filter_ibefore = (dotPlot['i'] == pair_i-1)
-                    filter_jbefore = (dotPlot['j'] == pair_j-1)
-                    filter_iafter = (dotPlot['i'] == pair_i+1)
-                    filter_jafter = (dotPlot['j'] == pair_j+1)
-
-                    # index filters to a dict
-                    filterList['before_i'] = filter_ibefore * filter_j
-                    filterList['before_j'] = filter_i * filter_jbefore
-                    filterList['after_i'] = filter_iafter * filter_j
-                    filterList['after_j'] = filter_i * filter_jafter
-
-                    # define the prob at in normal normal space
-                    prob_at = 10**(-dotPlot['logBP'][filter_union])
-
-                    # go through each of the filters
-                    for pairFilter in list(filterList.keys()):
-                        curr = filterList[pairFilter]
-
-                        # if the current pair exists in the dotplot
-                        if np.sum(curr) == 1:
-                            # check to see if it's less likely than current pairs
-                            if dotPlot['logBP'][filter_union] < dotPlot['logBP'][curr]:
-                                # and add it to the current pair if it is
-                                prob_at += 10**(-dotPlot['logBP'][curr])
-
-                                # set to a very low probabliity afterwards
-                                dotPlot['logBP'][curr] = 50
-                    dotPlot['logBP'][filter_union] = -np.log10(prob_at)
-
-        return slipped
-
-    def pairingProb(self):
-        pass
-
-
-###############################################################################
 
 def readShannonFile(fname):
 
