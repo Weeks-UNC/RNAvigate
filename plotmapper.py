@@ -10,15 +10,13 @@ import pandas as pd
 import numpy as np
 from scipy import stats
 import math
-import os.path
 import xml.etree.ElementTree as xmlet
 
 # Special python packages
 try:
     import Bio.PDB
-    from Bio import SeqIO
 except ModuleNotFoundError:
-    print("Biopython package is missing. Parsing PDB or deletions won't work.")
+    print("Biopython package is missing. Reading PDB files will not work.")
 try:
     import py3Dmol
 except ModuleNotFoundError:
@@ -62,19 +60,6 @@ sns.set_palette(colors)
 ###############################################################################
 
 
-def get_nt_color(nt, colors="new"):
-    nt_color = {"old": {"A": "#f20000",  # red
-                        "U": "#f28f00",  # yellow
-                        "G": "#00509d",  # blue
-                        "C": "#00c200"},  # green
-                "new": {"A": "#366ef0",  # blue
-                        "U": "#9bb9ff",  # light blue
-                        "G": "#f04c4c",  # red
-                        "C": "#ffa77c"}  # light red
-                }[colors][nt]
-    return nt_color
-
-
 def get_default_fill(metric):
     fill = {'Class': -1,
             'Statistic': 0.0,
@@ -107,11 +92,11 @@ def get_default_cmap(metric):
     return cmap
 
 
-def get_default_metric(ij_data):
+def get_default_metric(attribute):
     metric = {'rings': 'Statistic',
               'pairs': 'Class',
               'deletions': 'Percentile'
-              }[ij_data]
+              }[attribute]
     return metric
 
 
@@ -126,13 +111,13 @@ def get_default_min_max(metric):
     return min_max
 
 
-def view_colormap(ij_data=None, metric=None, ticks=None, values=None,
+def view_colormap(attribute=None, metric=None, ticks=None, values=None,
                   title=None, cmap=None):
-    """Given an ij_data (ij data) will display a colorbar for the default
+    """Given an attribute (ij data) will display a colorbar for the default
     values (metric, cmap, min_max).
 
     Args:
-        ij_data (str, optional): string matching an ij data type.
+        attribute (str, optional): string matching an ij data type.
             Options are "rings", "pairs" or "deletions".
             Defaults to None.
         metric (str, optional): string matching column name of ij data.
@@ -140,12 +125,12 @@ def view_colormap(ij_data=None, metric=None, ticks=None, values=None,
         ticks (list, optional): locations to add ticks. scale is 0-10.
             Defaults to [0.5, 0.95], or [10/6, 30/6/, 50/6] for "Class" metric.
         title (str, optional): string for title of colorbar.
-            Defaults to "{ij_data}: {metric}"
+            Defaults to "{attribute}: {metric}"
         cmap (str, optional): string matching a valid matplotlib colormap.
             Default determined by get_default_cmap.
     """
     if metric is None:
-        metric = get_default_metric(ij_data)
+        metric = get_default_metric(attribute)
     if ticks is None:
         if metric == "Class":
             ticks = [10/6, 30/6, 50/6]
@@ -157,7 +142,7 @@ def view_colormap(ij_data=None, metric=None, ticks=None, values=None,
         else:
             values = get_default_min_max(metric)
     if title is None:
-        title = f"{ij_data.capitalize()}: {metric.lower()}"
+        title = f"{attribute}: {metric}"
     if cmap is None:
         cmap = get_default_cmap(metric)
     else:
@@ -210,7 +195,10 @@ class Sample():
                  pairs=None,
                  pdb=None,
                  pdb_name=None,
-                 dance_prefix=None):
+                 dance_prefix=None,
+                 dance_pairs=False,
+                 dance_rings=False,
+                 dance_ct=False):
         self.paths = {"fasta": fasta,
                       "profile": profile,
                       "ct": ct,
@@ -226,15 +214,10 @@ class Sample():
         # This might make code more readable, testable, extendible
         # instead of getattr(self, f"{data}_sequence"), self.sequence[data]
         # getattr() will work on any attribute, but sequence[data] checks type
-        self.sequence = {}  # stores sequences:
-        # profile == rings == pairs == dance
-        # fasta == deletions
-        # ct, ss, 3d can be different
-        self.length = {}  # stores length of all sequences
-        self.ij_data = {}  # TODO: stores rings, pairs, deletions as dataFrames
-        self.window = {}  # TODO: each ij_data value needs a window
-        self.header = {}  # TODO: each file needs a header in case it is printed
-        self.profile = {}  # TODO: add shape, frag, rnp as key:value pairs
+        self.sequence = {}  # add all as key:value pairs
+        self.length = {}  # stores length of sequences
+        self.ij_data = {}  # add rings, pairs, deletions as key:value pairs
+        self.profile = {}  # add shape, frag, rnp as key:value pairs
         self.structure = {"ct": {},
                           "ss": {},
                           "pdb": {}}  # add ct's, ss's, pdb's
@@ -243,13 +226,13 @@ class Sample():
         if ct is not None:
             self.read_ct("ct", ct)
         if compct is not None:
-            self.read_ct("compct", compct)
+            self.read_ct("compct", ct)
         if rings is not None:
             assert hasattr(self, "profile"), "Rings plotting requires profile."
-            self.read_rings(rings)
+            self.read_ring(rings)
         if pairs is not None:
             assert hasattr(self, "profile"), "Pairs plotting requires profile."
-            self.read_pairs(pairs)
+            self.read_pair(pairs)
         if deletions is not None:
             assert fasta is not None, "Deletions plotting requires fasta"
             self.read_deletions(deletions, fasta)
@@ -260,7 +243,7 @@ class Sample():
         if pdb is not None:
             self.read_pdb(pdb_name, pdb)
         if dance_prefix is not None:
-            self.init_dance(dance_prefix)
+            self.init_dance(dance_prefix, dance_pairs, dance_rings, dance_ct)
 
 ###############################################################################
 # Parsing data files
@@ -269,9 +252,9 @@ class Sample():
 #       read_pdb
 #       read_ss          Note: nsd portion is kludgey AF should use yaml
 #   MaP data files
-#       read_rings
+#       read_ring
 #       read_deletions
-#       read_pairs
+#       read_pair
 #       read_log
 #       read_dance_reactivities
 ###############################################################################
@@ -394,7 +377,7 @@ class Sample():
                               "varna": 1/65,
                               "cte": 1/30.5,
                               "nsd": 1/30.5}[self.ss_type]
-        self.sequence[ss_name] = sequence.upper().replace("T", "U")
+        self.sequence[ss_name] = sequence
         self.length[ss_name] = len(sequence)
         self.basepairs = basepairs
         self.xcoordinates = xcoords*coord_scale_factor
@@ -406,35 +389,33 @@ class Sample():
         self.sequence["profile"] = sequence.upper().replace("T", "U")
         self.length["profile"] = len(self.sequence["profile"])
 
-    def read_rings(self, rings):
+    def read_ring(self, rings):
         with open(rings, 'r') as file:
-            self.header["rings"] = file.readline()
-        split_header = self.header["rings"].split('\t')
-        window = split_header[1].split('=')[1]
-        self.window["rings"] = int(window)
-        self.ij_data["rings"] = pd.read_csv(rings, sep='\t', header=1)
+            header = file.readline().split('\t')
+        self.rings_window = int(header[1].split('=')[1])
+        self.rings = pd.read_csv(rings, sep='\t', header=1)
         self.sequence["rings"] = self.sequence["profile"]
         self.length["rings"] = self.length["profile"]
 
     def read_deletions(self, deletions, fasta):
+        from Bio import SeqIO
         fasta = list(SeqIO.parse(open(fasta), 'fasta'))
         self.deletions_gene = fasta[0].id
         self.sequence["deletions"] = str(fasta[0].seq).upper().replace("T",
                                                                        "U")
         self.length["deletions"] = len(self.sequence["deletions"])
         column_names = ['Gene', 'i', 'j', 'Metric']
-        data = pd.read_csv(deletions, sep='\t', names=column_names, header=0)
-        data["Percentile"] = data['Metric'].rank(method='max', pct=True)
-        self.ij_data["deletions"] = data
-        self.window["deletions"] = 1
+        self.deletions = pd.read_csv(deletions, sep='\t', names=column_names,
+                                     header=0)
+        metric = self.deletions['Metric']
+        percentile = metric.rank(method='max', pct=True)
+        self.deletions['Percentile'] = percentile
 
-    def read_pairs(self, pairs):
+    def read_pair(self, pairs):
         with open(pairs, 'r') as file:
-            self.header["pairs"] = file.readline()
-        split_header = self.header["pairs"].split('\t')
-        window = split_header[1].split('=')[1]
-        self.window["pairs"] = int(window)
-        self.ij_data["pairs"] = pd.read_csv(pairs, sep='\t', header=1)
+            header = file.readline().split('\t')
+        self.pairs_window = int(header[1].split('=')[1])
+        self.pairs = pd.read_csv(pairs, sep='\t', header=1)
         self.sequence["pairs"] = self.sequence["profile"]
         self.length["pairs"] = self.length["profile"]
 
@@ -475,7 +456,7 @@ class Sample():
                 'Untreated_mutations_per_molecule': untmuts}
         self.log = pd.DataFrame(data)
 
-    def init_dance(self, prefix):
+    def init_dance(self, prefix, pairs, rings, ct):
         reactivityfile = f"{prefix}-reactivities.txt"
         # read in 2 line header
         with open(reactivityfile) as inf:
@@ -493,8 +474,7 @@ class Sample():
             sample.paths = {"profile": reactivityfile,
                             "rings": f"{prefix}-{i}-rings.txt",
                             "pairs": f"{prefix}-{i}-pairmap.txt",
-                            "ct": [f"{prefix}-{i}.f.ct",  # if iterative PK used
-                                   f"{prefix}-{i}.ct"]}  # if regular fold used
+                            "ct": f"{prefix}-{i}.f.ct"}
             # read in "profile" from reactivities
             colnames = ["Nucleotide", "Sequence", "Reactivity_profile",
                         "Reactivity", "Background"]
@@ -506,15 +486,12 @@ class Sample():
             sample.sequence["profile"] = self.sequence['profile']
             sample.length["profile"] = len(sample.sequence["profile"])
             # read in other attributes
-            if os.path.isfile(sample.paths["rings"]):
-                sample.read_rings(sample.paths["rings"])
-            if os.path.isfile(sample.paths["pairs"]):
-                sample.read_pairs(sample.paths["pairs"])
-            # possible that these both exist
-            for ct_file in sample.paths["ct"]:
-                if os.path.isfile(ct_file):
-                    sample.read_ct("ct", ct_file)
-                    sample.paths["ct"] = ct_file
+            if rings:
+                sample.read_ring(sample.paths["rings"])
+            if pairs:
+                sample.read_pair(sample.paths["pairs"])
+            if ct:
+                sample.ct = rna.CT(sample.paths["ct"])
 
 ###############################################################################
 # Skyline plotting functions
@@ -910,10 +887,14 @@ class Sample():
                yerr=self.profile['Norm_stderr'], ecolor=near_black, capsize=1)
         self.plot_sequence(ax, 'ct', yvalue=0.5)
 
-    def plot_ap_data(self, ax, ij_data, metric=None, **kwargs):
-        self.filter_ij_data(ij_data, "ct", **kwargs)
-        ij_colors = self.get_ij_colors(ij_data, metric)
-        window = self.window[ij_data]
+    def plot_ap_data(self, ax, attribute, metric=None, all_pairs=False,
+                     **kwargs):
+        self.filter_ij_data(attribute, "ct", all_pairs=all_pairs, **kwargs)
+        ij_colors = self.get_ij_colors(attribute, metric)
+        if attribute in ['rings', 'pairs']:
+            window = getattr(self, attribute+"_window")
+        else:
+            window = 1
         for i, j, color in zip(*ij_colors):
             self.add_arc(ax, i, j, window, color, "bottom")
 
@@ -926,8 +907,8 @@ class Sample():
         # axins2.set_title(metric)
         # axins1.set_visible(False)
 
-    def make_ap(self, ax=None, ij_data=None, metric=None, ctcompare=True,
-                **kwargs):
+    def make_ap(self, ax=None, attribute=None, metric=None, all_pairs=False,
+                ctcompare=True, **kwargs):
         """Creates figure with arc plot. Includes ct, profile, sequence, and
         data type passed to data. [rings, pairs, probabilities]
 
@@ -947,9 +928,9 @@ class Sample():
         if hasattr(self, "profile"):
             self.plot_ap_profile(ax)
         if metric == "Distance":
-            self.set_3d_distances(ij_data)
-        if ij_data is not None:
-            self.plot_ap_data(ax, ij_data, metric, **kwargs)
+            self.set_3d_distances(attribute)
+        if attribute is not None:
+            self.plot_ap_data(ax, attribute, metric, all_pairs, **kwargs)
         self.plot_sequence(ax, "ct", yvalue=0.5)
         ax.annotate(self.sample, xy=(0.1, 0.9),
                     xycoords="axes fraction", fontsize=60, ha='center')
@@ -1074,18 +1055,17 @@ class Sample():
         yj = self.ycoordinates[j-1]
         ax.plot([xi, xj], [yi, yj], color=color, linewidth=linewidth)
 
-    def plot_ss_data(self, ax, ij_data, metric=None, all_pairs=False,
+    def plot_ss_data(self, ax, attribute, metric=None, all_pairs=False,
                      **kwargs):
-        self.filter_ij_data(ij_data, "ss", all_pairs=all_pairs, **kwargs)
-        ij_colors = self.get_ij_colors(ij_data, metric)
-        window = self.window[ij_data]
+        self.filter_ij_data(attribute, "ss", all_pairs=all_pairs, **kwargs)
+        ij_colors = self.get_ij_colors(attribute, metric)
         for i, j, color in zip(*ij_colors):
-            if window == 1:
-                self.add_ss_lines(ax, i, j, color)
+            if attribute == 'pairs':
+                for w in range(self.pairs_window):
+                    self.add_ss_lines(ax, i+w, j+self.pairs_window-1-w,
+                                      color, linewidth=6)
             else:
-                for w in range(window):
-                    self.add_ss_lines(ax, i+w, j+window-1 -
-                                      w, color, linewidth=6)
+                self.add_ss_lines(ax, i, j, color)
 
     def plot_ss_positions(self, ax, spacing=20):
         """adds position labels to the secondary structure graph
@@ -1102,16 +1082,16 @@ class Sample():
                         xycoords='data', fontsize=16,
                         bbox=dict(fc="white", ec='none', pad=0.3))
 
-    def make_ss(self, ax=None, ij_data=None, metric=None, positions=True,
+    def make_ss(self, ax=None, attribute=None, metric=None, positions=True,
                 colorby=None, markers='o', all_pairs=False, **kwargs):
         """Creates a full secondary structure graph with data plotted
 
         Args:
             ax (pyplot axis, option): axis to plot
-            ij_data (str, optional): string matching the ij_data to plot.
+            attribute (str, optional): string matching the attribute to plot.
                     Options: rings, pairs, deletions.
             metric (str, optional): string matching a column name of the
-                    ij_data dataframe. Defaults defined at top of file.
+                    attribute dataframe. Defaults defined at top of file.
             positions (bool, optional): whether to label positions.
                     Defaults to True.
             colorby (str, optional): method used to color nucleotides.
@@ -1125,7 +1105,7 @@ class Sample():
             _, ax = plt.subplots(1, figsize=self.get_ss_figsize(1, 1))
         self.set_ss(ax)
         self.plot_ss_structure(ax)
-        if colorby is None:
+        if colorby == None:
             if hasattr(self, "profile"):
                 colorby = "profile"
             else:
@@ -1134,9 +1114,9 @@ class Sample():
         if positions is True:
             self.plot_ss_positions(ax)
         if metric == "Distance":
-            self.set_3d_distances(ij_data)
-        if ij_data is not None:
-            self.plot_ss_data(ax, ij_data, metric, all_pairs, **kwargs)
+            self.set_3d_distances(attribute)
+        if attribute is not None:
+            self.plot_ss_data(ax, attribute, metric, all_pairs, **kwargs)
         return ax
 
 ###############################################################################
@@ -1381,15 +1361,15 @@ class Sample():
             distance = 1000
         return distance
 
-    def set_3d_distances(self, ij_data):
-        self.filter_ij_data(ij_data, "pdb")
-        data = self.ij_data[ij_data].copy()
+    def set_3d_distances(self, attribute):
+        self.filter_ij_data(attribute, "pdb")
+        data = getattr(self, attribute).copy()
         if "Distance" not in data:
             distances = []
             for _, i, j in data[["i_offset", "j_offset"]].itertuples():
                 distances.append(self.get_3d_distance(i, j))
             data["Distance"] = distances
-        self.ij_data[ij_data] = data
+        setattr(self, attribute, data)
 
     def add_3d_lines(self, view, i, j, color, viewer=None):
         xi, yi, zi = self.get_xyz_coord(i)
@@ -1405,19 +1385,22 @@ class Sample():
         else:
             view.addCylinder(cylinder_specs)
 
-    def plot_3d_data(self, view, ij_data, metric=None, viewer=None,
+    def plot_3d_data(self, view, attribute, metric=None, viewer=None,
                      **kwargs):
-        self.filter_ij_data(ij_data, "pdb", **kwargs)
-        ij_colors = self.get_ij_colors(ij_data, metric)
+        self.filter_ij_data(attribute, "pdb", **kwargs)
+        ij_colors = self.get_ij_colors(attribute, metric)
         for i, j, color in zip(*ij_colors):
             color = mp.colors.rgb2hex(color)
             color = "0x"+color[1:]
-            window = self.window[ij_data]
-            for w in range(window):
-                io = i+w
-                jo = j+window-1-w
-                if io in self.pdb_validres and jo in self.pdb_validres:
-                    self.add_3d_lines(view, io, jo, color, viewer)
+            if attribute in ['rings', 'pairs']:
+                window = getattr(self, attribute+"_window")
+                for w in range(window):
+                    io = i+w
+                    jo = j+window-1-w
+                    if io in self.pdb_validres and jo in self.pdb_validres:
+                        self.add_3d_lines(view, io, jo, color, viewer)
+            else:
+                self.add_3d_lines(view, i, j, color, viewer)
 
     def set_3d_colors(self, view, colorby, viewer=None):
         colorby_function = getattr(self, "get_colorby_"+colorby)
@@ -1435,7 +1418,7 @@ class Sample():
             else:
                 view.setStyle(selector, style, viewer=viewer)
 
-    def make_3d(self, view=None, viewer=None, ij_data=None, metric=None,
+    def make_3d(self, view=None, viewer=None, attribute=None, metric=None,
                 colorby="sequence", **kwargs):
         if view is None:
             view = py3Dmol.view(query="pdb:"+self.pdb_name)
@@ -1443,9 +1426,9 @@ class Sample():
             colorby = "profile"
         self.set_3d_colors(view, colorby, viewer)
         if metric == "Distance":
-            self.set_3d_distances(ij_data)
-        if ij_data is not None:
-            self.plot_3d_data(view, ij_data, metric, viewer, **kwargs)
+            self.set_3d_distances(attribute)
+        if attribute is not None:
+            self.plot_3d_data(view, attribute, metric, viewer, **kwargs)
         return view
 
 ##############################################################################
@@ -1530,23 +1513,22 @@ class Sample():
             unpaired_mask = ~paired_mask
             ax.scatter(p1[paired_mask], p2[paired_mask], label="Paired")
             ax.scatter(p1[unpaired_mask], p2[unpaired_mask], label="Unpaired")
-        elif colorby == "nucleotide":
+        if colorby == "nucleotide":
             for nuc in "GUAC":
                 sequence = self.profile["Sequence"][notNans]
                 nuc_mask = [nt == nuc for nt in sequence]
-                color = get_nt_color(nuc)
-                ax.scatter(p1[nuc_mask], p2[nuc_mask], label=nuc, color=color)
+                ax.scatter(p1[nuc_mask], p2[nuc_mask], label=nuc)
         else:
             ax.scatter(p1, p2)
         s1, s2 = self.sample, comp_sample.sample
         ax.set(xscale='log',
-               xlim=[0.00001, 0.3],
+               xlim=[0.0001, 0.3],
                xlabel=s1,
                yscale='log',
-               ylim=[0.00001, 0.3],
+               ylim=[0.0001, 0.3],
                ylabel=s2,
                title=f'{s1} vs. {s2}: {column}')
-        ax.legend(title=colorby, loc="lower right")
+        ax.legend(title=colorby)
 
 ###############################################################################
 # Heatmap plotting functions
@@ -1559,27 +1541,26 @@ class Sample():
 ###############################################################################
 
     def get_distance_matrix(self, structure):
-        if not hasattr(self, "distances"):
-            self.distances = {}
-        if structure in self.distances.keys():
-            return self.distances[structure]
-        if structure == "ct":
-            matrix = self.ct.get_distance_matrix()
-            self.distances["ct"] = matrix
-        elif structure == "pdb":
-            length = self.length["pdb"]
-            fill = get_default_fill('Distance')
-            matrix = np.full([length, length], fill)
-            for i in range(length):
-                for j in range(length):
-                    if matrix[i, j] == fill:
-                        matrix[i, j] = self.get_3d_distance(i+1, j+1)
-                        matrix[j, i] = matrix[i, j]
-            self.distances["pdb"] = matrix
+        if hasattr(self, structure+"_distances"):
+            matrix = getattr(self, structure+"_distances")
+        else:
+            if structure == "ct":
+                matrix = self.ct.get_distance_matrix()
+                self.ct_distances = matrix
+            elif structure == "pdb":
+                length = self.length["pdb"]
+                fill = get_default_fill('Distance')
+                matrix = np.full([length, length], fill)
+                for i in range(length):
+                    for j in range(length):
+                        if matrix[i, j] == fill:
+                            matrix[i, j] = self.get_3d_distance(i+1, j+1)
+                            matrix[j, i] = matrix[i, j]
+                self.pdb_distances = matrix
         return matrix
 
-    def plot_contour_distances(self, ax, structure, ij_data, levels):
-        clip_pad = self.get_clip_pad(structure, ij_data)
+    def plot_contour_distances(self, ax, structure, attribute, levels):
+        clip_pad = self.get_clip_pad(structure, attribute)
         length = self.length[structure]+sum(clip_pad[1])
         fill = get_default_fill('Distance')
         distances = np.full([length, length], fill)
@@ -1594,26 +1575,34 @@ class Sample():
         ax.contour(x_y, x_y, distances, levels=levels, cmap=cmap,
                    linewidths=0.5)
 
-    def plot_heatmap_data(self, ax, ij_data, structure, metric=None):
-        clip_pad = self.get_clip_pad(ij_data, structure)
-        data = self.ij_data[ij_data].copy()
+    def plot_heatmap_data(self, ax, attribute, structure, metric=None):
+        clip_pad = self.get_clip_pad(attribute, structure)
+        data = getattr(self, attribute).copy()
         if metric is None:
-            metric = get_default_metric(ij_data)
+            metric = get_default_metric(attribute)
         columns = ["i", "j", metric]
-        if ij_data == "rings":
+        if attribute == "rings":
             data = data[columns+["+/-"]]
             data[metric] = data[metric]*data["+/-"]
             data = data[columns]
         else:
             data = data[columns]
         data[["i", "j"]] += clip_pad[1][0]
-        length = self.length[ij_data] + sum(clip_pad[1])
+        length = self.length[attribute] + sum(clip_pad[1])
         fill = get_default_fill(metric)
         data_im = np.full([length, length], fill)
-        window = self.window[ij_data]
         for _, i, j, value in data.itertuples():
-            data_im[i-1:i-1+window, j-1:j-1+window] = value
-            data_im[j-1:j-1+window, i-1:i-1+window] = value
+            if attribute in ["rings", "pairs"]:
+                window = getattr(self, attribute+"_window")
+                for iw in range(window):
+                    io = i-1+iw
+                    for jw in range(window):
+                        jo = j+window-2-jw
+                        data_im[io, jo] = value
+                        data_im[jo, io] = value
+            else:
+                data_im[i-1, j-1] = value
+                data_im[j-1, i-1] = value
         min_max = get_default_min_max(metric)
         if metric == "Percentile":
             min_max = [0, 1]
@@ -1630,19 +1619,19 @@ class Sample():
         else:
             cmap = get_default_cmap(metric)
             cmap = cmap(np.arange(cmap.N))
-        if ij_data != "rings":
+        if attribute != "rings":
             cmap[0, :] = [1, 1, 1, 0]
         cmap = mp.colors.ListedColormap(cmap)
         ax.imshow(data_im, cmap=cmap, vmin=min_max[0], vmax=min_max[1],
                   interpolation='none')
 
-    def make_heatmap(self, ij_data, structure, metric=None, ax=None,
+    def make_heatmap(self, attribute, structure, metric=None, ax=None,
                      levels=None):
         if ax is None:
             fig, ax = plt.subplots(1, figsize=(10, 10))
         # self.set_heatmap(ax)
-        self.plot_heatmap_data(ax, ij_data, structure, metric)
-        self.plot_contour_distances(ax, structure, ij_data, levels)
+        self.plot_heatmap_data(ax, attribute, structure, metric)
+        self.plot_contour_distances(ax, structure, attribute, levels)
 
 ###############################################################################
 # i,j data filters and coloring functions
@@ -1652,8 +1641,7 @@ class Sample():
 #   get_ij_colors
 ###############################################################################
 
-    def get_cd_mask(self, ij_data, fit_to_sequence, cdAbove=None, cdBelow=None,
-                    ss_only=False, ds_only=False):
+    def get_cd_mask(self, data, fit_to_sequence, cdAbove=None, cdBelow=None):
         """creates a mask for filtering i,j data based on contact distance.
 
         Args:
@@ -1673,19 +1661,11 @@ class Sample():
             ct.pair2CT(pairs=basepairs, seq=self.sequence["ss"])
         elif fit_to_sequence == 'ct':
             ct = self.ct
-        ij_data = self.ij_data[ij_data]
+        data = getattr(self, data)
         mask = []
-        for i, j, yes in zip(ij_data["i_offset"].values, ij_data["j_offset"].values,
-                             ij_data["mask"].values):
+        for i, j, yes in zip(data["i_offset"].values, data["j_offset"].values,
+                             data["mask"].values):
             if yes:
-                if ss_only:
-                    ss = (ct.ct[i-1] == 0) and (ct.ct[j-1] == 0)
-                else:
-                    ss = True
-                if ds_only:
-                    ds = (ct.ct[i-1] != 0) and (ct.ct[j-1] != 0)
-                else:
-                    ds = True
                 if cdAbove is not None:
                     above = ct.contactDistance(i, j) > cdAbove
                 else:
@@ -1695,33 +1675,12 @@ class Sample():
                 else:
                     below = True
             else:
-                above, below, ss, ds = False, False, False, False
-            mask.append(above & below & ss & ds)
+                above = False
+                below = False
+            mask.append(above & below)
         return mask
 
-    def get_profile_mask(self, ij_data, profAbove=None, profBelow=None):
-        clip, pad = self.get_clip_pad(ij_data, "profile")
-        data = self.ij_data[ij_data].copy()
-        norm_prof = self.profile["Norm_profile"]
-        mask = []
-        for _, i, j in data[["i", "j"]].itertuples():
-            if not (clip[1] > i > clip[0]) or not (clip[1] > j > clip[0]):
-                mask.append(False)
-                continue
-            prof_i = norm_prof[i-1+pad[0]]
-            prof_j = norm_prof[j-1+pad[0]]
-            if profAbove is not None:
-                above = (prof_i >= profAbove) and (prof_j >= profAbove)
-            else:
-                above = True
-            if profBelow is not None:
-                below = (prof_i <= profBelow) and (prof_j <= profBelow)
-            else:
-                below = True
-            mask.append(above and below)
-        return mask
-
-    def set_mask_offset(self, ij_data, fit_to_sequence):
+    def set_mask_offset(self, attribute, fit_to_sequence):
         """Creates 3 new columns of the attribute dataFrame: mask, i_offset,
         and j_offset. These are the clipped and padded values to fit to the
         given sequence.
@@ -1730,10 +1689,10 @@ class Sample():
             attribute (str): string matching i, j data attribute.
             fit_to_sequence (str): string matching sequence to fit data to.
         """
-        clip_pad = self.get_clip_pad(ij_data, fit_to_sequence)
+        clip_pad = self.get_clip_pad(attribute, fit_to_sequence)
         start = clip_pad[0][0]
         end = clip_pad[0][1]
-        data = self.ij_data[ij_data]
+        data = getattr(self, attribute)
         i = data["i"].values
         j = data["j"].values
         iinrange = (start < i) & (i < end)
@@ -1744,10 +1703,8 @@ class Sample():
         data['i_offset'] = i+offset
         data['j_offset'] = j+offset
 
-    def filter_ij_data(self, ij_data, fit_to_sequence, cdAbove=None,
-                       cdBelow=None, ss_only=False, ds_only=False,
-                       profAbove=None, profBelow=None, all_pairs=False,
-                       **kwargs):
+    def filter_ij_data(self, attribute, fit_to_sequence, cdAbove=None,
+                       cdBelow=None, all_pairs=False, **kwargs):
         """Apply given filters to i,j data attribute.
 
         Args:
@@ -1761,31 +1718,29 @@ class Sample():
                 Keywords should be column names of the given attribute.
                 Arguments should be value of the lower bound for that column.
         """
-        data = self.ij_data[ij_data]
-        self.set_mask_offset(ij_data, fit_to_sequence)
+        data = getattr(self, attribute)
+        self.set_mask_offset(attribute, fit_to_sequence)
         if fit_to_sequence == 'pdb':
             mask = []
             for i, j in zip(data["i_offset"], data["j_offset"]):
                 mask.append(i in self.pdb_validres and j in self.pdb_validres)
             mask = np.array(mask, dtype=bool)
             data["mask"] = data["mask"] & mask
-        if profAbove is not None or profBelow is not None:
-            prof_mask = self.get_profile_mask(ij_data, profAbove, profBelow)
-            data["mask"] = data["mask"] & prof_mask
-        if cdAbove is not None or cdBelow is not None or ss_only or ds_only:
-            cd_mask = self.get_cd_mask(ij_data, fit_to_sequence,
-                                       cdAbove, cdBelow, ss_only, ds_only)
+        if cdAbove is not None or cdBelow is not None:
+            cd_mask = self.get_cd_mask(attribute, fit_to_sequence,
+                                       cdAbove, cdBelow)
             data['mask'] = data['mask'] & cd_mask
-        if not all_pairs and ij_data == 'pairs':
+        if not all_pairs and attribute == 'pairs':
             data["mask"] = data["mask"] & (data["Class"] != 0)
+        data = getattr(self, attribute)
         for key in kwargs.keys():
             try:
                 mask = data[key] > kwargs[key]
                 data["mask"] = data["mask"] & mask
             except KeyError:
-                print(f"{key} is not a valid column of {ij_data} dataFrame")
+                print(f"{key} is not a valid column of {attribute} dataFrame")
 
-    def get_ij_colors(self, ij_data, metric=None, min_max=None):
+    def get_ij_colors(self, attribute, metric=None, min_max=None):
         """get lists for i_offset, j_offset, and mpl colors for the given
         i,j data attribute and metric.
 
@@ -1800,12 +1755,12 @@ class Sample():
             3 lists: offset i and j values, and mpl colors
         """
         if metric is None:
-            metric = get_default_metric(ij_data)
+            metric = get_default_metric(attribute)
         if min_max is None:
             min_max = get_default_min_max(metric)
         columns = ["i_offset", "j_offset"]
-        data = self.ij_data[ij_data]
-        if ij_data == 'rings':
+        data = getattr(self, attribute)
+        if attribute == 'rings':
             columns.extend([metric, "+/-"])
             data = data[data["mask"]][columns].copy()
             data[metric] = data[metric]*data["+/-"]
@@ -1827,26 +1782,6 @@ class Sample():
         cmap = get_default_cmap(metric)
         colors = cmap(data[metric].values)
         return i, j, colors
-
-    def print_new_ij_file(self, ij_data, outfile=None, **kwargs):
-        self.filter_ij_data(ij_data, "ct", **kwargs)
-        if ij_data in self.header.keys():
-            header = self.header[ij_data]
-        data = self.ij_data[ij_data][self.ij_data[ij_data]["mask"]].copy()
-        columns = list(data.columns)
-        exclude_columns = ["i_offset", "j_offset", "mask", "Distance"]
-        for col in exclude_columns:
-            if col in columns:
-                columns.remove(col)
-        csv = data.to_csv(columns=columns, sep='\t', index=False,
-                          line_terminator='\n')
-        if outfile is not None:
-            with open(outfile, 'w') as out:
-                out.write(header)
-                out.write(csv)
-        else:
-            print(header, csv)
-
 
 ###############################################################################
 # filters, clipping, paddings, and coloring functions
@@ -1883,12 +1818,9 @@ class Sample():
         Returns:
             [2x2 list]: 5' and 3' clip and 5' and 3' pad
         """
-        if not hasattr(self, "clip_pad"):
-            self.clip_pad = {}
-        if fit_this not in self.clip_pad.keys():
-            self.clip_pad[fit_this] = {}
-        if to_that in self.clip_pad[fit_this].keys():
-            return self.clip_pad[fit_this][to_that]
+        attribute = f"{fit_this}_{to_that}_clip_pad"
+        if hasattr(self, attribute):
+            return getattr(self, attribute)
         this_sequence = self.sequence[fit_this]
         that_sequence = self.sequence[to_that]
         this_length = self.length[fit_this]
@@ -1924,7 +1856,7 @@ class Sample():
         else:
             clip = [0, that_length]
             pad = [index-1, that_length - this_length - index + 1]
-        self.clip_pad[fit_this][to_that] = [clip, pad]
+        setattr(self, attribute, [clip, pad])
         return [clip, pad]
 
     def get_colorby_profile(self, sequence):
@@ -1966,8 +1898,12 @@ class Sample():
         Returns:
             list of mpl colors: color list representing sequence
         """
+        nuc_colors = {"old": {"A": "#f20000", "U": "#f28f00",
+                              "G": "#00509d", "C": "#00c200"},
+                      "new": {"A": "#366ef0", "U": "#9bb9ff",
+                              "G": "#f04c4c", "C": "#ffa77c"}}[colors]
         seq = self.sequence[sequence]
-        colors = np.array([get_nt_color(nt.upper(), colors) for nt in seq])
+        colors = np.array([nuc_colors[nuc.upper()] for nuc in seq])
         return colors
 
     def get_colorby_position(self, sequence, cmap='rainbow'):
@@ -2023,18 +1959,19 @@ def array_ap(samples=[], rows=None, cols=None, **kwargs):
 
 
 def array_qc(samples=[]):
-    fig = plt.figure(figsize=(20, 10))
-    ax1 = fig.add_subplot(241)
-    ax2 = fig.add_subplot(242)
-    ax3 = fig.add_subplot(243)
-    ax4 = fig.add_subplot(244)
+    fig = plt.figure(figsize=(14, 14))
+    ax1 = fig.add_subplot(421)
+    ax2 = fig.add_subplot(422)
+    ax3 = fig.add_subplot(423)
+    ax4 = fig.add_subplot(424)
     ax5 = fig.add_subplot(212)
-    total = len(samples)
+    num_samples = len(samples)
     for i, sample in enumerate(samples):
         sample.plot_log_MutsPerMol(ax1, sample="Untreated")
         sample.plot_log_MutsPerMol(ax2, sample="Modified")
-        sample.plot_log_ReadLength(ax3, sample="Untreated", n=i, of=total)
-        sample.plot_log_ReadLength(ax4, sample="Modified", n=i, of=total)
+        sample.plot_log_ReadLength(
+            ax3, sample="Untreated", n=i, of=num_samples)
+        sample.plot_log_ReadLength(ax4, sample="Modified", n=i, of=num_samples)
     samples[0].set_log_MutsPerMol(ax1)
     samples[0].set_log_MutsPerMol(ax2)
     samples[0].set_log_ReadLength(ax3)
