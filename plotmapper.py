@@ -209,7 +209,6 @@ class Sample():
                  deletions=None,
                  pairs=None,
                  pdb=None,
-                 pdb_name=None,
                  dance_prefix=None):
         self.paths = {"fasta": fasta,
                       "profile": profile,
@@ -222,18 +221,15 @@ class Sample():
                       "pairs": pairs,
                       "pdb": pdb}
         self.sample = sample
-        # TODO: possible alternative structures
-        # This might make code more readable, testable, extendible
-        # instead of getattr(self, f"{data}_sequence"), self.sequence[data]
-        # getattr() will work on any attribute, but sequence[data] checks type
+
         self.sequence = {}  # stores sequences:
         # profile == rings == pairs == dance
         # fasta == deletions
         # ct, ss, 3d can be different
         self.length = {}  # stores length of all sequences
-        self.ij_data = {}  # TODO: stores rings, pairs, deletions as dataFrames
-        self.window = {}  # TODO: each ij_data value needs a window
-        self.header = {}  # TODO: each file needs a header in case it is printed
+        self.ij_data = {}  # stores rings, pairs, deletions as dataFrames
+        self.window = {}  # each ij_data value needs a window
+        self.header = {}  # each ij_data value needs a header
         self.profile = {}  # TODO: add shape, frag, rnp as key:value pairs
         self.structure = {"ct": {},
                           "ss": {},
@@ -258,7 +254,7 @@ class Sample():
         if log is not None:
             self.read_log(log)
         if pdb is not None:
-            self.read_pdb(pdb_name, pdb)
+            self.read_pdb(pdb)
         if dance_prefix is not None:
             self.init_dance(dance_prefix)
 
@@ -281,10 +277,9 @@ class Sample():
         self.sequence[ct_name] = ''.join(self.ct.seq)
         self.length[ct_name] = len(self.sequence["ct"])
 
-    def read_pdb(self, pdb_name, pdb):
-        assert pdb_name is not None, "pdb parsing requires PDB entry name"
+    def read_pdb(self, pdb):
         parser = Bio.PDB.PDBParser()
-        self.pdb = parser.get_structure(pdb_name, pdb)
+        self.pdb = parser.get_structure('RNA', pdb)
         self.sequence["pdb"] = ''
         with open(pdb) as file:
             for line in file.readlines():
@@ -297,7 +292,6 @@ class Sample():
             if res_id[0] == " ":
                 self.pdb_validres.append(res_id[1])
         self.length["pdb"] = len(self.sequence["pdb"])
-        self.pdb_name = pdb_name
 
     def read_ss(self, ss_name, ss):
         # get and check file extension, then read
@@ -1422,23 +1416,41 @@ class Sample():
     def set_3d_colors(self, view, colorby, viewer=None):
         colorby_function = getattr(self, "get_colorby_"+colorby)
         colors = colorby_function("pdb")
-        for i, atom in enumerate(self.pdb.get_atoms()):
-            res = atom.get_parent().get_id()
-            selector = {'model': -1, 'serial': i+1}
-            if res[0] == " ":
-                color = colors[res[1]-1]
-                style = {"cartoon": {"color": color, "opacity": 0.8}}
+        color_selector = {}
+        for res in self.pdb.get_residues():
+            res = res.get_id()
+            color = colors[res[1]-1]
+            if color in color_selector.keys():
+                color_selector[color].append(res[1])
             else:
-                style = {"cross": {"hidden": "true"}}
+                color_selector[color] = [res[1]]
+        for color in color_selector.keys():
+            selector = {'resi': color_selector[color]}
+            style = {"cartoon": {"color": color, "opacity": 0.8}}
             if viewer is None:
                 view.setStyle(selector, style)
             else:
                 view.setStyle(selector, style, viewer=viewer)
+        selector = {'resi': self.pdb_validres, 'invert': 'true'}
+        style = {"cross": {"hidden": "true"}}
+        if viewer is None:
+            view.setStyle(selector, style)
+        else:
+            view.setStyle(selector, style, viewer=viewer)
+
+    def set_3d_view(self, view):
+        with open("data/3dhs_Correct.pdb", 'r') as pdb_file:
+            pdb_str = pdb_file.read()
+        view.addModel(pdb_str, 'pdb')
+        view.setStyle({'chain': 'A'}, {"cartoon": {'color': 'grey'}})
+        view.zoomTo()
+        return view
 
     def make_3d(self, view=None, viewer=None, ij_data=None, metric=None,
                 colorby="sequence", **kwargs):
         if view is None:
-            view = py3Dmol.view(query="pdb:"+self.pdb_name)
+            view = py3Dmol.view()
+            view = self.set_3d_view(view)
         if hasattr(self, "profile"):
             colorby = "profile"
         self.set_3d_colors(view, colorby, viewer)
@@ -1494,7 +1506,7 @@ class Sample():
             w.write(line.format(*cols))
         w.close()
 
-    def plot_regression(self, comp_sample, ax=None, colorby="ct",
+    def make_regression(self, comp_sample, ax=None, colorby="ct",
                         column="Reactivity_profile"):
         """Plots scatter plot of reactivity profile vs. reactivity profile and
         computes regression metrics R^2 and slope, which are annotated on the
@@ -1510,7 +1522,7 @@ class Sample():
                 Defaults to "Reactivity_profile".
         """
         if ax is None:
-            ax = plt.gca()
+            _, ax = plt.subplots(1, 1, figsize=(7, 7))
         p1 = self.profile[column].copy()
         p2 = comp_sample.profile[column].copy()
 
@@ -1832,9 +1844,12 @@ class Sample():
         self.filter_ij_data(ij_data, "ct", **kwargs)
         if ij_data in self.header.keys():
             header = self.header[ij_data]
+        else:
+            header = ''
         data = self.ij_data[ij_data][self.ij_data[ij_data]["mask"]].copy()
         columns = list(data.columns)
-        exclude_columns = ["i_offset", "j_offset", "mask", "Distance"]
+        exclude_columns = ["i_offset", "j_offset",
+                           "mask", "Distance", "Percentile"]
         for col in exclude_columns:
             if col in columns:
                 columns.remove(col)
@@ -2072,10 +2087,10 @@ def array_3d(samples, rows=None, cols=None, **kwargs):
         [type]: [description]
     """
     rows, cols = get_rows_columns(len(samples), rows, cols)
-    view = py3Dmol.view(query="pdb:"+samples[0].pdb_name,
-                        viewergrid=(rows, cols),
+    view = py3Dmol.view(viewergrid=(rows, cols),
                         width=400*rows,
                         height=400*cols)
+    view = samples[0].set_3d_view(view)
     for i, sample in enumerate(samples):
         row = i // cols
         col = i % rows
