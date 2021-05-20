@@ -487,7 +487,7 @@ class Sample():
             sample.paths = {"profile": reactivityfile,
                             "rings": f"{prefix}-{i}-rings.txt",
                             "pairs": f"{prefix}-{i}-pairmap.txt",
-                            "ct": [f"{prefix}-{i}.f.ct",  # if iterative PK used
+                            "ct": [f"{prefix}-{i}.f.ct",  # if using --pk
                                    f"{prefix}-{i}.ct"]}  # if regular fold used
             # read in "profile" from reactivities
             colnames = ["Nucleotide", "Sequence", "Reactivity_profile",
@@ -1687,8 +1687,8 @@ class Sample():
             ct = self.ct
         ij_data = self.ij_data[ij_data]
         mask = []
-        for i, j, yes in zip(ij_data["i_offset"].values, ij_data["j_offset"].values,
-                             ij_data["mask"].values):
+        i_j_yes = ["i_offset", "j_offset", "mask"]
+        for _, i, j, yes in ij_data[i_j_yes].itertuples():
             if yes:
                 if ss_only:
                     ss = (ct.ct[i-1] == 0) and (ct.ct[j-1] == 0)
@@ -1861,7 +1861,6 @@ class Sample():
                 out.write(csv)
         else:
             print(header, csv)
-
 
 ###############################################################################
 # filters, clipping, paddings, and coloring functions
