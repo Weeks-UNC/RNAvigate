@@ -1,4 +1,3 @@
-
 Secondary Structure options test script
 =======================================
 This test script is to test implemented features with 2D secondary structures.
@@ -8,13 +7,7 @@ The function calls are likely to stay the same, but the default plots
 may look a little different in the future.
 
 Currently broken:
-* coloring by 3d distance.
-* plotting pairs:
-  * draws one line from i to j.
-  * should draw 3 lines:
-    * i to j+2
-    * i+1 to j+1
-    * i+2 to j.
+* nothing that I'm aware of
 
 Notebook set-up
 ---------------
@@ -57,92 +50,147 @@ If you have consistently named files, (which you should), you can use a function
 path = 'data/'
 def kwargs(sample):
     kwargs = {}
+    kwargs["sample"] = sample
     kwargs["profile"] = path+sample+"_rnasep_profile.txt"
     kwargs["ct"] = path+"RNaseP.ct"
     kwargs["ss"] = path+"RC_CRYSTAL_STRUCTURE.xrna"
     kwargs["rings"] = path+sample+"-rnasep.corrs"
     kwargs["pairs"] = path+sample+"-rnasep-pairmap.txt"
     kwargs["log"] = path+sample+"_shapemapper_log.txt"
-    kwargs["dance_reactivities"] = path+sample+"_rnasep-reactivities.txt"
+    kwargs["dance_prefix"] = path+sample+"_rnasep"
     kwargs["deletions"] = path+"example-rnasep-deletions.txt"
     kwargs["fasta"] = path+"RNaseP-noSC.fasta"
     kwargs["pdb"] = path+"3dhs_Correct.pdb"
     kwargs["pdb_name"] = "3dhs"
     return kwargs
 
-example = MaP.Sample(sample="example2", **kwargs("example2"))
+example = MaP.Sample(**kwargs("example2"))
 ```
 
 
 ```python
-example.make_ss(attribute="rings", metric="Statistic", Statistic=20, cdAbove=20)
+example.make_ss(ij_data="pairs")
 ```
 
 
-![svg](ss_test_files/ss_test_5_0.svg)
+
+
+    <AxesSubplot:title={'center':'example2'}>
+
+
+
+
+    
+![svg](ss_test_files/ss_test_5_1.svg)
+    
 
 
 
 ```python
-example.make_ss(attribute="deletions", Percentile=0.95)
+example.make_ss(ij_data="rings", metric="Statistic", Statistic=20, cdAbove=20)
 ```
 
 
-![svg](ss_test_files/ss_test_6_0.svg)
+
+
+    <AxesSubplot:title={'center':'example2'}>
+
+
+
+
+    
+![svg](ss_test_files/ss_test_6_1.svg)
+    
 
 
 
 ```python
-example.make_ss(attribute="rings", metric="Zij", Zij=10)
+example.make_ss(ij_data="deletions", Percentile=0.95, colorby="sequence", ss_only=True)
 ```
 
 
-![svg](ss_test_files/ss_test_7_0.svg)
+
+
+    <AxesSubplot:title={'center':'example2'}>
+
+
+
+
+    
+![svg](ss_test_files/ss_test_7_1.svg)
+    
 
 
 
 ```python
-example.make_ss(attribute="rings", cdBelow=30)
+example.make_ss(ij_data="rings", metric="Zij", Zij=10, colorby='position')
 ```
 
 
-![svg](ss_test_files/ss_test_8_0.svg)
+
+
+    <AxesSubplot:title={'center':'example2'}>
+
+
+
+
+    
+![svg](ss_test_files/ss_test_8_1.svg)
+    
 
 
 
 ```python
-example.make_ss(attribute="pairs", all_pairs=True)
+example.make_ss(ij_data="rings", cdBelow=30, profAbove=0.8)
 ```
 
 
-![svg](ss_test_files/ss_test_9_0.svg)
+
+
+    <AxesSubplot:title={'center':'example2'}>
+
+
+
+
+    
+![svg](ss_test_files/ss_test_9_1.svg)
+    
 
 
 
 ```python
-example.make_ss(attribute="pairs")
+example.make_ss(ij_data="pairs", all_pairs=True)
 ```
 
 
-![svg](ss_test_files/ss_test_10_0.svg)
+
+
+    <AxesSubplot:title={'center':'example2'}>
+
+
+
+
+    
+![svg](ss_test_files/ss_test_10_1.svg)
+    
 
 
 
 ```python
-example.make_ss(attribute="pairs", metric="distance")
+example.make_ss(ij_data="deletions", metric="Distance", Percentile=0.98)
 ```
 
 
-![svg](ss_test_files/ss_test_11_0.svg)
+
+
+    <AxesSubplot:title={'center':'example2'}>
 
 
 
-```python
-example.make_ss(attribute="deletions", metric="distance", Percentile=0.98)
-```
 
-
-![svg](ss_test_files/ss_test_12_0.svg)
+    
+![svg](ss_test_files/ss_test_11_1.svg)
+    
 
 
 
