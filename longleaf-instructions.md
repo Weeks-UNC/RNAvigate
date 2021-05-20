@@ -63,3 +63,31 @@ OpenOnDemand is UNC's platform for using interactive programs within Longleaf.
 4. To test that this works, restart the kernel and run all cells.
 5. On the JupyterLab home page, there should be an option to start a new python
    notebook using the "mapexplors" environment.
+
+To Manage environments
+----------------------
+```bash
+## Create the virtual environment
+conda create -n environment_name
+
+## Activate the virtual environment
+conda activate environment_name
+
+## Make sure that ipykernel is installed
+pip install --user ipykernel
+
+## Add the new virtual environment to Jupyter
+python -m ipykernel install --user --name=environment_name
+
+## To list existing Jupyter virtual environments
+jupyter kernelspec list
+
+## To list existing conda environments
+conda env list
+
+## To remove conda environment
+conda env remove -n environment_name
+
+## To remove the environment from Jupyter
+jupyter kernelspec uninstall environment_name
+```
