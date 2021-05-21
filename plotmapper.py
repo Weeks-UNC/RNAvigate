@@ -49,10 +49,10 @@ def create_code_button():
 sns.set_context("talk")
 sns.set_style("ticks")
 colors = [
-    '#a100ffff',  # Purple
-    '#edc600ff',  # Yellow
     '#0092edff',  # Blue
     '#ff8300ff',  # Orange
+    '#a100ffff',  # Purple
+    '#edc600ff',  # Yellow
     '#ff48e9ff',  # Pink
     '#3fd125ff'  # Green
 ]
