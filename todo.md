@@ -7,24 +7,24 @@ analysis.
 
 To-Do List
 ----------
-- [ ] Keep documentation updated for testers.
-- [ ] consider moving to kwarg dicts for more customizability
-- [ ] implement single sample arrays with filters as kwarg dicts.
-- [ ] Implement support for probabilities in ap, ss, maybe 3d.
-- [ ] In ss and 3D, add filter for only ij_data that are base-paired.
-- [ ] Support for different annotation types
-  - [ ] vertical bars in ap
-  - [ ] highlight nts for ss
-  - [ ] not sure how to show this in 3D figures.
-- [ ] 3D-distance histograms of filtered ij data.
-- [ ] add colorbar and legends for ap, ss, pdb plots
-- [ ] pairwise regression scatterplots with kde along diagonal.
-- [ ] support for filtering by multiple cts simultaneously.
-- [ ] easy and robust installation guidelines
-- [ ] guide for more custom use cases.
-- [ ] Class and method descriptions.
-- [ ] Reformatting heatmaps to be more familiar.
-- [ ] implement 2 sample analyses, rnp, deltaSHAPE, klog normalization
+- 3d/contact distance histograms.
+- Support for different annotation types
+  - vertical bars in ap
+  - highlight nts for ss
+  - clouds, colors, or labels in 3D figures.
+- implement single sample arrays with different filtering.
+- In ss and 3D, add filter for only ij_data that are base-paired.
+- Minimized log-log comparison of profiles.
+- add colorbar and legends for ap, ss, pdb plots
+- support for filtering by multiple cts simultaneously.
+- Keep documentation updated for testers.
+- consider moving to kwarg dicts for more customizability
+- pairplot regressions
+- easy and robust installation guidelines
+- guide for more custom use cases.
+- Class and method descriptions.
+- Reformatting heatmaps to be more familiar.
+- implement 2 sample analyses, rnp, deltaSHAPE, klog normalization
 
 Features
 --------

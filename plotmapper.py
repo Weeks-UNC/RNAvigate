@@ -11,7 +11,6 @@ import numpy as np
 from scipy import stats
 import math
 import os.path
-import xml.etree.ElementTree as xmlet
 
 # Special python packages
 try:
@@ -93,7 +92,8 @@ def get_default_cmap(metric):
             'Zij': 'bwr',
             'Metric': 'YlGnBu',
             'Distance': 'jet',
-            'Percentile': 'YlGnBu'
+            'Percentile': 'YlGnBu',
+            'Probability': 'rainbow_r'
             }[metric]
     cmap = plt.get_cmap(cmap)
     cmap = cmap(np.arange(cmap.N))
@@ -110,7 +110,8 @@ def get_default_cmap(metric):
 def get_default_metric(ij_data):
     metric = {'rings': 'Statistic',
               'pairs': 'Class',
-              'deletions': 'Percentile'
+              'deletions': 'Percentile',
+              'probs': 'Probability'
               }[ij_data]
     return metric
 
@@ -121,7 +122,8 @@ def get_default_min_max(metric):
                'Zij': [-50, 50],
                "Class": [0, 2],
                "Metric": [0, 0.001],
-               'Distance': [10, 80]
+               'Distance': [10, 80],
+               'Probability': [0, 1]
                }[metric]
     return min_max
 
@@ -150,12 +152,13 @@ def view_colormap(ij_data=None, metric=None, ticks=None, values=None,
         if metric == "Class":
             ticks = [10/6, 30/6, 50/6]
         else:
-            ticks = [0.2, 9.8]
+            ticks = [0, 2, 4, 6, 8, 10]
     if values is None:
         if metric == "Class":
             values = ['Complementary', 'Primary', 'Secondary']
         else:
-            values = get_default_min_max(metric)
+            mn, mx = get_default_min_max(metric)
+            values = [f"{mn + ((mx-mn)/5)*i:.2}" for i in range(6)]
     if title is None:
         title = f"{ij_data.capitalize()}: {metric.lower()}"
     if cmap is None:
@@ -177,17 +180,17 @@ def view_colormap(ij_data=None, metric=None, ticks=None, values=None,
 # TODO: look into passing dict to mp.rc()
 ###############################################################################
 mp.rcParams["font.sans-serif"].insert(0, "Arial")
-mp.rcParams["font.family"] = "sans-serif"
-mp.rcParams["pdf.fonttype"] = 42  # use TrueType fonts when exporting PDFs
-# (embeds most fonts - this is especially
-#  useful when opening in Adobe Illustrator)
-mp.rcParams['xtick.direction'] = 'out'
-mp.rcParams['ytick.direction'] = 'out'
-mp.rcParams['legend.fontsize'] = 14
-mp.rcParams['grid.color'] = ".8"
-mp.rcParams['grid.linestyle'] = '-'
-mp.rcParams['grid.linewidth'] = 1
-
+shapemapper_style = {"font.family": "sans-serif",
+                     "pdf.fonttype": 42,
+                     # use TrueType fonts when exporting PDFs
+                     # (embeds most fonts - this is especially
+                     #  useful when opening in Adobe Illustrator)
+                     'xtick.direction': 'out',
+                     'ytick.direction': 'out',
+                     'legend.fontsize': 14,
+                     'grid.color': ".8",
+                     'grid.linestyle': '-',
+                     'grid.linewidth': 1}
 
 rx_color = "red"
 bg_color = "blue"
@@ -209,6 +212,7 @@ class Sample():
                  deletions=None,
                  pairs=None,
                  pdb=None,
+                 probs=None,
                  dance_prefix=None):
         self.paths = {"fasta": fasta,
                       "profile": profile,
@@ -219,7 +223,8 @@ class Sample():
                       "rings": rings,
                       "deletions": deletions,
                       "pairs": pairs,
-                      "pdb": pdb}
+                      "pdb": pdb,
+                      "probs": probs}
         self.sample = sample
 
         self.sequence = {}  # stores sequences:
@@ -246,6 +251,9 @@ class Sample():
         if pairs is not None:
             assert hasattr(self, "profile"), "Pairs plotting requires profile."
             self.read_pairs(pairs)
+        if probs is not None:
+            assert hasattr(self, "profile"), "Probabilities require profile."
+            self.read_probs(probs)
         if deletions is not None:
             assert fasta is not None, "Deletions plotting requires fasta"
             self.read_deletions(deletions, fasta)
@@ -399,6 +407,16 @@ class Sample():
         sequence = ''.join(self.profile["Sequence"].values)
         self.sequence["profile"] = sequence.upper().replace("T", "U")
         self.length["profile"] = len(self.sequence["profile"])
+
+    def read_probs(self, probs):
+        with open(probs, 'r') as file:
+            self.header["probs"] = file.readline()
+        self.window["probs"] = 1
+        data = pd.read_csv(probs, sep='\t', header=1)
+        data["Probability"] = 10 ** (-data["-log10(Probability)"])
+        self.ij_data["probs"] = data
+        self.sequence["probs"] = self.sequence["profile"]
+        self.length["probs"] = self.length["profile"]
 
     def read_rings(self, rings):
         with open(rings, 'r') as file:
@@ -948,6 +966,24 @@ class Sample():
         ax.annotate(self.sample, xy=(0.1, 0.9),
                     xycoords="axes fraction", fontsize=60, ha='center')
         return ax
+
+    def make_dance_ap(self, ij_data=None, metric=None, **kwargs):
+        rows, cols = get_rows_columns(self.dance_components)
+        figsize = self.dance[0].get_ap_figsize(rows, cols)
+        _, axes = plt.subplots(rows, cols, figsize=figsize, squeeze=False)
+        for i, dance in enumerate(self.dance):
+            row = i // cols
+            col = i % rows
+            ax = axes[col, row]
+            self.set_ap(ax)
+            dance.plot_ap_ct(ax)
+            if hasattr(dance, "profile"):
+                dance.plot_ap_profile(ax)
+            if ij_data is not None:
+                dance.plot_ap_data(ax, ij_data, metric, **kwargs)
+            dance.plot_sequence(ax, "ct", yvalue=0.5)
+            ax.annotate(dance.sample, xy=(0.1, 0.9),
+                        xycoords="axes fraction", fontsize=60, ha='center')
 
 ###############################################################################
 # Secondary Structure graph plotting functions
@@ -1663,9 +1699,34 @@ class Sample():
 #   filter_ij_data
 #   get_ij_colors
 ###############################################################################
+    def filter_dance_rings(self, filterneg=True, cdfilter=15, sigfilter=20,
+                           ssfilter=True):
+        ctlist = [dance.ct for dance in self.dance]
+        ringlist = [dance.ij_data["rings"].copy() for dance in self.dance]
+        for index, rings in enumerate(ringlist):
+            rings[['i_offset', 'j_offset']] = rings[['i', 'j']]
+            mask = []
+            for _, row in rings.iterrows():
+                i, j, G, sign = row[['i', 'j', 'Statistic', '+/-']]
+                true_so_far = True
+                if ssfilter and true_so_far:
+                    true_so_far = (ctlist[index].ct[i-1]
+                                   == 0 and ctlist[index].ct[j-1] == 0)
+                if filterneg and true_so_far:
+                    true_so_far = sign == 1
+                if sigfilter is not None and true_so_far:
+                    true_so_far = G > sigfilter
+                if cdfilter is not None and true_so_far:
+                    for ct in ctlist:
+                        if not true_so_far:
+                            break
+                        true_so_far = ct.contactDistance(i, j) >= cdfilter
+                mask.append(true_so_far)
+            rings['mask'] = mask
+            self.dance[index].ij_data["rings"] = rings
 
     def get_cd_mask(self, ij_data, fit_to_sequence, cdAbove=None, cdBelow=None,
-                    ss_only=False, ds_only=False):
+                    ss_only=False, ds_only=False, paired_only=False):
         """creates a mask for filtering i,j data based on contact distance.
 
         Args:
@@ -1687,28 +1748,20 @@ class Sample():
             ct = self.ct
         ij_data = self.ij_data[ij_data]
         mask = []
-        i_j_yes = ["i_offset", "j_offset", "mask"]
-        for _, i, j, yes in ij_data[i_j_yes].itertuples():
-            if yes:
-                if ss_only:
-                    ss = (ct.ct[i-1] == 0) and (ct.ct[j-1] == 0)
-                else:
-                    ss = True
-                if ds_only:
-                    ds = (ct.ct[i-1] != 0) and (ct.ct[j-1] != 0)
-                else:
-                    ds = True
-                if cdAbove is not None:
-                    above = ct.contactDistance(i, j) > cdAbove
-                else:
-                    above = True
-                if cdBelow is not None:
-                    below = ct.contactDistance(i, j) < cdBelow
-                else:
-                    below = True
-            else:
-                above, below, ss, ds = False, False, False, False
-            mask.append(above & below & ss & ds)
+        i_j_keep = ["i_offset", "j_offset", "mask"]
+        for _, i, j, keep in ij_data[i_j_keep].itertuples():
+            true_so_far = keep
+            if paired_only and true_so_far:
+                true_so_far = ct.ct[i-1] == j
+            if ss_only and true_so_far:
+                true_so_far = (ct.ct[i-1] == 0) and (ct.ct[j-1] == 0)
+            if ds_only and true_so_far:
+                true_so_far = (ct.ct[i-1] != 0) and (ct.ct[j-1] != 0)
+            if cdAbove is not None and true_so_far:
+                true_so_far = ct.contactDistance(i, j) > cdAbove
+            if cdBelow is not None and true_so_far:
+                true_so_far = ct.contactDistance(i, j) < cdBelow
+            mask.append(true_so_far)
         return mask
 
     def get_profile_mask(self, ij_data, profAbove=None, profBelow=None):
@@ -1790,6 +1843,8 @@ class Sample():
             data['mask'] = data['mask'] & cd_mask
         if not all_pairs and ij_data == 'pairs':
             data["mask"] = data["mask"] & (data["Class"] != 0)
+        if ij_data == 'probs':
+            data['mask'] = data['mask'] & (data["Probability"] >= 0.03)
         for key in kwargs.keys():
             try:
                 mask = data[key] > kwargs[key]
@@ -2027,12 +2082,13 @@ def get_rows_columns(number_of_samples, rows=None, cols=None):
 
 def array_ap(samples=[], rows=None, cols=None, **kwargs):
     rows, cols = get_rows_columns(len(samples), rows, cols)
-    fig = plt.figure(figsize=samples[0].get_ap_figsize(rows, cols))
-    gs = fig.add_gridspec(rows, cols, hspace=0.01, wspace=0.1)
+    figsize = samples[0].get_ap_figsize(rows, cols)
+    gs_kw = {'rows': rows, 'cols': cols, 'hspace': 0.01, 'wspace': 0.1}
+    _, axes = plt.subplots(rows, cols, figsize=figsize, gridspec_kw=gs_kw)
     for i, sample in enumerate(samples):
-        row = int(i/cols)
+        row = i // cols
         col = i % rows
-        ax = fig.add_subplot(gs[row, col])
+        ax = axes[row, col]
         sample.make_ap(ax=ax, **kwargs)
 
 

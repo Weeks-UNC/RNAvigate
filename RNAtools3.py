@@ -56,16 +56,20 @@
 
 import sys
 import numpy as np
+import xml.etree.ElementTree as xmlet
 
 
 class CT(object):
 
-    def __init__(self, fIN=None, **kwargs):
+    def __init__(self, fIN=None, type="ct", **kwargs):
         """
         if givin an input file .ct construct the ct object automatically
         """
-        if fIN:
+        self.type = type
+        if fIN and self.type == "ct":
             self.readCT(fIN, **kwargs)
+        elif fIN and self.type == "ss":
+            self.read_ss(fIN, **kwargs)
 
     def __str__(self):
         """overide the default print statement for the object"""
@@ -91,7 +95,7 @@ class CT(object):
             seq = seq.replace('T', 'U')
             seq = seq.replace('t', 'u')
 
-        self.seq = list(seq)
+        self.sequence = seq
 
     def readCT(self, fIN, structNum=0, filterNC=False, filterSingle=False):
         """Loads CT information from a given ct file. Requires a header!
@@ -147,7 +151,7 @@ class CT(object):
 
         if 'T' in seq:
             print("Note: T nucleotides have been recoded as U")
-            seq = ['U' if x == 'T' else x for x in seq]
+            seq = ''.join(['U' if x == 'T' else x for x in seq])
 
         # check consistency!
         for i in range(len(bp)):
@@ -161,7 +165,7 @@ class CT(object):
         self.name = fIN
         self.header = header
         self.num = num
-        self.seq = seq
+        self.sequence = seq
         self.ct = bp
         self.mask = mask
 
@@ -170,6 +174,107 @@ class CT(object):
 
         if filterSingle:
             self.filterSingleton()
+
+    def read_ss(self, ss_name, ss):
+        # get and check file extension, then read
+        self.ss_type = ss.split('.')[-1].lower()
+        valid_type = self.ss_type in ['xrna', 'varna', 'nsd', 'cte']
+        message = f"stucture file type {self.ss_type} not supported"
+        assert valid_type, message
+        # Parse file and get sequence, xcoords, ycoords, and list of pairs.
+        if self.ss_type == "xrna":
+            tree = xmlet.parse(ss)
+            root = tree.getroot()
+            # extract sequence, x and y coordinates
+            nucList = root.findall('./Complex/RNAMolecule/')
+            nucLists = []
+            for i in nucList:
+                if i.tag == 'NucListData':
+                    nucLists.append(i)
+            sequence, xcoords, ycoords = '', [], []
+            for nt in nucLists[0].text.split('\n'):
+                if nt == '':
+                    continue
+                line = nt.split()
+                sequence += line[0]
+                xcoords.append(float(line[1]))
+                ycoords.append(float(line[2]))
+            # extract pairing information
+            basepairs = []
+            for helix in root.findall('./Complex/RNAMolecule/BasePairs'):
+                i_outter = int(helix.get('nucID'))
+                j_outter = int(helix.get('bpNucID'))
+                length = int(helix.get('length'))
+                helix_list = [(i_outter+nt, j_outter-nt)
+                              for nt in range(length)]
+                basepairs.extend(helix_list)
+            # make expected arrays
+            xcoords = np.array(xcoords)
+            ycoords = np.array(ycoords)
+        elif self.ss_type == "varna":
+            tree = xmlet.parse(ss)
+            root = tree.getroot()
+            # extract sequence, y and x coordinates
+            sequence, xcoords, ycoords = "", [], []
+            for nt in root.findall('./RNA/bases/nt'):
+                base = nt.find('base').text
+                sequence += base
+                for i in nt:
+                    if i.get('r') == 'pos':
+                        xcoords.append(float(i.get('x')))
+                        ycoords.append(float(i.get('y')))
+            # extract pairing information
+            basepairs = []
+            for pair in root.findall('./RNA/BPs/bp'):
+                i = int(pair.get('part5'))+1
+                j = int(pair.get('part3'))+1
+                basepairs.append((i, j))
+            xcoords = np.array(xcoords)
+            ycoords = np.array(ycoords)
+        elif self.ss_type == "cte":
+            names = ['nuc', 'seq', 'pair', 'xcoords', 'ycoords']
+            ct = pd.read_csv(ss, sep=r'\s+', usecols=[0, 1, 4, 8, 10],
+                             names=names, header=0)
+            sequence = ''.join(list(ct['seq']))
+            xcoords = np.array([float(x) for x in ct.xcoords])
+            ycoords = np.array([float(y) for y in ct.ycoords])
+            ct = ct[ct.nuc < ct.pair]
+            basepairs = [[int(i), int(j)] for i, j in zip(ct.nuc, ct.pair)]
+        elif self.ss_type == "nsd":
+            basepairs, sequence, xcoords, ycoords = [], '', [], []
+            with open(ss, 'r') as file:
+                item = ""
+                for line in file.readlines():
+                    line = line.strip().split(' ')
+                    if "Strand:[" in line:
+                        item = "strand"
+                        continue
+                    elif "]" in line:
+                        item = ""
+                    elif "Pairs:[" in line:
+                        item = "pairs"
+                        continue
+                    if item == "strand":
+                        nt = [item.split(':') for item in line]
+                        sequence += nt[2][1]
+                        xcoords.append(float(nt[4][1]))
+                        ycoords.append(float(nt[5][1]))
+                    elif item == "pairs":
+                        pairs = line[1].split(":")[1:]
+                        basepair = [int(nuc.strip('"')) for nuc in pairs]
+                        basepairs.append(basepair)
+            xcoords = np.array(xcoords)
+            ycoords = np.array(ycoords)
+        # store attributes
+        coord_scale_factor = {"xrna": 1/20,
+                              "varna": 1/65,
+                              "cte": 1/30.5,
+                              "nsd": 1/30.5}[self.ss_type]
+        self.sequence = sequence.upper().replace("T", "U")
+        self.length = len(sequence)
+        self.basepairs = basepairs
+        self.xcoordinates = xcoords*coord_scale_factor
+        self.ycoordinates = ycoords*coord_scale_factor
 
     def filterNC(self):
         """
@@ -183,11 +288,11 @@ class CT(object):
 
             pi = self.num.index(nt)
 
-            bp = self.seq[pi] + self.seq[i]
+            bp = self.sequence[pi] + self.sequence[i]
             if bp not in ('AU', 'UA', 'GC', 'CG', 'GU', 'UG', '  '):
                 self.ct[i] = 0
                 self.ct[pi] = 0
-                # print 'Deleted %d %s' % (self.num[i], self.seq[i])
+                # print 'Deleted %d %s' % (self.num[i], self.sequence[i])
                 continue
 
     def filterSingleton(self):
@@ -212,7 +317,7 @@ class CT(object):
             if not neigh:
                 self.ct[i] = 0
                 self.ct[pi] = 0
-                # print 'Deleted %d %s *' % (self.num[i], self.seq[i])
+                # print 'Deleted %d %s *' % (self.num[i], self.sequence[i])
 
     def writeCT(self, fOUT, writemask=False):
         """
@@ -236,7 +341,7 @@ class CT(object):
             nt = self.num[i]
             prev = nt-1
             next = nt+1 % len(self.ct+1)  # last nt goes back to zero
-            seq = self.seq[i]
+            seq = self.sequence[i]
             ct = self.ct[i]
             if mask and self.mask[i]:
                 line = f'{nt:5d} {seq} {prev:5d} {next:5d} {ct:5d} {nt:5d} 1\n'
@@ -252,7 +357,7 @@ class CT(object):
         out = CT()
         out.name = self.name[:]
         out.num = self.num[:]
-        out.seq = self.seq[:]
+        out.seq = self.sequence[:]
         out.ct = self.ct[:]
         return out
 
@@ -332,14 +437,14 @@ class CT(object):
         length is implied from the given sequence
         """
 
-        # See if sequence has been defined either as self.seq or as seq keyword
+        # See if sequence has been defined either as self.sequence or as seq keyword
         if seq is None:
             assert hasattr(self, "seq"), "Sequence is not defined"
-            assert self.seq is not None, "Sequence is not defined"
+            assert self.sequence is not None, "Sequence is not defined"
         else:
-            self.seq = seq
+            self.sequence = seq
 
-        length = len(self.seq)
+        length = len(self.sequence)
         self.num = list(range(1, length+1))
 
         # give it a name if it has one
@@ -440,7 +545,7 @@ class CT(object):
         numnts = end-start+1
 
         out = CT()
-        out.seq = self.seq[sel]
+        out.seq = self.sequence[sel]
         out.num = list(range(1, numnts+1))
         out.name = self.name + '_cut_'+str(start)+'_'+str(end)
 
@@ -873,7 +978,7 @@ class CT(object):
             namelen = max(len(name), 12)
 
             out.write('{0} '.format(name.ljust(namelen)))
-            for nt in self.seq:
+            for nt in self.sequence:
                 out.write(nt)
             out.write('\n')
 
@@ -893,7 +998,7 @@ class CT(object):
 
         with open(writename, 'w') as out:
             out.write(';\nSequence from {0}\n'.format(self.name))
-            out.write('{0}1'.format(''.join(self.seq)))
+            out.write('{0}1'.format(''.join(self.sequence)))
 
 
 ###############################################################################
