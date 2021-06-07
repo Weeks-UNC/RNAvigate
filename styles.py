@@ -1,4 +1,6 @@
 from functools import wraps
+import matplotlib as mpl
+import seaborn as sns
 
 # STYLE SHEET
 ###############################################################################
@@ -25,17 +27,18 @@ def apply_style(style_dict, function):
     return wrapper
 
 
-shapemapper_plots = {"font.family": "sans-serif",
-                     "pdf.fonttype": 42,
-                     # use TrueType fonts when exporting PDFs
-                     # (embeds most fonts - this is especially
-                     #  useful when opening in Adobe Illustrator)
-                     'xtick.direction': 'out',
-                     'ytick.direction': 'out',
-                     'legend.fontsize': 14,
-                     'grid.color': ".8",
-                     'grid.linestyle': '-',
-                     'grid.linewidth': 1}
+# ShapeMapper Plot Styles
+sm = {"font.family": "sans-serif",
+      "pdf.fonttype": 42,
+      # use TrueType fonts when exporting PDFs
+      # (embeds most fonts - this is especially
+      #  useful when opening in Adobe Illustrator)
+      'xtick.direction': 'out',
+      'ytick.direction': 'out',
+      'legend.fontsize': 14,
+      'grid.color': ".8",
+      'grid.linestyle': '-',
+      'grid.linewidth': 1}
 
 rx_color = "red"
 bg_color = "blue"

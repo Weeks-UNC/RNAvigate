@@ -2,12 +2,31 @@ import Bio.SeqIO
 import pandas as pd
 import plotmapper as MaP
 
-Class ij_data():
 
-    def __init__(self, datatype, path, sequence=None, fasta=None):
-        self.path = path
-        passed_sequence = sequence is not None or fasta is not None
-        assert passed_sequence, "ij_data object requires a sequence"
+def get_default_min_max(metric):
+    min_max = {'Percentile': [0.98, 1.0],
+               "Statistic": [-100, 100],
+               'Zij': [-50, 50],
+               "Class": [0, 2],
+               "Metric": [0, 0.001],
+               'Distance': [10, 80],
+               'Probability': [0, 1]
+               }[metric]
+    return min_max
+
+
+class IJ():
+
+    def __init__(self, filepath, datatype, sequence=None, fasta=None):
+        self.datatype = datatype
+        self.default_metric = {'rings': 'Statistic',
+                               'pairs': 'Class',
+                               'deletions': 'Percentile',
+                               'probs': 'Probability'
+                               }[self.datatype]
+        self.path = filepath
+        sequence_passed = sequence is not None or fasta is not None
+        assert sequence_passed, "ij_data object requires a sequence"
         if sequence is not None:
             self.sequence = sequence
             self.length = len(sequence)
@@ -16,11 +35,12 @@ Class ij_data():
             self.sequence = str(fasta[0].seq).upper().replace("T", "U")
             self.length = len(self.sequence)
             self.gene = fasta[0].id
-        read_file = {"probabilities": read_probs,
-                     "rings": read_rings,
-                     "deletions": read_deletions,
+        read_file = {"probs": self.read_probs,
+                     "rings": self.read_rings,
+                     "deletions": self.read_deletions,
+                     "pairs": self.read_pairs
                      }[datatype]
-        read_file(path)
+        read_file(filepath)
 
     def read_probs(self, probs):
         with open(probs, 'r') as file:

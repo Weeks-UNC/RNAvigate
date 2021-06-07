@@ -24,8 +24,7 @@ except ModuleNotFoundError:
     print("py3Dmol package is missing. Plotting 3D structures will not work.")
 
 # scripts in JNBTools
-from data import *
-from plots import *
+import RNAtools3 as rna
 
 
 def create_code_button():
@@ -228,42 +227,265 @@ class Sample():
                       "probs": probs}
         self.sample = sample
 
-        self.data = {}  # stores profile, ij, and structure objects
-        if ct is not None:
-            self.data["ct"] = CT(ct)
-        if compct is not None:
-            self.data["compct"] = CT(compct)
-        if ss is not None:
-            self.data["ss"] = CT("ss", ss)
-        if pdb is not None:
-            self.data["pdb"] = PDB(pdb)
-
-        # ShapeMapper downstream analysis requires sequence given from profile
+        self.sequence = {}  # stores sequences:
+        # profile == rings == pairs == dance
+        # fasta == deletions
+        # ct, ss, 3d can be different
+        self.length = {}  # stores length of all sequences
+        self.ij_data = {}  # stores rings, pairs, deletions as dataFrames
+        self.window = {}  # each ij_data value needs a window
+        self.header = {}  # each ij_data value needs a header
+        self.profile = {}  # TODO: add shape, frag, rnp as key:value pairs
+        self.structure = {"ct": {},
+                          "ss": {},
+                          "pdb": {}}  # add ct's, ss's, pdb's
         if profile is not None:
-            self.data["profile"] = Profile(profile)
-            prof_seq = self.data["profile"].sequence
-            self.has_profile = True
-        else:
-            self.has_profile = False
-        no_profile_message = "{} requires a sequence from ShapeMapper profile."
-        if log is not None:
-            self.data["log"] = Log(log)
+            self.read_profile(profile)
+        if ct is not None:
+            self.read_ct("ct", ct)
+        if compct is not None:
+            self.read_ct("compct", compct)
         if rings is not None:
-            assert self.has_profile, no_profile_message.format("Rings")
-            self.data["rings"] = IJ("rings", rings, prof_seq)
+            assert hasattr(self, "profile"), "Rings plotting requires profile."
+            self.read_rings(rings)
         if pairs is not None:
-            assert self.has_profile, no_profile_message.format("Pairs")
-            self.data["pairs"] = IJ("pairs", pairs, prof_seq)
+            assert hasattr(self, "profile"), "Pairs plotting requires profile."
+            self.read_pairs(pairs)
         if probs is not None:
-            assert self.has_profile, no_profile_message.format("Probabilities")
-            self.data["probs"] = IJ("probs", probs, prof_seq)
-
-        # Deletions requires a reference sequence in fasta format.
+            assert hasattr(self, "profile"), "Probabilities require profile."
+            self.read_probs(probs)
         if deletions is not None:
             assert fasta is not None, "Deletions plotting requires fasta"
-            self.data["deletions"] = IJ("deletions", deletions, fasta=fasta)
+            self.read_deletions(deletions, fasta)
+        if ss is not None:
+            self.read_ss("ss", ss)
+        if log is not None:
+            self.read_log(log)
+        if pdb is not None:
+            self.read_pdb(pdb)
         if dance_prefix is not None:
             self.init_dance(dance_prefix)
+
+###############################################################################
+# Parsing data files
+# TODO: make read_nsd function less sucky. I think it's YAML.
+#   structure files
+#       read_pdb
+#       read_ss          Note: nsd portion is kludgey AF should use yaml
+#   MaP data files
+#       read_rings
+#       read_deletions
+#       read_pairs
+#       read_log
+#       read_dance_reactivities
+###############################################################################
+
+    def read_ct(self, ct_name, ct):
+        setattr(self, ct_name, rna.CT(ct))
+        self.sequence[ct_name] = ''.join(self.ct.seq)
+        self.length[ct_name] = len(self.sequence["ct"])
+
+    def read_pdb(self, pdb):
+        parser = Bio.PDB.PDBParser()
+        self.pdb = parser.get_structure('RNA', pdb)
+        self.sequence["pdb"] = ''
+        with open(pdb) as file:
+            for line in file.readlines():
+                line = [field.strip() for field in line.split()]
+                if line[0] == "SEQRES":
+                    self.sequence["pdb"] += ''.join(line[4:])
+        self.pdb_validres = []
+        for res in self.pdb[0]["A"].get_residues():
+            res_id = res.get_id()
+            if res_id[0] == " ":
+                self.pdb_validres.append(res_id[1])
+        self.length["pdb"] = len(self.sequence["pdb"])
+
+    def read_ss(self, ss_name, ss):
+        # get and check file extension, then read
+        self.ss_type = ss.split('.')[-1].lower()
+        valid_type = self.ss_type in ['xrna', 'varna', 'nsd', 'cte']
+        message = f"stucture file type {self.ss_type} not supported"
+        assert valid_type, message
+        # Parse file and get sequence, xcoords, ycoords, and list of pairs.
+        if self.ss_type == "xrna":
+            tree = xmlet.parse(ss)
+            root = tree.getroot()
+            # extract sequence, x and y coordinates
+            nucList = root.findall('./Complex/RNAMolecule/')
+            nucLists = []
+            for i in nucList:
+                if i.tag == 'NucListData':
+                    nucLists.append(i)
+            sequence, xcoords, ycoords = '', [], []
+            for nt in nucLists[0].text.split('\n'):
+                if nt == '':
+                    continue
+                line = nt.split()
+                sequence += line[0]
+                xcoords.append(float(line[1]))
+                ycoords.append(float(line[2]))
+            # extract pairing information
+            basepairs = []
+            for helix in root.findall('./Complex/RNAMolecule/BasePairs'):
+                i_outter = int(helix.get('nucID'))
+                j_outter = int(helix.get('bpNucID'))
+                length = int(helix.get('length'))
+                helix_list = [(i_outter+nt, j_outter-nt)
+                              for nt in range(length)]
+                basepairs.extend(helix_list)
+            # make expected arrays
+            xcoords = np.array(xcoords)
+            ycoords = np.array(ycoords)
+        elif self.ss_type == "varna":
+            tree = xmlet.parse(ss)
+            root = tree.getroot()
+            # extract sequence, y and x coordinates
+            sequence, xcoords, ycoords = "", [], []
+            for nt in root.findall('./RNA/bases/nt'):
+                base = nt.find('base').text
+                sequence += base
+                for i in nt:
+                    if i.get('r') == 'pos':
+                        xcoords.append(float(i.get('x')))
+                        ycoords.append(float(i.get('y')))
+            # extract pairing information
+            basepairs = []
+            for pair in root.findall('./RNA/BPs/bp'):
+                i = int(pair.get('part5'))+1
+                j = int(pair.get('part3'))+1
+                basepairs.append((i, j))
+            xcoords = np.array(xcoords)
+            ycoords = np.array(ycoords)
+        elif self.ss_type == "cte":
+            names = ['nuc', 'seq', 'pair', 'xcoords', 'ycoords']
+            ct = pd.read_csv(ss, sep=r'\s+', usecols=[0, 1, 4, 8, 10],
+                             names=names, header=0)
+            sequence = ''.join(list(ct['seq']))
+            xcoords = np.array([float(x) for x in ct.xcoords])
+            ycoords = np.array([float(y) for y in ct.ycoords])
+            ct = ct[ct.nuc < ct.pair]
+            basepairs = [[int(i), int(j)] for i, j in zip(ct.nuc, ct.pair)]
+        elif self.ss_type == "nsd":
+            basepairs, sequence, xcoords, ycoords = [], '', [], []
+            with open(ss, 'r') as file:
+                item = ""
+                for line in file.readlines():
+                    line = line.strip().split(' ')
+                    if "Strand:[" in line:
+                        item = "strand"
+                        continue
+                    elif "]" in line:
+                        item = ""
+                    elif "Pairs:[" in line:
+                        item = "pairs"
+                        continue
+                    if item == "strand":
+                        nt = [item.split(':') for item in line]
+                        sequence += nt[2][1]
+                        xcoords.append(float(nt[4][1]))
+                        ycoords.append(float(nt[5][1]))
+                    elif item == "pairs":
+                        pairs = line[1].split(":")[1:]
+                        basepair = [int(nuc.strip('"')) for nuc in pairs]
+                        basepairs.append(basepair)
+            xcoords = np.array(xcoords)
+            ycoords = np.array(ycoords)
+        # store attributes
+        coord_scale_factor = {"xrna": 1/20,
+                              "varna": 1/65,
+                              "cte": 1/30.5,
+                              "nsd": 1/30.5}[self.ss_type]
+        self.sequence[ss_name] = sequence.upper().replace("T", "U")
+        self.length[ss_name] = len(sequence)
+        self.basepairs = basepairs
+        self.xcoordinates = xcoords*coord_scale_factor
+        self.ycoordinates = ycoords*coord_scale_factor
+
+    def read_profile(self, profile):
+        self.profile = pd.read_csv(profile, sep='\t')
+        sequence = ''.join(self.profile["Sequence"].values)
+        self.sequence["profile"] = sequence.upper().replace("T", "U")
+        self.length["profile"] = len(self.sequence["profile"])
+
+    def read_probs(self, probs):
+        with open(probs, 'r') as file:
+            self.header["probs"] = file.readline()
+        self.window["probs"] = 1
+        data = pd.read_csv(probs, sep='\t', header=1)
+        data["Probability"] = 10 ** (-data["-log10(Probability)"])
+        self.ij_data["probs"] = data
+        self.sequence["probs"] = self.sequence["profile"]
+        self.length["probs"] = self.length["profile"]
+
+    def read_rings(self, rings):
+        with open(rings, 'r') as file:
+            self.header["rings"] = file.readline()
+        split_header = self.header["rings"].split('\t')
+        window = split_header[1].split('=')[1]
+        self.window["rings"] = int(window)
+        self.ij_data["rings"] = pd.read_csv(rings, sep='\t', header=1)
+        self.sequence["rings"] = self.sequence["profile"]
+        self.length["rings"] = self.length["profile"]
+
+    def read_deletions(self, deletions, fasta):
+        fasta = list(SeqIO.parse(open(fasta), 'fasta'))
+        self.deletions_gene = fasta[0].id
+        self.sequence["deletions"] = str(fasta[0].seq).upper().replace("T",
+                                                                       "U")
+        self.length["deletions"] = len(self.sequence["deletions"])
+        column_names = ['Gene', 'i', 'j', 'Metric']
+        data = pd.read_csv(deletions, sep='\t', names=column_names, header=0)
+        data["Percentile"] = data['Metric'].rank(method='max', pct=True)
+        self.ij_data["deletions"] = data
+        self.window["deletions"] = 1
+
+    def read_pairs(self, pairs):
+        with open(pairs, 'r') as file:
+            self.header["pairs"] = file.readline()
+        split_header = self.header["pairs"].split('\t')
+        window = split_header[1].split('=')[1]
+        self.window["pairs"] = int(window)
+        self.ij_data["pairs"] = pd.read_csv(pairs, sep='\t', header=1)
+        self.sequence["pairs"] = self.sequence["profile"]
+        self.length["pairs"] = self.length["profile"]
+
+    def read_log(self, log):
+        with open(log, 'r') as f:
+            flist = list(f)
+            log_format_test = 0
+            for i, line in enumerate(flist):
+                if line.startswith("  |MutationCounter_Modified"):
+                    log_format_test += 1
+                    modlength = []
+                    for x in flist[i+6:i+27]:
+                        modlength.append(float(x.strip().split('\t')[1]))
+                    modmuts = []
+                    for x in flist[i+32:i+53]:
+                        modmuts.append(float(x.strip().split('\t')[1]))
+                if line.startswith("  |MutationCounter_Untreated"):
+                    log_format_test += 1
+                    untlength = []
+                    for x in flist[i+6:i+27]:
+                        untlength.append(float(x.strip().split('\t')[1]))
+                    untmuts = []
+                    for x in flist[i+32:i+53]:
+                        untmuts.append(float(x.strip().split('\t')[1]))
+        message = ("Histogram data missing from log file. Requires" +
+                   " --per-read-histogram flag when running ShapeMapper.")
+        assert log_format_test >= 2, message
+        data = {'Read_length': ['0-49', '50-99', '100-149', '150-199',
+                                '200-249', '250-299', '300-349', '350-399',
+                                '400-449', '450-499', '500-549', '550-599',
+                                '600-649', '650-699', '700-749', '750-799',
+                                '800-849', '850-899', '900-949', '950-999',
+                                '>1000'],
+                'Mutation_count': list(range(21)),
+                'Modified_read_length': modlength,
+                'Modified_mutations_per_molecule': modmuts,
+                'Untreated_read_length': untlength,
+                'Untreated_mutations_per_molecule': untmuts}
+        self.log = pd.DataFrame(data)
 
     def init_dance(self, prefix):
         reactivityfile = f"{prefix}-reactivities.txt"
@@ -286,28 +508,111 @@ class Sample():
                             "ct": [f"{prefix}-{i}.f.ct",  # if using --pk
                                    f"{prefix}-{i}.ct"]}  # if regular fold used
             # read in "profile" from reactivities
-            sample.data["profile"] = Profile(reactivityfile, "dance", i)
+            colnames = ["Nucleotide", "Sequence", "Reactivity_profile",
+                        "Reactivity", "Background"]
+            col_offset = 3 * i
+            last_col = 3 * self.dance_components + 2
+            columns = [0, 1, 2 + col_offset, 3 + col_offset, last_col]
+            sample.profile = pd.read_csv(reactivityfile, sep='\t', header=2,
+                                         names=colnames, usecols=columns)
+            sample.sequence["profile"] = self.sequence['profile']
+            sample.length["profile"] = len(sample.sequence["profile"])
             # read in other attributes
             if os.path.isfile(sample.paths["rings"]):
-                sample.data["rings"] = IJ(sample.paths["rings"], "rings",
-                                          sample.data["profile"].sequence)
+                sample.read_rings(sample.paths["rings"])
             if os.path.isfile(sample.paths["pairs"]):
-                sample.data["pairs"] = IJ(sample.paths["pairs"], "pairs",
-                                          sample.data["profile"].sequence)
-            # ! possible that these both exist
+                sample.read_pairs(sample.paths["pairs"])
+            # possible that these both exist
             for ct_file in sample.paths["ct"]:
                 if os.path.isfile(ct_file):
-                    sample.data["ct"] = CT("ct", ct_file)
+                    sample.read_ct("ct", ct_file)
                     sample.paths["ct"] = ct_file
 
 ###############################################################################
-# Plotting functions
+# Skyline plotting functions
+#     get_skyline_figsize
+#     plot_skyline
+#     plot_sequence
 #     make_skyline
-#
-#
+#     make_dance_skyline
+#     Future:
+#         set_skyline
 ###############################################################################
 
-    def make_skyline(self, ax=None, column="Reactivity_profile", dance=False):
+    def get_skyline_figsize(self, rows, columns):
+        """Pass this function call to figsize within pyplot.subplots() to set
+        an appropriate figure width and height for skyline plots.
+
+        Args:
+            rows (int): number of rows in pyplot figure
+            cols (int): number of columns in pyplot figure
+
+        Returns:
+            tuple: (width, height) appropriate figsize for pyplot figure
+        """
+        left_inches = 0.9
+        right_inches = 0.4
+        ax_width = self.length["profile"] * 0.1
+        fig_height = 6
+        fig_width = max(7, ax_width + left_inches + right_inches)
+        return (fig_width*columns, fig_height*rows)
+
+    def plot_skyline(self, axis, column='Reactivity_profile', label=None):
+        """Plots a skyline on the given axis from the profile file and column
+        passed. Label is the sample name that should appear on the legend.
+
+        Args:
+            axis (pyplot axis): axis on which to plot skyline
+            label (string, optional): Label for legend.
+                Default: None.
+            column (str, optional): Column to plot.
+                Default: Reactivity_profile.
+        """
+        x = [-0.5]
+        y = [0]
+        # converts standard plot to skyline plot.
+        for n, r in zip(self.profile['Nucleotide'], self.profile[column]):
+            x.extend([n - 0.5, n + 0.5])
+            y.extend([r, r])
+        x.append(x[-1])
+        y.append(0)
+        if label is None:
+            label = self.sample
+        axis.plot(x, y, label=label)
+
+    def plot_sequence(self, axis, sequence, yvalue=0.005):
+        """Adds a colored sequence bar along the bottom of the given axis.
+        ylim must be set before calling this function.
+
+        Args:
+            axis (pyplot axis): axis to which sequence bar will be added
+            yvalue (float, optional): y value as a fraction of the ylimits set
+                at which sequence bar is added.
+                Default: 0.005. (barely above x-axis)
+        """
+        # set font style and colors for each nucleotide
+        font_prop = mp.font_manager.FontProperties(
+            family="monospace", style="normal", weight="bold", size="12")
+        color_dict = {"A": "#f20000", "U": "#f28f00",
+                      "G": "#00509d", "C": "#00c200"}
+        # transform yvalue to a y-axis data value
+        ymin, ymax = axis.get_ylim()
+        yvalue = (ymax-ymin)*yvalue + ymin
+        sequence = self.sequence[sequence]
+        for i, seq in enumerate(sequence):
+            col = color_dict[seq.upper()]
+            axis.annotate(seq, xy=(i + 1, yvalue), xycoords='data',
+                          fontproperties=font_prop,
+                          color=col, horizontalalignment="center")
+
+    def set_skyline(self, ax, title="Raw Reactivity Profile"):
+        ax.set(title=title,
+               xlim=[0, self.length["profile"]],
+               xticks=range(0, self.length["profile"], 20))
+        ax.set_xticks(range(0, self.length["profile"], 5), minor=True)
+        ax.legend(title="Samples")
+
+    def make_skyline(self, ax=None, column="Reactivity_profile"):
         """Creates a skyline figure, including sequence, title, legend, and
         axis labels.
 
@@ -315,15 +620,26 @@ class Sample():
             column (str, optional): Name of column from profile.txt to plot.
                 Defaults to "Reactivity_profile".
         """
-        plot = skyline()
-        if dance:
-            for profile in self.dance:
-                plot.add_profile(profile, profile.sample)
-                plot.make_plot(ax, column, legend_title="Comp: Percent",
-                               axis_title=f"{self.sample}: DANCE Reactivities")
-        else:
-            plot.add_profile(self.data["profile"], self.sample)
-            plot.make_plot(ax, column)
+        if ax is None:
+            fig, ax = plt.subplots(1, figsize=self.get_skyline_figsize(1, 1))
+        self.plot_skyline(ax, column=column)
+        self.plot_sequence(ax, "profile")
+        self.set_skyline(ax, title=column.replace("_", " "))
+
+    def make_dance_skyline(self, ax=None):
+        """Creates a skyline figure representing the component reactivities of
+        the ensemble.
+        """
+        if ax is None:
+            fig, ax = plt.subplots(1, figsize=self.get_skyline_figsize(1, 1))
+        for i, sample in enumerate(self.dance):
+            sample.plot_skyline(ax, label=f"{i} - {self.dance_percents[i]}")
+        self.plot_sequence(ax, sequence="profile")
+        ax.legend(title="Component: Population", loc=1)
+        ax.set(xlim=(0, self.length["profile"]),
+               title=f"{self.sample}: DANCE-MaP Reactivities",
+               xlabel="Nucleotide",
+               ylabel="Profile")
 
 ###############################################################################
 # ShapeMapper Log plotting functions

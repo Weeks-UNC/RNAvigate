@@ -1,58 +1,13 @@
 #!/usr/bin/env python
 
 ###############################################################################
-# GPL statement:
-# This file is part of SuperFold.
-#
-# SuperFold is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# SuperFold is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with SuperFold.  If not, see <http://www.gnu.org/licenses/>.
-#
-# 17 Nov 2014
-# Copywrite 2014
-# Greggory M Rice
-# all rights reserved
-#
-# V2 version of RNAtools modified by Anthony Mustoe
-# 2016
+#  CT object code comes from RNAtools2.py and Superfold
+#      Main contributors:
+#           Gregg Rice
+#           Anthony Mustoe
+#           Tom Christy
+#           Patrick Irving
 ###############################################################################
-########################################################
-#                                                      #
-#      RNAtools2.py CT and dotplot data structures     #
-#               v 2.0       2016                       #
-#                                                      #
-#          author: Gregg Rice                          #
-#                  Anthony Mustoe                      #
-########################################################
-
-# CHANGE-LOG
-#   Feb 2020 Added separate filterNC, filter single functionality
-#            -CT masking functionality,
-#            -bp consistency checking
-#            -writeRNAstructureSeq
-#            -addPairs
-#
-#   12/6/18 Full merging of Tony's RNAtools
-#
-#   v0.8.1  contact distance fixed
-#    Tom Christy: Contact Distance Fixed Again
-#                 now uses a breadth first search algorithm
-#
-#   v0.8    numpy dotplot functions added
-#
-#   Added get_distance_matrix based on contactDistance, faster for all pairs.
-#   made compatible with python 3
-#   formatting changes in keeping with JNBTools project
-#   separated CT and dotplot data structures.
 
 import sys
 import numpy as np
@@ -61,15 +16,16 @@ import xml.etree.ElementTree as xmlet
 
 class CT(object):
 
-    def __init__(self, fIN=None, type="ct", **kwargs):
+    def __init__(self, datatype, filepath, **kwargs):
         """
         if givin an input file .ct construct the ct object automatically
         """
-        self.type = type
-        if fIN and self.type == "ct":
-            self.readCT(fIN, **kwargs)
-        elif fIN and self.type == "ss":
-            self.read_ss(fIN, **kwargs)
+        assert datatype in ["ct", "ss"], "Invalid datatype."
+        self.datatype = datatype
+        if datatype == "ct":
+            self.readCT(filepath, **kwargs)
+        elif datatype == "ss":
+            self.read_ss(filepath, **kwargs)
 
     def __str__(self):
         """overide the default print statement for the object"""
@@ -272,7 +228,7 @@ class CT(object):
                               "nsd": 1/30.5}[self.ss_type]
         self.sequence = sequence.upper().replace("T", "U")
         self.length = len(sequence)
-        self.basepairs = basepairs
+        self.pair2CT(basepairs)
         self.xcoordinates = xcoords*coord_scale_factor
         self.ycoordinates = ycoords*coord_scale_factor
 
@@ -357,7 +313,7 @@ class CT(object):
         out = CT()
         out.name = self.name[:]
         out.num = self.num[:]
-        out.seq = self.sequence[:]
+        out.sequence = self.sequence[:]
         out.ct = self.ct[:]
         return out
 
@@ -439,7 +395,7 @@ class CT(object):
 
         # See if sequence has been defined either as self.sequence or as seq keyword
         if seq is None:
-            assert hasattr(self, "seq"), "Sequence is not defined"
+            assert hasattr(self, "sequence"), "Sequence is not defined"
             assert self.sequence is not None, "Sequence is not defined"
         else:
             self.sequence = seq
@@ -545,7 +501,7 @@ class CT(object):
         numnts = end-start+1
 
         out = CT()
-        out.seq = self.sequence[sel]
+        out.sequence = self.sequence[sel]
         out.num = list(range(1, numnts+1))
         out.name = self.name + '_cut_'+str(start)+'_'+str(end)
 
@@ -1010,7 +966,7 @@ def padCT(targetCT, referenceCT, giveAlignment=False):
     """Aligns the target CT to the reference CT and pads the referece
     CT file with 000s in order to input into CircleCompare"""
     out = CT()
-    out.seq = referenceCT.seq
+    out.sequence = referenceCT.seq
     out.num = referenceCT.num
 
     # align target to reference

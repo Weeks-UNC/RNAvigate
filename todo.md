@@ -7,6 +7,7 @@ analysis.
 
 To-Do List
 ----------
+- filter out negative correlations
 - 3d/contact distance histograms.
 - Support for different annotation types
   - vertical bars in ap
