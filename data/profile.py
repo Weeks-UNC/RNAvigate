@@ -32,7 +32,7 @@ class Profile():
                                 "Modified_rate", "Untreated_rate"]
         col_offset = 3 * component
         read_kwargs["usecols"] = [0, 1, 2+col_offset, 3+col_offset, -1]
-        sample.data = pd.read_csv(filepath, sep='\t', header=2, **read_kwargs)
+        self.data = pd.read_csv(filepath, sep='\t', header=2, **read_kwargs)
         sequence = ''.join(self.data["Sequence"].values)
         self.sequence = sequence.upper().replace("T", "U")
         self.length = len(self.sequence)

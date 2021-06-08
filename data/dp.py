@@ -2,7 +2,7 @@
 
 import numpy as np
 import sys
-import RNAtools3 as rna
+from data.ct import CT
 
 
 class DotPlot:
@@ -119,7 +119,7 @@ class DotPlot:
 
         newDP = self.requireProb(probcut)
 
-        newCT = rna.CT()
+        newCT = CT()
         newCT.pair2CT(newDP.pairList(), ['n']*self.length,
                       skipConflicting=skipConflicting, filterNC=filterNC,
                       filterSingle=filterSingle)

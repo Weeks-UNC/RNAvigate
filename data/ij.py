@@ -17,7 +17,7 @@ def get_default_min_max(metric):
 
 class IJ():
 
-    def __init__(self, filepath, datatype, sequence=None, fasta=None):
+    def __init__(self, datatype, filepath, sequence=None, fasta=None):
         self.datatype = datatype
         self.default_metric = {'rings': 'Statistic',
                                'pairs': 'Class',
@@ -53,13 +53,13 @@ class IJ():
     def read_rings(self, rings):
         with open(rings, 'r') as file:
             self.header = file.readline()
-        split_header = self.header["rings"].split('\t')
+        split_header = self.header.split('\t')
         window = split_header[1].split('=')[1]
         self.window = int(window)
         self.data = pd.read_csv(rings, sep='\t', header=1)
         self.data.rename(columns={"+/-": "Sign"})
 
-    def read_deletions(self, deletions, fasta):
+    def read_deletions(self, deletions):
         column_names = ['Gene', 'i', 'j', 'Metric']
         data = pd.read_csv(deletions, sep='\t', names=column_names, header=0)
         data["Percentile"] = data['Metric'].rank(method='max', pct=True)
@@ -69,7 +69,7 @@ class IJ():
     def read_pairs(self, pairs):
         with open(pairs, 'r') as file:
             self.header = file.readline()
-        split_header = self.header["pairs"].split('\t')
+        split_header = self.header.split('\t')
         window = split_header[1].split('=')[1]
         self.window = int(window)
         self.data = pd.read_csv(pairs, sep='\t', header=1)

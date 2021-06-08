@@ -131,7 +131,7 @@ class CT(object):
         if filterSingle:
             self.filterSingleton()
 
-    def read_ss(self, ss_name, ss):
+    def read_ss(self, ss):
         # get and check file extension, then read
         self.ss_type = ss.split('.')[-1].lower()
         valid_type = self.ss_type in ['xrna', 'varna', 'nsd', 'cte']

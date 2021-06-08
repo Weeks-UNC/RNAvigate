@@ -7,7 +7,7 @@ class Log():
         self.read_log(filepath)
 
     def read_log(self, log):
-       with open(log, 'r') as f:
+        with open(log, 'r') as f:
             flist = list(f)
             log_format_test = 0
             for i, line in enumerate(flist):

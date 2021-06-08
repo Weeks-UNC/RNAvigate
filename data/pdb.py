@@ -15,7 +15,7 @@ class PDB():
             for line in file.readlines():
                 line = [field.strip() for field in line.split()]
                 if line[0] == "SEQRES":
-                    self.sequence["pdb"] += ''.join(line[4:])
+                    self.sequence += ''.join(line[4:])
         self.length = len(self.sequence)
         self.validres = []
         for res in self.pdb[0]["A"].get_residues():
