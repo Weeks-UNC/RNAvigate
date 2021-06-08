@@ -230,9 +230,9 @@ class Sample():
 
         self.data = {}  # stores profile, ij, and structure objects
         if ct is not None:
-            self.data["ct"] = CT(ct)
+            self.data["ct"] = CT("ct", ct)
         if compct is not None:
-            self.data["compct"] = CT(compct)
+            self.data["compct"] = CT("ct", compct)
         if ss is not None:
             self.data["ss"] = CT("ss", ss)
         if pdb is not None:
@@ -317,10 +317,10 @@ class Sample():
         """
         plot = skyline()
         if dance:
-            for profile in self.dance:
-                plot.add_profile(profile, profile.sample)
-                plot.make_plot(ax, column, legend_title="Comp: Percent",
-                               axis_title=f"{self.sample}: DANCE Reactivities")
+            for dance in self.dance:
+                plot.add_profile(dance.data["profile"], dance.sample)
+            plot.make_plot(ax, column, legend_title="Comp: Percent",
+                           axis_title=f"{self.sample}: DANCE Reactivities")
         else:
             plot.add_profile(self.data["profile"], self.sample)
             plot.make_plot(ax, column)
@@ -337,143 +337,6 @@ class Sample():
 #     get_boxplot_data
 #     plot_boxplot
 ###############################################################################
-
-    def plot_log_MutsPerMol(self, ax, sample="Modified", upper_limit=10):
-        """Adds a line plot of the distribution of mutations per molecule to
-        the given axis.
-
-        Args:
-            ax (pyploy axis): axis on which to add plot
-            sample (str, optional): Options are "Modified" or "Untreated".
-                    Defaults to "Modified".
-            upper_limit (int, optional): Upper limit to mutations per molecule.
-                    Defaults to 10.
-        """
-        x = self.log['Mutation_count'][:upper_limit]
-        y = self.log[sample+'_mutations_per_molecule'][:upper_limit]
-        ax.plot(x, y, label=self.sample+": "+sample)
-
-    def set_log_MutsPerMol(self, ax):
-        """Adds a title, axis labels, and legend appropriate for mutations per
-        molecule to the given axis
-
-        Args:
-            ax (pyplot axis): axis to set
-        """
-        ax.legend(title="Samples")
-        ax.set(xlabel="Mutations per molecule",
-               ylabel="Percentage of Reads",
-               title='Mutations per molecule distribution')
-
-    def make_log_MutsPerMol(self, ax):
-        """Adds modified and unmodified samples, and sets title, labels, and
-        legend for the given axis.
-
-        Args:
-            ax (pyplot axis): axis on which to make plot
-        """
-        self.plot_log_MutsPerMol(ax, sample="Modified")
-        self.plot_log_MutsPerMol(ax, sample="Untreated")
-        self.set_log_MutsPerMol(ax)
-
-    def plot_log_ReadLength(self, ax, sample="Modified", upper_limit=10,
-                            n=1, of=1):
-        """adds the read length distribution of the sample to the given axis.
-
-        Args:
-            ax (pyplot axis): axis on which to add data
-            sample (str, optional): Options are "Modified" or "Untreated".
-                    Defaults to "Modified".
-            upper_limit (int, optional): upper limit of read length to plot.
-                    Defaults to 10. (bin 450-499)
-            n (int, optional): Sample number out of...
-                    Defaults to 1.
-            of (int, optional): Total number of samples to be added to plot.
-                    Defaults to 1.
-        """
-        width = 0.8/of
-        x = np.arange(upper_limit) - 0.4 - (width/2) + (width*n)
-        y = self.log[sample+'_read_length'][:upper_limit]
-        ax.bar(x, y, width, label=self.sample+": "+sample)
-
-    def set_log_ReadLength(self, ax, upper_limit=10):
-        """Adds title, axis labels, bin labels, and legend appropriate for read
-        depth to the axis.
-
-        Args:
-            ax (pyplot axis): axis to be set
-            upper_limit (int, optional): Number of bin labels to add.
-                    Defaults to 10.
-        """
-        ax.legend(title="Samples")
-        ax.set(xticks=range(upper_limit),
-               xlabel='Read Length',
-               ylabel='Percentage of Reads',
-               title='Read length distribution')
-        ax.set_xticklabels(self.log["Read_length"][:upper_limit],
-                           rotation=45, ha='right', label=self.sample)
-
-    def make_log_ReadLength(self, ax):
-        """Adds modified and untreated readlengths to the given axis, and sets
-        labels, titles, and legend.
-
-        Args:
-            ax (pyplot axis): axis on which to add data
-        """
-        self.plot_log_ReadLength(ax, sample="Modified", n=1, of=2)
-        self.plot_log_ReadLength(ax, sample="Untreated", n=2, of=2)
-        self.set_log_ReadLength(ax)
-
-    def make_log_qc(self):
-        """Creates a three panel plot with read depth, mutations per molecule,
-        and boxplot of reactivities.
-        """
-        fig, ax = plt.subplots(1, 3, figsize=(21, 7))
-        self.make_log_MutsPerMol(ax[0])
-        self.make_log_ReadLength(ax[1])
-        self.plot_boxplot(ax[2])
-        plt.tight_layout()
-
-    def get_boxplot_data(self, sample=1,
-                         cols=["Modified_rate", "Untreated_rate"]):
-        """Returns slice of profile with additional ID column "Sample" for easy
-        use with sns.boxplot
-
-        Args:
-            sample (int, optional): x-value for this sample's boxplot.
-                Defaults to 1.
-            cols (list, optional): list of columns from profile to use.
-                Defaults to ["Modified_rate", "Untreated_rate"].
-
-        Returns:
-            DataFrame: slice of profile formatted for sns.boxplot
-        """
-        data = self.profile[cols].copy()
-        data = data.assign(Sample=sample)
-        return data
-
-    def plot_boxplot(self, ax, other_samples=[]):
-        """Plots a boxplot for self and other samples on the given axis.
-
-        Args:
-            ax (pyplot axis): axis on which to add plot
-            other_samples (list, optional): list of other MaP Samples to plot.
-                Defaults to empty list.
-        """
-        data = [self.get_boxplot_data(sample=1)]
-        xticklabels = [self.sample]
-        for i, sample in enumerate(other_samples):
-            data.append(sample.get_boxplot_data(sample=i+2))
-            xticklabels.append(sample.sample)
-        data = pd.concat(data)
-        data = pd.melt(data, id_vars=['Sample'], var_name=['Rate'])
-        data.head()
-        ax = sns.boxplot(x="Sample", y="value",
-                         hue='Rate', data=data, orient='v')
-        ax.set(yscale='log',
-               ylim=(0.0005, 0.5),
-               ylabel="Mutation Rate",
-               xticklabels=xticklabels)
 
 ###############################################################################
 # Arc Plot plotting functions
