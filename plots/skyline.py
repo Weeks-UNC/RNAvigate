@@ -1,3 +1,5 @@
+import matplotlib.pyplot as plt
+import matplotlib as mp
 
 
 class skyline():
@@ -24,17 +26,17 @@ class skyline():
         else:
             self.ax = ax
         # x axis appearance
-        ax.set_xlim([0, profile.length])
-        ax.set_xticks(range(0, profile.length, 20))
-        ax.set_xticks(range(0, profile.length, 5), minor=True)
+        self.ax.set_xlim([0, profile.length])
+        self.ax.set_xticks(range(0, profile.length, 20))
+        self.ax.set_xticks(range(0, profile.length, 5), minor=True)
 
     def set_labels(self, axis_title="Raw Reactivity Profile",
                    legend_title="Samples", xlabel="Nucleotide",
                    ylabel="Profile"):
-        ax.set_title(axis_title)
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel(ylabel)
-        ax.legend(title=legend_title)
+        self.ax.set_title(axis_title)
+        self.ax.set_xlabel(xlabel)
+        self.ax.set_ylabel(ylabel)
+        self.ax.legend(title=legend_title)
 
     def plot_profile(self, profile, label, column='Reactivity_profile'):
         x = [0.5]
@@ -45,7 +47,7 @@ class skyline():
             y.extend([r, r])
         x.append(x[-1])
         y.append(0)
-        ax.plot(x, y, label=label)
+        self.ax.plot(x, y, label=label)
 
     def add_sequence(self, sequence, yvalue=0.005):
         # set font style and colors for each nucleotide
@@ -54,18 +56,18 @@ class skyline():
         color_dict = {"A": "#f20000", "U": "#f28f00",
                       "G": "#00509d", "C": "#00c200"}
         # transform yvalue to a y-axis data value
-        ymin, ymax = axis.get_ylim()
+        ymin, ymax = self.ax.get_ylim()
         yvalue = (ymax-ymin)*yvalue + ymin
         for i, seq in enumerate(sequence):
             col = color_dict[seq.upper()]
-            axis.annotate(seq, xy=(i + 1, yvalue), xycoords='data',
-                          fontproperties=font_prop,
-                          color=col, horizontalalignment="center")
+            self.ax.annotate(seq, xy=(i + 1, yvalue), xycoords='data',
+                             fontproperties=font_prop,
+                             color=col, horizontalalignment="center")
 
-    def make_plot(self, ax=None, column, **kwargs):
-        self.set_figsize(self.profile[0])
-        self.set_axis(self.profile[0], ax)
-        self.add_sequence(self.profile[0].sequence)
+    def make_plot(self, ax=None, column="Reactivity_profile", **kwargs):
+        self.set_figsize(self.profiles[0])
+        self.set_axis(self.profiles[0], ax)
         for profile, label in zip(self.profiles, self.labels):
             self.plot_profile(profile, label, column)
+        self.add_sequence(self.profiles[0].sequence)
         self.set_labels(**kwargs)
