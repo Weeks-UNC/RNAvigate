@@ -1,6 +1,10 @@
-import Bio.SeqIO
 import pandas as pd
 import plotmapper as MaP
+from data.data import Data
+from data.ct import CT
+import matplotlib as mp
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 def get_default_min_max(metric):
@@ -15,9 +19,52 @@ def get_default_min_max(metric):
     return min_max
 
 
-class IJ():
+def get_default_fill(metric):
+    fill = {'Class': -1,
+            'Statistic': 0.0,
+            'Zij': 0.0,
+            'Metric': 0.0,
+            'Distance': 1000,
+            'Percentile': 0.0}[metric]
+    return fill
+
+
+def get_default_cmap(metric):
+    cmap = {'Class': mp.colors.ListedColormap([[0.3, 0.3, 0.3, 0.2],
+                                               [0.0, 0.0, 0.95, 0.6],
+                                               [0.12, 0.76, 1.0, 0.6]]),
+            'Statistic': 'bwr',
+            'Zij': 'bwr',
+            'Metric': 'YlGnBu',
+            'Distance': 'jet',
+            'Percentile': 'YlGnBu',
+            'Probability': 'rainbow_r'
+            }[metric]
+    cmap = plt.get_cmap(cmap)
+    cmap = cmap(np.arange(cmap.N))
+    cmap[:, -1] = np.full((len(cmap)), 0.6)  # set default alpha to 0.6
+    if metric == 'Class':
+        cmap[0, -1] = 0.2  # alpha of non primary and secondary pairs to 0.2
+    if metric == 'Distance':
+        # set color of max distance and no data distances to gray
+        cmap[-1, :] = np.array([80/255., 80/255., 80/255., 0.2])
+    cmap = mp.colors.ListedColormap(cmap)
+    return cmap
+
+
+def get_default_metric(ij_data):
+    metric = {'rings': 'Statistic',
+              'pairs': 'Class',
+              'deletions': 'Percentile',
+              'probs': 'Probability'
+              }[ij_data]
+    return metric
+
+
+class IJ(Data):
 
     def __init__(self, datatype, filepath, sequence=None, fasta=None):
+        super().__init__(sequence, fasta)
         self.datatype = datatype
         self.default_metric = {'rings': 'Statistic',
                                'pairs': 'Class',
@@ -25,16 +72,6 @@ class IJ():
                                'probs': 'Probability'
                                }[self.datatype]
         self.path = filepath
-        sequence_passed = sequence is not None or fasta is not None
-        assert sequence_passed, "ij_data object requires a sequence"
-        if sequence is not None:
-            self.sequence = sequence
-            self.length = len(sequence)
-        if fasta is not None:
-            fasta = list(Bio.SeqIO.parse(open(fasta), 'fasta'))
-            self.sequence = str(fasta[0].seq).upper().replace("T", "U")
-            self.length = len(self.sequence)
-            self.gene = fasta[0].id
         read_file = {"probs": self.read_probs,
                      "rings": self.read_rings,
                      "deletions": self.read_deletions,
@@ -57,7 +94,7 @@ class IJ():
         window = split_header[1].split('=')[1]
         self.window = int(window)
         self.data = pd.read_csv(rings, sep='\t', header=1)
-        self.data.rename(columns={"+/-": "Sign"})
+        self.data.rename(columns={"+/-": "Sign"}, inplace=True)
 
     def read_deletions(self, deletions):
         column_names = ['Gene', 'i', 'j', 'Metric']
@@ -109,27 +146,22 @@ class IJ():
         self.update_mask(mask)
 
     def set_mask_offset(self, fit_to):
-        clip, pad = MaP.get_clip_pad(self.sequence, fit_to.sequence)
-        start = clip[0]
-        end = clip[1]
-        i = self.data["i"].values
-        j = self.data["j"].values
-        iinrange = (start < i) & (i < end)
-        jinrange = (start < j) & (j < end)
-        self.data['mask'] = iinrange & jinrange
-        offset = pad[0]-start
-        self.data['i_offset'] = i+offset
-        self.data['j_offset'] = j+offset
+        alignment_map = self.get_alignment_map(fit_to)
+        i = [alignment_map[i-1] for i in self.data["i"].values]
+        j = [alignment_map[i-1] for i in self.data["j"].values]
+        self.data['mask'] = (i != 0) & (j != 0)
+        self.data['i_offset'] = i
+        self.data['j_offset'] = j
 
     def update_mask(self, mask):
         self.data["mask"] = self.data["mask"] & mask
 
-    def filter_ij_data(self, fit_to, profile=None, ct=None, cdAbove=None,
-                       cdBelow=None, ss_only=False, ds_only=False,
-                       profAbove=None, profBelow=None, all_pairs=False,
-                       **kwargs):
+    def filter(self, fit_to, profile=None, ct=None, cdAbove=None,
+               cdBelow=None, ss_only=False, ds_only=False,
+               profAbove=None, profBelow=None, all_pairs=False,
+               **kwargs):
         self.set_mask_offset(fit_to)
-        if fit_to.type == 'pdb':
+        if fit_to.datatype == 'pdb':
             mask = []
             for i, j in zip(self.data["i_offset"], self.data["j_offset"]):
                 mask.append(i in fit_to.validres and j in fit_to.validres)
@@ -141,27 +173,27 @@ class IJ():
             self.mask_on_profile(profile, profAbove, profBelow)
         if cdAbove is not None or cdBelow is not None or ss_only or ds_only:
             message = "CT filtering requires a ct object."
-            assert isinstance(ct, "CT"), message
+            assert isinstance(ct, CT), message
             self.mask_on_ct(ct, cdAbove, cdBelow, ss_only, ds_only)
-        if not all_pairs and ij_data == 'pairs':
+        if not all_pairs and self.datatype == 'pairs':
             self.update_mask(self.data["Class"] != 0)
-        if ij_data == 'probs':
+        if self.datatype == 'probs':
             self.update_mask(self.data["Probability"] >= 0.03)
         for key in kwargs.keys():
             try:
                 self.update_mask(self.data[key] > kwargs[key])
             except KeyError:
-                print(f"{key} is not a valid column of {self.type} dataFrame")
+                print(f"{key} is not a valid column of {self.datatype} dataFrame")
 
     def get_ij_colors(self, metric=None, min_max=None, cmap=None):
         if metric is None:
-            metric = get_default_metric(self.type)
+            metric = self.default_metric
         if min_max is None:
             minimum, maximum = get_default_min_max(metric)
         else:
             minimum, maximum = min_max
         columns = ["i_offset", "j_offset", metric]
-        if self.type == 'rings':
+        if self.datatype == 'rings':
             columns.append("Sign")
             data = self.data.loc[self.data["mask"], columns].copy()
             data[metric] = data[metric]*data["Sign"]
@@ -186,7 +218,7 @@ class IJ():
         colors = cmap(data[metric].values)
         return i, j, colors
 
-    def print_new_ij_file(self, outfile=None, **kwargs):
+    def print_new_file(self, outfile=None, **kwargs):
         self.filter_ij_data(**kwargs)
         columns = [c if c != "Sign" else "+/-" for c in self.data.columns]
         exclude_columns = ["i_offset", "j_offset",
@@ -202,3 +234,13 @@ class IJ():
                 out.write(csv)
         else:
             print(self.header, csv)
+
+    # def set_3d_distances(self, ij_data):
+    #     self.filter_ij_data(ij_data, "pdb")
+    #     data = self.ij_data[ij_data].copy()
+    #     if "Distance" not in data:
+    #         distances = []
+    #         for _, i, j in data[["i_offset", "j_offset"]].itertuples():
+    #             distances.append(self.get_3d_distance(i, j))
+    #         data["Distance"] = distances
+    #     self.ij_data[ij_data] = data

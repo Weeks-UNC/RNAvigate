@@ -12,9 +12,10 @@
 import sys
 import numpy as np
 import xml.etree.ElementTree as xmlet
+from data.data import Data
 
 
-class CT(object):
+class CT(Data):
 
     def __init__(self, datatype, filepath, **kwargs):
         """
@@ -32,27 +33,6 @@ class CT(object):
         a = '{ Name= %s, len(CT)= %s }' % (self.name, str(len(self.ct)))
         return a
 
-    def readFasta(self, fastapath):
-        """Assign sequence from fastafile"""
-
-        with open(fastapath) as inp:
-
-            seq = ''
-            inp.readline()  # pop off the header
-            for line in inp:
-                if line[0] == '>':
-                    print(f"WARNING: Multiple sequences in {fastapath}. "
-                          "Using the first sequence.")
-                    break
-                seq += line.strip()
-
-        if 'T' in seq or 't' in seq:
-            print(f"WARNING: replacing 'T' with 'U' from {fastapath}")
-            seq = seq.replace('T', 'U')
-            seq = seq.replace('t', 'u')
-
-        self.sequence = seq
-
     def readCT(self, fIN, structNum=0, filterNC=False, filterSingle=False):
         """Loads CT information from a given ct file. Requires a header!
 
@@ -64,7 +44,7 @@ class CT(object):
         filterSingle (bool, optional): If True, will filter out any singleton
             base pairs. Defaults to False.
         """
-        num, seq, bp, mask = [], [], [], []
+        num, seq, bp, mask = [], '', [], []
 
         try:
             with open(fIN) as f:
@@ -89,7 +69,7 @@ class CT(object):
 
                     if curstruct == structNum:
                         num.append(int(spl[0]))
-                        seq.append(str(spl[1]))
+                        seq += str(spl[1])
                         bp.append(int(spl[4]))
 
                         # check if there is masking info
@@ -227,7 +207,6 @@ class CT(object):
                               "cte": 1/30.5,
                               "nsd": 1/30.5}[self.ss_type]
         self.sequence = sequence.upper().replace("T", "U")
-        self.length = len(sequence)
         self.pair2CT(basepairs)
         self.xcoordinates = xcoords*coord_scale_factor
         self.ycoordinates = ycoords*coord_scale_factor
@@ -956,6 +935,30 @@ class CT(object):
             out.write(';\nSequence from {0}\n'.format(self.name))
             out.write('{0}1'.format(''.join(self.sequence)))
 
+    def write_cte(self, outputPath):
+        """writes the current structure out to CTE format for Structure Editor.
+
+        Args:
+            outputPath (string): path to output cte file to be created
+        """
+        # set scaling factors based on data source.
+        xscale = {'xrna': 1.525, 'varna': 0.469,
+                  'nsd': 1, 'cte': 1}[self.ss_type]
+        yscale = {'xrna': -1.525, 'varna': 0.469,
+                  'nsd': 1, 'cte': 1}[self.ss_type]
+        w = open(outputPath, 'w')
+        w.write('{0:6d} {1}\n'.format(self.length, self.name))
+        line = ('{0:5d} {1} {2:5d} {3:5d} {4:5d} {0:5d} ' +
+                ';! X: {5:5d} Y: {6:5d}\n')
+        for i in range(self.length):
+            xcoord = round(xscale*self.xcoordinates[i])
+            ycoord = round(yscale*self.ycoordinates[i])
+            num, seq, cti = self.num[i], self.seq[i], self.ct[i]
+            # no nums after self.length, resets to zero
+            nextnum = (num+1) % (self.length+1)
+            cols = [num, seq, num-1, nextnum, cti, xcoord, ycoord]
+            w.write(line.format(*cols))
+        w.close()
 
 ###############################################################################
 # end of CT class

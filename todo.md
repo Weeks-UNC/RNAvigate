@@ -7,25 +7,32 @@ analysis.
 
 To-Do List
 ----------
-- filter out negative correlations
+### Filters
+- negative correlations
+- exclude nts
+- multiple cts
+- basepaired ijs
+### Plots
 - 3d/contact distance histograms.
-- Support for different annotation types
+- Minimized log-log comparison of profiles.
+- add colorbars and legends
+- pairplot regressions
+- Plotting annotations
   - vertical bars in ap
   - highlight nts for ss
   - clouds, colors, or labels in 3D figures.
 - implement single sample arrays with different filtering.
-- In ss and 3D, add filter for only ij_data that are base-paired.
-- Minimized log-log comparison of profiles.
-- add colorbar and legends for ap, ss, pdb plots
-- support for filtering by multiple cts simultaneously.
+- Reformatting heatmaps to be more familiar.
+- deltaSHAPE
+- RNP-MaP
+- Bin by MutsPerMol (work out probabilities of N draw K)
+### Misc.
+- Consider moving to kwarg dicts for more customizability
+### Documentation
 - Keep documentation updated for testers.
-- consider moving to kwarg dicts for more customizability
-- pairplot regressions
 - easy and robust installation guidelines
 - guide for more custom use cases.
 - Class and method descriptions.
-- Reformatting heatmaps to be more familiar.
-- implement 2 sample analyses, rnp, deltaSHAPE, klog normalization
 
 Features
 --------

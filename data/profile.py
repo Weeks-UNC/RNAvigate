@@ -1,7 +1,9 @@
 import pandas as pd
+from data.data import Data
+import numpy as np
 
 
-class Profile():
+class Profile(Data):
     def __init__(self, filepath, datatype="profile", component=None):
         self.datatype = datatype
         if datatype == "profile":
@@ -14,7 +16,6 @@ class Profile():
         self.data = pd.read_csv(profile, sep='\t')
         sequence = ''.join(self.data["Sequence"].values)
         self.sequence = sequence.upper().replace("T", "U")
-        self.length = len(self.sequence)
 
     def read_dance_reactivities(self, filepath, component):
         # parse header
@@ -35,4 +36,27 @@ class Profile():
         self.data = pd.read_csv(filepath, sep='\t', header=2, **read_kwargs)
         sequence = ''.join(self.data["Sequence"].values)
         self.sequence = sequence.upper().replace("T", "U")
-        self.length = len(self.sequence)
+
+    def get_colors(self, fit_to):
+        """Returns list of colors representing reactivity profile, matched to
+        the given sequence.
+
+        Args:
+            fit_to (Data): Data object to match.
+
+        Returns:
+            list of mpl colors: colors representing reactivity profile data
+        """
+        alignment_map = self.get_alignment_map(fit_to)
+        cmap = ['gray', 'black', 'orange', 'red']
+        bins = [0, 0.4, 0.85]
+        profcolors = []
+        for i in alignment_map:
+            if i == 0:
+                profcolors.append(0)
+            else:
+                row = np.where(self.data["Nucleotide"] == i)
+                x = self.data.loc[row, "Norm_profile"]
+                profcolors.append(sum([b < x for b in bins]))
+        colors = np.array([cmap[val] for val in profcolors])
+        return colors
