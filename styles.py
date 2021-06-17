@@ -16,15 +16,17 @@ colors = [
 ]
 sns.set_palette(colors)
 
-mp.rcParams["font.sans-serif"].insert(0, "Arial")
+mpl.rcParams["font.sans-serif"].insert(0, "Arial")
 
 
-def apply_style(style_dict, function):
-    @wraps(function)
-    def wrapper(*args, **kwargs):
-        with mpl.rc_context(style_dict):
-            return function(*args, **kwargs)
-    return wrapper
+def apply_style(style_dict):
+    def decorator(function):
+        @wraps(function)
+        def wrapper(*args, **kwargs):
+            with mpl.rc_context(style_dict):
+                return function(*args, **kwargs)
+        return wrapper
+    return decorator
 
 
 # ShapeMapper Plot Styles

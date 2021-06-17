@@ -47,16 +47,15 @@ class Profile(Data):
         Returns:
             list of mpl colors: colors representing reactivity profile data
         """
-        alignment_map = self.get_alignment_map(fit_to)
         cmap = ['gray', 'black', 'orange', 'red']
         bins = [0, 0.4, 0.85]
         profcolors = []
+        alignment_map = self.get_alignment_map(fit_to)
         for i in alignment_map:
             if i == 0:
                 profcolors.append(0)
             else:
-                row = np.where(self.data["Nucleotide"] == i)
-                x = self.data.loc[row, "Norm_profile"]
+                x = self.data.loc[i, "Norm_profile"]
                 profcolors.append(sum([b < x for b in bins]))
         colors = np.array([cmap[val] for val in profcolors])
         return colors

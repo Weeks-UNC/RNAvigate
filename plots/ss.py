@@ -1,180 +1,113 @@
-
-def get_ss_figsize(self, rows, columns):
-    """Returns a tuple of the width and height for a secondary structure
-    graph, based on the number of rows and columns. Pass this function call
-    to the figsize argument of plt.subplots.
-
-    Args:
-        rows (int): number of rows in figure
-        columns (int): number of columns in plot
-
-    Returns:
-        [type]: [description]
-    """
-    xmin = min(self.xcoordinates)
-    xmax = max(self.xcoordinates)
-    ymin = min(self.ycoordinates)
-    ymax = max(self.ycoordinates)
-    scale = 0.5
-    width = (xmax-xmin)*scale
-    height = (ymax-ymin)*scale
-    return (width*columns, height*rows)
+import matplotlib.pyplot as plt
+from plots.plots import get_rows_columns
 
 
-def set_ss(self, ax):
-    """Turn off axes and axis border and set aspect ratio to equal
+class SS():
+    def __init__(self, structures, labels, ijs=None, profiles=None):
+        self.structures = structures
+        self.ijs = ijs
+        self.profiles = profiles
+        self.labels = labels
 
-    Args:
-        ax (pyplot axis): axis to set
-    """
-    ax.set_aspect('equal')
-    ax.axis('off')
-    ax.set_title(self.sample, fontsize=30)
+    def get_figsize(self, rows, columns):
+        ss = self.structures[0]
+        xmin = min(ss.xcoordinates)
+        xmax = max(ss.xcoordinates)
+        ymin = min(ss.ycoordinates)
+        ymax = max(ss.ycoordinates)
+        scale = 0.5
+        width = (xmax-xmin)*scale
+        height = (ymax-ymin)*scale
+        return (width*columns, height*rows)
 
+    def set_plot(self, ax, index):
+        ax.set_aspect('equal')
+        ax.axis('off')
+        ax.set_title(self.labels[index], fontsize=30)
 
-def plot_ss_structure(self, ax):
-    """Plots the skeleton of the secondary structure, with base pairs as
-    dotted lines
+    def plot_structure(self, ax, index):
+        ss = self.structures[index]
+        for pair in ss.basepairs:
+            xcoords = [ss.xcoordinates[pair[0]-1], ss.xcoordinates[pair[1]-1]]
+            ycoords = [ss.ycoordinates[pair[0]-1], ss.ycoordinates[pair[1]-1]]
+            ax.plot(xcoords, ycoords, color='grey',
+                    linestyle=(0, (1, 1)), zorder=0)
+        ax.plot(ss.xcoordinates, ss.ycoordinates, color='grey', zorder=0)
 
-    Args:
-        ax (pyplot axis): axis on which to plot
-    """
-    for pair in self.basepairs:
-        xcoords = [self.xcoordinates[pair[0]-1],
-                   self.xcoordinates[pair[1]-1]]
-        ycoords = [self.ycoordinates[pair[0]-1],
-                   self.ycoordinates[pair[1]-1]]
-        ax.plot(xcoords, ycoords, color='grey',
-                linestyle=(0, (1, 1)), zorder=0)
-    ax.plot(self.xcoordinates, self.ycoordinates, color='grey', zorder=0)
-
-
-def get_ss_seqcolors(self, colors):
-    """creates an array of white and black that contrasts well with the
-    given color array
-    """
-    def whiteOrBlack(color):
-        """excepts any valid mpl color and returns white or black,
-        which ever has higher contrast"""
-        try:
-            c = mc.cnames[color]
-        except KeyError:
-            c = color
-        if mc.rgb_to_hsv(mc.to_rgb(c))[2] < 0.179:
-            return 'white'
+    def plot_sequence(self, ax, index, colors, markers='o'):
+        ss = self.structures[index]
+        if isinstance(colors, list) and len(colors) == self.length["ss"]:
+            self.colors = np.array(colors)
+        elif colors == "sequence":
+            colors = ss.get_colorby_sequence()
+        elif colors == "position":
+            colors = ss.get_colorby_position()
+        elif colors == "profile":
+            colors == self.profiles[index].get_colors(ss)
         else:
-            return 'black'
-    letter_colors = np.apply_along_axis(whiteOrBlack, 0, colors)
-    return letter_colors
-
-
-def plot_ss_sequence(self, ax, colorby='sequence', markers='o'):
-    """plots the location of nucleotides on top of the secondary structure
-    skeleton.
-
-    Args:
-        ax (pyplot axis): axis on which to plot
-        colorby (str or list, optional): Options are 'sequence', 'profile',
-                'position' or a lis of valid matplotlib colors.
-                Defaults to None.
-        markers (str, optional): Options are a matplotlib marker type or
-                'sequence', which uses the sequence letters as markers.
-                Defaults to 'o' (a filled circle).
-    """
-    if isinstance(colorby, list) and len(colorby) == self.length["ss"]:
-        self.colors = np.array(colorby)
-    try:
-        colors = getattr(self, f"get_colorby_{colorby}")("ss")
-    except AttributeError:
-        print("Invalid colorby: choices are profile, sequence, position" +
-              " or a list of length equal to structure sequence, using" +
-              " sequence.")
-        self.get_colorby_sequence("ss")
-    if markers == "sequence":
-        for nuc in "GUAC":
-            mask = [nt == nuc for nt in self.sequence["ss"]]
-            xcoords = self.xcoordinates[mask]
-            ycoords = self.ycoordinates[mask]
-            marker = "$"+nuc+"}$"
-            marker = markers
-            ax.scatter(xcoords, ycoords, marker=marker,
-                       c=colors[mask])
-    else:
-        ax.scatter(self.xcoordinates, self.ycoordinates, marker=markers,
-                   c=colors)
-
-
-def add_ss_lines(self, ax, i, j, color, linewidth=1.5):
-    xi = self.xcoordinates[i-1]
-    yi = self.ycoordinates[i-1]
-    xj = self.xcoordinates[j-1]
-    yj = self.ycoordinates[j-1]
-    ax.plot([xi, xj], [yi, yj], color=color, linewidth=linewidth)
-
-
-def plot_ss_data(self, ax, ij_data, metric=None, all_pairs=False,
-                 **kwargs):
-    self.filter_ij_data(ij_data, "ss", all_pairs=all_pairs, **kwargs)
-    ij_colors = self.get_ij_colors(ij_data, metric)
-    window = self.window[ij_data]
-    for i, j, color in zip(*ij_colors):
-        if window == 1:
-            self.add_ss_lines(ax, i, j, color)
+            print("Invalid colors: choices are profile, sequence, position " +
+                  "or a list of length equal to structure sequence. " +
+                  "Defaulting to sequence.")
+            colors = ss.get_colorby_sequence()
+        if markers == "sequence":
+            for nuc in "GUAC":
+                mask = [nt == nuc for nt in ss.sequence]
+                xcoords = ss.xcoordinates[mask]
+                ycoords = ss.ycoordinates[mask]
+                marker = "$"+nuc+"}$"
+                marker = markers
+                ax.scatter(xcoords, ycoords, marker=marker,
+                           c=colors[mask])
         else:
-            for w in range(window):
-                self.add_ss_lines(ax, i+w, j+window-1 -
-                                  w, color, linewidth=6)
+            ax.scatter(ss.xcoordinates, ss.ycoordinates, marker=markers,
+                       c=colors)
 
+    def add_lines(self, ax, i, j, color, index, linewidth=1.5):
+        ss = self.structures[index]
+        x = [ss.xcoordinates[i-1], ss.xcoordinates[j-1]]
+        y = [ss.ycoordinates[i-1], ss.ycoordinates[j-1]]
+        ax.plot(x, y, color=color, linewidth=linewidth)
 
-def plot_ss_positions(self, ax, spacing=20):
-    """adds position labels to the secondary structure graph
+    def plot_ij(self, ax, index):
+        ij = self.ijs[index]
+        ij_colors = ij.get_ij_colors()
+        window = ij.window
+        for i, j, color in zip(*ij_colors):
+            if window == 1:
+                self.add_lines(ax, i, j, color, index)
+            else:
+                for w in range(window):
+                    self.add_lines(ax, i+w, j+window-1 -
+                                   w, color, index, linewidth=6)
 
-    Args:
-        ax (pyplot axis): axis on which to add labels
-        spacing (int, optional): labels every nth nucleotide.
-                Defaults to 20.
-    """
-    for i in range(0, self.length["ss"], spacing):
-        ax.annotate(i+1, xy=(self.xcoordinates[i], self.ycoordinates[i]),
-                    horizontalalignment="center",
-                    verticalalignment="center",
-                    xycoords='data', fontsize=16,
-                    bbox=dict(fc="white", ec='none', pad=0.3))
+    def plot_positions(self, ax, index, spacing=20):
+        ss = self.structures[index]
+        for i in range(0, ss.length, spacing):
+            ax.annotate(i+1, xy=(self.xcoordinates[i], self.ycoordinates[i]),
+                        horizontalalignment="center",
+                        verticalalignment="center",
+                        xycoords='data', fontsize=16,
+                        bbox=dict(fc="white", ec='none', pad=0.3))
 
-
-def make_ss(self, ax=None, ij_data=None, metric=None, positions=True,
-            colorby=None, markers='o', all_pairs=False, **kwargs):
-    """Creates a full secondary structure graph with data plotted
-
-    Args:
-        ax (pyplot axis, option): axis to plot
-        ij_data (str, optional): string matching the ij_data to plot.
-                Options: rings, pairs, deletions.
-        metric (str, optional): string matching a column name of the
-                ij_data dataframe. Defaults defined at top of file.
-        positions (bool, optional): whether to label positions.
-                Defaults to True.
-        colorby (str, optional): method used to color nucleotides.
-                Options: sequence, profile, positions
-                Defaults to 'profile',
-                If profile is missing, sequence is used.
-        markers (str, optional): marker type to use for nucleotides.
-                Defaults to 'o'. (dots)
-    """
-    if ax is None:
-        _, ax = plt.subplots(1, figsize=self.get_ss_figsize(1, 1))
-    self.set_ss(ax)
-    self.plot_ss_structure(ax)
-    if colorby is None:
-        if hasattr(self, "profile"):
-            colorby = "profile"
-        else:
-            colorby = "sequence"
-    self.plot_ss_sequence(ax, colorby=colorby, markers=markers)
-    if positions is True:
-        self.plot_ss_positions(ax)
-    if metric == "Distance":
-        self.set_3d_distances(ij_data)
-    if ij_data is not None:
-        self.plot_ss_data(ax, ij_data, metric, all_pairs, **kwargs)
-    return ax
+    def make_plot(self, ax=None, positions=True, colors=None, markers='o'):
+        length = len(self.labels)
+        rows, cols = get_rows_columns(length)
+        if ax is None:
+            _, axes = plt.subplots(rows, cols, squeeze=False,
+                                   figsize=self.get_figsize(rows, cols))
+        for i in range(length):
+            row = i // cols
+            col = i % cols
+            ax = axes[row, col]
+            self.set_plot(ax)
+            self.plot_structure(ax, i)
+            if colors is None:
+                if self.profile is not None:
+                    colors = "profile"
+                else:
+                    colors = "sequence"
+            self.plot_sequence(ax, i, colors=colors, markers=markers)
+            if positions is True:
+                self.plot_positions(ax, i)
+            if self.ij is not None:
+                self.plot_ij(ax, i)

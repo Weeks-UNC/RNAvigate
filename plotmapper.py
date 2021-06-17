@@ -107,29 +107,6 @@ def view_colormap(ij_data=None, metric=None, ticks=None, values=None,
     ax.set_yticks([])
 
 
-# COPIED FROM SHAPEMAPPER2
-# some of this might be inappropriately applied to all plots
-# TODO: look into passing dict to mp.rc()
-###############################################################################
-mp.rcParams["font.sans-serif"].insert(0, "Arial")
-shapemapper_style = {"font.family": "sans-serif",
-                     "pdf.fonttype": 42,
-                     # use TrueType fonts when exporting PDFs
-                     # (embeds most fonts - this is especially
-                     #  useful when opening in Adobe Illustrator)
-                     'xtick.direction': 'out',
-                     'ytick.direction': 'out',
-                     'legend.fontsize': 14,
-                     'grid.color': ".8",
-                     'grid.linestyle': '-',
-                     'grid.linewidth': 1}
-
-rx_color = "red"
-bg_color = "blue"
-dc_color = "darkgoldenrod"
-###############################################################################
-
-
 class Sample():
 
     def __init__(self,
@@ -232,30 +209,11 @@ class Sample():
                     sample.paths["ct"] = ct_file
 
 ###############################################################################
-# Plotting functions
-#     make_skyline
-#     make_qc
-#
+# some functions
+#     get_data
+#     filter_ij
+#     filter_dance_rings
 ###############################################################################
-
-    def make_skyline(self, dance=False, **kwargs):
-        profiles, labels = [], []
-        if dance:
-            for dance in self.dance:
-                profiles.append(dance.data["profile"])
-                labels.append(dance.sample)
-            kwargs["legend_title"] = "Comp: Percent"
-            kwargs["axis_title"] = f"{self.sample}: DANCE Reactivities"
-        else:
-            profiles.append(self.data["profile"])
-            labels.append(self.sample)
-        Skyline(profiles, labels).make_plot(**kwargs)
-
-    def make_qc(self, **kwargs):
-        profiles = [self.data["profile"]]
-        logs = [self.data["log"]]
-        labels = [self.sample]
-        QC(logs, profiles, labels).make_plot(**kwargs)
 
     def get_data(self, key):
         if key == "ctcompare":
@@ -266,22 +224,6 @@ class Sample():
             return [self.data[k] for k in key]
         else:
             print(f"Key must be one of:\n{self.data.keys()}")
-
-    def make_ap(self, top, bottom, dance=False, **filter_kwargs):
-        def add_sample(sample):
-            ap_kwargs["top"].append(sample.get_data(top))
-            ap_kwargs["bottom"].append(sample.get_data(bottom))
-            ap_kwargs["profiles"].append(sample.get_data("profile"))
-            ap_kwargs["labels"].append(self.sample)
-
-        self.filter_ij(self.get_data(bottom), self.get_data(top), **filter_kwargs)
-        ap_kwargs = {"top": [], "bottom": [], "profiles": [], "labels": []}
-        if dance:
-            for sample in self.dance:
-                add_sample(sample)
-        else:
-            add_sample(self)
-        AP(**ap_kwargs).make_plot()
 
     def filter_ij(self, data, fit_to, **kwargs):
         data.filter(fit_to, profile=self.data["profile"],
@@ -313,8 +255,66 @@ class Sample():
             rings['mask'] = mask
             self.dance[index].ij_data["rings"] = rings
 
+    def make_skyline(self, dance=False, **kwargs):
+        profiles, labels = [], []
+        if dance:
+            for dance in self.dance:
+                profiles.append(dance.data["profile"])
+                labels.append(dance.sample)
+            kwargs["legend_title"] = "Comp: Percent"
+            kwargs["axis_title"] = f"{self.sample}: DANCE Reactivities"
+        else:
+            profiles.append(self.data["profile"])
+            labels.append(self.sample)
+        Skyline(profiles, labels).make_plot(**kwargs)
+
+    def make_qc(self, **kwargs):
+        profiles = [self.data["profile"]]
+        logs = [self.data["log"]]
+        labels = [self.sample]
+        QC(logs, profiles, labels).make_plot(**kwargs)
+
+    def make_ap(self, top, bottom, dance=False, **filter_kwargs):
+        def add_sample(sample):
+            ap_kwargs["top"].append(sample.get_data(top))
+            ap_kwargs["bottom"].append(sample.get_data(bottom))
+            ap_kwargs["profiles"].append(sample.get_data("profile"))
+            ap_kwargs["labels"].append(self.sample)
+
+        self.filter_ij(self.get_data(bottom),
+                       self.get_data(top), **filter_kwargs)
+        ap_kwargs = {"top": [], "bottom": [], "profiles": [], "labels": []}
+        if dance:
+            for sample in self.dance:
+                add_sample(sample)
+        else:
+            add_sample(self)
+        AP(**ap_kwargs).make_plot()
+
+    def make_ss(self, ij, dance=False, **filter_kwargs):
+        def add_sample(sample):
+            ap_kwargs["structures"].append(self.data["ss"])
+            ap_kwargs["ij"].append(sample.data[ij])
+            ap_kwargs["profiles"].append(sample.data["profile"])
+            ap_kwargs["labels"].append(sample.sample)
+
+        ss_kwargs = {"structures": [], "ij": [], "profiles": [], "labels": []}
+        if dance:
+            for sample in self.dance:
+                add_sample(sample)
+        else:
+            self.filter_ij(self.data[ij], self.data["ss"], **filter_kwargs)
+            add_sample(self)
+        SS(**ss_kwargs).make_plot()
+
     def make_shapemapper(self, **kwargs):
-        SM(self.data["profile"]).make_shapemapper(**kwargs)
+        SM(self.data["profile"], self.sample).make_plot(**kwargs)
+
+    def make_heatmap(self, heatmap, contour, metric=None):
+        heatmap = self.get_data(heatmap)
+        contour = self.get_data(contour)
+        heatmap.metric = metric
+        Heatmap(heatmap, contour).make_plot()
 
 ###############################################################################
 # Plotting functions that accept a list of samples

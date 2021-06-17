@@ -7,77 +7,83 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def get_default_min_max(metric):
-    min_max = {'Percentile': [0.98, 1.0],
-               "Statistic": [-100, 100],
-               'Zij': [-50, 50],
-               "Class": [0, 2],
-               "Metric": [0, 0.001],
-               'Distance': [10, 80],
-               'Probability': [0, 1]
-               }[metric]
-    return min_max
-
-
-def get_default_fill(metric):
-    fill = {'Class': -1,
-            'Statistic': 0.0,
-            'Zij': 0.0,
-            'Metric': 0.0,
-            'Distance': 1000,
-            'Percentile': 0.0}[metric]
-    return fill
-
-
-def get_default_cmap(metric):
-    cmap = {'Class': mp.colors.ListedColormap([[0.3, 0.3, 0.3, 0.2],
-                                               [0.0, 0.0, 0.95, 0.6],
-                                               [0.12, 0.76, 1.0, 0.6]]),
-            'Statistic': 'bwr',
-            'Zij': 'bwr',
-            'Metric': 'YlGnBu',
-            'Distance': 'jet',
-            'Percentile': 'YlGnBu',
-            'Probability': 'rainbow_r'
-            }[metric]
-    cmap = plt.get_cmap(cmap)
-    cmap = cmap(np.arange(cmap.N))
-    cmap[:, -1] = np.full((len(cmap)), 0.6)  # set default alpha to 0.6
-    if metric == 'Class':
-        cmap[0, -1] = 0.2  # alpha of non primary and secondary pairs to 0.2
-    if metric == 'Distance':
-        # set color of max distance and no data distances to gray
-        cmap[-1, :] = np.array([80/255., 80/255., 80/255., 0.2])
-    cmap = mp.colors.ListedColormap(cmap)
-    return cmap
-
-
-def get_default_metric(ij_data):
-    metric = {'rings': 'Statistic',
-              'pairs': 'Class',
-              'deletions': 'Percentile',
-              'probs': 'Probability'
-              }[ij_data]
-    return metric
-
-
 class IJ(Data):
 
     def __init__(self, datatype, filepath, sequence=None, fasta=None):
         super().__init__(sequence, fasta)
         self.datatype = datatype
+        self.path = filepath
         self.default_metric = {'rings': 'Statistic',
                                'pairs': 'Class',
                                'deletions': 'Percentile',
                                'probs': 'Probability'
                                }[self.datatype]
-        self.path = filepath
+        self._metric = self.default_metric
         read_file = {"probs": self.read_probs,
                      "rings": self.read_rings,
                      "deletions": self.read_deletions,
                      "pairs": self.read_pairs
                      }[datatype]
         read_file(filepath)
+
+    @property
+    def min_max(self):
+        min_max = {'Percentile': [0.98, 1.0],
+                   "Statistic": [-100, 100],
+                   'Zij': [-50, 50],
+                   "Class": [0, 2],
+                   "Metric": [0, 0.001],
+                   'Distance': [10, 80],
+                   'Probability': [0, 1]
+                   }[self.metric]
+        return min_max
+
+    @property
+    def fill(self):
+        fill = {'Class': -1,
+                'Statistic': 0.0,
+                'Zij': 0.0,
+                'Metric': 0.0,
+                'Distance': 1000,
+                'Percentile': 0.0}[self.metric]
+        return fill
+
+    @property
+    def cmap(self):
+        cmap = {'Class': mp.colors.ListedColormap([[0.3, 0.3, 0.3, 0.2],
+                                                   [0.0, 0.0, 0.95, 0.6],
+                                                   [0.12, 0.76, 1.0, 0.6]]),
+                'Statistic': 'bwr',
+                'Zij': 'bwr',
+                'Metric': 'YlGnBu',
+                'Distance': 'jet',
+                'Percentile': 'YlGnBu',
+                'Probability': 'rainbow_r'
+                }[self.metric]
+        cmap = plt.get_cmap(cmap)
+        cmap = cmap(np.arange(cmap.N))
+        cmap[:, -1] = np.full((len(cmap)), 0.6)  # set default alpha to 0.6
+        if self.metric == 'Class':
+            cmap[0, -1] = 0.2  # alpha of non primary and secondary pairs to 0.2
+        if self.metric == 'Distance':
+            # set color of max distance and no data distances to gray
+            cmap[-1, :] = np.array([80/255., 80/255., 80/255., 0.2])
+        cmap = mp.colors.ListedColormap(cmap)
+        return cmap
+
+    @property
+    def metric(self):
+        return self._metric
+
+    @metric.setter
+    def metric(self, value):
+        if value in self.data.keys():
+            self._metric = value
+        elif value is None:
+            self._metric = self.default_metric
+        else:
+            print(f"{value} is not a valid metric of {self.datatype}")
+            self._metric = self.default_metric
 
     def read_probs(self, probs):
         with open(probs, 'r') as file:
@@ -185,11 +191,10 @@ class IJ(Data):
             except KeyError:
                 print(f"{key} is not a valid column of {self.datatype} dataFrame")
 
-    def get_ij_colors(self, metric=None, min_max=None, cmap=None):
-        if metric is None:
-            metric = self.default_metric
+    def get_ij_colors(self, min_max=None, cmap=None):
+        metric = self.metric
         if min_max is None:
-            minimum, maximum = get_default_min_max(metric)
+            minimum, maximum = self.min_max
         else:
             minimum, maximum = min_max
         columns = ["i_offset", "j_offset", metric]
@@ -212,7 +217,7 @@ class IJ(Data):
         i = data["i_offset"].values
         j = data["j_offset"].values
         if cmap is None:
-            cmap = get_default_cmap(metric)
+            cmap = self.cmap
         else:
             cmap = plt.get_cmap(cmap)
         colors = cmap(data[metric].values)

@@ -29,21 +29,24 @@ class Data():
     def length(self):
         return len(self.sequence)
 
-    def get_alignment_map(self, to_that):
-        alignment = align.globalxs(self.sequence, to_that.sequence, -1, -0.1,
+    def get_alignment_map(self, fit_to, full=False):
+        alignment = align.globalxs(self.sequence, fit_to.sequence, -1, -0.1,
                                    penalize_end_gaps=False)
         # get an index map from this sequence to that.
-        alignment_map = [0]  # index-0 place holder, data files are 1-indexed.
-        i = 1  # also for 1-indexing
+        alignment_map = []
+        i = 0
         for nt1, nt2 in zip(alignment[0].seqA, alignment[0].seqB):
-            #  AUC-UGGCUA
-            #  AUCGUG-CUA
-            #  123056 789
+            #  AUC-UGGCU
+            #  AUCGUG-CU
+            #  012-3467 if not full
+            #  012-34567 if full
             if nt1 == '-':
+                alignment_map.append(-1)  # these will be masked when plotting
                 i += 1
-                alignment_map.append(0)  # these will be masked when plotting
             elif nt2 == '-':
-                continue
+                if full:
+                    alignment_map.append(i)
+                    i += 1
             else:
                 alignment_map.append(i)
                 i += 1

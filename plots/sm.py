@@ -1,10 +1,16 @@
-from data.profile import Profile
 import matplotlib.pyplot as plt
+import numpy as np
+from plots.plots import add_sequence
+from matplotlib.patches import Rectangle
+from styles import rx_color, bg_color, dc_color, apply_style, sm
+
 
 class SM():
-    def __init__(self, profile):
-        self.profile=profile
+    def __init__(self, profile, label):
+        self.profile = profile
+        self.label = label
 
+    @apply_style(sm)
     def plot_sm_profile(self, axis=None):
         """Plots classic ShapeMapper normalized reactivity on the given axis
 
@@ -12,21 +18,21 @@ class SM():
             axis (pyplot axis): axis on which to add plot
         """
         if axis is None:
-            _, axis = plt.subplots(figsize=self.get_skyline_figsize(1, 1))
+            _, axis = plt.subplots(figsize=self.get_figsize(1, 1))
         yMin, ymax = (-0.5, 4)
         near_black = (0, 0, 1 / 255.0)
         orange_thresh = 0.4
         red_thresh = 0.85
         colors = self.profile.get_colors(self.profile)
-        sample = self.profile["Norm_profile"].copy()
+        sample = self.profile.data["Norm_profile"].copy()
         sample[np.isnan(sample)] = -1
-        axis.bar(self.profile['Nucleotide'], sample, align="center",
-                width=1.05, color=colors, edgecolor=colors,
-                linewidth=0.0, yerr=self.profile['Norm_stderr'],
-                ecolor=near_black, capsize=1)
-        axis.set_title(self.sample, fontsize=16)
+        axis.bar(self.profile.data['Nucleotide'], sample, align="center",
+                 width=1.05, color=colors, edgecolor=colors,
+                 linewidth=0.0, yerr=self.profile.data['Norm_stderr'],
+                 ecolor=near_black, capsize=1)
+        axis.set_title(self.label, fontsize=16)
         axis.set_ylim(yMin, ymax)
-        axis.set_xlim(1, self.length["profile"])
+        axis.set_xlim(1, self.profile.length)
         axis.yaxis.grid(True)
         axis.set_axisbelow(True)
         axis.set_xlabel("Nucleotide", fontsize=14, labelpad=0)
@@ -46,15 +52,15 @@ class SM():
         tpB2 = inv.transform_point(tpB)
         rectW = tpB2[0] - tpA2[0]
         rect = Rectangle((rectX, -0.5), rectW, orange_thresh +
-                        0.5, facecolor="black", edgecolor="none")
+                         0.5, facecolor="black", edgecolor="none")
         axis.add_patch(rect)
         rect.set_clip_on(False)
         rect = Rectangle((rectX, orange_thresh), rectW, red_thresh -
-                        orange_thresh, facecolor="orange", edgecolor="none")
+                         orange_thresh, facecolor="orange", edgecolor="none")
         axis.add_patch(rect)
         rect.set_clip_on(False)
         rect = Rectangle((rectX, red_thresh), rectW, 4 -
-                        red_thresh, facecolor="red", edgecolor="none")
+                         red_thresh, facecolor="red", edgecolor="none")
         axis.add_patch(rect)
         rect.set_clip_on(False)
         axis.get_xaxis().tick_bottom()   # remove unneeded ticks
@@ -65,7 +71,7 @@ class SM():
         yticks = axis.get_yticks()
         stripped_ticks = [str(int(val)) for val in yticks]
         axis.set(yticks=yticks,
-                yticklabels=stripped_ticks)
+                 yticklabels=stripped_ticks)
 
         for line in axis.get_yticklines():
             line.set_markersize(6)
@@ -80,9 +86,9 @@ class SM():
             line.set_markeredgewidth(1)
 
         # put nuc sequence below axis
-        self.plot_sequence(axis, "profile")
+        add_sequence(axis, self.profile.sequence)
 
-
+    @apply_style(sm)
     def plot_sm_depth(self, axis=None):
         """Plots classic ShapeMapper read depth on the given axis
 
@@ -90,22 +96,22 @@ class SM():
             axis (pyplot axis): axis on which to add plot
         """
         if axis is None:
-            _, axis = plt.subplots(figsize=self.get_skyline_figsize(1, 1))
-        sample = self.profile
+            _, axis = plt.subplots(figsize=self.get_figsize(1, 1))
+        sample = self.profile.data
         axis.plot(sample['Nucleotide'], sample['Modified_read_depth'],
-                linewidth=1.5, color=rx_color, alpha=1.0, label="Modified")
+                  linewidth=1.5, color=rx_color, alpha=1.0, label="Modified")
         axis.plot(sample['Nucleotide'], sample['Untreated_read_depth'],
-                linewidth=1.5, color=bg_color, alpha=1.0, label="Untreated")
+                  linewidth=1.5, color=bg_color, alpha=1.0, label="Untreated")
         axis.plot(sample['Nucleotide'], sample['Denatured_read_depth'],
-                linewidth=1.5, color=dc_color, alpha=1.0, label="Denatured")
-        axis.set_xlim(1, self.length["profile"])
+                  linewidth=1.5, color=dc_color, alpha=1.0, label="Denatured")
+        axis.set_xlim(1, self.profile.length)
         axis.legend(loc=2, borderpad=0.8, handletextpad=0.2, framealpha=0.75)
         axis.plot(sample['Nucleotide'], sample['Modified_effective_depth'],
-                linewidth=1.0, color=rx_color, alpha=0.3)
+                  linewidth=1.0, color=rx_color, alpha=0.3)
         axis.plot(sample['Nucleotide'], sample['Untreated_effective_depth'],
-                linewidth=1.0, color=bg_color, alpha=0.3)
+                  linewidth=1.0, color=bg_color, alpha=0.3)
         axis.plot(sample['Nucleotide'], sample['Denatured_effective_depth'],
-                linewidth=1.0, color=dc_color, alpha=0.3)
+                  linewidth=1.0, color=dc_color, alpha=0.3)
         xmin, xmax, ymin, ymax = axis.axis()
         axis.set_ylim(0, ymax)
         axis.set_xlabel("Nucleotide\n" +
@@ -132,7 +138,7 @@ class SM():
         # but couldn't get positioning/transforms to work properly.
         # For now just putting in xaxis label
 
-
+    @apply_style(sm)
     def plot_sm_rates(self, axis=None):
         """Plots classic ShapeMapper mutation rates on the given axis
 
@@ -141,9 +147,10 @@ class SM():
         """
         if axis is None:
             _, axis = plt.subplots(figsize=self.get_skyline_figsize(1, 1))
-        sample = self.profile
+        sample = self.profile.data
         # choose a decent range for axis, excluding high-background positions
-        temp_rates = sample['Modified_rate'][sample['Untreated_rate'] <= 0.05]
+        temp_rates = sample.loc[sample['Untreated_rate'] <= 0.05,
+                                'Modified_rate']
         near_top_rate = np.nanpercentile(temp_rates, 98.0)
         maxes = np.array([0.32, 0.16, 0.08, 0.04, 0.02, 0.01])
         ymax = np.amin(maxes[maxes > near_top_rate])
@@ -159,17 +166,17 @@ class SM():
         axis.set_xlabel("Nucleotide", fontsize=14)
         axis.set_ylabel("Mutation rate (%)", fontsize=14)
         axis.plot(sample['Nucleotide'], sample['Modified_rate'], zorder=3,
-                color=rx_color, linewidth=1.5, label='Modified')
+                  color=rx_color, linewidth=1.5, label='Modified')
         axis.plot(sample['Nucleotide'], sample['Untreated_rate'], zorder=2,
-                color=bg_color, linewidth=1.5, label='Untreated')
+                  color=bg_color, linewidth=1.5, label='Untreated')
         axis.plot(sample['Nucleotide'], sample['Denatured_rate'], zorder=2,
-                color=dc_color, linewidth=1.5)
+                  color=dc_color, linewidth=1.5)
         axis.fill_between(sample['Nucleotide'], rx_lower, rx_upper,
-                        edgecolor="none", alpha=0.5, facecolor=rx_color)
+                          edgecolor="none", alpha=0.5, facecolor=rx_color)
         axis.fill_between(sample['Nucleotide'], bg_lower, bg_upper,
-                        edgecolor="none", alpha=0.5, facecolor=bg_color)
+                          edgecolor="none", alpha=0.5, facecolor=bg_color)
         axis.fill_between(sample['Nucleotide'], dc_lower, dc_upper,
-                        edgecolor="none", alpha=0.5, facecolor=dc_color)
+                          edgecolor="none", alpha=0.5, facecolor=dc_color)
         axis.legend(loc=2, borderpad=0.8, handletextpad=0.2, framealpha=0.75)
         axis.set_xlim((1, len(sample['Modified_rate'])))
         axis.set_ylim((0, ymax))
@@ -189,7 +196,6 @@ class SM():
             line.set_markeredgewidth(1)
         axis.yaxis.grid(True)
         axis.set_axisbelow(True)
-
 
     def metric_abbreviate(self, num):
         """takes a large number and applies an appropriate abbreviation
@@ -223,7 +229,8 @@ class SM():
         fig_width = max(7, ax_width + left_inches + right_inches)
         return (fig_width*cols, fig_height*rows)
 
-    def make_shapemapper(self, plots=["profile", "rates", "depth"]):
+    @apply_style(sm)
+    def make_plot(self, plots=["profile", "rates", "depth"]):
         """Creates a figure with the three classic Shapemapper plots.
         """
         rows = len(plots)
@@ -232,5 +239,5 @@ class SM():
             plot_func = {"profile": self.plot_sm_profile,
                          "rates": self.plot_sm_rates,
                          "depth": self.plot_sm_depth
-                        }[plot]
+                         }[plot]
             plot_func(ax)
