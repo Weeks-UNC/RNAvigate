@@ -27,7 +27,7 @@ class SS():
 
     def plot_structure(self, ax, index):
         ss = self.structures[index]
-        for pair in ss.basepairs:
+        for pair in ss.pairList():
             xcoords = [ss.xcoordinates[pair[0]-1], ss.xcoordinates[pair[1]-1]]
             ycoords = [ss.ycoordinates[pair[0]-1], ss.ycoordinates[pair[1]-1]]
             ax.plot(xcoords, ycoords, color='grey',
@@ -43,7 +43,7 @@ class SS():
         elif colors == "position":
             colors = ss.get_colorby_position()
         elif colors == "profile":
-            colors == self.profiles[index].get_colors(ss)
+            colors = self.profiles[index].get_colors(ss)
         else:
             print("Invalid colors: choices are profile, sequence, position " +
                   "or a list of length equal to structure sequence. " +
@@ -83,7 +83,7 @@ class SS():
     def plot_positions(self, ax, index, spacing=20):
         ss = self.structures[index]
         for i in range(0, ss.length, spacing):
-            ax.annotate(i+1, xy=(self.xcoordinates[i], self.ycoordinates[i]),
+            ax.annotate(i+1, xy=(ss.xcoordinates[i], ss.ycoordinates[i]),
                         horizontalalignment="center",
                         verticalalignment="center",
                         xycoords='data', fontsize=16,
@@ -99,15 +99,15 @@ class SS():
             row = i // cols
             col = i % cols
             ax = axes[row, col]
-            self.set_plot(ax)
+            self.set_plot(ax, i)
             self.plot_structure(ax, i)
             if colors is None:
-                if self.profile is not None:
+                if self.profiles is not None:
                     colors = "profile"
                 else:
                     colors = "sequence"
             self.plot_sequence(ax, i, colors=colors, markers=markers)
             if positions is True:
                 self.plot_positions(ax, i)
-            if self.ij is not None:
+            if self.ijs is not None:
                 self.plot_ij(ax, i)

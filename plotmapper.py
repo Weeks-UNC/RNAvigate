@@ -293,12 +293,12 @@ class Sample():
 
     def make_ss(self, ij, dance=False, **filter_kwargs):
         def add_sample(sample):
-            ap_kwargs["structures"].append(self.data["ss"])
-            ap_kwargs["ij"].append(sample.data[ij])
-            ap_kwargs["profiles"].append(sample.data["profile"])
-            ap_kwargs["labels"].append(sample.sample)
+            ss_kwargs["structures"].append(self.data["ss"])
+            ss_kwargs["ijs"].append(sample.data[ij])
+            ss_kwargs["profiles"].append(sample.data["profile"])
+            ss_kwargs["labels"].append(sample.sample)
 
-        ss_kwargs = {"structures": [], "ij": [], "profiles": [], "labels": []}
+        ss_kwargs = {"structures": [], "ijs": [], "profiles": [], "labels": []}
         if dance:
             for sample in self.dance:
                 add_sample(sample)
@@ -316,6 +316,22 @@ class Sample():
         heatmap.metric = metric
         Heatmap(heatmap, contour).make_plot()
 
+    def make_mol(self, ij, dance=False, **filter_kwargs):
+        def add_sample(sample):
+            mol_kwargs["pdbs"].append(self.data["pdb"])
+            mol_kwargs["ijs"].append(sample.data[ij])
+            mol_kwargs["profiles"].append(sample.data["profile"])
+            mol_kwargs["labels"].append(sample.sample)
+
+        mol_kwargs = {"pdbs": [], "ijs": [], "profiles": [], "labels": []}
+        if dance:
+            for sample in self.dance:
+                add_sample(sample)
+        else:
+            self.filter_ij(self.data[ij], self.data["pdb"], **filter_kwargs)
+            add_sample(self)
+        return Mol(**mol_kwargs).make_plot()
+
 ###############################################################################
 # Plotting functions that accept a list of samples
 #   array_qc
@@ -324,18 +340,6 @@ class Sample():
 #   array_ss
 #   array_3d
 ###############################################################################
-
-
-def array_ap(samples=[], rows=None, cols=None, **kwargs):
-    rows, cols = get_rows_columns(len(samples), rows, cols)
-    figsize = samples[0].get_ap_figsize(rows, cols)
-    gs_kw = {'rows': rows, 'cols': cols, 'hspace': 0.01, 'wspace': 0.1}
-    _, axes = plt.subplots(rows, cols, figsize=figsize, gridspec_kw=gs_kw)
-    for i, sample in enumerate(samples):
-        row = i // cols
-        col = i % rows
-        ax = axes[row, col]
-        sample.make_ap(ax=ax, **kwargs)
 
 
 def array_qc(samples=[]):
@@ -347,40 +351,39 @@ def array_qc(samples=[]):
     QC(logs, profiles, labels).make_plot()
 
 
-def array_skyline(samples, **kwargs):
-    fig, ax = plt.subplots(1, figsize=samples[0].get_skyline_figsize(1, 1))
-    for sample in samples[:-1]:
-        sample.plot_skyline(ax)
-    samples[-1].make_skyline(ax, **kwargs)
+def array_skyline(samples):
+    profiles, labels = []
+    for sample in samples:
+        profiles.append(sample.data["profile"])
+        labels.append(sample.sample)
+    Skyline(profiles, labels).make_plot()
 
 
-def array_ss(samples, **kwargs):
-    fig, ax = plt.subplots(1, 4, figsize=samples[0].get_ss_figsize(1, 4))
-    for i, sample in enumerate(samples):
-        sample.make_ss(ax[i], **kwargs)
+def array_ap(samples, **kwargs):
+    top, bottom, profiles, labels = [], [], [], []
+    for sample in samples:
+        top.append(sample.data["ct"])
+        bottom.append(sample.data[ij])
+        profiles.append(sample.data["profile"])
+        labels.append(sample.sample)
+    AP(top, bottom, profiles, labels).make_plot()
 
 
-def array_3d(samples, rows=None, cols=None, **kwargs):
-    """Given a list of samples, creates a grid of py3Dmol views. Kwargs passed
-    to samples[0].make_3d(). Samples must all use the same structure.
+def array_ss(samples, ij):
+    structures, ijs, profiles, labels = [], [], [], []
+    for sample in samples:
+        structures.append(sample.data["ss"])
+        ijs.append(sample.data[ij])
+        profiles.append(sample.data["profiles"])
+        labels.append(sample.sample)
+    SS(structures, labels, ijs, profiles)
 
-    Args:
-        samples (List of Sample objects): Sample objects from which to display.
-        rows (int, optional): number of rows for figure.
-            Default determined by get_rows_columns.
-        cols (int, optional): number of columns for figure.
-            Default determined by get_rows_columns.
 
-    Returns:
-        [type]: [description]
-    """
-    rows, cols = get_rows_columns(len(samples), rows, cols)
-    view = py3Dmol.view(viewergrid=(rows, cols),
-                        width=400*rows,
-                        height=400*cols)
-    view = samples[0].set_3d_view(view)
-    for i, sample in enumerate(samples):
-        row = i // cols
-        col = i % rows
-        view = sample.make_3d(view, (row, col), **kwargs)
-    return view
+def array_mol(samples, ij):
+    pdbs, ijs, profiles, labels = [], [], [], []
+    for sample in samples:
+        pdbs.append(sample.data["pdb"])
+        ijs.append(sample.data[ij])
+        profiles.append(sample.data["profile"])
+        labels.append(sample.sample)
+    Mol(pdbs, profiles, ijs, labels).make_plot()

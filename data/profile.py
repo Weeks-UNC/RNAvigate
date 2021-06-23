@@ -49,13 +49,11 @@ class Profile(Data):
         """
         cmap = ['gray', 'black', 'orange', 'red']
         bins = [0, 0.4, 0.85]
-        profcolors = []
+        profcolors = np.full(fit_to.length, 0)
         alignment_map = self.get_alignment_map(fit_to)
-        for i in alignment_map:
-            if i == 0:
-                profcolors.append(0)
-            else:
+        for i, i2 in enumerate(alignment_map):
+            if i2 != -1:
                 x = self.data.loc[i, "Norm_profile"]
-                profcolors.append(sum([b < x for b in bins]))
+                profcolors[i2] = sum([b < x for b in bins])
         colors = np.array([cmap[val] for val in profcolors])
         return colors

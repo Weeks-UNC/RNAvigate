@@ -137,17 +137,19 @@ class IJ(Data):
         self.update_mask(mask)
 
     def mask_on_profile(self, profile, profAbove=None, profBelow=None):
-        clip, pad = MaP.get_clip_pad(self.sequence, profile.sequence)
+        alignment_map = self.get_alignment_map(profile)
         norm_prof = self.profile["Norm_profile"]
         mask = []
         for _, i, j in self.data[["i", "j"]].itertuples():
-            keep_ij = (clip[0] < i < clip[1]) and (clip[0] < j < clip[1])
-            prof_i = norm_prof[i-1+pad[0]]
-            prof_j = norm_prof[j-1+pad[0]]
-            if profAbove is not None and keep_ij:
-                keep_ij = (prof_i >= profAbove) and (prof_j >= profAbove)
-            if profBelow is not None and keep_ij:
-                keep_ij = (prof_i <= profBelow) and (prof_j <= profBelow)
+            index_i = alignment_map[i-1]
+            index_j = alignment_map[j-1]
+            if (index_i != -1) and (index_j != -1):
+                prof_i = norm_prof[index_i]
+                prof_j = norm_prof[index_j]
+                if profAbove is not None:
+                    keep_ij = (prof_i >= profAbove) and (prof_j >= profAbove)
+                if profBelow is not None:
+                    keep_ij = (prof_i <= profBelow) and (prof_j <= profBelow)
             mask.append(keep_ij)
         self.update_mask(mask)
 
