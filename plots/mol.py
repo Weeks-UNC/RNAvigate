@@ -1,17 +1,36 @@
-from plots import *
+from plots import get_rows_columns
 import py3Dmol
 import matplotlib.colors as mpc
 
 
 class Mol():
-    def __init__(self, pdbs, profiles=None, ijs=None, labels=None):
-        self.pdbs = pdbs
+    def __init__(self, pdb, profiles=None, ijs=None, labels=[]):
+        self.pdb = pdb
         self.labels = labels
-        self.profiles = profiles
-        self.ijs = ijs
+        if profiles is not None:
+            self.profiles = [p.get_colors(self.pdb) for p in profiles]
+        else:
+            self.profiles = []
+        if ijs is not None:
+            self.ijs = [ij.get_ij_colors() for ij in ijs]
+            self.ij_windows = [ij.window for ij in ijs]
+        else:
+            self.ijs, self.ij_windows = [], []
 
-    def add_lines(self, view, i, j, color, viewer, index):
-        pdb = self.pdbs[index]
+    def add_sample(self, ij, profile=None, label=None):
+        self.ijs.append(ij.get_ij_colors())
+        self.ij_windows.append(ij.window)
+        if label is not None:
+            self.labels.append(label)
+        else:
+            self.labels.append('')
+        if profile is not None:
+            self.profiles.append(profile.get_colors(self.pdb))
+        else:
+            self.profiles.append(self.pdb.get_colorby_sequence())
+
+    def add_lines(self, view, i, j, color, viewer):
+        pdb = self.pdb
         xi, yi, zi = pdb.get_xyz_coord(i)
         xj, yj, zj = pdb.get_xyz_coord(j)
         cylinder_specs = {"start": {"x": xi, "y": yi, "z": zi},
@@ -23,27 +42,19 @@ class Mol():
         view.addCylinder(cylinder_specs, viewer=viewer)
 
     def plot_data(self, view, viewer, index):
-        pdb = self.pdbs[index]
-        ij = self.ijs[index]
-        ij_colors = ij.get_ij_colors()
-        for i, j, color in zip(*ij_colors):
-            color = mpc.rgb2hex(color)
-            color = "0x"+color[1:]
-            window = ij.window
+        window = self.ij_windows[index]
+        for i, j, color in zip(*self.ijs[index]):
+            color = "0x"+mpc.rgb2hex(color)[1:]
             for w in range(window):
                 io = i+w
                 jo = j+window-1-w
-                if io in pdb.validres and jo in pdb.validres:
-                    self.add_lines(view, io, jo, color, viewer, index)
+                if io in self.pdb.validres and jo in self.pdb.validres:
+                    self.add_lines(view, io, jo, color, viewer)
 
-    def set_colors(self, view, colorby, viewer, index):
-        pdb = self.pdbs[index]
-        if colorby == "profile":
-            colors = self.profiles[index].get_colors(pdb)
-        if colorby == "sequence":
-            colors = pdb.get_colorby_sequence()
+    def set_colors(self, view, viewer, index):
+        colors = self.profiles[index]
         color_selector = {}
-        for res in pdb.pdb.get_residues():
+        for res in self.pdb.pdb.get_residues():
             res = res.get_id()
             color = colors[res[1]-1]
             if color in color_selector.keys():
@@ -54,12 +65,12 @@ class Mol():
             selector = {'resi': color_selector[color]}
             style = {"cartoon": {"color": color, "opacity": 0.8}}
             view.setStyle(selector, style, viewer=viewer)
-        selector = {'resi': pdb.validres, 'invert': 'true'}
+        selector = {'resi': self.pdb.validres, 'invert': 'true'}
         style = {"cross": {"hidden": "true"}}
         view.setStyle(selector, style, viewer=viewer)
 
     def set_view(self, view):
-        with open(self.pdbs[0].path, 'r') as pdb_file:
+        with open(self.pdb.path, 'r') as pdb_file:
             pdb_str = pdb_file.read()
         view.addModel(pdb_str, 'pdb')
         view.setStyle({'chain': 'A'}, {"cartoon": {'color': 'grey'}})
@@ -67,7 +78,7 @@ class Mol():
         return view
 
     def make_plot(self, view=None):
-        rows, cols = get_rows_columns(len(self.pdbs))
+        rows, cols = get_rows_columns(len(self.ijs))
         if view is None:
             view = py3Dmol.view(viewergrid=(rows, cols),
                                 width=400*rows, height=400*cols)
@@ -76,11 +87,11 @@ class Mol():
             colorby = "profile"
         else:
             colorby = "sequence"
-        for i in range(len(self.pdbs)):
+        for i in range(len(self.ijs)):
             row = i // cols
             col = i % cols
             viewer = (row, col)
-            self.set_colors(view, colorby, viewer, i)
-        if self.ijs is not None:
-            self.plot_data(view, viewer, i)
+            self.set_colors(view, viewer, i)
+            if self.ijs is not None:
+                self.plot_data(view, viewer, i)
         return view

@@ -1,7 +1,7 @@
 import pandas as pd
-import plotmapper as MaP
 from data.data import Data
 from data.ct import CT
+from data.profile import Profile
 import matplotlib as mp
 import matplotlib.pyplot as plt
 import numpy as np
@@ -64,7 +64,7 @@ class IJ(Data):
         cmap = cmap(np.arange(cmap.N))
         cmap[:, -1] = np.full((len(cmap)), 0.6)  # set default alpha to 0.6
         if self.metric == 'Class':
-            cmap[0, -1] = 0.2  # alpha of non primary and secondary pairs to 0.2
+            cmap[0, -1] = 0.2  # alpha of non 1ary and 2ary pairs to 0.2
         if self.metric == 'Distance':
             # set color of max distance and no data distances to gray
             cmap[-1, :] = np.array([80/255., 80/255., 80/255., 0.2])
@@ -79,6 +79,8 @@ class IJ(Data):
     def metric(self, value):
         if value in self.data.keys():
             self._metric = value
+        elif value == "Distance":
+            print("Please set 3D distances using IJ.set_3d_distances(PDB)")
         elif value is None:
             self._metric = self.default_metric
         else:
@@ -138,7 +140,7 @@ class IJ(Data):
 
     def mask_on_profile(self, profile, profAbove=None, profBelow=None):
         alignment_map = self.get_alignment_map(profile)
-        norm_prof = self.profile["Norm_profile"]
+        norm_prof = profile.data["Norm_profile"]
         mask = []
         for _, i, j in self.data[["i", "j"]].itertuples():
             index_i = alignment_map[i-1]
@@ -155,8 +157,8 @@ class IJ(Data):
 
     def set_mask_offset(self, fit_to):
         alignment_map = self.get_alignment_map(fit_to)
-        i = [alignment_map[i-1] for i in self.data["i"].values]
-        j = [alignment_map[i-1] for i in self.data["j"].values]
+        i = [alignment_map[i-1]+1 for i in self.data["i"].values]
+        j = [alignment_map[i-1]+1 for i in self.data["j"].values]
         self.data['mask'] = (i != 0) & (j != 0)
         self.data['i_offset'] = i
         self.data['j_offset'] = j
@@ -177,7 +179,7 @@ class IJ(Data):
             self.data["mask"] = self.data["mask"] & mask
         if profAbove is not None or profBelow is not None:
             message = "Profile filters require a profile object."
-            assert isinstance(profile, "profile"), message
+            assert isinstance(profile, Profile), message
             self.mask_on_profile(profile, profAbove, profBelow)
         if cdAbove is not None or cdBelow is not None or ss_only or ds_only:
             message = "CT filtering requires a ct object."
@@ -191,7 +193,7 @@ class IJ(Data):
             try:
                 self.update_mask(self.data[key] > kwargs[key])
             except KeyError:
-                print(f"{key} is not a valid column of {self.datatype} dataFrame")
+                print(f"{key} is invalid column of {self.datatype} dataFrame")
 
     def get_ij_colors(self, min_max=None, cmap=None):
         metric = self.metric
@@ -242,12 +244,11 @@ class IJ(Data):
         else:
             print(self.header, csv)
 
-    # def set_3d_distances(self, ij_data):
-    #     self.filter_ij_data(ij_data, "pdb")
-    #     data = self.ij_data[ij_data].copy()
-    #     if "Distance" not in data:
-    #         distances = []
-    #         for _, i, j in data[["i_offset", "j_offset"]].itertuples():
-    #             distances.append(self.get_3d_distance(i, j))
-    #         data["Distance"] = distances
-    #     self.ij_data[ij_data] = data
+    def set_3d_distances(self, pdb):
+        alignment_map = self.get_alignment_map(pdb)
+        distances = []
+        for _, i, j in self.data[["i", "j"]].itertuples():
+            io = alignment_map[i-1]+1
+            jo = alignment_map[j-1]+1
+            distances.append(pdb.get_distance(io, jo))
+        self.data["Distance"] = distances

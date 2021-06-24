@@ -28,7 +28,7 @@ class PDB(Data):
         xyz = [float(c) for c in self.pdb[0]["A"][int(nt)][atom].get_coord()]
         return xyz
 
-    def get_3d_distance(self, i, j):
+    def get_distance(self, i, j):
         valid = [nt.get_id()[1] for nt in self.pdb[0]["A"].get_residues()]
         if i in valid and j in valid:
             xi, yi, zi = self.get_xyz_coord(i)

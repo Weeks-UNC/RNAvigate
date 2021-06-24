@@ -225,11 +225,11 @@ class Sample():
         else:
             print(f"Key must be one of:\n{self.data.keys()}")
 
-    def filter_ij(self, data, fit_to, **kwargs):
-        data.filter(fit_to, profile=self.data["profile"],
-                    ct=self.data["ct"], **kwargs)
+    def filter_ij(self, ij, fit_to, **kwargs):
+        self.data[ij].filter(self.data[fit_to], profile=self.data["profile"],
+                             ct=self.data["ct"], **kwargs)
 
-    def filter_dance_rings(self, filterneg=True, cdfilter=15, sigfilter=20,
+    def filter_dance_rings(self, filterneg=True, cdfilter=15, sigfilter=23,
                            ssfilter=True):
         ctlist = [dance.ct for dance in self.dance]
         ringlist = [dance.ij_data["rings"].copy() for dance in self.dance]
@@ -281,13 +281,13 @@ class Sample():
             ap_kwargs["profiles"].append(sample.get_data("profile"))
             ap_kwargs["labels"].append(self.sample)
 
-        self.filter_ij(self.get_data(bottom),
-                       self.get_data(top), **filter_kwargs)
         ap_kwargs = {"top": [], "bottom": [], "profiles": [], "labels": []}
         if dance:
             for sample in self.dance:
+                sample.filter_ij(bottom, top, **filter_kwargs)
                 add_sample(sample)
         else:
+            self.filter_ij(bottom, top, **filter_kwargs)
             add_sample(self)
         AP(**ap_kwargs).make_plot()
 
@@ -301,9 +301,10 @@ class Sample():
         ss_kwargs = {"structures": [], "ijs": [], "profiles": [], "labels": []}
         if dance:
             for sample in self.dance:
+                sample.filter_ij(ij, "ss", **filter_kwargs)
                 add_sample(sample)
         else:
-            self.filter_ij(self.data[ij], self.data["ss"], **filter_kwargs)
+            self.filter_ij(ij, "ss", **filter_kwargs)
             add_sample(self)
         SS(**ss_kwargs).make_plot()
 
@@ -317,20 +318,39 @@ class Sample():
         Heatmap(heatmap, contour).make_plot()
 
     def make_mol(self, ij, dance=False, **filter_kwargs):
-        def add_sample(sample):
-            mol_kwargs["pdbs"].append(self.data["pdb"])
-            mol_kwargs["ijs"].append(sample.data[ij])
-            mol_kwargs["profiles"].append(sample.data["profile"])
-            mol_kwargs["labels"].append(sample.sample)
-
-        mol_kwargs = {"pdbs": [], "ijs": [], "profiles": [], "labels": []}
+        plot = Mol(self.data["pdb"])
         if dance:
             for sample in self.dance:
-                add_sample(sample)
+                sample.filter_ij(ij, "pdb", **filter_kwargs)
+                plot.add_sample(sample.data[ij], sample.data["profile"],
+                                sample.sample)
         else:
-            self.filter_ij(self.data[ij], self.data["pdb"], **filter_kwargs)
-            add_sample(self)
-        return Mol(**mol_kwargs).make_plot()
+            try:
+                profile = self.data["profile"]
+            except KeyError:
+                profile = None
+            self.filter_ij(ij, "pdb", **filter_kwargs)
+            plot.add_sample(self.data[ij], profile, self.sample)
+        return plot.make_plot()
+
+    def make_mol_multifilter(self, filters):
+        plot = Mol(self.data["pdb"])
+        try:
+            profile = self.data["profile"]
+        except KeyError:
+            profile = None
+        for filter in filters:
+            ij = filter.pop("ij")
+            try:
+                metric = filter.pop("metric")
+                if metric == "Distance":
+                    self.data[ij].set_3d_distances(self.data["pdb"])
+                self.data[ij].metric = metric
+            except KeyError:
+                self.data[ij].metric = self.data[ij].default_metric
+            self.filter_ij(ij, "pdb", **filter)
+            plot.add_sample(self.data[ij], profile, self.sample)
+        return plot.make_plot()
 
 ###############################################################################
 # Plotting functions that accept a list of samples
@@ -359,9 +379,10 @@ def array_skyline(samples):
     Skyline(profiles, labels).make_plot()
 
 
-def array_ap(samples, **kwargs):
+def array_ap(samples, ij, **kwargs):
     top, bottom, profiles, labels = [], [], [], []
     for sample in samples:
+        sample.filter_ij(ij, sample.data["ct"], **kwargs)
         top.append(sample.data["ct"])
         bottom.append(sample.data[ij])
         profiles.append(sample.data["profile"])
@@ -369,21 +390,20 @@ def array_ap(samples, **kwargs):
     AP(top, bottom, profiles, labels).make_plot()
 
 
-def array_ss(samples, ij):
+def array_ss(samples, ij, **kwargs):
     structures, ijs, profiles, labels = [], [], [], []
     for sample in samples:
+        sample.filter_ij(ij, "ss", **kwargs)
         structures.append(sample.data["ss"])
         ijs.append(sample.data[ij])
         profiles.append(sample.data["profiles"])
         labels.append(sample.sample)
-    SS(structures, labels, ijs, profiles)
+    SS(structures, labels, ijs, profiles).make_plot()
 
 
-def array_mol(samples, ij):
-    pdbs, ijs, profiles, labels = [], [], [], []
+def array_mol(samples, ij, **kwargs):
+    plot = Mol(samples[0].data["pdb"])
     for sample in samples:
-        pdbs.append(sample.data["pdb"])
-        ijs.append(sample.data[ij])
-        profiles.append(sample.data["profile"])
-        labels.append(sample.sample)
-    Mol(pdbs, profiles, ijs, labels).make_plot()
+        sample.filter_ij(ij, "pdb", **kwargs)
+        plot.add_sample(sample.data[ij], sample.data["profile"], sample.sample)
+    return plot.make_plot()
