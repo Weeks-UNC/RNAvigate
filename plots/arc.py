@@ -5,17 +5,22 @@ import matplotlib.pyplot as plt
 
 
 class AP():
-    def __init__(self, top=[[]], bottom=[[]], profiles=[], labels=[]):
-        self.top = top
-        self.bottom = bottom
-        self.profiles = profiles
-        self.labels = labels
+    def __init__(self, structures=[], ijs=[], profiles=[], labels=[]):
+        self.structures = []
+        self.ijs = []
+        self.profiles = []
+        self.labels = []
+        self.ij_windows = []
+        for sample in zip(structures, ijs, profiles, labels):
+            self.add_sample(sample)
 
-    def add_data(self, top, bottom, profile, label):
-        self.top.append(top)
-        self.bottom.append(bottom)
+    def add_sample(self, structure, ij, profile, label):
+        self.structures.append(structure)
         self.profiles.append(profile)
         self.labels.append(label)
+        self.ijs.append(ij.get_ij_colors())
+        self.ij_windows.append(ij.window)
+        view_colormap(ij)
 
     def add_arc(self, ax, i, j, window, color, panel):
         if panel == "top":
@@ -98,14 +103,14 @@ class AP():
         for i, j, color in zip(*ij_colors):
             self.add_arc(ax, i, j, window, color, panel)
 
-    def plot_data(self, ax, i=0):
+    def plot_data(self, ax, index=0):
         def cls_name(data):
             return type(data).__name__
-        
+
         def plot_func(ax, data, panel):
             f = {'CT': self.plot_ct, 'IJ': self.plot_ij}
             if isinstance(data, list):
-                if cls_name(data[0])==cls_name(data[1])=="CT":
+                if cls_name(data[0]) == cls_name(data[1]) == "CT":
                     self.plot_ctcompare(ax, data[0], data[1], panel)
                 else:
                     for datum in data:
@@ -115,15 +120,13 @@ class AP():
                 cls = cls_name(data)
                 f[cls](ax, data, panel)
 
-        plot_func(ax, self.top[i], "top")
-        plot_func(ax, self.bottom[i], "bottom")
-        self.plot_profile(ax, self.profiles[i])
+        plot_func(ax, self.structures[index], "top")
+        window = self.ij_windows[index]
+        for i, j, color in zip(*self.ijs[index]):
+            self.add_arc(ax, i, j, window, color, "bottom")
+        self.plot_profile(ax, self.profiles[index])
 
     def make_plot(self, ax=None):
-        equal_lengths = same_lengths(self.profiles, self.top,
-                                     self.bottom, self.labels)
-        assert equal_lengths, "profiles, top, bottom and labels are not equal"
-
         length = len(self.labels)
         rows, columns = get_rows_columns(length)
         if ax is None:

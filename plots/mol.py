@@ -1,25 +1,22 @@
-from plots import get_rows_columns
+from plots import get_rows_columns, view_colormap
 import py3Dmol
 import matplotlib.colors as mpc
 
 
 class Mol():
-    def __init__(self, pdb, profiles=None, ijs=None, labels=[]):
+    def __init__(self, pdb, profiles=[], ijs=[], labels=[]):
         self.pdb = pdb
-        self.labels = labels
-        if profiles is not None:
-            self.profiles = [p.get_colors(self.pdb) for p in profiles]
-        else:
-            self.profiles = []
-        if ijs is not None:
-            self.ijs = [ij.get_ij_colors() for ij in ijs]
-            self.ij_windows = [ij.window for ij in ijs]
-        else:
-            self.ijs, self.ij_windows = [], []
+        self.labels = []
+        self.profiles = []
+        self.ij_windows = []
+        self.ijs = []
+        for sample in zip(ijs, profiles, labels):
+            self.add_sample(sample)
 
     def add_sample(self, ij, profile=None, label=None):
         self.ijs.append(ij.get_ij_colors())
         self.ij_windows.append(ij.window)
+        view_colormap(ij)
         if label is not None:
             self.labels.append(label)
         else:

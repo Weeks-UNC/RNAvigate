@@ -3,6 +3,7 @@
 # general python packages
 import matplotlib as mp
 import matplotlib.pyplot as plt
+from py3Dmol import view
 import seaborn as sns
 import numpy as np
 import os.path
@@ -58,53 +59,6 @@ def get_nt_color(nt, colors="new"):
                         "C": "#ffa77c"}  # light red
                 }[colors][nt]
     return nt_color
-
-
-def view_colormap(ij_data=None, metric=None, ticks=None, values=None,
-                  title=None, cmap=None):
-    """Given an ij_data (ij data) will display a colorbar for the default
-    values (metric, cmap, min_max).
-
-    Args:
-        ij_data (str, optional): string matching an ij data type.
-            Options are "rings", "pairs" or "deletions".
-            Defaults to None.
-        metric (str, optional): string matching column name of ij data.
-            Default determined by get_default_metric.
-        ticks (list, optional): locations to add ticks. scale is 0-10.
-            Defaults to [0.5, 0.95], or [10/6, 30/6/, 50/6] for "Class" metric.
-        title (str, optional): string for title of colorbar.
-            Defaults to "{ij_data}: {metric}"
-        cmap (str, optional): string matching a valid matplotlib colormap.
-            Default determined by get_default_cmap.
-    """
-    if metric is None:
-        metric = get_default_metric(ij_data)
-    if ticks is None:
-        if metric == "Class":
-            ticks = [10/6, 30/6, 50/6]
-        else:
-            ticks = [0, 2, 4, 6, 8, 10]
-    if values is None:
-        if metric == "Class":
-            values = ['Complementary', 'Primary', 'Secondary']
-        else:
-            mn, mx = get_default_min_max(metric)
-            values = [f"{mn + ((mx-mn)/5)*i:.2}" for i in range(6)]
-    if title is None:
-        title = f"{ij_data.capitalize()}: {metric.lower()}"
-    if cmap is None:
-        cmap = get_default_cmap(metric)
-    else:
-        cmap = plt.get_cmap(cmap)
-    colors = cmap(np.arange(cmap.N))
-
-    _, ax = plt.subplots(1, figsize=(6, 2))
-    ax.imshow([colors], extent=[0, 10, 0, 1])
-    ax.set_title(title)
-    ax.set_xticks(ticks)
-    ax.set_xticklabels(values)
-    ax.set_yticks([])
 
 
 class Sample():
@@ -226,6 +180,13 @@ class Sample():
             print(f"Key must be one of:\n{self.data.keys()}")
 
     def filter_ij(self, ij, fit_to, **kwargs):
+        try:
+            metric = kwargs.pop("metric")
+            if metric == "Distance":
+                self.data[ij].set_3d_distances(self.data["pdb"])
+            self.data[ij].metric = metric
+        except KeyError:
+            self.data[ij].metric = self.data[ij].default_metric
         self.data[ij].filter(self.data[fit_to], profile=self.data["profile"],
                              ct=self.data["ct"], **kwargs)
 
@@ -255,6 +216,12 @@ class Sample():
             rings['mask'] = mask
             self.dance[index].ij_data["rings"] = rings
 
+    def make_qc(self, **kwargs):
+        profiles = [self.data["profile"]]
+        logs = [self.data["log"]]
+        labels = [self.sample]
+        QC(logs, profiles, labels).make_plot(**kwargs)
+
     def make_skyline(self, dance=False, **kwargs):
         profiles, labels = [], []
         if dance:
@@ -268,28 +235,46 @@ class Sample():
             labels.append(self.sample)
         Skyline(profiles, labels).make_plot(**kwargs)
 
-    def make_qc(self, **kwargs):
-        profiles = [self.data["profile"]]
-        logs = [self.data["log"]]
-        labels = [self.sample]
-        QC(logs, profiles, labels).make_plot(**kwargs)
+    def make_shapemapper(self, **kwargs):
+        SM(self.data["profile"], self.sample).make_plot(**kwargs)
 
-    def make_ap(self, top, bottom, dance=False, **filter_kwargs):
+    def make_heatmap(self, heatmap, contour, metric=None):
+        heatmap = self.get_data(heatmap)
+        contour = self.get_data(contour)
+        heatmap.metric = metric
+        Heatmap(heatmap, contour).make_plot()
+
+    def make_ap(self, ij, dance=False, **filter_kwargs):
+        plot = AP()
+
         def add_sample(sample):
-            ap_kwargs["top"].append(sample.get_data(top))
-            ap_kwargs["bottom"].append(sample.get_data(bottom))
-            ap_kwargs["profiles"].append(sample.get_data("profile"))
-            ap_kwargs["labels"].append(self.sample)
-
-        ap_kwargs = {"top": [], "bottom": [], "profiles": [], "labels": []}
+            structure = sample.data["ct"]
+            if "compct" in sample.data.keys():
+                structure = [structure, sample.data["compct"]]
+            sample.filter_ij(ij, "ct", **filter_kwargs)
+            plot.add_sample(structure, sample.data[ij],
+                            sample.data["profile"], sample.sample)
         if dance:
             for sample in self.dance:
-                sample.filter_ij(bottom, top, **filter_kwargs)
                 add_sample(sample)
         else:
-            self.filter_ij(bottom, top, **filter_kwargs)
             add_sample(self)
-        AP(**ap_kwargs).make_plot()
+        return plot.make_plot()
+
+    def make_ap_multifilter(self, filters):
+        plot = AP()
+        try:
+            profile = self.data["profile"]
+        except KeyError:
+            profile = None
+        structure = self.data["ct"]
+        if "compct" in self.data.keys():
+            structure = [structure, self.data["compct"]]
+        for filter in filters:
+            ij = filter.pop("ij")
+            self.filter_ij(ij, "pdb", **filter)
+            plot.add_sample(structure, self.data[ij], profile, self.sample)
+        return plot.make_plot()
 
     def make_ss(self, ij, dance=False, **filter_kwargs):
         def add_sample(sample):
@@ -307,15 +292,6 @@ class Sample():
             self.filter_ij(ij, "ss", **filter_kwargs)
             add_sample(self)
         SS(**ss_kwargs).make_plot()
-
-    def make_shapemapper(self, **kwargs):
-        SM(self.data["profile"], self.sample).make_plot(**kwargs)
-
-    def make_heatmap(self, heatmap, contour, metric=None):
-        heatmap = self.get_data(heatmap)
-        contour = self.get_data(contour)
-        heatmap.metric = metric
-        Heatmap(heatmap, contour).make_plot()
 
     def make_mol(self, ij, dance=False, **filter_kwargs):
         plot = Mol(self.data["pdb"])
@@ -341,13 +317,6 @@ class Sample():
             profile = None
         for filter in filters:
             ij = filter.pop("ij")
-            try:
-                metric = filter.pop("metric")
-                if metric == "Distance":
-                    self.data[ij].set_3d_distances(self.data["pdb"])
-                self.data[ij].metric = metric
-            except KeyError:
-                self.data[ij].metric = self.data[ij].default_metric
             self.filter_ij(ij, "pdb", **filter)
             plot.add_sample(self.data[ij], profile, self.sample)
         return plot.make_plot()
@@ -379,15 +348,16 @@ def array_skyline(samples):
     Skyline(profiles, labels).make_plot()
 
 
-def array_ap(samples, ij, **kwargs):
-    top, bottom, profiles, labels = [], [], [], []
+def array_ap(samples, **kwargs):
+    plot = AP()
     for sample in samples:
-        sample.filter_ij(ij, sample.data["ct"], **kwargs)
-        top.append(sample.data["ct"])
-        bottom.append(sample.data[ij])
-        profiles.append(sample.data["profile"])
-        labels.append(sample.sample)
-    AP(top, bottom, profiles, labels).make_plot()
+        structure = sample.data["ct"]
+        if "compct" in sample.data.keys():
+            structure = [structure, sample.data["compct"]]
+        sample.filter_ij(ij, "ct", **kwargs)
+        plot.add_sample(structure, sample.data[ij],
+                        sample.data["profile"], sample.sample)
+    plot.make_plot()
 
 
 def array_ss(samples, ij, **kwargs):

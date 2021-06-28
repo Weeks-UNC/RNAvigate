@@ -285,7 +285,7 @@ class Sample():
         self.sequence[ct_name] = ''.join(self.ct.seq)
         self.length[ct_name] = len(self.sequence["ct"])
 
-    def read_pdb(self, pdb):
+    def read_pdb(self, pdb, chain="A"):
         parser = Bio.PDB.PDBParser()
         self.pdb = parser.get_structure('RNA', pdb)
         self.sequence["pdb"] = ''
@@ -295,7 +295,7 @@ class Sample():
                 if line[0] == "SEQRES":
                     self.sequence["pdb"] += ''.join(line[4:])
         self.pdb_validres = []
-        for res in self.pdb[0]["A"].get_residues():
+        for res in self.pdb[0][chain].get_residues():
             res_id = res.get_id()
             if res_id[0] == " ":
                 self.pdb_validres.append(res_id[1])

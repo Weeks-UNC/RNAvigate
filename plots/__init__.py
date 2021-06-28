@@ -8,4 +8,4 @@ from plots.heatmap import Heatmap
 from plots.mol import Mol
 
 __all__ = ["Skyline", "QC", "AP", "SM", "Heatmap", "SS", "Mol",
-           "get_rows_columns", "same_lengths", "add_sequence"]
+           "get_rows_columns", "same_lengths", "add_sequence", "view_colormap"]

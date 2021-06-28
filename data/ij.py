@@ -121,6 +121,13 @@ class IJ(Data):
 
     def mask_on_ct(self, ct, cdAbove=None, cdBelow=None,
                    ss_only=False, ds_only=False, paired_only=False):
+        if isinstance(ct, list):
+            for each in ct:
+                self.mask_on_ct(each, cdAbove, cdBelow, ss_only, ds_only,
+                                paired_only)
+                return
+        message = "CT filtering requires a ct object."
+        assert isinstance(ct, CT), message
         mask = []
         i_j_keep = ["i_offset", "j_offset", "mask"]
         for _, i, j, keep in self.data[i_j_keep].itertuples():
@@ -182,8 +189,6 @@ class IJ(Data):
             assert isinstance(profile, Profile), message
             self.mask_on_profile(profile, profAbove, profBelow)
         if cdAbove is not None or cdBelow is not None or ss_only or ds_only:
-            message = "CT filtering requires a ct object."
-            assert isinstance(ct, CT), message
             self.mask_on_ct(ct, cdAbove, cdBelow, ss_only, ds_only)
         if not all_pairs and self.datatype == 'pairs':
             self.update_mask(self.data["Class"] != 0)
@@ -228,7 +233,6 @@ class IJ(Data):
         return i, j, colors
 
     def print_new_file(self, outfile=None, **kwargs):
-        self.filter_ij_data(**kwargs)
         columns = [c if c != "Sign" else "+/-" for c in self.data.columns]
         exclude_columns = ["i_offset", "j_offset",
                            "mask", "Distance", "Percentile"]
