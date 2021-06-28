@@ -75,6 +75,7 @@ class Sample():
                  deletions=None,
                  pairs=None,
                  pdb=None,
+                 chain=None,
                  probs=None,
                  dance_prefix=None):
         self.paths = {"fasta": fasta,
@@ -98,7 +99,7 @@ class Sample():
         if ss is not None:
             self.data["ss"] = CT("ss", ss)
         if pdb is not None:
-            self.data["pdb"] = PDB(pdb)
+            self.data["pdb"] = PDB(pdb, chain)
 
         # ShapeMapper downstream analysis requires sequence given from profile
         if profile is not None:
