@@ -322,7 +322,7 @@ def array_ap(samples, fit="ct", ct="ct", comp="compct", ij=None, ij2=None,
 
 
 def array_qc(samples=[]):
-    logs, profiles, labels = []
+    logs, profiles, labels = [], [], []
     for sample in samples:
         logs.append(sample.data["logs"])
         profiles.append(sample.data["profile"])
@@ -331,7 +331,7 @@ def array_qc(samples=[]):
 
 
 def array_skyline(samples):
-    profiles, labels = []
+    profiles, labels = [], []
     for sample in samples:
         profiles.append(sample.data["profile"])
         labels.append(sample.sample)

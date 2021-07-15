@@ -24,7 +24,7 @@ except ModuleNotFoundError:
     print("py3Dmol package is missing. Plotting 3D structures will not work.")
 
 # scripts in JNBTools
-import RNAtools3 as rna
+from data.ct import CTrna
 
 
 def create_code_button():
@@ -281,7 +281,7 @@ class Sample():
 ###############################################################################
 
     def read_ct(self, ct_name, ct):
-        setattr(self, ct_name, rna.CT(ct))
+        setattr(self, ct_name, CT(ct))
         self.sequence[ct_name] = ''.join(self.ct.seq)
         self.length[ct_name] = len(self.sequence["ct"])
 
@@ -1520,7 +1520,7 @@ class Sample():
             outputPath (string): path to output cte file to be created
         """
         pairs = [tuple(pair) for pair in self.basepairs]
-        ct = rna.CT()
+        ct = CT()
         ct.pair2CT(pairs=pairs, seq=self.sequence["ss"])
         # set scaling factors based on data source.
         xscale = {'xrna': 1.525, 'varna': 0.469,
@@ -1742,7 +1742,7 @@ class Sample():
         """
         if fit_to_sequence == 'ss':
             basepairs = [tuple(pair) for pair in self.basepairs]
-            ct = rna.CT()
+            ct = CT()
             ct.pair2CT(pairs=basepairs, seq=self.sequence["ss"])
         elif fit_to_sequence == 'ct':
             ct = self.ct
