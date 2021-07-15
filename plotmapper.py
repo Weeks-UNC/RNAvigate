@@ -55,7 +55,7 @@ class Sample():
                  deletions=None,
                  pairs=None,
                  pdb=None,
-                 pdb_kwargs=None,
+                 pdb_kwargs={},
                  probs=None,
                  dance_prefix=None):
         self.paths = {"fasta": fasta,
