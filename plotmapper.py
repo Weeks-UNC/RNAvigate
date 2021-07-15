@@ -1,11 +1,7 @@
 #!/usr/bin/env python
 
 # general python packages
-import matplotlib as mp
-import matplotlib.pyplot as plt
-from py3Dmol import view
 import seaborn as sns
-import numpy as np
 import os.path
 
 
@@ -44,22 +40,6 @@ colors = [
 ]
 sns.set_palette(colors)
 
-# Hard coded defaults
-###############################################################################
-
-
-def get_nt_color(nt, colors="new"):
-    nt_color = {"old": {"A": "#f20000",  # red
-                        "U": "#f28f00",  # yellow
-                        "G": "#00509d",  # blue
-                        "C": "#00c200"},  # green
-                "new": {"A": "#366ef0",  # blue
-                        "U": "#9bb9ff",  # light blue
-                        "G": "#f04c4c",  # red
-                        "C": "#ffa77c"}  # light red
-                }[colors][nt]
-    return nt_color
-
 
 class Sample():
 
@@ -75,7 +55,7 @@ class Sample():
                  deletions=None,
                  pairs=None,
                  pdb=None,
-                 chain=None,
+                 pdb_kwargs=None,
                  probs=None,
                  dance_prefix=None):
         self.paths = {"fasta": fasta,
@@ -99,7 +79,7 @@ class Sample():
         if ss is not None:
             self.data["ss"] = CT("ss", ss)
         if pdb is not None:
-            self.data["pdb"] = PDB(pdb, chain)
+            self.data["pdb"] = PDB(pdb, **pdb_kwargs)
 
         # ShapeMapper downstream analysis requires sequence given from profile
         if profile is not None:
@@ -152,10 +132,10 @@ class Sample():
             sample.data["profile"] = Profile(reactivityfile, "dance", i)
             # read in other attributes
             if os.path.isfile(sample.paths["rings"]):
-                sample.data["rings"] = IJ(sample.paths["rings"], "rings",
+                sample.data["rings"] = IJ("rings", sample.paths["rings"],
                                           sample.data["profile"].sequence)
             if os.path.isfile(sample.paths["pairs"]):
-                sample.data["pairs"] = IJ(sample.paths["pairs"], "pairs",
+                sample.data["pairs"] = IJ("pairs", sample.paths["pairs"],
                                           sample.data["profile"].sequence)
             # ! possible that these both exist
             for ct_file in sample.paths["ct"]:
@@ -191,31 +171,20 @@ class Sample():
         self.data[ij].filter(self.data[fit_to], profile=self.data["profile"],
                              ct=self.data["ct"], **kwargs)
 
-    def filter_dance_rings(self, filterneg=True, cdfilter=15, sigfilter=23,
-                           ssfilter=True):
-        ctlist = [dance.ct for dance in self.dance]
-        ringlist = [dance.ij_data["rings"].copy() for dance in self.dance]
-        for index, rings in enumerate(ringlist):
-            rings[['i_offset', 'j_offset']] = rings[['i', 'j']]
-            mask = []
-            for _, row in rings.iterrows():
-                i, j, G, sign = row[['i', 'j', 'Statistic', '+/-']]
-                true_so_far = True
-                if ssfilter and true_so_far:
-                    true_so_far = (ctlist[index].ct[i-1]
-                                   == 0 and ctlist[index].ct[j-1] == 0)
-                if filterneg and true_so_far:
-                    true_so_far = sign == 1
-                if sigfilter is not None and true_so_far:
-                    true_so_far = G > sigfilter
-                if cdfilter is not None and true_so_far:
-                    for ct in ctlist:
-                        if not true_so_far:
-                            break
-                        true_so_far = ct.contactDistance(i, j) >= cdfilter
-                mask.append(true_so_far)
-            rings['mask'] = mask
-            self.dance[index].ij_data["rings"] = rings
+    def dance_filter(self, filterneg=True, cdfilter=15, sigfilter=23,
+                     ssfilter=True):
+        kwargs = {}
+        if filterneg:
+            kwargs["Sign"] = 0
+        if ssfilter:
+            kwargs["ss_only"] = True
+        kwargs["Statistic"] = sigfilter
+        ctlist = [dance.data["ct"] for dance in self.dance]
+        for dance in self.dance:
+            dance_ct = dance.data["ct"]
+            dance.data["rings"].filter(dance_ct, ct=dance_ct, **kwargs)
+            dance.data["rings"].mask_on_ct(ctlist, cdAbove=cdfilter)
+            dance.data["pairs"].filter(dance_ct, ct=dance_ct, paired_only=True)
 
     def make_qc(self, **kwargs):
         profiles = [self.data["profile"]]
@@ -252,9 +221,13 @@ class Sample():
             structure = sample.data["ct"]
             if "compct" in sample.data.keys():
                 structure = [structure, sample.data["compct"]]
+            try:
+                profile = sample.data["profile"]
+            except KeyError:
+                profile = None
             sample.filter_ij(ij, "ct", **filter_kwargs)
             plot.add_sample(structure, sample.data[ij],
-                            sample.data["profile"], sample.sample)
+                            profile, sample.sample)
         if dance:
             for sample in self.dance:
                 add_sample(sample)
@@ -277,22 +250,26 @@ class Sample():
             plot.add_sample(structure, self.data[ij], profile, self.sample)
         return plot.make_plot()
 
-    def make_ss(self, ij, dance=False, **filter_kwargs):
-        def add_sample(sample):
-            ss_kwargs["structures"].append(self.data["ss"])
-            ss_kwargs["ijs"].append(sample.data[ij])
-            ss_kwargs["profiles"].append(sample.data["profile"])
-            ss_kwargs["labels"].append(sample.sample)
-
-        ss_kwargs = {"structures": [], "ijs": [], "profiles": [], "labels": []}
+    def make_ss(self, ij, dance=False, label=None, **filter_kwargs):
+        plot = SS()
+        if label is None:
+            label = self.sample
         if dance:
             for sample in self.dance:
                 sample.filter_ij(ij, "ss", **filter_kwargs)
-                add_sample(sample)
+                plot.add_sample(sample, "ss", ij, "profile", label)
         else:
             self.filter_ij(ij, "ss", **filter_kwargs)
-            add_sample(self)
-        SS(**ss_kwargs).make_plot()
+            plot.add_sample(self, "ss", ij, "profile", label)
+        plot.make_plot()
+
+    def make_ss_multifilter(self, filters):
+        plot = SS()
+        for filter in filters:
+            ij = filter.pop("ij")
+            self.filter_ij(ij, "ss", **filter)
+            plot.add_sample(self, "ss", ij, "profile", self.sample)
+        return plot.make_plot()
 
     def make_mol(self, ij, dance=False, **filter_kwargs):
         plot = Mol(self.data["pdb"])
@@ -330,6 +307,18 @@ class Sample():
 #   array_ss
 #   array_3d
 ###############################################################################
+
+
+def array_plot(plot, samples, filter, fit, **kwargs):
+    for sample in samples:
+        self.filter_ij(fit, **filter)
+        plot.add_sample(sample, **kwargs)
+
+
+def array_ap(samples, fit="ct", ct="ct", comp="compct", ij=None, ij2=None,
+             profile="profile", label=None, **kwargs):
+    array_plot(AP(), samples, kwargs, fit, ct=ct, comp=comp, ij=ij, ij2=ij2,
+               profile=profile, label=label)
 
 
 def array_qc(samples=[]):

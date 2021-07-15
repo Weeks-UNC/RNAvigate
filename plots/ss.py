@@ -1,13 +1,30 @@
 import matplotlib.pyplot as plt
-from plots.plots import get_rows_columns
+from plots.plots import get_rows_columns, view_colormap
 
 
 class SS():
-    def __init__(self, structures, labels, ijs=None, profiles=None):
-        self.structures = structures
-        self.ijs = ijs
-        self.profiles = profiles
-        self.labels = labels
+    def __init__(self, structures=[], labels=[], ijs=[], profiles=[]):
+        self.structures = []
+        self.ij_colors = []
+        self.ij_windows = []
+        self.profiles = []
+        self.labels = []
+        for data in zip(structures, ijs, profiles, labels):
+            self.add_data(data)
+
+    def add_sample(self, sample, structure, ij, profile="profile", label=None):
+        if label is None:
+            label = sample.sample
+        self.add_data(sample.data[structure], sample.data[ij],
+                      sample.data[profile], label)
+
+    def add_data(self, structure, ij, profile, label):
+        self.structures.append(structure)
+        self.ij_colors.append(ij.get_ij_colors())
+        self.ij_windows.append(ij.window)
+        self.profiles.append(profile)
+        self.labels.append(label)
+        view_colormap(ij)
 
     def get_figsize(self, rows, columns):
         ss = self.structures[0]
@@ -69,16 +86,13 @@ class SS():
         ax.plot(x, y, color=color, linewidth=linewidth)
 
     def plot_ij(self, ax, index):
-        ij = self.ijs[index]
-        ij_colors = ij.get_ij_colors()
-        window = ij.window
+        ij_colors = self.ij_colors[index]
+        window = self.ij_windows[index]
+        lw = [1.5, 6, 6, 6, 6][window-1]
         for i, j, color in zip(*ij_colors):
-            if window == 1:
-                self.add_lines(ax, i, j, color, index)
-            else:
-                for w in range(window):
-                    self.add_lines(ax, i+w, j+window-1 -
-                                   w, color, index, linewidth=6)
+            for w in range(window):
+                self.add_lines(ax, i+w, j+window-1-w,
+                               color, index, linewidth=lw)
 
     def plot_positions(self, ax, index, spacing=20):
         ss = self.structures[index]
@@ -109,5 +123,5 @@ class SS():
             self.plot_sequence(ax, i, colors=colors, markers=markers)
             if positions is True:
                 self.plot_positions(ax, i)
-            if self.ijs is not None:
+            if len(self.ij_colors) > 0:
                 self.plot_ij(ax, i)

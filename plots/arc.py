@@ -1,4 +1,4 @@
-from plots import *
+from plots.plots import view_colormap, get_rows_columns, add_sequence
 import numpy as np
 import matplotlib as mp
 import matplotlib.pyplot as plt

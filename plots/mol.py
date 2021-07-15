@@ -1,4 +1,4 @@
-from plots import get_rows_columns, view_colormap
+from plots.plots import get_rows_columns, view_colormap
 import py3Dmol
 import matplotlib.colors as mpc
 
@@ -70,7 +70,7 @@ class Mol():
         with open(self.pdb.path, 'r') as pdb_file:
             pdb_str = pdb_file.read()
         view.addModel(pdb_str, 'pdb')
-        view.setStyle({'chain': 'A'}, {"cartoon": {'color': 'grey'}})
+        view.setStyle({"cartoon": {'color': 'grey'}})
         view.zoomTo()
         return view
 
@@ -78,7 +78,7 @@ class Mol():
         rows, cols = get_rows_columns(len(self.ijs))
         if view is None:
             view = py3Dmol.view(viewergrid=(rows, cols),
-                                width=400*rows, height=400*cols)
+                                width=400*cols, height=400*rows)
             view = self.set_view(view)
         if self.profiles is not None:
             colorby = "profile"

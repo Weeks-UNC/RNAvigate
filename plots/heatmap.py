@@ -10,15 +10,13 @@ class Heatmap():
         self.contour = contour
 
     def plot_contour_distances(self, ax, levels):
-        alignment_map = self.contour.get_alignment_map(self.heatmap, full=True)
-        length = len(alignment_map)
+        am, length = self.contour.get_alignment_map(self.heatmap, full=True)
         fill = 1000
         distances = np.full([length, length], fill)
         contour_distance_matrix = self.contour.get_distance_matrix()
-        for i1, i2 in enumerate(alignment_map):
-            for j1, j2 in enumerate(alignment_map):
-                if i2 != -1 and j2 != -1:
-                    distances[i1, j1] = contour_distance_matrix[i2, j2]
+        for i1, i2 in enumerate(am):
+            for j1, j2 in enumerate(am):
+                distances[i2, j2] = contour_distance_matrix[i1, j1]
         if levels is None:
             datatype = self.contour.datatype
             if datatype == "ct":
@@ -39,14 +37,13 @@ class Heatmap():
             data = data[columns+["Sign"]]
             data[metric] = data[metric]*data["Sign"]
         data = data[columns]
-        alignment_map = self.heatmap.get_alignment_map(self.contour, full=True)
-        length = len(alignment_map)
+        am, length = self.heatmap.get_alignment_map(self.contour, full=True)
         fill = self.heatmap.fill
         data_im = np.full([length, length], fill)
         window = self.heatmap.window
         for _, i, j, value in data.itertuples():
-            i = alignment_map[i-1]
-            j = alignment_map[j-1]
+            i = am[i-1]
+            j = am[j-1]
             data_im[i:i+window, j:j+window] = value
             data_im[j:j+window, i:i+window] = value
         min_max = self.heatmap.min_max

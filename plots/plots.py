@@ -4,25 +4,20 @@ import math
 import numpy as np
 
 
-def view_colormap(ij=None, metric=None, ticks=None, values=None,
+def view_colormap(ax=None, ij=None, metric=None, ticks=None, values=None,
                   title=None, cmap=None):
-    """Given an ij_data (ij data) will display a colorbar for the default
-    values (metric, cmap, min_max).
-
-    Args:
-        ij_data (str, optional): string matching an ij data type.
-            Options are "rings", "pairs" or "deletions".
-            Defaults to None.
-        metric (str, optional): string matching column name of ij data.
-            Default determined by get_default_metric.
-        ticks (list, optional): locations to add ticks. scale is 0-10.
-            Defaults to [0.5, 0.95], or [10/6, 30/6/, 50/6] for "Class" metric.
-        title (str, optional): string for title of colorbar.
-            Defaults to "{ij_data}: {metric}"
-        cmap (str, optional): string matching a valid matplotlib colormap.
-            Default determined by get_default_cmap.
-    """
-    metric = ij.metric
+    if ij == "ct_compare":
+        metric = "Pairing"
+        ticks = [10/6, 30/6, 50/6]
+        values = ["Reference\nonly", "Shared\npairs", "Comparison\nonly"]
+        title = "Base-pairing comparison"
+        cmap = mp.colors.ListedColormap([(0.6, 0.6, 0.6, 0.7),
+                                         (0.15, 0.8, 0.6, 0.7),
+                                         (0.6, 0.0, 1.0, 0.7)])
+    elif ij is None:
+        return
+    elif metric is None:
+        metric = ij.metric
     if ticks is None:
         if metric == "Class":
             ticks = [10/6, 30/6, 50/6]
@@ -42,7 +37,8 @@ def view_colormap(ij=None, metric=None, ticks=None, values=None,
         cmap = plt.get_cmap(cmap)
     colors = cmap(np.arange(cmap.N))
 
-    _, ax = plt.subplots(1, figsize=(6, 2))
+    if ax is None:
+        _, ax = plt.subplots(1, figsize=(6, 2))
     ax.imshow([colors], extent=[0, 10, 0, 1])
     ax.set_title(title)
     ax.set_xticks(ticks)
@@ -56,19 +52,13 @@ def get_rows_columns(number_of_samples, rows=None, cols=None):
     elif isinstance(cols, int) and rows is None:
         rows = math.ceil(number_of_samples / cols)
     elif number_of_samples < 10:
-        rows, cols = [(0, 0), (1, 1), (1, 2), (1, 3), (2, 2),  # 0-4 samples
-                      (2, 3), (2, 3), (3, 3), (3, 3), (3, 3)  # 5-9 samples
+        rows, cols = [(0, 0), (1, 1), (1, 2), (1, 3), (2, 2),
+                      (2, 3), (2, 3), (3, 3), (3, 3), (3, 3)
                       ][number_of_samples]
     else:
         cols = 4
         rows = math.ceil(number_of_samples / cols)
     return rows, cols
-
-
-def same_lengths(*lists):
-    it = iter(lists)
-    the_len = len(next(it))
-    return all(len(l) == the_len for l in it)
 
 
 def add_sequence(ax, sequence, yvalue=0.005):

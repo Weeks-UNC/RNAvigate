@@ -5,6 +5,7 @@ from data.profile import Profile
 import matplotlib as mp
 import matplotlib.pyplot as plt
 import numpy as np
+from operator import ge, le, gt, lt
 
 
 class IJ(Data):
@@ -30,7 +31,7 @@ class IJ(Data):
     def min_max(self):
         min_max = {'Percentile': [0.98, 1.0],
                    "Statistic": [-100, 100],
-                   'Zij': [-50, 50],
+                   'Zij': [-20, 20],
                    "Class": [0, 2],
                    "Metric": [0, 0.001],
                    'Distance': [10, 80],
@@ -58,7 +59,7 @@ class IJ(Data):
                 'Metric': 'YlGnBu',
                 'Distance': 'jet',
                 'Percentile': 'YlGnBu',
-                'Probability': 'rainbow_r'
+                'Probability': 'inferno_r'
                 }[self.metric]
         cmap = plt.get_cmap(cmap)
         cmap = cmap(np.arange(cmap.N))
@@ -133,7 +134,10 @@ class IJ(Data):
         for _, i, j, keep in self.data[i_j_keep].itertuples():
             true_so_far = keep
             if paired_only and true_so_far:
-                true_so_far = ct.ct[i-1] == j
+                for w in range(self.window):
+                    true_so_far = ct.ct[i+w-1] == j+self.window-w-1
+                    if not true_so_far:
+                        break
             if ss_only and true_so_far:
                 true_so_far = (ct.ct[i-1] == 0) and (ct.ct[j-1] == 0)
             if ds_only and true_so_far:
@@ -162,10 +166,17 @@ class IJ(Data):
             mask.append(keep_ij)
         self.update_mask(mask)
 
+    def mask_nts(self, nts):
+        mask = np.full(len(self.data), True)
+        for index, i, j in self.data[["i", "j"]].itertuples():
+            if i in nts or j in nts:
+                mask[index] = False
+        self.update_mask(mask)
+
     def set_mask_offset(self, fit_to):
-        alignment_map = self.get_alignment_map(fit_to)
-        i = [alignment_map[i-1]+1 for i in self.data["i"].values]
-        j = [alignment_map[i-1]+1 for i in self.data["j"].values]
+        am = self.get_alignment_map(fit_to)
+        i = np.array([am[i-1]+1 for i in self.data["i"].values])
+        j = np.array([am[j-1]+1 for j in self.data["j"].values])
         self.data['mask'] = (i != 0) & (j != 0)
         self.data['i_offset'] = i
         self.data['j_offset'] = j
@@ -176,6 +187,7 @@ class IJ(Data):
     def filter(self, fit_to, profile=None, ct=None, cdAbove=None,
                cdBelow=None, ss_only=False, ds_only=False,
                profAbove=None, profBelow=None, all_pairs=False,
+               paired_only=False, exclude_nts=None,
                **kwargs):
         self.set_mask_offset(fit_to)
         if fit_to.datatype == 'pdb':
@@ -184,12 +196,15 @@ class IJ(Data):
                 mask.append(i in fit_to.validres and j in fit_to.validres)
             mask = np.array(mask, dtype=bool)
             self.data["mask"] = self.data["mask"] & mask
+        if exclude_nts is not None:
+            self.mask_nts(exclude_nts)
         if profAbove is not None or profBelow is not None:
             message = "Profile filters require a profile object."
             assert isinstance(profile, Profile), message
             self.mask_on_profile(profile, profAbove, profBelow)
-        if cdAbove is not None or cdBelow is not None or ss_only or ds_only:
-            self.mask_on_ct(ct, cdAbove, cdBelow, ss_only, ds_only)
+        if cdAbove is not None or cdBelow is not None or ss_only or ds_only or paired_only:
+            self.mask_on_ct(ct, cdAbove, cdBelow,
+                            ss_only, ds_only, paired_only)
         if not all_pairs and self.datatype == 'pairs':
             self.update_mask(self.data["Class"] != 0)
         if self.datatype == 'probs':
@@ -223,24 +238,29 @@ class IJ(Data):
             data = pd.concat([data[data[metric] == 0],
                               data[data[metric] == 2],
                               data[data[metric] == 1]])
-        i = data["i_offset"].values
-        j = data["j_offset"].values
         if cmap is None:
             cmap = self.cmap
         else:
             cmap = plt.get_cmap(cmap)
-        colors = cmap(data[metric].values)
+        i, j, colors = [], [], []
+        for w in range(self.window):
+            i.extend(data["i_offset"].values + w)
+            j.extend(data["j_offset"].values + self.window - 1 - w)
+            colors.extend(cmap(data[metric].values))
         return i, j, colors
 
     def print_new_file(self, outfile=None, **kwargs):
-        columns = [c if c != "Sign" else "+/-" for c in self.data.columns]
+        data = self.data.copy()
+        data = data[data["mask"]]
+        data["i"] = data["i_offset"]
+        data["j"] = data["j_offset"]
+        if "Sign" in data.columns:
+            data.rename({"Sign": "+/-"}, inplace=True)
         exclude_columns = ["i_offset", "j_offset",
                            "mask", "Distance", "Percentile"]
-        for col in exclude_columns:
-            if col in columns:
-                columns.remove(col)
-        csv = self.data.to_csv(columns=columns, sep='\t', index=False,
-                               line_terminator='\n')
+        columns = [col for col in data.columns if col not in exclude_columns]
+        csv = data.to_csv(columns=columns, sep='\t', index=False,
+                          line_terminator='\n')
         if outfile is not None:
             with open(outfile, 'w') as out:
                 out.write(self.header)

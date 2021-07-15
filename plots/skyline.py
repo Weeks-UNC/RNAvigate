@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import matplotlib as mp
-from plots.plots import get_rows_columns, same_lengths, add_sequence
+from plots.plots import get_rows_columns, add_sequence
 from plots import *
 
 

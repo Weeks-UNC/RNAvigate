@@ -7,24 +7,20 @@ analysis.
 
 To-Do List
 ----------
+### Broken
+- windowed ijs that are (-1, -1) plots one line at (-1, 1)
+- colorby in ss not being pass correctly
 ### Objectified
 - ct functionality
   - implement as df?
   - get_ij_colors
-  - get_comp_colors returns ij_colors and handles for legend
   - color by ij codepth
+  - get_comp_colors
 - single api for plots
   - add_samples, make_plot
-- ij functions for returning patches
 - build plots as-you-go
   - instantiate with fig, ax
   - add patches from data when samples are added
-- pass plot to sample.add_to_plot for more reusability
-### Filters
-- negative correlations
-- exclude nts
-- multiple cts
-- basepaired ijs
 ### Plots
 - 3d/contact distance histograms.
 - Minimized log-log comparison of profiles.

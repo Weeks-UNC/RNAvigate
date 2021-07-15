@@ -960,6 +960,36 @@ class CT(Data):
             w.write(line.format(*cols))
         w.close()
 
+    def get_ij_colors(self, compct=None):
+        i_list, j_list, colors = [], [], []
+
+        def add_ij_color(i, j, color):
+            i_list.append(i)
+            j_list.append(j)
+            colors.append(color)
+
+        if compct is None:
+            ct_pairs = self.pairList()
+            for i, j in ct_pairs:
+                add_ij_color(i, j, (0.1, 0.1, 0.1, 0.7))
+            return (i_list, j_list, colors)
+        ct1 = set(self.pairList())
+        ct2 = set(compct.pairList())
+        shared = ct1.intersection(ct2)
+        ref = ct1.difference(ct2)
+        comp = ct2.difference(ct1)
+        sharedcolor = (150/255., 150/255., 150/255., 0.7)
+        refcolor = (38/255., 202/255., 145/255., 0.7)
+        compcolor = (153/255., 0.0, 1.0, 0.7)
+        for i, j in comp:
+            add_ij_color(i, j, compcolor)
+        for i, j in ref:
+            add_ij_color(i, j, refcolor)
+        for i, j in shared:
+            add_ij_color(i, j, sharedcolor)
+        print(*zip(i_list, j_list, colors))
+        return (i_list, j_list, colors)
+
 ###############################################################################
 # end of CT class
 ###############################################################################
