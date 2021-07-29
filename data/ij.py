@@ -129,9 +129,12 @@ class IJ(Data):
                 return
         message = "CT filtering requires a ct object."
         assert isinstance(ct, CT), message
+        am = self.get_alignment_map(ct)
         mask = []
-        i_j_keep = ["i_offset", "j_offset", "mask"]
+        i_j_keep = ["i", "j", "mask"]
         for _, i, j, keep in self.data[i_j_keep].itertuples():
+            i = am[i-1]+1
+            j = am[j-1]+1
             true_so_far = keep
             if paired_only and true_so_far:
                 for w in range(self.window):
@@ -243,6 +246,8 @@ class IJ(Data):
         else:
             cmap = plt.get_cmap(cmap)
         i, j, colors = [], [], []
+        if len(data[metric].values) == 0:
+            return i, j, colors
         for w in range(self.window):
             i.extend(data["i_offset"].values + w)
             j.extend(data["j_offset"].values + self.window - 1 - w)

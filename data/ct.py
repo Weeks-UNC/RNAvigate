@@ -987,7 +987,6 @@ class CT(Data):
             add_ij_color(i, j, refcolor)
         for i, j in shared:
             add_ij_color(i, j, sharedcolor)
-        print(*zip(i_list, j_list, colors))
         return (i_list, j_list, colors)
 
 ###############################################################################

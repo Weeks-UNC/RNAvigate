@@ -11,32 +11,20 @@ To-Do List
 - windowed ijs that are (-1, -1) plots one line at (-1, 1)
 - colorby in ss not being pass correctly
 ### Objectified
-- ct functionality
-  - implement as df?
-  - get_ij_colors
   - color by ij codepth
-  - get_comp_colors
-- single api for plots
-  - add_samples, make_plot
-- build plots as-you-go
-  - instantiate with fig, ax
-  - add patches from data when samples are added
+  - new_plots.qc
 ### Plots
 - 3d/contact distance histograms.
 - Minimized log-log comparison of profiles.
 - add colorbars and legends
-- pairplot regressions
 - Plotting annotations
   - vertical bars in ap
   - highlight nts for ss
   - clouds, colors, or labels in 3D figures.
-- implement single sample arrays with different filtering.
 - Reformatting heatmaps to be more familiar.
 - deltaSHAPE
 - RNP-MaP
-- Bin by MutsPerMol (work out probabilities of N draw K)
-### Misc.
-- Consider moving to kwarg dicts for more customizability
+- Bin by MutsPerMol
 ### Documentation
 - Keep documentation updated for testers.
 - easy and robust installation guidelines
@@ -55,14 +43,14 @@ A python interface and CLI interface for all of the following:
 
 | plot type | log | profiles | dance | rings | pairs | deletions | frags | array | probs |
 |-----------|-----|----------|-------|-------|-------|-----------|-------|-------|-------|
-| load data | Y   | Y        | Y     | Y     | Y     | Y         |       | ----- |       |
-| QC plots  | Y   | Y        | ---   | ---   | ---   | ---       | ---   | Y     |       |
-| Regression| --- | Y        |       | ---   | ---   | ---       | ---   |       |       |
-| skyline   | --- | Y        | Y     | ---   | ---   | ---       |       | Y     |       |
-| arc plots | --- | Y        | ---   | Y     | Y     | Y         |       | Y     |       |
-| secondary | --- | Y        | ---   | Y     | Y     | Y         |       | Y     |       |
-| tertiary  | --- | Y        | ---   | Y     | Y     | Y         |       |       |       |
-| heatmaps  | --- |          |       | Y     | Y     | Y         |       |       |       |
+| load data | Y   | Y        | Y     | Y     | Y     | Y         |       | ----- | Y     |
+| QC plots  | Y   | Y        | ---   | ---   | ---   | ---       | ---   | Y     | ---   |
+| Regression| --- | Y        | Y     | ---   | ---   | ---       | ---   | Y     | ---   |
+| skyline   | --- | Y        | Y     | ---   | ---   | ---       |       | Y     | ---   |
+| arc plots | --- | Y        | ---   | Y     | Y     | Y         |       | Y     | Y     |
+| secondary | --- | Y        | ---   | Y     | Y     | Y         |       | Y     | Y     |
+| tertiary  | --- | Y        | ---   | Y     | Y     | Y         |       | Y     | Y     |
+| heatmaps  | --- |          | Y     | Y     | Y     | Y         |       | Y     | Y     |
 
 - Reading in structural information
 
@@ -74,6 +62,7 @@ A python interface and CLI interface for all of the following:
   - [ ] RNP-MaP
   - [ ] log(+/-) - k*log(+/-) Normalization
   - [ ] deltaSHAPE
+  - [ ] destabilization analysis
 
 CLI examples
 ------------

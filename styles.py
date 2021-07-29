@@ -4,19 +4,21 @@ import seaborn as sns
 
 # STYLE SHEET
 ###############################################################################
-sns.set_context("talk")
-sns.set_style("ticks")
-colors = [
-    '#0092edff',  # Blue
-    '#ff8300ff',  # Orange
-    '#a100ffff',  # Purple
-    '#edc600ff',  # Yellow
-    '#ff48e9ff',  # Pink
-    '#3fd125ff'  # Green
-]
-sns.set_palette(colors)
 
-mpl.rcParams["font.sans-serif"].insert(0, "Arial")
+
+def set_defaults():
+    sns.set_context("talk")
+    sns.set_style("ticks")
+    colors = [
+        '#0092edff',  # Blue
+        '#ff8300ff',  # Orange
+        '#a100ffff',  # Purple
+        '#edc600ff',  # Yellow
+        '#ff48e9ff',  # Pink
+        '#3fd125ff'  # Green
+    ]
+    sns.set_palette(colors)
+    mpl.rcParams["font.sans-serif"].insert(0, "Arial")
 
 
 def apply_style(style_dict):

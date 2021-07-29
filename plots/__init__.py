@@ -1,11 +1,13 @@
-from plots.skyline import Skyline
-from plots.qc import QC
-from plots.arc import AP
-from plots.sm import SM
-from plots.ss import SS
-from plots.heatmap import Heatmap
-from plots.mol import Mol
-from plots.plots import get_rows_columns, add_sequence, view_colormap
+from .skyline import Skyline
+from .qc import QC
+from .arc import AP
+from .sm import SM
+from .ss import SS
+from .heatmap import Heatmap
+from .mol import Mol
+from .circle import Circle
+from .linreg import LinReg
+from .plots import Plot
 
 __all__ = ["Skyline", "QC", "AP", "SM", "Heatmap", "SS", "Mol",
-           "get_rows_columns", "add_sequence", "view_colormap"]
+           "LinReg", "Circle", "Plot"]

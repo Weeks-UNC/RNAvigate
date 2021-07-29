@@ -29,11 +29,16 @@ class Profile(Data):
         self.percent = self.percents[component]
         # parse datatable
         read_kwargs = {}
-        read_kwargs['names'] = ["Nucleotide", "Sequence", "Reactivity_profile",
+        read_kwargs['names'] = ["Nucleotide", "Sequence", "Norm_profile",
                                 "Modified_rate", "Untreated_rate"]
         col_offset = 3 * component
-        read_kwargs["usecols"] = [0, 1, 2+col_offset, 3+col_offset, -1]
+        bg_col = 3 * self.components + 2
+        read_kwargs["usecols"] = [0, 1, 2+col_offset, 3+col_offset, bg_col]
         self.data = pd.read_csv(filepath, sep='\t', header=2, **read_kwargs)
+        self.data["Untreated_rate"] = [
+            float(x.rstrip(' i')) for x in self.data["Untreated_rate"]]
+        self.data["Reactivity_profile"] = (self.data["Modified_rate"] -
+                                           self.data["Untreated_rate"])
         sequence = ''.join(self.data["Sequence"].values)
         self.sequence = sequence.upper().replace("T", "U")
 

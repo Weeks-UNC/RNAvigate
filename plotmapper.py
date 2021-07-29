@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 
 # general python packages
-import seaborn as sns
 import os.path
-
 
 # scripts in JNBTools
 from data import *
 from plots import *
+from styles import set_defaults
+
+# set default styles for plotting
+set_defaults()
 
 
 def create_code_button():
@@ -24,21 +26,6 @@ def create_code_button():
                  <form action="javascript:code_toggle()">
                  <input type="submit" value="Hide/show raw code.">
                  </form>'''))
-
-
-# STYLE SHEET
-###############################################################################
-sns.set_context("talk")
-sns.set_style("ticks")
-colors = [
-    '#0092edff',  # Blue
-    '#ff8300ff',  # Orange
-    '#a100ffff',  # Purple
-    '#edc600ff',  # Yellow
-    '#ff48e9ff',  # Pink
-    '#3fd125ff'  # Green
-]
-sns.set_palette(colors)
 
 
 class Sample():
@@ -70,7 +57,7 @@ class Sample():
                       "pdb": pdb,
                       "probs": probs}
         self.sample = sample
-
+        self.parent = None
         self.data = {}  # stores profile, ij, and structure objects
         if ct is not None:
             self.data["ct"] = CT("ct", ct)
@@ -122,7 +109,7 @@ class Sample():
         self.dance = [Sample() for _ in range(self.dance_components)]
         # build column names for reading in BM file
         for i, sample in enumerate(self.dance):
-            sample.sample = f"{i} - {self.dance_percents[i]}"
+            sample.sample = f"{self.sample}: {i} - {self.dance_percents[i]}"
             sample.paths = {"profile": reactivityfile,
                             "rings": f"{prefix}-{i}-rings.txt",
                             "pairs": f"{prefix}-{i}-pairmap.txt",
@@ -142,23 +129,41 @@ class Sample():
                 if os.path.isfile(ct_file):
                     sample.data["ct"] = CT("ct", ct_file)
                     sample.paths["ct"] = ct_file
+            sample.parent = self
 
 ###############################################################################
-# some functions
+# filtering and data retrieval
 #     get_data
+#     get_data_list
 #     filter_ij
-#     filter_dance_rings
+#     filter_dance
 ###############################################################################
 
     def get_data(self, key):
-        if key == "ctcompare":
-            return [self.data["ct"], self.data["compct"]]
-        elif key in self.data.keys():
+        try:
             return self.data[key]
-        elif isinstance(key, list):
-            return [self.data[k] for k in key]
-        else:
-            print(f"Key must be one of:\n{self.data.keys()}")
+        except KeyError:
+            try:
+                return self.parent.data[key]
+            except (KeyError, AttributeError):
+                print(f"{key} data not found in {self.sample}")
+                return None
+
+    def get_data_list(self, *keys):
+        data_list = []
+        for key in keys:
+            if key == "ctcompare":
+                data = self.get_data_list("ct", "compct")
+                if data[1] is None:
+                    data = data[0]
+            elif key == "label":
+                return self.sample
+            elif isinstance(key, list):
+                data = self.get_data_list(*key)
+            else:
+                data = self.get_data(key)
+            data_list.append(data)
+        return data_list
 
     def filter_ij(self, ij, fit_to, **kwargs):
         try:
@@ -168,8 +173,9 @@ class Sample():
             self.data[ij].metric = metric
         except KeyError:
             self.data[ij].metric = self.data[ij].default_metric
-        self.data[ij].filter(self.data[fit_to], profile=self.data["profile"],
-                             ct=self.data["ct"], **kwargs)
+        self.data[ij].filter(self.get_data(fit_to),
+                             profile=self.get_data("profile"),
+                             ct=self.get_data("ct"), **kwargs)
 
     def dance_filter(self, filterneg=True, cdfilter=15, sigfilter=23,
                      ssfilter=True):
@@ -186,184 +192,199 @@ class Sample():
             dance.data["rings"].mask_on_ct(ctlist, cdAbove=cdfilter)
             dance.data["pairs"].filter(dance_ct, ct=dance_ct, paired_only=True)
 
-    def make_qc(self, **kwargs):
-        profiles = [self.data["profile"]]
-        logs = [self.data["log"]]
-        labels = [self.sample]
-        QC(logs, profiles, labels).make_plot(**kwargs)
+###############################################################################
+# sample plotting functions
+#     make_skyline
+#     make_shapemapper
+#     make_ap
+#     make_ap_multifilter
+#     make_ss
+#     make_ss_multifilter
+#     make_mol
+#     make_mol_multifilter
+#     make_heatmap
+#     make_circle
+#     make_circle_multifilter
+###############################################################################
 
-    def make_skyline(self, dance=False, **kwargs):
-        profiles, labels = [], []
+    # def make_qc(self, **kwargs):
+    #     profiles = [self.data["profile"]]
+    #     logs = [self.data["log"]]
+    #     labels = [self.sample]
+    #     QC(logs, profiles, labels).make_plot(**kwargs)
+
+    def make_skyline(self, dance=False):
+        plot = Skyline(self.data["profile"].length)
         if dance:
             for dance in self.dance:
-                profiles.append(dance.data["profile"])
-                labels.append(dance.sample)
-            kwargs["legend_title"] = "Comp: Percent"
-            kwargs["axis_title"] = f"{self.sample}: DANCE Reactivities"
+                plot.add_sample(dance, profile="profile", label="label")
+            plot.ax.legend(title="Comp: Percent")
+            plot.ax.set_title(f"{self.sample}: DANCE Reactivities")
         else:
-            profiles.append(self.data["profile"])
-            labels.append(self.sample)
-        Skyline(profiles, labels).make_plot(**kwargs)
+            plot.add_sample(self, profile="profile", label="label")
+        return plot
 
-    def make_shapemapper(self, **kwargs):
-        SM(self.data["profile"], self.sample).make_plot(**kwargs)
+    def make_shapemapper(self, plots=["profile", "rates", "depth"]):
+        plot = SM(self.data["profile"].length, plots=plots)
+        plot.add_sample(self, profile="profile", label="label")
+        return plot
 
-    def make_heatmap(self, heatmap, contour, metric=None):
-        heatmap = self.get_data(heatmap)
-        contour = self.get_data(contour)
-        heatmap.metric = metric
-        Heatmap(heatmap, contour).make_plot()
+    def make_ap(self, ct="ct", comp="compct", ij=None, ij2=None,
+                profile="profile", label="label", **kwargs):
+        plot = AP(1, self.get_data(ct).length)
+        self.filter_ij(ij, ct, **kwargs)
+        plot.add_sample(self, ct=ct, comp=comp, ij=ij, ij2=ij2,
+                        profile=profile, label=label)
+        return plot
 
-    def make_ap(self, ij, dance=False, **filter_kwargs):
-        plot = AP()
+    def make_ap_multifilter(self, filters, ct="ct", comp="compct", ij2=None,
+                            profile="profile", label="label"):
+        plot = AP(len(filters), self.get_data(ct).length)
+        for filter in filters:
+            ij = filter.pop("ij")
+            self.filter_ij(ij, self.get_data(ct), **filter)
+            plot.add_sample(self, ct=ct, comp=comp, ij=ij, ij2=ij2,
+                            profile=profile, label=label)
+        return plot
 
-        def add_sample(sample):
-            structure = sample.data["ct"]
-            if "compct" in sample.data.keys():
-                structure = [structure, sample.data["compct"]]
-            try:
-                profile = sample.data["profile"]
-            except KeyError:
-                profile = None
-            sample.filter_ij(ij, "ct", **filter_kwargs)
-            plot.add_sample(structure, sample.data[ij],
-                            profile, sample.sample)
-        if dance:
-            for sample in self.dance:
-                add_sample(sample)
-        else:
-            add_sample(self)
-        return plot.make_plot()
+    def make_ss(self, ss="ss", ij=None, profile="profile", label="label",
+                **kwargs):
+        plot = SS(1, self.get_data(ss))
+        self.filter_ij(ij, ss, **kwargs)
+        plot.add_sample(self, ij=ij, profile=profile, label=label)
+        return plot
 
-    def make_ap_multifilter(self, filters):
-        plot = AP()
-        try:
-            profile = self.data["profile"]
-        except KeyError:
-            profile = None
-        structure = self.data["ct"]
-        if "compct" in self.data.keys():
-            structure = [structure, self.data["compct"]]
+    def make_ss_multifilter(self, filters, ss="ss", profile=profile,
+                            label="label"):
+        plot = SS(len(filters), self.get_data(ss))
+        for filter in filters:
+            ij = filter.pop("ij")
+            self.filter_ij(ij, ss, **filter)
+            plot.add_sample(self, ij=ij, profile=profile, label=label)
+        return plot
+
+    def make_mol(self, ij=None, profile="profile", label="label", show=True,
+                 **kwargs):
+        plot = Mol(1, self.data["pdb"])
+        self.filter_ij(ij, "pdb", **kwargs)
+        plot.add_sample(self, ij=ij, profile=profile, label=label)
+        if show:
+            plot.view.show()
+        return plot
+
+    def make_mol_multifilter(self, filters, profile="profile", label="label",
+                             show=True):
+        plot = Mol(len(filters), self.data["pdb"])
         for filter in filters:
             ij = filter.pop("ij")
             self.filter_ij(ij, "pdb", **filter)
-            plot.add_sample(structure, self.data[ij], profile, self.sample)
-        return plot.make_plot()
+            plot.add_sample(self, ij=ij, profile=profile, label=label)
+        return plot
 
-    def make_ss(self, ij, dance=False, label=None, **filter_kwargs):
-        plot = SS()
-        if label is None:
-            label = self.sample
-        if dance:
-            for sample in self.dance:
-                sample.filter_ij(ij, "ss", **filter_kwargs)
-                plot.add_sample(sample, "ss", ij, "profile", label)
-        else:
-            self.filter_ij(ij, "ss", **filter_kwargs)
-            plot.add_sample(self, "ss", ij, "profile", label)
-        plot.make_plot()
+    def make_heatmap(self, structure=None, ij=None, levels=None, **kwargs):
+        plot = Heatmap(1)
+        self.filter_ij(ij, ij, **kwargs)
+        plot.add_sample(self, structure=structure, ij=ij, levels=levels)
+        return plot
 
-    def make_ss_multifilter(self, filters):
-        plot = SS()
+    def make_circle(self, ct=None, comp=None, ij=None, ij2=None, profile=None,
+                    label=None, **kwargs):
+        plot = Circle(1, self.data["profile"].length)
+        self.filter_ij(ij, "profile", **kwargs)
+        plot.add_sample(self, ct=ct, comp=comp, ij=ij, ij2=ij2,
+                        profile=profile, label=label)
+        return plot
+
+    def make_circle_multifilter(self, filters, ct=None, comp=None, ij2=None,
+                                profile=None, label=None):
+        plot = Circle(len(filters), self.data["profile"].length)
         for filter in filters:
             ij = filter.pop("ij")
-            self.filter_ij(ij, "ss", **filter)
-            plot.add_sample(self, "ss", ij, "profile", self.sample)
-        return plot.make_plot()
-
-    def make_mol(self, ij, dance=False, **filter_kwargs):
-        plot = Mol(self.data["pdb"])
-        if dance:
-            for sample in self.dance:
-                sample.filter_ij(ij, "pdb", **filter_kwargs)
-                plot.add_sample(sample.data[ij], sample.data["profile"],
-                                sample.sample)
-        else:
-            try:
-                profile = self.data["profile"]
-            except KeyError:
-                profile = None
-            self.filter_ij(ij, "pdb", **filter_kwargs)
-            plot.add_sample(self.data[ij], profile, self.sample)
-        return plot.make_plot()
-
-    def make_mol_multifilter(self, filters):
-        plot = Mol(self.data["pdb"])
-        try:
-            profile = self.data["profile"]
-        except KeyError:
-            profile = None
-        for filter in filters:
-            ij = filter.pop("ij")
-            self.filter_ij(ij, "pdb", **filter)
-            plot.add_sample(self.data[ij], profile, self.sample)
-        return plot.make_plot()
+            self.filter_ij(ij, "profile", **filter)
+            plot.add_sample(self, ct=ct, comp=comp, ij=ij, ij2=ij2,
+                            profile=profile, label=label)
+        return plot
 
 ###############################################################################
 # Plotting functions that accept a list of samples
-#   array_qc
+# TODO:  array_qc
 #   array_skyline
 #   array_ap
 #   array_ss
-#   array_3d
+#   array_mol
+#   array_heatmap
+#   array_circle
+#   array_linreg
 ###############################################################################
 
 
-def array_plot(plot, samples, filter, fit, **kwargs):
-    for sample in samples:
-        self.filter_ij(fit, **filter)
-        plot.add_sample(sample, **kwargs)
-
-
-def array_ap(samples, fit="ct", ct="ct", comp="compct", ij=None, ij2=None,
-             profile="profile", label=None, **kwargs):
-    array_plot(AP(), samples, kwargs, fit, ct=ct, comp=comp, ij=ij, ij2=ij2,
-               profile=profile, label=label)
-
-
-def array_qc(samples=[]):
-    logs, profiles, labels = [], [], []
-    for sample in samples:
-        logs.append(sample.data["logs"])
-        profiles.append(sample.data["profile"])
-        labels.append(sample.sample)
-    QC(logs, profiles, labels).make_plot()
+# def array_qc(samples=[]):
+#     logs, profiles, labels = [], [], []
+#     for sample in samples:
+#         logs.append(sample.data["log"])
+#         profiles.append(sample.data["profile"])
+#         labels.append(sample.sample)
+#     QC(logs, profiles, labels).make_plot()
 
 
 def array_skyline(samples):
-    profiles, labels = [], []
+    plot = Skyline(sample.data["profile"].length)
     for sample in samples:
-        profiles.append(sample.data["profile"])
-        labels.append(sample.sample)
-    Skyline(profiles, labels).make_plot()
+        plot.add_sample(sample, profile="profile", label=None)
+    return plot
 
 
-def array_ap(samples, **kwargs):
-    plot = AP()
+def array_ap(samples, ct="ct", comp="compct", ij=None, ij2=None,
+             profile="profile", label="label", **kwargs):
+    plot = AP(len(samples), samples[0].data["ct"].length)
     for sample in samples:
-        structure = sample.data["ct"]
-        if "compct" in sample.data.keys():
-            structure = [structure, sample.data["compct"]]
-        sample.filter_ij(ij, "ct", **kwargs)
-        plot.add_sample(structure, sample.data[ij],
-                        sample.data["profile"], sample.sample)
-    plot.make_plot()
+        sample.filter_ij(ij, ct, **kwargs)
+        plot.add_sample(sample, ct=ct, comp=comp, ij=ij, ij2=ij2,
+                        profile=profile, label=label)
+    return plot
 
 
-def array_ss(samples, ij, **kwargs):
-    structures, ijs, profiles, labels = [], [], [], []
+def array_ss(samples, ss="ss", ij=None, profile="profile", label="label",
+             **kwargs):
+    plot = SS(len(samples), samples[0].data[ss])
     for sample in samples:
         sample.filter_ij(ij, "ss", **kwargs)
-        structures.append(sample.data["ss"])
-        ijs.append(sample.data[ij])
-        profiles.append(sample.data["profiles"])
-        labels.append(sample.sample)
-    SS(structures, labels, ijs, profiles).make_plot()
+        plot.add_sample(sample, ij=ij, profile=profile, label=label)
+    return plot
 
 
-def array_mol(samples, ij, **kwargs):
-    plot = Mol(samples[0].data["pdb"])
+def array_mol(samples, ij=None, profile="profile", label="label", show=True,
+              **kwargs):
+    plot = Mol(len(samples), samples.data["pdb"])
     for sample in samples:
         sample.filter_ij(ij, "pdb", **kwargs)
-        plot.add_sample(sample.data[ij], sample.data["profile"], sample.sample)
-    return plot.make_plot()
+        plot.add_sample(ij=ij, profile=profile, label=label)
+    if show:
+        plot.view.show()
+    else:
+        return plot
+
+
+def array_heatmap(samples, structure=None, ij=None, levels=None, **kwargs):
+    plot = Heatmap(len(samples))
+    for sample in samples:
+        sample.filter_ij(ij, ij, **kwargs)
+        plot.add_sample(sample, structure=structure, ij=ij, levels=levels)
+    return plot
+
+
+def array_circle(samples, ct=None, comp=None, ij=None, ij2=None, profile=None,
+                 label=None, **kwargs):
+    plot = Circle(len(samples), samples[0].data["profile"].length)
+    for sample in samples:
+        sample.filter_ij(ij, "profile", **kwargs)
+        plot.add_sample(sample, ct=ct, comp=comp, ij=ij, ij2=ij2,
+                        profile=profile, label=label)
+    return plot
+
+
+def array_linreg(samples, ct="ct", profile="profile", label="label"):
+    plot = LinReg(len(samples))
+    for sample in samples:
+        plot.add_sample(sample, ct=ct, profile=profile, label=label)
+    return plot

@@ -2,74 +2,72 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from .plots import Plot
 
 
-class QC():
-    def __init__(self, logs=None, profiles=[], labels=[]):
-        self.logs = logs
-        self.profiles = profiles
-        self.labels = labels
+class QC(Plot):
 
-    def add_data(self, log, profile, label):
+    def __init__(self, num_samples):
+        self.num_samples = num_samples
+        self.fig = plt.figure(figsize=self.get_figsize(),
+                              constrained_layout=True)
+        gs = self.fig.add_gridspec(2, 4)
+        # Muts per molecule plots
+        self.ax1 = self.fig.add_subplot(gs[0, 0])
+        self.ax2 = self.fig.add_subplot(gs[0, 1],
+                                        sharex=self.ax1, sharey=self.ax1)
+        self.ax1.set(xlabel="Mutations per molecule",
+                     ylabel="Percentage of Reads",
+                     title="Untreated")
+        self.ax2.set(xlabel="Mutations per molecule",
+                     title="Modified")
+        # Read length distribution
+        self.ax3 = self.fig.add_subplot(gs[0, 2])
+        self.ax4 = self.fig.add_subplot(gs[0, 3],
+                                        sharex=self.ax3, sharey=self.ax3)
+        self.ax3.set(xticks=range(12),
+                     xlabel='Read Length',
+                     ylabel='Percentage of Reads',
+                     title='Untreated')
+        self.ax4.set(xticks=range(12),
+                     xlabel='Read Length',
+                     title='Modified')
+        xticklabels = [f"{x*50}-\n{x*50+50}" for x in range(12)]
+        self.ax3.set_xticklabels(xticklabels)
+        self.ax4.set_xticklabels(xticklabels)
+        # Legend
+        self.ax5 = self.fig.add_subplot(gs[1, 0])
+        self.ax5.set(title="Samples", axis="off", frame="on")
+        # Reactivities boxplot
+        self.ax6 = self.fig.add_subplot(gs[1, 1:])
+        self.i = 0
+        self.colors = sns.color_palette("Paired")
+
+    def get_figsize(self):
+        return (20, 10)
+
+    def plot_data(self, log, profile, label):
         self.logs.append(log)
         self.profiles.append(profile)
         self.labels.append(label)
 
-##############################################################################
-# Mutations per molecule plotting
-#   set, plot, make
-##############################################################################
+    def plot_MutsPerMol(self, log, upper_limit=10):
+        x = log.data.iloc[:upper_limit, 'Mutation_count']
+        y1 = log.data.iloc[:upper_limit, 'Modified_mutations_per_molecule']
+        self.ax2.plot(x, y1, color=self.colors[self.i])
+        y2 = log.data.iloc[:upper_limit, 'Untreated_mutations_per_molecule']
+        self.ax1.plot(x, y2, color=self.colors[self.i])
 
-    def set_MutsPerMol(self, ax):
-        ax.legend(title="Samples")
-        ax.set(xlabel="Mutations per molecule",
-               ylabel="Percentage of Reads",
-               title='Mutations per molecule distribution')
+    def plot_ReadLength(self, log, upper_limit=10):
+        width = 0.8/self.num_samples
+        x = np.arange(upper_limit) - 0.4 - (width/2) + (width*self.i)
+        y1 = log.data.iloc[:upper_limit, 'Modified_read_length']
+        self.ax4.bar(x, y1, width)
+        y2 = log.data.iloc[:upper_limit, 'Untreated_read_length']
+        self.ax3.bar(x, y2, width)
 
-    def plot_MutsPerMol(self, mod_ax, unt_ax, upper_limit=10):
-        for log, label in zip(self.logs, self.labels):
-            x = log.data['Mutation_count'][:upper_limit]
-            y = log.data['Modified_mutations_per_molecule'][:upper_limit]
-            mod_ax.plot(x, y, label=label+": Modified")
-            y = log.data['Untreated_mutations_per_molecule'][:upper_limit]
-            unt_ax.plot(x, y, label=label+": Untreated")
-
-    def make_MutsPerMol(self, mod_ax, unt_ax):
-        self.plot_MutsPerMol(mod_ax, unt_ax)
-        self.set_MutsPerMol(mod_ax)
-        self.set_MutsPerMol(unt_ax)
-
-##############################################################################
-# Read Length Distribution plotting
-#   set, plot, make
-##############################################################################
-
-    def set_ReadLength(self, ax, upper_limit=10):
-        ax.legend(title="Samples")
-        ax.set(xticks=range(upper_limit),
-               xlabel='Read Length',
-               ylabel='Percentage of Reads',
-               title='Read length distribution')
-        ax.set_xticklabels(self.logs[0].data.loc[:upper_limit-1, "Read_length"],
-                           rotation=45, ha='right')
-
-    def plot_ReadLength(self, mod_ax, unt_ax, upper_limit=10):
-        width = 0.8/len(self.logs)
-        for i, (log, label) in enumerate(zip(self.logs, self.labels)):
-            x = np.arange(upper_limit) - 0.4 - (width/2) + (width*i)
-            y = log.data['Modified_read_length'][:upper_limit]
-            mod_ax.bar(x, y, width, label=label+": Modified")
-            y = log.data['Untreated_read_length'][:upper_limit]
-            unt_ax.bar(x, y, width, label=label+": Untreated")
-
-    def make_ReadLength(self, mod_ax, unt_ax):
-        self.plot_ReadLength(mod_ax, unt_ax)
-        self.set_ReadLength(mod_ax)
-        self.set_ReadLength(unt_ax)
-
-##############################################################################
-# Reactivity boxplot plotting
-##############################################################################
+    def add_to_legend(self, label):
+        pass
 
     def make_boxplot(self, ax):
         cols = ["Modified_rate", "Untreated_rate"]
@@ -80,32 +78,8 @@ class QC():
         data = pd.concat(data)
         data = pd.melt(data, id_vars=['Sample'], var_name=['Rate'])
         ax = sns.boxplot(x="Sample", y="value",
-                         hue='Rate', data=data, orient='v')
+                         hue='Rate', data=data, orient='v', ax=ax)
         ax.set(yscale='log',
                ylim=(0.0005, 0.5),
                ylabel="Mutation Rate",
                xticklabels=xticklabels)
-
-##############################################################################
-# Combination plotting
-##############################################################################
-
-    def make_plot(self):
-        equal_data = len(self.profiles) == len(self.logs) == len(self.labels)
-        assert equal_data, "Uneven number of profiles, logs, and labels."
-        if len(self.profiles) > 1:
-            fig = plt.figure(figsize=(20, 10))
-            mpm_mod = fig.add_subplot(241)
-            mpm_unt = fig.add_subplot(242)
-            rl_mod = fig.add_subplot(243)
-            rl_unt = fig.add_subplot(244)
-            boxplot = fig.add_subplot(212)
-        else:
-            _, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(21, 7))
-            mpm_mod, mpm_unt = ax1, ax1
-            rl_mod, rl_unt = ax2, ax2
-            boxplot = ax3
-        self.make_MutsPerMol(mpm_mod, mpm_unt)
-        self.make_ReadLength(rl_mod, rl_unt)
-        self.make_boxplot(boxplot)
-        plt.tight_layout()
