@@ -11,7 +11,7 @@ class SS(Plot):
             ax.set_aspect("equal")
             ax.axis("off")
 
-    def add_data(self, ij, profile, label):
+    def plot_data(self, ij, profile, label):
         ax = self.get_ax()
         self.plot_structure(ax)
         self.plot_sequence(ax, profile)
@@ -22,7 +22,7 @@ class SS(Plot):
         ax.set_title(label, fontsize=30)
         self.i += 1
 
-    def get_figsize(self, rows, columns):
+    def get_figsize(self):
         ss = self.structure
         xmin = min(ss.xcoordinates)
         xmax = max(ss.xcoordinates)
@@ -31,7 +31,7 @@ class SS(Plot):
         scale = 0.5
         width = (xmax-xmin)*scale
         height = (ymax-ymin)*scale
-        return (width*columns, height*rows)
+        return (width*self.columns, height*self.rows)
 
     def plot_structure(self, ax):
         ss = self.structure
@@ -77,7 +77,7 @@ class SS(Plot):
         ax.plot(x, y, color=color, linewidth=linewidth)
 
     def plot_ij(self, ax, ij):
-        ij_colors = ij.ij_colors
+        ij_colors = ij.get_ij_colors()
         window = ij.window
         if window == 1:
             lw = 1.5

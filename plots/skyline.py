@@ -2,18 +2,21 @@ from .plots import Plot
 
 
 class Skyline(Plot):
-    def __init__(self, nt_length):
+    def __init__(self, num_samples, nt_length):
         self.nt_length = nt_length
-        super().__init__(1)
-        self.set_axis()
-        self.set_labels()
+        super().__init__(num_samples)
         self.ax = self.axes[0, 0]
+        self.set_axis()
+
+    def get_rows_columns(self, number_of_samples=None, rows=None, cols=None):
+        return (1, 1)
 
     def plot_data(self, profile, label, column="Reactivity_profile"):
         self.plot_profile(profile, label, column)
         self.i += 1
         if self.i == self.length:
             self.add_sequence(self.ax, profile.sequence)
+            self.set_labels()
 
     def get_figsize(self):
         left_inches = 0.9

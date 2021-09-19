@@ -140,6 +140,10 @@ class Sample():
 ###############################################################################
 
     def get_data(self, key):
+        if key == "label":
+            return self.sample
+        elif key == None:
+            return None
         try:
             return self.data[key]
         except KeyError:
@@ -214,15 +218,12 @@ class Sample():
     #     QC(logs, profiles, labels).make_plot(**kwargs)
 
     def make_skyline(self, dance=False):
-        plot = Skyline(self.data["profile"].length)
         if dance:
-            for dance in self.dance:
-                plot.add_sample(dance, profile="profile", label="label")
+            array_skyline(self.dance)
             plot.ax.legend(title="Comp: Percent")
             plot.ax.set_title(f"{self.sample}: DANCE Reactivities")
         else:
-            plot.add_sample(self, profile="profile", label="label")
-        return plot
+            array_skyline([self])
 
     def make_shapemapper(self, plots=["profile", "rates", "depth"]):
         plot = SM(self.data["profile"].length, plots=plots)
@@ -231,30 +232,23 @@ class Sample():
 
     def make_ap(self, ct="ct", comp="compct", ij=None, ij2=None,
                 profile="profile", label="label", **kwargs):
-        plot = AP(1, self.get_data(ct).length)
-        self.filter_ij(ij, ct, **kwargs)
-        plot.add_sample(self, ct=ct, comp=comp, ij=ij, ij2=ij2,
-                        profile=profile, label=label)
-        return plot
+        array_ap([self], ct, comp, ij, ij2, profile, label, **kwargs)
 
     def make_ap_multifilter(self, filters, ct="ct", comp="compct", ij2=None,
                             profile="profile", label="label"):
         plot = AP(len(filters), self.get_data(ct).length)
         for filter in filters:
             ij = filter.pop("ij")
-            self.filter_ij(ij, self.get_data(ct), **filter)
+            self.filter_ij(ij, ct, **filter)
             plot.add_sample(self, ct=ct, comp=comp, ij=ij, ij2=ij2,
                             profile=profile, label=label)
         return plot
 
     def make_ss(self, ss="ss", ij=None, profile="profile", label="label",
                 **kwargs):
-        plot = SS(1, self.get_data(ss))
-        self.filter_ij(ij, ss, **kwargs)
-        plot.add_sample(self, ij=ij, profile=profile, label=label)
-        return plot
+        array_ss([self], ss, ij, profile, label, **kwargs)
 
-    def make_ss_multifilter(self, filters, ss="ss", profile=profile,
+    def make_ss_multifilter(self, filters, ss="ss", profile="profile",
                             label="label"):
         plot = SS(len(filters), self.get_data(ss))
         for filter in filters:
@@ -265,12 +259,7 @@ class Sample():
 
     def make_mol(self, ij=None, profile="profile", label="label", show=True,
                  **kwargs):
-        plot = Mol(1, self.data["pdb"])
-        self.filter_ij(ij, "pdb", **kwargs)
-        plot.add_sample(self, ij=ij, profile=profile, label=label)
-        if show:
-            plot.view.show()
-        return plot
+        array_mol([self], ij, profile, label, show, **kwargs)
 
     def make_mol_multifilter(self, filters, profile="profile", label="label",
                              show=True):
@@ -279,24 +268,19 @@ class Sample():
             ij = filter.pop("ij")
             self.filter_ij(ij, "pdb", **filter)
             plot.add_sample(self, ij=ij, profile=profile, label=label)
+        if show:
+            plot.view.show()
         return plot
 
     def make_heatmap(self, structure=None, ij=None, levels=None, **kwargs):
-        plot = Heatmap(1)
-        self.filter_ij(ij, ij, **kwargs)
-        plot.add_sample(self, structure=structure, ij=ij, levels=levels)
-        return plot
+        array_heatmap([self], structure, ij, levels, **kwargs)
 
     def make_circle(self, ct=None, comp=None, ij=None, ij2=None, profile=None,
-                    label=None, **kwargs):
-        plot = Circle(1, self.data["profile"].length)
-        self.filter_ij(ij, "profile", **kwargs)
-        plot.add_sample(self, ct=ct, comp=comp, ij=ij, ij2=ij2,
-                        profile=profile, label=label)
-        return plot
+                    label="label", **kwargs):
+        array_circle([self], ct, comp, ij, ij2, profile, label, **kwargs)
 
     def make_circle_multifilter(self, filters, ct=None, comp=None, ij2=None,
-                                profile=None, label=None):
+                                profile=None, label="label"):
         plot = Circle(len(filters), self.data["profile"].length)
         for filter in filters:
             ij = filter.pop("ij")
@@ -328,9 +312,9 @@ class Sample():
 
 
 def array_skyline(samples):
-    plot = Skyline(sample.data["profile"].length)
+    plot = Skyline(len(samples), samples[0].data["profile"].length)
     for sample in samples:
-        plot.add_sample(sample, profile="profile", label=None)
+        plot.add_sample(sample, profile="profile", label="label")
     return plot
 
 
@@ -355,10 +339,10 @@ def array_ss(samples, ss="ss", ij=None, profile="profile", label="label",
 
 def array_mol(samples, ij=None, profile="profile", label="label", show=True,
               **kwargs):
-    plot = Mol(len(samples), samples.data["pdb"])
+    plot = Mol(len(samples), samples[0].data["pdb"])
     for sample in samples:
         sample.filter_ij(ij, "pdb", **kwargs)
-        plot.add_sample(ij=ij, profile=profile, label=label)
+        plot.add_sample(sample, ij=ij, profile=profile, label=label)
     if show:
         plot.view.show()
     else:
@@ -374,7 +358,7 @@ def array_heatmap(samples, structure=None, ij=None, levels=None, **kwargs):
 
 
 def array_circle(samples, ct=None, comp=None, ij=None, ij2=None, profile=None,
-                 label=None, **kwargs):
+                 label="label", **kwargs):
     plot = Circle(len(samples), samples[0].data["profile"].length)
     for sample in samples:
         sample.filter_ij(ij, "profile", **kwargs)

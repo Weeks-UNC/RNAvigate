@@ -7,13 +7,19 @@ analysis.
 
 To-Do List
 ----------
+### Workflows
+- create plot object, add samples, finalize
+- create axis, set as plot object axes, add samples, finalize.
+- one ax per plot object, either given or created.
+  - a seperate array class creates figure and axis for multiple plots.
 ### Broken
 - windowed ijs that are (-1, -1) plots one line at (-1, 1)
-- colorby in ss not being pass correctly
+- colorby in ss not being passed correctly
 ### Objectified
   - color by ij codepth
   - new_plots.qc
 ### Plots
+- Plotting only certain windows.
 - 3d/contact distance histograms.
 - Minimized log-log comparison of profiles.
 - add colorbars and legends
