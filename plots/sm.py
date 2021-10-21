@@ -27,7 +27,7 @@ class SM(Plot):
         """Creates a figure with the three classic Shapemapper plots.
         """
         self.fig.suptitle(label, fontsize=30)
-        for i, plot in enumerate(plots):
+        for i, plot in enumerate(self.plots):
             ax = self.get_ax(i)
             plot_func = {"profile": self.plot_sm_profile,
                          "rates": self.plot_sm_rates,
@@ -35,7 +35,7 @@ class SM(Plot):
                          }[plot]
             plot_func(ax, profile)
 
-    def plot_sm_profile(self, ax, profile, label):
+    def plot_sm_profile(self, ax, profile):
         """Plots classic ShapeMapper normalized reactivity on the given axis
 
         Args:
@@ -116,8 +116,6 @@ class SM(Plot):
         Args:
             axis (pyplot axis): axis on which to add plot
         """
-        if axis is None:
-            _, ax = plt.subplots(figsize=self.get_figsize(1, 1))
         sample = profile.data
         ax.plot(sample['Nucleotide'], sample['Modified_read_depth'],
                 linewidth=1.5, color=rx_color, alpha=1.0, label="Modified")
@@ -125,7 +123,7 @@ class SM(Plot):
                 linewidth=1.5, color=bg_color, alpha=1.0, label="Untreated")
         ax.plot(sample['Nucleotide'], sample['Denatured_read_depth'],
                 linewidth=1.5, color=dc_color, alpha=1.0, label="Denatured")
-        ax.set_xlim(1, self.profile.length)
+        ax.set_xlim(1, profile.length)
         ax.legend(loc=2, borderpad=0.8, handletextpad=0.2, framealpha=0.75)
         ax.plot(sample['Nucleotide'], sample['Modified_effective_depth'],
                 linewidth=1.0, color=rx_color, alpha=0.3)

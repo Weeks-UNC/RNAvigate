@@ -5,11 +5,19 @@ import numpy as np
 class SS(Plot):
     def __init__(self, num_samples, structure):
         self.structure = structure
+        xmin = min(self.structure.xcoordinates)
+        xmax = max(self.structure.xcoordinates)
+        xbuffer = (xmax - xmin) * 0.05
+        ymin = min(self.structure.ycoordinates)
+        ymax = max(self.structure.ycoordinates)
+        ybuffer = (ymax-ymin) * 0.05
         super().__init__(num_samples)
         for i in range(self.length):
             ax = self.get_ax(i)
             ax.set_aspect("equal")
             ax.axis("off")
+            ax.set(xlim=[xmin-xbuffer, xmax+xbuffer],
+                   ylim=[ymin-3*ybuffer, ymax+ybuffer])
 
     def plot_data(self, ij, profile, label):
         ax = self.get_ax()
@@ -17,7 +25,7 @@ class SS(Plot):
         self.plot_sequence(ax, profile)
         if ij is not None:
             self.plot_ij(ax, ij)
-            ax_ins1 = ax.inset_axes([0.05, 0.95, 0.4, 0.1])
+            ax_ins1 = ax.inset_axes([0.15, 0.05, 0.7, 0.05])
             self.view_colormap(ax_ins1, ij)
         ax.set_title(label, fontsize=30)
         self.i += 1
@@ -30,7 +38,7 @@ class SS(Plot):
         ymax = max(ss.ycoordinates)
         scale = 0.5
         width = (xmax-xmin)*scale
-        height = (ymax-ymin)*scale
+        height = (ymax-ymin)*scale*1.05
         return (width*self.columns, height*self.rows)
 
     def plot_structure(self, ax):

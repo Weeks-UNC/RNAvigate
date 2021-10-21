@@ -259,7 +259,7 @@ class Sample():
 
     def make_mol(self, ij=None, profile="profile", label="label", show=True,
                  **kwargs):
-        array_mol([self], ij, profile, label, show, **kwargs)
+        return array_mol([self], ij, profile, label, show, **kwargs)
 
     def make_mol_multifilter(self, filters, profile="profile", label="label",
                              show=True):
