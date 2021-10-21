@@ -219,7 +219,7 @@ class Sample():
 
     def make_skyline(self, dance=False):
         if dance:
-            array_skyline(self.dance)
+            plot = array_skyline(self.dance)
             plot.ax.legend(title="Comp: Percent")
             plot.ax.set_title(f"{self.sample}: DANCE Reactivities")
         else:
@@ -320,7 +320,7 @@ def array_skyline(samples):
 
 def array_ap(samples, ct="ct", comp="compct", ij=None, ij2=None,
              profile="profile", label="label", **kwargs):
-    plot = AP(len(samples), samples[0].data["ct"].length)
+    plot = AP(len(samples), samples[0].get_data("ct").length)
     for sample in samples:
         sample.filter_ij(ij, ct, **kwargs)
         plot.add_sample(sample, ct=ct, comp=comp, ij=ij, ij2=ij2,
