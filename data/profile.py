@@ -35,8 +35,13 @@ class Profile(Data):
         bg_col = 3 * self.components + 2
         read_kwargs["usecols"] = [0, 1, 2+col_offset, 3+col_offset, bg_col]
         self.data = pd.read_csv(filepath, sep='\t', header=2, **read_kwargs)
-        self.data["Untreated_rate"] = [
-            float(x.rstrip(' i')) for x in self.data["Untreated_rate"]]
+        stripped = []
+        for x in self.data["Untreated_rate"]:
+            if type(x) is float:
+                stripped.append(x)
+            else:
+                stripped.append(float(x.rstrip(' i')))
+        self.data["Untreated_rate"] = stripped
         self.data["Reactivity_profile"] = (self.data["Modified_rate"] -
                                            self.data["Untreated_rate"])
         sequence = ''.join(self.data["Sequence"].values)
