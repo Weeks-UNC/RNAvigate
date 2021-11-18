@@ -301,14 +301,12 @@ class Sample():
 #   array_linreg
 ###############################################################################
 
-
+# TODO: qc.py needs to be updated to accept this API
 # def array_qc(samples=[]):
-#     logs, profiles, labels = [], [], []
+#     plot = QC(len(samples))
 #     for sample in samples:
-#         logs.append(sample.data["log"])
-#         profiles.append(sample.data["profile"])
-#         labels.append(sample.sample)
-#     QC(logs, profiles, labels).make_plot()
+#         plot.add_sample(sample, etc.)
+#     return plot
 
 
 def array_skyline(samples):
