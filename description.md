@@ -61,24 +61,110 @@
   toggles hiding/showing code blocks. This is especially useful for creating a
   report of your analysis exported to HTML.
 </details>
-<details><summary>Function: create_code_button()</summary>
+<details><summary>Function: array_*plot()</summary>
 
+  Replace *plot with qc, skyline, ap, ss, mol, heatmap, circle, or linreg. These
+  take a list of samples and makes one plot per sample. Makes it easy to compare
+  similar data between samples.
+  
+  Sample.make_plot() == MaP.array_plot([Sample])
 </details>
 </details>
 
-## ./plots
-<details><summary>plots.py - Abstract class: Plot()</summary></details>
-<details><summary>arc.py - Class: AP()</summary></details>
-<details><summary>circle.py - Class: Circle()</summary></details>
-<details><summary>heatmap.py - Class: Heatmap()</summary></details>
-<details><summary>linreg.py - Class: LinReg()</summary></details>
-<details><summary>mol.py - Class: Mol()</summary></details>
-<details><summary>qc.py - Class: QC()</summary></details>
+## ./plots/
+<details><summary>plots.py - Abstract class: Plot()</summary>
+
+This is an abstract class that defines some generally useful methods and what
+properties a plot object should have.
+### Methods:
+- __init__() from the number of samples, makes a figure and axis grid.
+- get_ax() return the axis corresponding to the *n*th sample
+- add_sample() retrieves data and passes it on to plot_data()
+- view_colormap() creates an appropiate colormap for given ij data.
+- get_rows_columns() returns # of rows an columns for a given # of samples
+- add_sequence() adds a sequence bar along the x-axis of the given plot
+- abstract get_figsize(): each figure must know how big to be.
+- abstract plot_data(): each figure must know how to plot the given data
+</details>
+<details><summary>arc.py - Class: AP()</summary>
+
+This creates a grid of arcPlots.
+### Methods
+- plot_data() plots the given data on the current axis, then moves to next axis.
+- add_patches() draws arcs as a patch_collection.
+- add_title()
+- get_figsize()
+- plot_profile() draws the mid-plot reactivity bar chart
+</details>
+<details><summary>circle.py - Class: Circle()</summary>
+
+Creates a grid of circle plots, similar to an arcPlot, but arranged in a circle.
+### Methods
+- plot_data() plots the data on the current axis, then moves to the next.
+- get_figsize()
+- add_patches() draws arcs as a patch collection
+</details>
+<details><summary>heatmap.py - Class: Heatmap()</summary>
+
+--
+A nt x nt grid that plots each ij data point as a pixel. Useful for viewing very
+dense data.
+### Methods
+- plot_data() adds a structure as contour map and ij data as heatmap.
+- get_figsize()
+- plot_contour_distances() draws the contour plot
+- plot_heatmap_data() draws the heatmap
+</details>
+<details><summary>Linear Regression</summary>
+
+---
+
+### linreg.py - Class LinReg()
+A classic grid plot. Showing separation of paired and unpaired reactivity along
+diagonal and linear regression between each passed sample in the other positions.
+### Methods
+- get_rows_columns()
+- get_figsize()
+- plot_data()
+- plot_regression()
+- plot_kde()
+
+---
+
+</details>
+<details><summary>3-D Molecules</summary>
+
+---
+
+### mol.py - Class Mol()
+An interactive 3D RNA structure colored by reactivity, with ij data plotted as
+cylinders. Built with py3DMol (3DMol.js).
+### Methods
+- get_figsize()
+- get_viewer() similar to get_ax() but for a 3DMol view object
+- plot_data()
+- add_lines()
+- plot_ij()
+- set_colors()
+
+---
+
+</details>
+<details><summary>Quality Control</summary>
+
+---
+
+### qc.py - Class: QC()
+Quality control metrics including distributions of mutations per molecule, read
+lengths, and reactivities.
+### Methods
+- 
+</details>
 <details><summary>skyline.py - Class: Skyline()</summary></details>
 <details><summary>sm.py - Class: SM()</summary></details>
 <details><summary>ss.py - Class: SS()</summary></details>
 
-## ./data
+## ./data/
 <details><summary>data.py - Abstract class: Data()</summary></details>
 <details><summary>ct.py - Class: CT()</summary></details>
 <details><summary>dp.py - Class: DP()</summary></details>
