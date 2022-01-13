@@ -41,6 +41,7 @@ class Sample():
                  rings=None,
                  deletions=None,
                  pairs=None,
+                 allcorrs=None,
                  pdb=None,
                  pdb_kwargs={},
                  probs=None,
@@ -54,6 +55,7 @@ class Sample():
                       "rings": rings,
                       "deletions": deletions,
                       "pairs": pairs,
+                      "allcorrs": allcorrs,
                       "pdb": pdb,
                       "probs": probs}
         self.sample = sample
@@ -84,6 +86,9 @@ class Sample():
         if pairs is not None:
             assert self.has_profile, no_profile_message.format("Pairs")
             self.data["pairs"] = IJ("pairs", pairs, prof_seq)
+        if allcorrs is not None:
+            assert self.has_profile, no_profile_message.format("allcorrs")
+            self.data["allcorrs"] = IJ("rings", allcorrs, prof_seq)
         if probs is not None:
             assert self.has_profile, no_profile_message.format("Probabilities")
             self.data["probs"] = IJ("probs", probs, prof_seq)
@@ -146,7 +151,7 @@ class Sample():
             return None
         try:
             return self.data[key]
-        except KeyError:
+        except (KeyError, TypeError) as e:
             try:
                 return self.parent.data[key]
             except (KeyError, AttributeError):
