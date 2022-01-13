@@ -47,8 +47,8 @@ class QC(Plot):
         return (20, 10)
 
     def plot_data(self, log, profile, label):
-        self.logs.append(log)
-        self.profiles.append(profile)
+        self.plot_MutsPerMol(log)
+        self.make_boxplotprofiles.append(profile)
         self.labels.append(label)
 
     def plot_MutsPerMol(self, log, upper_limit=10):
