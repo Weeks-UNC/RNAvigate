@@ -142,13 +142,19 @@ class IJ(Data):
                     if not true_so_far:
                         break
             if ss_only and true_so_far:
+                # TODO: which windows are ss vs. ds?
                 true_so_far = (ct.ct[i-1] == 0) and (ct.ct[j-1] == 0)
             if ds_only and true_so_far:
                 true_so_far = (ct.ct[i-1] != 0) and (ct.ct[j-1] != 0)
-            if cdAbove is not None and true_so_far:
-                true_so_far = ct.contactDistance(i, j) > cdAbove
-            if cdBelow is not None and true_so_far:
-                true_so_far = ct.contactDistance(i, j) < cdBelow
+            if (cdAbove is not None or cdBelow is not None) and true_so_far:
+                cd = 10000
+                for iw in range(self.window):
+                    for jw in range(self.window):
+                        cd = min(cd, ct.contactDistance(i+iw, j+jw))
+                if cdAbove is not None:
+                    true_so_far = cd > cdAbove
+                if cdBelow is not None:
+                    true_so_far = cd < cdBelow
             mask.append(true_so_far)
         self.update_mask(mask)
 
@@ -277,7 +283,13 @@ class IJ(Data):
         alignment_map = self.get_alignment_map(pdb)
         distances = []
         for _, i, j in self.data[["i", "j"]].itertuples():
-            io = alignment_map[i-1]+1
-            jo = alignment_map[j-1]+1
-            distances.append(pdb.get_distance(io, jo))
+            # for windows calculate average of window*window distances
+            # e.g. window==3 results in average of nine distances
+            distance = 0
+            for iw in range(self.window):
+                for jw in range(self.window):
+                    io = alignment_map[i+iw-1]+1
+                    jo = alignment_map[j+jw-1]+1
+                    distance += pdb.get_distance(io, jo)/(self.window**2)
+            distances.append(distance)
         self.data["Distance"] = distances
