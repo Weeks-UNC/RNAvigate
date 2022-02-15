@@ -19,10 +19,10 @@ class SS(Plot):
             ax.set(xlim=[xmin-xbuffer, xmax+xbuffer],
                    ylim=[ymin-3*ybuffer, ymax+ybuffer])
 
-    def plot_data(self, ij, profile, label):
+    def plot_data(self, ij, profile, label, colors="sequence"):
         ax = self.get_ax()
         self.plot_structure(ax)
-        self.plot_sequence(ax, profile)
+        self.plot_sequence(ax, profile, colors)
         if ij is not None:
             self.plot_ij(ax, ij)
             ax_ins1 = ax.inset_axes([0.15, 0.05, 0.7, 0.05])
@@ -50,7 +50,7 @@ class SS(Plot):
                     linestyle=(0, (1, 1)), zorder=0)
         ax.plot(ss.xcoordinates, ss.ycoordinates, color="grey", zorder=0)
 
-    def plot_sequence(self, ax, profile, colors="profile", markers="o"):
+    def plot_sequence(self, ax, profile, colors, markers="o"):
         ss = self.structure
         if isinstance(colors, list) and len(colors) == self.length["ss"]:
             self.colors = np.array(colors)
