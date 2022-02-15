@@ -9,7 +9,7 @@ class Mol(Plot):
         self.pdb = pdb
         self.rows, self.columns = self.get_rows_columns(num_samples)
         view = py3Dmol.view(viewergrid=(self.rows, self.columns),
-                            width=400*self.columns, height=400*self.rows)
+                            width=800*self.columns, height=800*self.rows)
         with open(self.pdb.path, 'r') as pdb_file:
             pdb_str = pdb_file.read()
         view.addModel(pdb_str, 'pdb')
@@ -40,6 +40,8 @@ class Mol(Plot):
 
     def add_lines(self, i, j, color, viewer):
         pdb = self.pdb
+        if i not in pdb.validres or j not in pdb.validres:
+            return
         i += self.pdb.offset
         j += self.pdb.offset
         xi, yi, zi = pdb.get_xyz_coord(i)
