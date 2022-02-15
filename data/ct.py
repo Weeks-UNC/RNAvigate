@@ -194,7 +194,7 @@ class CT(Data):
                         nt = [item.split(':') for item in line]
                         sequence += nt[2][1]
                         xcoords.append(float(nt[4][1]))
-                        ycoords.append(float(nt[5][1]))
+                        ycoords.append(-float(nt[5][1]))
                     elif item == "pairs":
                         pairs = line[1].split(":")[1:]
                         basepair = [int(nuc.strip('"')) for nuc in pairs]
