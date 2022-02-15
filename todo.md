@@ -14,6 +14,7 @@ To-Do List
   - a seperate array class creates figure and axis for multiple plots.
 ### Broken
 - windowed ijs that are (-1, -1) plots one line at (-1, 1)
+- figure out how to pass plot specific kwargs through to plot_data()
 - colorby in ss not being passed correctly
 ### Objectified
   - color by ij codepth
