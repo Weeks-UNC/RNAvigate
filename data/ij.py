@@ -122,7 +122,7 @@ class IJ(Data):
 
     def mask_on_sequence(self, compliment_only, nts):
         mask = []
-        comp = {'A': 'T', 'T': 'A', 'G': 'CT', 'C': 'G'}
+        comp = {'A': 'U', 'U': 'A', 'G': 'CT', 'C': 'G'}
         for _, i, j in self.data[["i", "j"]].itertuples():
             t = True
             for w in range(self.window):
