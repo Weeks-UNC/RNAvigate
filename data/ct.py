@@ -522,7 +522,7 @@ class CT(Data):
                 outarr.append(temp)
         return outarr
 
-    def get_distance_matrix(self, recalculate="False"):
+    def get_distance_matrix(self, recalculate=False):
         """Based on Tom's contactDistance function above, but instead returns
         the all pairs shortest paths matrix, and stores it as an attribute. If
         the attribute has already been set, it returns the attribute. This is
