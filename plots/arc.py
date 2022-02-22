@@ -71,6 +71,8 @@ class AP(Plot):
         return (dim*self.columns, dim*self.rows)
 
     def plot_profile(self, ax, profile, ct):
+        if profile is None:
+            return
         columns = ["Norm_profile", "Reactivity_profile", "Modified_rate"]
         for column in columns:
             if column in profile.data.columns:
