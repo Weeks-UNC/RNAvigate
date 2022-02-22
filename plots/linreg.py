@@ -10,6 +10,7 @@ class LinReg(Plot):
         self.paired = None
         self.profiles = []
         self.labels = []
+        self.pass_through = ["colorby"]
 
     def get_rows_columns(self, number_of_samples):
         return (number_of_samples, number_of_samples)

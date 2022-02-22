@@ -2,7 +2,7 @@ import matplotlib as mp
 import matplotlib.pyplot as plt
 import math
 import numpy as np
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod, abstractproperty
 
 
 class Plot(ABC):
@@ -13,6 +13,7 @@ class Plot(ABC):
         self.fig, self.axes = plt.subplots(self.rows, self.columns,
                                            figsize=figsize, squeeze=False)
         self.i = 0
+        self.pass_through = []
 
     def get_ax(self, i=None):
         if i is None:
@@ -27,10 +28,10 @@ class Plot(ABC):
                 self.add_sample(s, **kwargs)
             return
         for key in kwargs.keys():
-            try:
-                kwargs[key] = sample.get_data(kwargs[key])
-            except KeyError:
+            if key in self.pass_through:
                 pass
+            else:
+                kwargs[key] = sample.get_data(kwargs[key])
         self.plot_data(**kwargs)
 
     def view_colormap(self, ax=None, ij=None, metric=None, ticks=None, values=None,

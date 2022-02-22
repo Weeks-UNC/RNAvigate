@@ -18,6 +18,7 @@ class SS(Plot):
             ax.axis("off")
             ax.set(xlim=[xmin-xbuffer, xmax+xbuffer],
                    ylim=[ymin-3*ybuffer, ymax+ybuffer])
+        self.pass_through = ["colors"]
 
     def plot_data(self, ij, profile, label, colors="sequence"):
         ax = self.get_ax()

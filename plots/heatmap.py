@@ -6,6 +6,10 @@ from .plots import Plot
 
 
 class Heatmap(Plot):
+    def __init__(self, num_samples):
+        super().__init__(num_samples)
+        self.pass_through = ["levels"]
+
     def plot_data(self, structure, ij, levels=None):
         ax = self.get_ax()
         self.plot_contour_distances(ax, structure, ij, levels)

@@ -7,6 +7,7 @@ class Skyline(Plot):
         super().__init__(num_samples)
         self.ax = self.axes[0, 0]
         self.set_axis()
+        self.pass_through = ["column"]
 
     def get_rows_columns(self, number_of_samples=None, rows=None, cols=None):
         return (1, 1)
