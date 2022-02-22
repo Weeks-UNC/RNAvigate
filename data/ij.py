@@ -231,7 +231,7 @@ class IJ(Data):
         if cdAbove is not None or cdBelow is not None or ss_only or ds_only or paired_only:
             self.mask_on_ct(ct, cdAbove, cdBelow,
                             ss_only, ds_only, paired_only)
-        if compliments_only or nts not None:
+        if compliments_only or nts is not None:
             self.mask_on_sequence(compliments_only, nts)
         if not all_pairs and self.datatype == 'pairs':
             self.update_mask(self.data["Class"] != 0)
