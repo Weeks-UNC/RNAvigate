@@ -191,11 +191,15 @@ class IJ(Data):
             mask.append(keep_ij)
         self.update_mask(mask)
 
-    def mask_nts(self, nts):
+    def mask_nts(self, exclude, isolate):
         mask = np.full(len(self.data), True)
         for index, i, j in self.data[["i", "j"]].itertuples():
-            if i in nts or j in nts:
-                mask[index] = False
+            if exclude is not None:
+                if i in exclude or j in exclude:
+                    mask[index] = False
+            if isolate is not None:
+                if i not in isolate and j not in isolate:
+                    mask[index] = False
         self.update_mask(mask)
 
     def set_mask_offset(self, fit_to):
@@ -209,11 +213,15 @@ class IJ(Data):
     def update_mask(self, mask):
         self.data["mask"] = self.data["mask"] & mask
 
-    def filter(self, fit_to, profile=None, ct=None, cdAbove=None,
-               cdBelow=None, ss_only=False, ds_only=False,
-               profAbove=None, profBelow=None, all_pairs=False,
-               paired_only=False, exclude_nts=None, positive_only=False,
-               negative_only=False, compliments_only=False, nts=None,
+    def filter(self, fit_to,
+               ct=None,  # required if any of next are passed
+               cdAbove=None, cdBelow=None,
+               paired_only=False, ss_only=False, ds_only=False,
+               profile=None, profAbove=None, profBelow=None,
+               compliments_only=False, nts=None,
+               all_pairs=False,
+               exclude_nts=None, isolate_nts=None,
+               positive_only=False, negative_only=False,
                **kwargs):
         self.set_mask_offset(fit_to)
         if fit_to.datatype == 'pdb':
@@ -222,8 +230,8 @@ class IJ(Data):
                 mask.append(i in fit_to.validres and j in fit_to.validres)
             mask = np.array(mask, dtype=bool)
             self.data["mask"] = self.data["mask"] & mask
-        if exclude_nts is not None:
-            self.mask_nts(exclude_nts)
+        if exclude_nts is not None or isolate_nts is not None:
+            self.mask_nts(exclude_nts, isolate_nts)
         if profAbove is not None or profBelow is not None:
             message = "Profile filters require a profile object."
             assert isinstance(profile, Profile), message
