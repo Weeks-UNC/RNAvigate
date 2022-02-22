@@ -120,6 +120,21 @@ class IJ(Data):
         self.window = int(window)
         self.data = pd.read_csv(pairs, sep='\t', header=1)
 
+    def mask_on_sequence(self, compliment_only, nts):
+        mask = []
+        comp = {'A': 'T', 'T': 'A', 'G': 'CT', 'C': 'G'}
+        for _, i, j in self.data[["i", "j"]].itertuples():
+            t = True
+            for w in range(self.window):
+                seq_iw = self.sequence[i+w-1].upper()
+                seq_jw = self.sequence[j-w+2].upper()
+                if compliment_only:
+                    t = t and seq_iw in comp[seq_jw]
+                if nts is not None:
+                    t = t and seq_iw in nts and seq_jw in nts
+            mask.append(t)
+        self.update_mask(mask)
+
     def mask_on_ct(self, ct, cdAbove=None, cdBelow=None,
                    ss_only=False, ds_only=False, paired_only=False):
         if isinstance(ct, list):
@@ -147,10 +162,11 @@ class IJ(Data):
             if ds_only and true_so_far:
                 true_so_far = (ct.ct[i-1] != 0) and (ct.ct[j-1] != 0)
             if (cdAbove is not None or cdBelow is not None) and true_so_far:
-                cd = 10000
+                cd = []
                 for iw in range(self.window):
                     for jw in range(self.window):
-                        cd = min(cd, ct.contactDistance(i+iw, j+jw))
+                        cd.append(ct.contactDistance(i+iw, j+jw))
+                cd = min(cd)
                 if cdAbove is not None:
                     true_so_far = cd > cdAbove
                 if cdBelow is not None:
@@ -196,7 +212,8 @@ class IJ(Data):
     def filter(self, fit_to, profile=None, ct=None, cdAbove=None,
                cdBelow=None, ss_only=False, ds_only=False,
                profAbove=None, profBelow=None, all_pairs=False,
-               paired_only=False, exclude_nts=None,
+               paired_only=False, exclude_nts=None, positive_only=False,
+               negative_only=False, compliments_only=False, nts=None,
                **kwargs):
         self.set_mask_offset(fit_to)
         if fit_to.datatype == 'pdb':
@@ -214,10 +231,16 @@ class IJ(Data):
         if cdAbove is not None or cdBelow is not None or ss_only or ds_only or paired_only:
             self.mask_on_ct(ct, cdAbove, cdBelow,
                             ss_only, ds_only, paired_only)
+        if compliments_only or nts not None:
+            self.mask_on_sequence(compliments_only, nts)
         if not all_pairs and self.datatype == 'pairs':
             self.update_mask(self.data["Class"] != 0)
         if self.datatype == 'probs':
             self.update_mask(self.data["Probability"] >= 0.03)
+        if positive_only:
+            self.update_mask(self.data["Sign"] == 1)
+        if negative_only:
+            self.update_mask(self.data["Sign"] == -1)
         for key in kwargs.keys():
             try:
                 self.update_mask(self.data[key] > kwargs[key])
