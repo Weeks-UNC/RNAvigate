@@ -17,6 +17,7 @@ class Mol(Plot):
         view.zoomTo()
         self.view = view
         self.i = 0
+        pass_through = []
 
     def get_figsize(self):
         pass
