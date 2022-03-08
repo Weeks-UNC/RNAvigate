@@ -314,10 +314,10 @@ class Sample():
 #     return plot
 
 
-def array_skyline(samples):
+def array_skyline(samples, **kwargs):
     plot = Skyline(len(samples), samples[0].data["profile"].length)
     for sample in samples:
-        plot.add_sample(sample, profile="profile", label="label")
+        plot.add_sample(sample, profile="profile", label="label", **kwargs)
     return plot
 
 
