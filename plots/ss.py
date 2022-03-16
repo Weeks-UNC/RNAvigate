@@ -18,12 +18,12 @@ class SS(Plot):
             ax.axis("off")
             ax.set(xlim=[xmin-xbuffer, xmax+xbuffer],
                    ylim=[ymin-3*ybuffer, ymax+ybuffer])
-        self.pass_through = ["colors"]
+        self.pass_through = ["nt_color"]
 
-    def plot_data(self, ij, profile, label, colors="sequence"):
+    def plot_data(self, ij, profile, label, nt_color="sequence"):
         ax = self.get_ax()
         self.plot_structure(ax)
-        self.plot_sequence(ax, profile, colors)
+        self.plot_sequence(ax, profile, nt_color)
         if ij is not None:
             self.plot_ij(ax, ij)
             ax_ins1 = ax.inset_axes([0.15, 0.05, 0.7, 0.05])
@@ -51,21 +51,21 @@ class SS(Plot):
                     linestyle=(0, (1, 1)), zorder=0)
         ax.plot(ss.xcoordinates, ss.ycoordinates, color="grey", zorder=0)
 
-    def plot_sequence(self, ax, profile, colors, markers="o"):
+    def plot_sequence(self, ax, profile, nt_color, markers="o"):
         ss = self.structure
-        if isinstance(colors, list) and len(colors) == self.length["ss"]:
-            self.colors = np.array(colors)
-        elif colors == "sequence":
-            colors = ss.get_colorby_sequence()
-        elif colors == "position":
-            colors = ss.get_colorby_position()
-        elif colors == "profile":
-            colors = profile.get_colors(ss)
+        if isinstance(nt_color, list) and len(nt_color) == self.length["ss"]:
+            self.colors = np.array(nt_color)
+        elif nt_color == "sequence":
+            nt_color = ss.get_colorby_sequence()
+        elif nt_color == "position":
+            nt_color = ss.get_colorby_position()
+        elif nt_color == "profile":
+            nt_color = profile.get_colors(ss)
         else:
             print("Invalid colors: choices are profile, sequence, position " +
                   "or a list of length equal to structure sequence. " +
                   "Defaulting to sequence.")
-            colors = ss.get_colorby_sequence()
+            nt_color = ss.get_colorby_sequence()
         if markers == "sequence":
             for nuc in "GUAC":
                 mask = [nt == nuc for nt in ss.sequence]
@@ -74,10 +74,10 @@ class SS(Plot):
                 marker = "$"+nuc+"}$"
                 marker = markers
                 ax.scatter(xcoords, ycoords, marker=marker,
-                           c=colors[mask])
+                           c=nt_color[mask])
         else:
             ax.scatter(ss.xcoordinates, ss.ycoordinates, marker=markers,
-                       c=colors)
+                       c=nt_color)
 
     def add_lines(self, ax, i, j, color, linewidth=1.5):
         ss = self.structure
