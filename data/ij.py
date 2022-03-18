@@ -263,8 +263,7 @@ class IJ(Data):
             minimum, maximum = min_max
         columns = ["i_offset", "j_offset", metric]
         if self.datatype == 'rings':
-            columns.append("Sign")
-            data = self.data.loc[self.data["mask"], columns].copy()
+            data = self.data.loc[self.data["mask"], columns+['Sign']].copy()
             data[metric] = data[metric]*data["Sign"]
         else:
             data = self.data.loc[self.data["mask"], columns].copy()
@@ -282,14 +281,15 @@ class IJ(Data):
             cmap = self.cmap
         else:
             cmap = plt.get_cmap(cmap)
-        i, j, colors = [], [], []
+        i_list, j_list, colors = [], [], []
         if len(data[metric].values) == 0:
-            return i, j, colors
-        for w in range(self.window):
-            i.extend(data["i_offset"].values + w)
-            j.extend(data["j_offset"].values + self.window - 1 - w)
-            colors.extend(cmap(data[metric].values))
-        return i, j, colors
+            return i_list, j_list, colors
+        for _, i, j, datum in data[columns].itertuples():
+            for w in range(self.window):
+                i_list.append(i + w)
+                j_list.append(j + self.window - 1 - w)
+                colors.append(cmap(datum))
+        return i_list, j_list, colors
 
     def print_new_file(self, outfile=None, **kwargs):
         data = self.data.copy()
