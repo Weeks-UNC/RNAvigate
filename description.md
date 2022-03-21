@@ -1,5 +1,5 @@
 # Class and methods descriptions
-## ./plotmapper.py - import plotmapper as MaP
+## ./starmapper.py - import starmapper as MaP
 
 <details><summary>Class: Sample()</summary>
 <details><summary>Initialization</summary>

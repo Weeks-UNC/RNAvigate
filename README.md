@@ -31,8 +31,8 @@ Plot types
 
 Example Jupyter Notebooks
 -------------------------
-* [single sample plots](JNB-example/plotmapper-example.md)
-* [multiple samples plots](JNB-example/plotmapper-multiple-examples.md)
+* [single sample plots](JNB-example/starmapper-example.md)
+* [multiple samples plots](JNB-example/starmapper-multiple-examples.md)
 * [Arc Plot options](JNB-example/ap_test.md)
 * [Secondary Structure options](JNB-example/ss_test.md)
 * [3D plot options](JNB-example/3d_test.md)
