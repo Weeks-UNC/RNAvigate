@@ -29,6 +29,12 @@ Plot types
 * ShapeMapper profile plots
 * ShapeMapper quality control plots
 
+Other features
+--------------
+* Filtering data on many parameters
+* Calculating 3D distance and contact distances
+* Automatic data alignment for comparing sequence variants
+
 Example Jupyter Notebooks
 -------------------------
 * [single sample plots](JNB-example/starmapper-example.md)
