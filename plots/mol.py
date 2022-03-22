@@ -7,7 +7,8 @@ import matplotlib.pyplot as plt
 class Mol(Plot):
     def __init__(self, num_samples, pdb):
         self.pdb = pdb
-        self.rows, self.columns = self.get_rows_columns(num_samples)
+        self.length = num_samples
+        self.rows, self.columns = self.get_rows_columns()
         view = py3Dmol.view(viewergrid=(self.rows, self.columns),
                             width=800*self.columns, height=800*self.rows)
         with open(self.pdb.path, 'r') as pdb_file:

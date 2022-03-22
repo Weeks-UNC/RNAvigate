@@ -216,11 +216,8 @@ class Sample():
 #     make_circle_multifilter
 ###############################################################################
 
-    # def make_qc(self, **kwargs):
-    #     profiles = [self.data["profile"]]
-    #     logs = [self.data["log"]]
-    #     labels = [self.sample]
-    #     QC(logs, profiles, labels).make_plot(**kwargs)
+    def make_qc(self, **kwargs):
+        return array_qc([self], **kwargs)
 
     def make_skyline(self, dance=False):
         if dance:
@@ -296,7 +293,7 @@ class Sample():
 
 ###############################################################################
 # Plotting functions that accept a list of samples
-# TODO:  array_qc
+#   array_qc
 #   array_skyline
 #   array_ap
 #   array_ss
@@ -306,13 +303,12 @@ class Sample():
 #   array_linreg
 ###############################################################################
 
-# TODO: qc.py needs to be updated to accept this API
 
-
-def array_qc(samples=[]):
+def array_qc(samples=[], **kwargs):
     plot = QC(len(samples))
     for sample in samples:
-        plot.add_sample(sample, log="log", profile="profile", label="label")
+        plot.add_sample(sample, log="log", profile="profile", label="label",
+                        **kwargs)
     return plot
 
 
@@ -373,8 +369,8 @@ def array_circle(samples, ct=None, comp=None, ij=None, ij2=None, profile=None,
     return plot
 
 
-def array_linreg(samples, ct="ct", profile="profile", label="label"):
+def array_linreg(samples, ct="ct", profile="profile", label="label", **kwargs):
     plot = LinReg(len(samples))
     for sample in samples:
-        plot.add_sample(sample, ct=ct, profile=profile, label=label)
+        plot.add_sample(sample, ct=ct, profile=profile, label=label, **kwargs)
     return plot

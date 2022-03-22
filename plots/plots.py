@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod, abstractproperty
 class Plot(ABC):
     def __init__(self, num_samples):
         self.length = num_samples
-        self.rows, self.columns = self.get_rows_columns(num_samples)
+        self.rows, self.columns = self.get_rows_columns()
         figsize = self.get_figsize()
         self.fig, self.axes = plt.subplots(self.rows, self.columns,
                                            figsize=figsize, squeeze=False)
@@ -75,18 +75,18 @@ class Plot(ABC):
         ax.set_xticklabels(values)
         ax.set_yticks([])
 
-    def get_rows_columns(self, number_of_samples, rows=None, cols=None):
+    def get_rows_columns(self, rows=None, cols=None):
         if isinstance(rows, int) and cols is None:
-            cols = math.ceil(number_of_samples / rows)
+            cols = math.ceil(self.length / rows)
         elif isinstance(cols, int) and rows is None:
-            rows = math.ceil(number_of_samples / cols)
-        elif number_of_samples < 10:
+            rows = math.ceil(self.length / cols)
+        elif self.length < 10:
             rows, cols = [(0, 0), (1, 1), (1, 2), (1, 3), (2, 2),
                           (2, 3), (2, 3), (3, 3), (3, 3), (3, 3)
-                          ][number_of_samples]
+                          ][self.length]
         else:
             cols = 4
-            rows = math.ceil(number_of_samples / cols)
+            rows = math.ceil(self.length / cols)
         return rows, cols
 
     def add_sequence(self, ax, sequence, yvalue=0.005):
