@@ -307,11 +307,13 @@ class Sample():
 ###############################################################################
 
 # TODO: qc.py needs to be updated to accept this API
-# def array_qc(samples=[]):
-#     plot = QC(len(samples))
-#     for sample in samples:
-#         plot.add_sample(sample, etc.)
-#     return plot
+
+
+def array_qc(samples=[]):
+    plot = QC(len(samples))
+    for sample in samples:
+        plot.add_sample(sample, log="log", profile="profile", label="label")
+    return plot
 
 
 def array_skyline(samples, **kwargs):

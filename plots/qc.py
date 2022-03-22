@@ -32,54 +32,57 @@ class QC(Plot):
         self.ax4.set(xticks=range(12),
                      xlabel='Read Length',
                      title='Modified')
-        xticklabels = [f"{x*50}-\n{x*50+50}" for x in range(12)]
-        self.ax3.set_xticklabels(xticklabels)
-        self.ax4.set_xticklabels(xticklabels)
-        # Legend
-        self.ax5 = self.fig.add_subplot(gs[1, 0])
-        self.ax5.set(title="Samples", axis="off", frame="on")
+        xticklabels = [f"{x*50}" for x in range(12)]
+        self.ax3.set_xticklabels(xticklabels, rotation=45)
+        self.ax4.set_xticklabels(xticklabels, rotation=45)
         # Reactivities boxplot
-        self.ax6 = self.fig.add_subplot(gs[1, 1:])
+        self.ax6 = self.fig.add_subplot(gs[1, :])
         self.i = 0
         self.colors = sns.color_palette("Paired")
+        self.profiles = []
+        self.pass_through = []
 
     def get_figsize(self):
         return (20, 10)
 
     def plot_data(self, log, profile, label):
-        self.plot_MutsPerMol(log)
-        self.make_boxplotprofiles.append(profile)
-        self.labels.append(label)
+        self.plot_MutsPerMol(log, label)
+        self.plot_ReadLength(log, label)
+        self.profiles.append(profile)
+        self.i += 1
+        if self.i == self.num_samples:
+            handles, labels = self.ax1.get_legend_handles_labels()
+            self.add_legend(handles, labels)
+            self.make_boxplot(labels)
 
-    def plot_MutsPerMol(self, log, upper_limit=10):
-        x = log.data.iloc[:upper_limit, 'Mutation_count']
-        y1 = log.data.iloc[:upper_limit, 'Modified_mutations_per_molecule']
-        self.ax2.plot(x, y1, color=self.colors[self.i])
-        y2 = log.data.iloc[:upper_limit, 'Untreated_mutations_per_molecule']
-        self.ax1.plot(x, y2, color=self.colors[self.i])
+    def plot_MutsPerMol(self, log, label, upper_limit=12):
+        x = log.data.loc[:upper_limit, 'Mutation_count']
+        y1 = log.data.loc[:upper_limit, 'Modified_mutations_per_molecule']
+        self.ax2.plot(x, y1, label=label)
+        y2 = log.data.loc[:upper_limit, 'Untreated_mutations_per_molecule']
+        self.ax1.plot(x, y2, label=label)
 
-    def plot_ReadLength(self, log, upper_limit=10):
+    def plot_ReadLength(self, log, label, upper_limit=12):
         width = 0.8/self.num_samples
         x = np.arange(upper_limit) - 0.4 - (width/2) + (width*self.i)
-        y1 = log.data.iloc[:upper_limit, 'Modified_read_length']
-        self.ax4.bar(x, y1, width)
-        y2 = log.data.iloc[:upper_limit, 'Untreated_read_length']
-        self.ax3.bar(x, y2, width)
+        y1 = log.data.loc[:upper_limit-1, 'Modified_read_length']
+        self.ax4.bar(x, y1, width, label=label)
+        y2 = log.data.loc[:upper_limit-1, 'Untreated_read_length']
+        self.ax3.bar(x, y2, width, label=label)
 
-    def add_to_legend(self, label):
-        pass
+    def add_legend(self, handles, labels):
+        self.ax1.legend(handles, labels, title="Samples", loc=1)
 
-    def make_boxplot(self, ax):
+    def make_boxplot(self, labels):
         cols = ["Modified_rate", "Untreated_rate"]
-        xticklabels = [label for label in self.labels]
         data = []
         for i, profile in enumerate(self.profiles):
             data.append(profile.data[cols].copy().assign(Sample=i+1))
         data = pd.concat(data)
         data = pd.melt(data, id_vars=['Sample'], var_name=['Rate'])
         ax = sns.boxplot(x="Sample", y="value",
-                         hue='Rate', data=data, orient='v', ax=ax)
+                         hue='Rate', data=data, orient='v', ax=self.ax6)
         ax.set(yscale='log',
                ylim=(0.0005, 0.5),
                ylabel="Mutation Rate",
-               xticklabels=xticklabels)
+               xticklabels=labels)
