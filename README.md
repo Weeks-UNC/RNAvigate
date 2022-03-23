@@ -12,7 +12,8 @@ Data types
 * PairMapper: pairmap.txt, allcorrs.txt
 * DanceMapper: profiles, rings, pairs, allcorrs, structure predictions
 * ShapeJumper: deletions.txt, .fasta
-* Base-pairing: .ct (.db forthcoming)
+* RNP-MaP: forthcoming
+* Base-pairing: .ct, .db
 * Secondary Structure diagrams: .xrna, .varna, .nsd, .cte
 * 3-D molecular structures: .pdb (.cif and .pdbx forthcoming)
 * annotations: forthcoming
