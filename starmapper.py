@@ -62,9 +62,11 @@ class Sample():
         self.parent = None
         self.data = {}  # stores profile, ij, and structure objects
         if ct is not None:
-            self.data["ct"] = CT("ct", ct)
+            filetype = ct.split(".")[-1]
+            self.data["ct"] = CT(filetype, ct)
         if compct is not None:
-            self.data["compct"] = CT("ct", compct)
+            filetype = ct.split(".")[-1]
+            self.data["compct"] = CT(filetype, compct)
         if ss is not None:
             self.data["ss"] = CT("ss", ss)
         if pdb is not None:

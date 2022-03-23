@@ -21,12 +21,15 @@ class CT(Data):
         """
         if givin an input file .ct construct the ct object automatically
         """
-        assert datatype in ["ct", "ss"], "Invalid datatype."
+        valid_datatypes = ["ct", "ss", "dot", "dbn", "bracket"]
+        assert datatype in valid_datatypes, "Invalid datatype."
         self.datatype = datatype
         if datatype == "ct":
             self.readCT(filepath, **kwargs)
         elif datatype == "ss":
             self.read_ss(filepath, **kwargs)
+        elif datatype in ["dbn", "dot", "bracket"]:
+            self.read_db(filepath, **kwargs)
 
     def __str__(self):
         """overide the default print statement for the object"""
@@ -39,10 +42,10 @@ class CT(Data):
         Args:
             structNum (int, optional): If ct file contains multiple structures,
                 uses the given structure. Defaults to 0.
-        filterNC (bool, optional): If True, will filter out non-canonical base
-            pairs. Defaults to False.
-        filterSingle (bool, optional): If True, will filter out any singleton
-            base pairs. Defaults to False.
+            filterNC (bool, optional): If True, will filter out non-canonical base
+                pairs. Defaults to False.
+            filterSingle (bool, optional): If True, will filter out any singleton
+                base pairs. Defaults to False.
         """
         num, seq, bp, mask = [], '', [], []
 
@@ -111,7 +114,66 @@ class CT(Data):
         if filterSingle:
             self.filterSingleton()
 
+    def read_db(self, db, filterNC=False, filterSingle=False):
+        """Generates CT object from a dot-bracket notation file. Lines
+        starting with ">" or "#" are ignored. First non-ignored line is the
+        sequence and the second is the structure.
+
+        Args:
+            db (file path): a dot-bracket structure file
+            filterNC (bool, optional): If True, will filter out non-canonical base
+            pairs. Defaults to False.
+            filterSingle (bool, optional): If True, will filter out any singleton
+            base pairs. Defaults to False.
+        """
+        self.name = db
+        header, seq, bp_str, pairs = "", "", "", []
+        with open(db) as f:
+            for line in f:
+                if line[0] in ">#":
+                    header += line
+                    continue
+                if all(nt in "guactGUACT" for nt in line.strip()):
+                    seq += line.strip()
+                elif all(s in ".][)(}{><" for s in line.strip()):
+                    bp_str += line.strip()
+        assert len(bp_str) == len(
+            seq), ".db: seq and bp strings are mismatched"
+        num = list(range(1, len(seq)+1))
+        bp = [0 for _ in num]
+        opens = {"[": [], "{": [], "(": [], "<": []}
+        sym_pair = {"]": "[", "}": "{", ")": "(", ">": "<"}
+        for i, sym in enumerate(bp_str):
+            if sym == ".":
+                continue
+            elif sym in "[{(<":
+                opens[sym].append(i)
+            elif sym in "]})>":
+                pair_i = opens[sym_pair[sym]].pop()
+                pairs.append((pair_i, i))
+
+        for i, j in pairs:
+            bp[i] = j + 1
+            bp[j] = i + 1
+        self.name = db
+        self.header = header
+        self.num = num
+        self.sequence = seq
+        self.ct = bp
+        self.mask = [0 for _ in seq]
+
+        if filterNC:
+            self.filterNC()
+        if filterSingle:
+            self.filterSingleton()
+
     def read_ss(self, ss):
+        """Generates CT object data from an ss file, including nucleotide x and
+        y coordinates.
+
+        Args:
+            ss (file path): path to xrna, varna, nsd, or cte file
+        """
         # get and check file extension, then read
         self.ss_type = ss.split('.')[-1].lower()
         valid_type = self.ss_type in ['xrna', 'varna', 'nsd', 'cte']
