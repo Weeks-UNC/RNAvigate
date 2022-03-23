@@ -7,13 +7,15 @@ class Profile(Data):
     def __init__(self, filepath, datatype="profile", component=None):
         self.datatype = datatype
         if datatype == "profile":
-            self.read_profile(filepath)
+            self.read_profile(filepath, '\t')
+        elif datatype == "RNP":
+            self.read_profile(filepath, ',')
         elif datatype == "dance":
             assert component is not None, "Must pass a dance component number"
             self.read_dance_reactivities(filepath, component)
 
-    def read_profile(self, profile):
-        self.data = pd.read_csv(profile, sep='\t')
+    def read_profile(self, profile, sep):
+        self.data = pd.read_csv(profile, sep=sep)
         sequence = ''.join(self.data["Sequence"].values)
         self.sequence = sequence.upper().replace("T", "U")
 
@@ -57,6 +59,10 @@ class Profile(Data):
         Returns:
             list of mpl colors: colors representing reactivity profile data
         """
+        if self.datatype == 'RNP':
+            cmap = ["silver", "limegreen"]
+            colors = np.array([cmap[val] for val in self.data["RNPsite"]])
+            return colors
         cmap = ['gray', 'black', 'orange', 'red']
         bins = [0, 0.4, 0.85]
         profcolors = np.full(fit_to.length, 0)

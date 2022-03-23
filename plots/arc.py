@@ -73,15 +73,16 @@ class AP(Plot):
     def plot_profile(self, ax, profile, ct):
         if profile is None:
             return
-        columns = ["Norm_profile", "Reactivity_profile", "Modified_rate"]
-        for column in columns:
-            if column in profile.data.columns:
-                break
+        column = {"RNP": "normedP",
+                  "profile": "Norm_profile"}[profile.datatype]
+        factor = {"RNP": 1,
+                  "profile": 5}[profile.datatype]
         near_black = (0, 0, 1 / 255.0)
         orange_thresh = 0.4
         red_thresh = 0.85
         am = profile.get_alignment_map(ct)
         values = np.full(ct.length, np.nan)
+        colormap = profile.get_colors(ct)
         nts = np.arange(ct.length)+1
         yerr = np.full(ct.length, np.nan)
         for i1, i2 in enumerate(am):
@@ -89,18 +90,7 @@ class AP(Plot):
                 values[i2] = profile.data.loc[i1, column]
                 if 'Norm_stderr' in profile.data.columns:
                     yerr[i2] = profile.data.loc[i1, 'Norm_stderr']
-        cindex = np.zeros(len(values), dtype=int)
-        # where values are not NaNs, add 1 to color index array
-        not_nan_values = values[~np.isnan(values)]
-        not_nans = np.ones(len(not_nan_values), dtype=int)
-        # where values excede orange threshold, add 1 to color index array
-        not_nans[np.array(not_nan_values > orange_thresh, dtype=bool)] += 1
-        # where values excede red threshold (0.85), add 1 to color index array
-        not_nans[np.array(not_nan_values > red_thresh, dtype=bool)] += 1
-        cindex[~np.isnan(values)] += not_nans
-        # create color map array based on cindex
-        colormap = np.array(["0.80", "black", "orange", "red"])[cindex]
         ax = self.get_ax()
-        ax.bar(nts, values*5, align="center",
+        ax.bar(nts, values*factor, align="center",
                width=1.05, color=colormap, edgecolor=colormap, linewidth=0.0,
                yerr=yerr, ecolor=near_black, capsize=1)
