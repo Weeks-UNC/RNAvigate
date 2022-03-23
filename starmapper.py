@@ -34,6 +34,7 @@ class Sample():
                  sample=None,
                  fasta=None,
                  profile=None,
+                 rnp=None,
                  ct=None,
                  compct=None,
                  ss=None,
@@ -48,6 +49,7 @@ class Sample():
                  dance_prefix=None):
         self.paths = {"fasta": fasta,
                       "profile": profile,
+                      "rnp": rnp,
                       "ct": ct,
                       "comptct": compct,
                       "ss": ss,
@@ -80,6 +82,8 @@ class Sample():
         else:
             self.has_profile = False
         no_profile_message = "{} requires a sequence from ShapeMapper profile."
+        if rnp is not None:
+            self.data["rnp"] = Profile(rnp, 'RNP')
         if log is not None:
             self.data["log"] = Log(log)
         if rings is not None:
@@ -236,7 +240,7 @@ class Sample():
 
     def make_ap(self, ct="ct", comp="compct", ij=None, ij2=None,
                 profile="profile", label="label", **kwargs):
-        array_ap([self], ct, comp, ij, ij2, profile, label, **kwargs)
+        return array_ap([self], ct, comp, ij, ij2, profile, label, **kwargs)
 
     def make_ap_multifilter(self, filters, ct="ct", comp="compct", ij2=None,
                             profile="profile", label="label"):
@@ -250,7 +254,7 @@ class Sample():
 
     def make_ss(self, ss="ss", ij=None, profile="profile", label="label",
                 **kwargs):
-        array_ss([self], ss, ij, profile, label, **kwargs)
+        return array_ss([self], ss, ij, profile, label, **kwargs)
 
     def make_ss_multifilter(self, filters, ss="ss", profile="profile",
                             label="label"):
@@ -323,9 +327,10 @@ def array_skyline(samples, **kwargs):
 
 def array_ap(samples, ct="ct", comp="compct", ij=None, ij2=None,
              profile="profile", label="label", **kwargs):
-    plot = AP(len(samples), samples[0].get_data("ct").length)
+    plot = AP(len(samples), samples[0].get_data(ct).length)
     for sample in samples:
-        sample.filter_ij(ij, ct, **kwargs)
+        if ij is not None:
+            sample.filter_ij(ij, ct, **kwargs)
         plot.add_sample(sample, ct=ct, comp=comp, ij=ij, ij2=ij2,
                         profile=profile, label=label)
     return plot
@@ -335,7 +340,8 @@ def array_ss(samples, ss="ss", ij=None, profile="profile", label="label",
              nt_color="profile", **kwargs):
     plot = SS(len(samples), samples[0].data[ss])
     for sample in samples:
-        sample.filter_ij(ij, "ss", **kwargs)
+        if ij is not None:
+            sample.filter_ij(ij, "ss", **kwargs)
         plot.add_sample(sample, ij=ij, profile=profile, label=label,
                         nt_color=nt_color)
     return plot
@@ -345,7 +351,8 @@ def array_mol(samples, ij=None, profile="profile", label="label", show=True,
               **kwargs):
     plot = Mol(len(samples), samples[0].data["pdb"])
     for sample in samples:
-        sample.filter_ij(ij, "pdb", **kwargs)
+        if ij is not None:
+            sample.filter_ij(ij, "pdb", **kwargs)
         plot.add_sample(sample, ij=ij, profile=profile, label=label)
     if show:
         plot.view.show()
@@ -365,7 +372,8 @@ def array_circle(samples, ct=None, comp=None, ij=None, ij2=None, profile=None,
                  label="label", **kwargs):
     plot = Circle(len(samples), samples[0].data["profile"].length)
     for sample in samples:
-        sample.filter_ij(ij, "profile", **kwargs)
+        if ij is not None:
+            sample.filter_ij(ij, "profile", **kwargs)
         plot.add_sample(sample, ct=ct, comp=comp, ij=ij, ij2=ij2,
                         profile=profile, label=label)
     return plot
