@@ -12,11 +12,13 @@ Data types
 * PairMapper: pairmap.txt, allcorrs.txt
 * DanceMapper: profiles, rings, pairs, allcorrs, structure predictions
 * ShapeJumper: deletions.txt, .fasta
-* RNP-MaP: forthcoming
 * Base-pairing: .ct, .db
 * Secondary Structure diagrams: .xrna, .varna, .nsd, .cte
-* 3-D molecular structures: .pdb (.cif and .pdbx forthcoming)
-* annotations: forthcoming
+* 3-D molecular structures: .pdb
+* Forthcoming:
+  * annotations
+  * RNP-MaP
+  * .cif and .pdbx formats
 
 Plot types
 ----------
@@ -29,6 +31,10 @@ Plot types
 * heatmaps with structure contour maps
 * ShapeMapper profile plots
 * ShapeMapper quality control plots
+* Forthcoming:
+  * 3D distance distributions
+  * Annotations on skyline, arc, circle, secondary structure, and 3D structure
+  * information funnel diagram
 
 Other features
 --------------
