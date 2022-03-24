@@ -47,3 +47,7 @@ sm = {"font.family": "sans-serif",
 rx_color = "red"
 bg_color = "blue"
 dc_color = "darkgoldenrod"
+
+
+# set default styles for plotting
+set_defaults()

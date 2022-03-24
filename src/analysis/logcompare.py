@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize_scalar
-from plots import Plot
+from ..plots import Plot
 
 
 class LogCompare():

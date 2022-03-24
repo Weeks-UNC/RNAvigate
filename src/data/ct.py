@@ -12,7 +12,7 @@
 import sys
 import numpy as np
 import xml.etree.ElementTree as xmlet
-from data.data import Data
+from .data import Data
 
 
 class CT(Data):

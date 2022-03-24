@@ -2,7 +2,7 @@
 
 import numpy as np
 import sys
-from data.ct import CT
+from .ct import CT
 
 
 class DotPlot:

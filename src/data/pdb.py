@@ -1,5 +1,5 @@
 import Bio.PDB
-from data.data import Data
+from .data import Data
 import numpy as np
 
 

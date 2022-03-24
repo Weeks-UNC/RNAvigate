@@ -1,11 +1,11 @@
-from data.data import Data
-from data.ct import CT
-from data.ij import IJ
-from data.dp import DotPlot
-from data.log import Log
-from data.pdb import PDB
-from data.profile import Profile
-from data.annotation import Annotation
+from .data import Data
+from .ct import CT
+from .ij import IJ
+from .dp import DotPlot
+from .log import Log
+from .pdb import PDB
+from .profile import Profile
+from .annotation import Annotation
 
 __all__ = ["CT", "IJ", "DotPlot", "Log",
            "PDB", "Profile", "Data", "Annotation"]

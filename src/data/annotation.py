@@ -1,6 +1,6 @@
 import re
 import numpy as np
-from data.data import Data
+from .data import Data
 import pandas as pd
 
 

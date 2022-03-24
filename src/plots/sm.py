@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from .plots import Plot
 from matplotlib.patches import Rectangle
-from styles import rx_color, bg_color, dc_color, apply_style, sm
+from ..styles import rx_color, bg_color, dc_color, apply_style, sm
 
 
 class SM(Plot):
