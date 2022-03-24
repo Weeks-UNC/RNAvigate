@@ -34,6 +34,7 @@ class Plot(ABC):
                 kwargs[key] = sample.get_data(kwargs[key])
         self.plot_data(**kwargs)
 
+    @classmethod
     def view_colormap(self, ax=None, ij=None, metric=None, ticks=None, values=None,
                       title=None, cmap=None):
         if ij == "ct_compare":
@@ -44,9 +45,7 @@ class Plot(ABC):
             cmap = mp.colors.ListedColormap([(0.6, 0.6, 0.6, 0.7),
                                              (0.15, 0.8, 0.6, 0.7),
                                              (0.6, 0.0, 1.0, 0.7)])
-        elif ij is None:
-            return
-        else:
+        elif ij is not None:
             metric = ij.metric
         if ticks is None:
             if metric == "Class":
@@ -89,6 +88,7 @@ class Plot(ABC):
             rows = math.ceil(self.length / cols)
         return rows, cols
 
+    @classmethod
     def add_sequence(self, ax, sequence, yvalue=0.005):
         # set font style and colors for each nucleotide
         font_prop = mp.font_manager.FontProperties(
