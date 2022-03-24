@@ -6,6 +6,7 @@ import os.path
 # scripts in JNBTools
 from data import *
 from plots import *
+from analysis import *
 from styles import set_defaults
 
 # set default styles for plotting
