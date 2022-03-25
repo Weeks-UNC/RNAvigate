@@ -18,7 +18,7 @@ class Mol(Plot):
         view.zoomTo()
         self.view = view
         self.i = 0
-        self.pass_through = []
+        self.pass_through = ["cmap"]
 
     def get_figsize(self):
         pass
@@ -30,12 +30,12 @@ class Mol(Plot):
         col = i % self.columns
         return (row, col)
 
-    def plot_data(self, ij, profile, label):
+    def plot_data(self, ij, profile, label, cmap=None):
         viewer = self.get_viewer()
         if ij is not None:
-            self.plot_ij(viewer, ij)
+            self.plot_ij(viewer, ij, cmap=cmap)
             _, ax = plt.subplots(1, figsize=(6, 2))
-            self.view_colormap(ax, ij)
+            self.view_colormap(ax, ij, cmap=cmap)
         self.set_colors(viewer, profile)
         print(f"viewer: {viewer}, {label}")
         self.i += 1
@@ -56,9 +56,9 @@ class Mol(Plot):
                           "color": color}
         self.view.addCylinder(cylinder_specs, viewer=viewer)
 
-    def plot_ij(self, viewer, ij):
+    def plot_ij(self, viewer, ij, cmap=None):
         window = ij.window
-        for i, j, color in zip(*ij.get_ij_colors()):
+        for i, j, color in zip(*ij.get_ij_colors(cmap=cmap)):
             color = "0x"+mpc.rgb2hex(color)[1:]
             for w in range(window):
                 io = i+w
