@@ -262,7 +262,7 @@ class IJ(Data):
         else:
             minimum, maximum = min_max
         columns = ["i_offset", "j_offset", metric]
-        if self.datatype == 'rings':
+        if self.metric in ['Zij', 'Statistic']:
             data = self.data.loc[self.data["mask"], columns+['Sign']].copy()
             data[metric] = data[metric]*data["Sign"]
         else:
