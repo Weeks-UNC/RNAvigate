@@ -15,9 +15,9 @@ Data types
 * Base-pairing: .ct, .db
 * Secondary Structure diagrams: .xrna, .varna, .nsd, .cte
 * 3-D molecular structures: .pdb
+* RNP-MaP
 * Forthcoming:
   * annotations
-  * RNP-MaP
   * .cif and .pdbx formats
 
 Plot types
@@ -35,6 +35,10 @@ Plot types
   * 3D distance distributions
   * Annotations on skyline, arc, circle, secondary structure, and 3D structure
   * information funnel diagram
+
+Analyses
+--------
+* Log Compare à la Steve
 
 Other features
 --------------
