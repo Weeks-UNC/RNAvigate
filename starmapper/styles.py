@@ -7,7 +7,7 @@ import seaborn as sns
 
 
 def set_defaults():
-    sns.set_context("talk")
+    sns.set_context("poster")
     sns.set_style("ticks")
     colors = [
         '#0092edff',  # Blue
