@@ -157,7 +157,7 @@ class IJ(Data):
                     if not true_so_far:
                         break
             if ss_only and true_so_far:
-                # TODO: which windows are ss vs. ds?
+                # TODO: which windows are ss vs. ds? At least 2 per window.
                 true_so_far = (ct.ct[i-1] == 0) and (ct.ct[j-1] == 0)
             if ds_only and true_so_far:
                 true_so_far = (ct.ct[i-1] != 0) and (ct.ct[j-1] != 0)
@@ -206,7 +206,10 @@ class IJ(Data):
         am = self.get_alignment_map(fit_to)
         i = np.array([am[i-1]+1 for i in self.data["i"].values])
         j = np.array([am[j-1]+1 for j in self.data["j"].values])
-        self.data['mask'] = (i != 0) & (j != 0)
+        mask = np.ones(len(i), dtype=bool)
+        for w in range(self.window):
+            mask = mask & ((i+w) != 0) & ((j+w) != 0)
+        self.data["mask"] = mask
         self.data['i_offset'] = i
         self.data['j_offset'] = j
 
