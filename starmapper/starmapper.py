@@ -330,14 +330,13 @@ class Sample():
         return array_qc([self], **kwargs)
 
     def make_skyline(self, dance=False):
-
         if dance:
             plot = array_skyline(self.dance)
             plot.ax.legend(title="Comp: Percent")
             plot.ax.set_title(f"{self.sample}: DANCE Reactivities")
             return plot
         else:
-            array_skyline([self])
+            plot = array_skyline([self])
             return plot
 
     def make_shapemapper(self, plots=["profile", "rates", "depth"]):
