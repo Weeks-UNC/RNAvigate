@@ -46,21 +46,21 @@ class PDB(Data):
                [int(nt)][atom].get_coord()]
         return xyz
 
-    def get_distance(self, i, j):
+    def get_distance(self, i, j, atom="O2'"):
         valid = [nt.get_id()[1]
                  for nt in self.pdb[0][self.chain].get_residues()]
         if i in valid and j in valid:
-            xi, yi, zi = self.get_xyz_coord(i)
-            xj, yj, zj = self.get_xyz_coord(j)
+            xi, yi, zi = self.get_xyz_coord(i, atom)
+            xj, yj, zj = self.get_xyz_coord(j, atom)
             distance = ((xi-xj)**2 + (yi-yj)**2 + (zi-zj)**2)**0.5
         else:
             distance = 1000
         return distance
 
-    def get_distance_matrix(self):
+    def get_distance_matrix(self, atom="O2'"):
         matrix = np.full((self.length, self.length), np.nan)
         for i in range(self.length):
             for j in range(i, self.length):
-                matrix[i, j] = self.get_distance(i+1, j+1)
+                matrix[i, j] = self.get_distance(i+1, j+1, atom)
                 matrix[j, i] = matrix[i, j]
         return matrix
