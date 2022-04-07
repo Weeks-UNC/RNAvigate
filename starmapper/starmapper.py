@@ -469,23 +469,24 @@ def array_ap(samples, ct="ct", comp="compct", ij=None, ij2=None,
 
 
 def array_ss(samples, ss="ss", ij=None, profile="profile", label="label",
-             nt_color="profile", **kwargs):
+             nt_color="profile", markers="o", ** kwargs):
     plot = SS(len(samples), samples[0].data[ss])
     for sample in samples:
         if ij is not None:
             sample.filter_ij(ij, "ss", **kwargs)
         plot.add_sample(sample, ij=ij, profile=profile, label=label,
-                        nt_color=nt_color)
+                        nt_color=nt_color, markers=markers)
     return plot
 
 
 def array_mol(samples, ij=None, profile="profile", label="label", show=True,
-              **kwargs):
+              nt_color="sequence", **kwargs):
     plot = Mol(len(samples), samples[0].data["pdb"])
     for sample in samples:
         if ij is not None:
             sample.filter_ij(ij, "pdb", **kwargs)
-        plot.add_sample(sample, ij=ij, profile=profile, label=label)
+        plot.add_sample(sample, ij=ij, profile=profile, label=label,
+                        nt_color=nt_color)
     if show:
         plot.view.show()
     else:

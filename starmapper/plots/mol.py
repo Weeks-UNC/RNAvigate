@@ -14,11 +14,11 @@ class Mol(Plot):
         with open(self.pdb.path, 'r') as pdb_file:
             pdb_str = pdb_file.read()
         view.addModel(pdb_str, 'pdb')
-        view.setStyle({"cartoon": {'color': 'grey'}})
+        view.setStyle({"cartoon": {'color': 'spectrum', 'opacity': 0.8}})
         view.zoomTo()
         self.view = view
         self.i = 0
-        self.pass_through = ["cmap"]
+        self.pass_through = ["cmap", "nt_color"]
 
     def get_figsize(self):
         pass
@@ -30,13 +30,13 @@ class Mol(Plot):
         col = i % self.columns
         return (row, col)
 
-    def plot_data(self, ij, profile, label, cmap=None):
+    def plot_data(self, ij, profile, label, cmap=None, nt_color="sequence"):
         viewer = self.get_viewer()
         if ij is not None:
             self.plot_ij(viewer, ij, cmap=cmap)
             _, ax = plt.subplots(1, figsize=(6, 2))
             self.view_colormap(ax, ij, cmap=cmap)
-        self.set_colors(viewer, profile)
+        self.set_colors(viewer, profile, nt_color)
         print(f"viewer: {viewer}, {label}")
         self.i += 1
 
@@ -65,11 +65,11 @@ class Mol(Plot):
                 jo = j+window-1-w
                 self.add_lines(io, jo, color, viewer)
 
-    def set_colors(self, viewer, profile):
-        if profile is None:
-            colors = self.pdb.get_colorby_sequence()
-        else:
-            colors = profile.get_colors(self.pdb)
+    def set_colors(self, viewer, profile, nt_color):
+        if nt_color in ["sequence", "profile"]:
+            colors = self.pdb.get_colors(nt_color, profile=profile)
+        elif nt_color == "position":
+            return
         color_selector = {}
         valid_pdbres = []
         for res in self.pdb.validres:

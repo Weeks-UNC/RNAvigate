@@ -48,28 +48,3 @@ class Profile(Data):
                                            self.data["Untreated_rate"])
         sequence = ''.join(self.data["Sequence"].values)
         self.sequence = sequence.upper().replace("T", "U")
-
-    def get_colors(self, fit_to):
-        """Returns list of colors representing reactivity profile, matched to
-        the given sequence.
-
-        Args:
-            fit_to (Data): Data object to match.
-
-        Returns:
-            list of mpl colors: colors representing reactivity profile data
-        """
-        if self.datatype == 'RNP':
-            cmap = ["silver", "limegreen"]
-            colors = np.array([cmap[val] for val in self.data["RNPsite"]])
-            return colors
-        cmap = ['gray', 'black', 'orange', 'red']
-        bins = [0, 0.4, 0.85]
-        profcolors = np.full(fit_to.length, 0)
-        alignment_map = self.get_alignment_map(fit_to)
-        for i, i2 in enumerate(alignment_map):
-            if i2 != -1:
-                x = self.data.loc[i, "Norm_profile"]
-                profcolors[i2] = sum([b < x for b in bins])
-        colors = np.array([cmap[val] for val in profcolors])
-        return colors

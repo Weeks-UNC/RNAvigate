@@ -77,12 +77,9 @@ class AP(Plot):
                   "profile": "Norm_profile"}[profile.datatype]
         factor = {"RNP": 1,
                   "profile": 5}[profile.datatype]
-        near_black = (0, 0, 1 / 255.0)
-        orange_thresh = 0.4
-        red_thresh = 0.85
         am = profile.get_alignment_map(ct)
         values = np.full(ct.length, np.nan)
-        colormap = profile.get_colors(ct)
+        colormap = ct.get_colors("profile", profile=profile)
         nts = np.arange(ct.length)+1
         yerr = np.full(ct.length, np.nan)
         for i1, i2 in enumerate(am):
@@ -93,4 +90,4 @@ class AP(Plot):
         ax = self.get_ax()
         ax.bar(nts, values*factor, align="center",
                width=1.05, color=colormap, edgecolor=colormap, linewidth=0.0,
-               yerr=yerr, ecolor=near_black, capsize=1)
+               yerr=yerr, ecolor=(0, 0, 1 / 255.0), capsize=1)

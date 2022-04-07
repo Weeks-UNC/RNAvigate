@@ -1,5 +1,6 @@
 from .plots import Plot
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 class SS(Plot):
@@ -18,18 +19,20 @@ class SS(Plot):
             ax.axis("off")
             ax.set(xlim=[xmin-xbuffer, xmax+xbuffer],
                    ylim=[ymin-3*ybuffer, ymax+ybuffer])
-        self.pass_through = ["nt_color"]
+        self.pass_through = ["nt_color", "markers"]
 
-    def plot_data(self, ij, profile, label, nt_color="sequence"):
+    def plot_data(self, ij, profile, label, nt_color="sequence", markers="o"):
         ax = self.get_ax()
         self.plot_structure(ax)
-        self.plot_sequence(ax, profile, nt_color)
+        self.plot_sequence(ax, profile, nt_color, markers)
         if ij is not None:
             self.plot_ij(ax, ij)
             ax_ins1 = ax.inset_axes([0.15, 0.05, 0.7, 0.05])
             self.view_colormap(ax_ins1, ij)
-        ax.set_title(label, fontsize=30)
+        ax.set_title(label)
         self.i += 1
+        if self.i == self.length:
+            plt.tight_layout()
 
     def get_figsize(self):
         ss = self.structure
@@ -37,9 +40,9 @@ class SS(Plot):
         xmax = max(ss.xcoordinates)
         ymin = min(ss.ycoordinates)
         ymax = max(ss.ycoordinates)
-        scale = 0.5
+        scale = 0.55
         width = (xmax-xmin)*scale
-        height = (ymax-ymin)*scale*1.05
+        height = (ymax-ymin)*scale
         return (width*self.columns, height*self.rows)
 
     def plot_structure(self, ax):
@@ -55,29 +58,29 @@ class SS(Plot):
         ss = self.structure
         if isinstance(nt_color, list) and len(nt_color) == self.length["ss"]:
             self.colors = np.array(nt_color)
-        elif nt_color == "sequence":
-            nt_color = ss.get_colorby_sequence()
-        elif nt_color == "position":
-            nt_color = ss.get_colorby_position()
-        elif nt_color == "profile":
-            nt_color = profile.get_colors(ss)
+        elif nt_color in ["sequence", "position", "profile", "structure"]:
+            nt_color = ss.get_colors(nt_color, profile=profile,
+                                     ct=self.structure)
+        elif nt_color is None:
+            return
         else:
             print("Invalid colors: choices are profile, sequence, position " +
                   "or a list of length equal to structure sequence. " +
                   "Defaulting to sequence.")
-            nt_color = ss.get_colorby_sequence()
+            nt_color = ss.get_colors("sequence")
         if markers == "sequence":
+            ax.scatter(ss.xcoordinates, ss.ycoordinates, marker="o",
+                       c="w", ec="k", lw=0.5, s=225)
             for nuc in "GUAC":
                 mask = [nt == nuc for nt in ss.sequence]
                 xcoords = ss.xcoordinates[mask]
                 ycoords = ss.ycoordinates[mask]
-                marker = "$"+nuc+"}$"
-                marker = markers
-                ax.scatter(xcoords, ycoords, marker=marker,
-                           c=nt_color[mask])
+                marker = "$\mathsf{"+nuc+"}$"
+                ax.scatter(xcoords, ycoords, marker=marker, s=10**2,
+                           c=nt_color[mask], lw=1)
         else:
             ax.scatter(ss.xcoordinates, ss.ycoordinates, marker=markers,
-                       c=nt_color)
+                       c=nt_color, s=225)
 
     def add_lines(self, ax, i, j, color, linewidth=1.5):
         ss = self.structure

@@ -75,12 +75,42 @@ class Data():
             return alignment_map, i
         return alignment_map
 
-    def get_colorby_sequence(self, colors='new'):
-        seq = self.sequence
-        colors = np.array([get_nt_color(nt.upper(), colors) for nt in seq])
-        return colors
-
-    def get_colorby_position(self, cmap='rainbow'):
-        cmap = plt.get_cmap(cmap)
-        colors = np.array([cmap(n/self.length) for n in range(self.length)])
-        return colors
+    def get_colors(self, source, nt_colors='new', pos_cmap='turbo',
+                   profile=None, ct=None):
+        if source == "sequence":
+            seq = self.sequence
+            colors = np.array([get_nt_color(nt.upper(), nt_colors)
+                               for nt in seq])
+            return colors
+        elif source == "position":
+            cmap = plt.get_cmap(pos_cmap)
+            colors = np.array([cmap(n/self.length)
+                               for n in range(self.length)])
+            return colors
+        elif source == "profile":
+            assert type(profile).__name__ == "Profile", "Invalid profile"
+            if profile.datatype == 'RNP':
+                cmap = np.array(["silver", "limegreen"])
+                prof_colors = cmap[profile.data["RNPsite"]]
+            elif profile.datatype == 'profile':
+                cmap = np.array(['gray', 'black', 'orange', 'red'])
+                bins = np.array([0, 0.4, 0.85])
+                with np.errstate(invalid='ignore'):  # always false for nans
+                    prof_colors = cmap[[sum(p > bins)
+                                        for p in profile.data.Norm_profile]]
+            colors = np.full(self.length, 'gray', dtype='<U8')
+            am = profile.get_alignment_map(self)
+            for i, i2 in enumerate(am):
+                if i2 != -1:
+                    colors[i2] = prof_colors[i]
+            return colors
+        elif source == "structure":
+            assert type(ct).__name__ == "CT", "Invalid ct"
+            cmap = np.array(['C0', 'C1'])
+            ct_colors = cmap[[int(nt == 0) for nt in ct.ct]]
+            colors = np.full(self.length, 'gray', dtype='<U8')
+            am = ct.get_alignment_map(self)
+            for i, i2 in enumerate(am):
+                if i2 != -1:
+                    colors[i2] = ct_colors[i]
+            return colors

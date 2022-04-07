@@ -44,7 +44,7 @@ class Circle(Plot):
         # self.add_sequence(ax, ct.sequence, yvalue=0.5)
         # self.plot_profile(ax, profile, ct)
         ax.set_title(label)
-        nuc_colors = profile.get_colors(profile)
+        nuc_colors = profile.get_colors("profile", profile=profile)
         ax.scatter(self.x, self.y, marker='o', c=nuc_colors)
         self.i += 1
 

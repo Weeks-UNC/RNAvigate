@@ -45,7 +45,7 @@ class SM(Plot):
         near_black = (0, 0, 1 / 255.0)
         orange_thresh = 0.4
         red_thresh = 0.85
-        colors = profile.get_colors(profile)
+        colors = profile.get_colors("profile", profile=profile)
         sample = profile.data["Norm_profile"].copy()
         sample[np.isnan(sample)] = -1
         ax.bar(profile.data['Nucleotide'], sample, align="center",
