@@ -19,6 +19,7 @@ Data types
 * Forthcoming:
   * annotations
   * .cif and .pdbx formats
+  * Shannon entropy
 
 Plot types
 ----------
@@ -35,6 +36,7 @@ Plot types
   * 3D distance distributions
   * Annotations on skyline, arc, circle, secondary structure, and 3D structure
   * information funnel diagram
+  * Profile, windowed shape and shannon, arcplot (classic)
 
 Analyses
 --------
