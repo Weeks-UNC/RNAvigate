@@ -59,7 +59,7 @@ class IJ(Data):
                 'Metric': 'YlGnBu',
                 'Distance': 'jet',
                 'Percentile': 'YlGnBu',
-                'Probability': 'inferno_r'
+                'Probability': 'viridis_r'
                 }[self.metric]
         cmap = plt.get_cmap(cmap)
         cmap = cmap(np.arange(cmap.N))
@@ -91,9 +91,11 @@ class IJ(Data):
     def read_probs(self, probs):
         with open(probs, 'r') as file:
             self.header = file.readline()
+        lengths_match = int(self.header.strip()) == self.length
+        assert lengths_match, "DP and sequence are different lengths"
         self.window = 1
-        data = pd.read_csv(probs, sep='\t', header=1)
-        data["Probability"] = 10 ** (-data["-log10(Probability)"])
+        data = pd.read_table(probs, header=1, names=['i', 'j', 'log10p'])
+        data["Probability"] = 10 ** (-data["log10p"])
         self.data = data
 
     def read_rings(self, rings):
@@ -327,3 +329,20 @@ class IJ(Data):
                     distance += pdb.get_distance(io, jo)/(self.window**2)
             distances.append(distance)
         self.data["Distance"] = distances
+
+    def set_entropy(self, printOut=False, toFile=None):
+        assert self.datatype == "probs", "IJ must be a pairing probability .dp"
+        self.data.eval('nlogn = log10p * 10 ** ( - log10p )', inplace=True)
+        entropy = np.zeros(self.length)
+        for i in range(self.length):
+            mask = (self.data["i"] == i+1) | (self.data["j"] == i+1)
+            entropy[i] = self.data.loc[mask, "nlogn"].sum()
+        # catch rounding errors:
+        entropy[np.where(entropy < 0)] = 0
+        if printOut:
+            print(*[f"{i+1} {s}" for i, s in enumerate(entropy)], sep="\n")
+        if toFile:
+            with open(toFile) as outf:
+                for i, s in enumerate(entropy):
+                    outf.write(f"{i+1}\t{s}\n")
+        self.entropy = entropy

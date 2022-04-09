@@ -5,9 +5,9 @@ from matplotlib.collections import PatchCollection
 
 
 class AP(Plot):
-    def __init__(self, num_samples, nt_length):
+    def __init__(self, num_samples, nt_length, rows=None, cols=None):
         self.nt_length = nt_length
-        super().__init__(num_samples)
+        super().__init__(num_samples, rows=rows, cols=cols)
         for i in range(self.length):
             ax = self.get_ax(i)
             ax.set_aspect('equal')
@@ -20,9 +20,10 @@ class AP(Plot):
             height = min(300, width/2)
             ax.set(xlim=(0, width),
                    ylim=(-height-5, height+1))
+        self.pass_through = ["ax"]
 
-    def plot_data(self, ct, comp, ij, ij2, profile, label):
-        ax = self.get_ax()
+    def plot_data(self, ct, comp, ij, ij2, profile, label, ax=None):
+        ax = self.get_ax(ax)
         if ij is not None:
             ax_ins1 = ax.inset_axes([0.05, 0.2, 0.3, 0.03])
             self.view_colormap(ax_ins1, ij)
@@ -87,7 +88,6 @@ class AP(Plot):
                 values[i2] = profile.data.loc[i1, column]
                 if 'Norm_stderr' in profile.data.columns:
                     yerr[i2] = profile.data.loc[i1, 'Norm_stderr']
-        ax = self.get_ax()
         ax.bar(nts, values*factor, align="center",
                width=1.05, color=colormap, edgecolor=colormap, linewidth=0.0,
                yerr=yerr, ecolor=(0, 0, 1 / 255.0), capsize=1)

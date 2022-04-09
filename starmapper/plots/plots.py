@@ -6,9 +6,9 @@ from abc import ABC, abstractmethod, abstractproperty
 
 
 class Plot(ABC):
-    def __init__(self, num_samples):
+    def __init__(self, num_samples, rows=None, cols=None):
         self.length = num_samples
-        self.rows, self.columns = self.get_rows_columns()
+        self.rows, self.columns = self.get_rows_columns(rows, cols)
         figsize = self.get_figsize()
         self.fig, self.axes = plt.subplots(self.rows, self.columns,
                                            figsize=figsize, squeeze=False)
@@ -28,9 +28,7 @@ class Plot(ABC):
                 self.add_sample(s, **kwargs)
             return
         for key in kwargs.keys():
-            if key in self.pass_through:
-                pass
-            else:
+            if key not in self.pass_through:
                 kwargs[key] = sample.get_data(kwargs[key])
         self.plot_data(**kwargs)
 
@@ -75,9 +73,13 @@ class Plot(ABC):
         ax.set_yticks([])
 
     def get_rows_columns(self, rows=None, cols=None):
-        if isinstance(rows, int) and cols is None:
+        has_rows = isinstance(rows, int)
+        has_cols = isinstance(cols, int)
+        if has_rows and has_cols:
+            return rows, cols
+        elif has_rows:
             cols = math.ceil(self.length / rows)
-        elif isinstance(cols, int) and rows is None:
+        elif has_cols:
             rows = math.ceil(self.length / cols)
         elif self.length < 10:
             rows, cols = [(0, 0), (1, 1), (1, 2), (1, 3), (2, 2),
