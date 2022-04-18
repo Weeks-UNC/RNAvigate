@@ -48,3 +48,46 @@ class Profile(Data):
                                            self.data["Untreated_rate"])
         sequence = ''.join(self.data["Sequence"].values)
         self.sequence = sequence.upper().replace("T", "U")
+
+    def set_dms_profile(self):
+        """Perform normalization of data based on DMS reactivities (AC seperate
+        from GU), and replace data columns "Norm_profile" and "Norm_stderr"
+        """
+        profile = self.data["HQ_profile"]
+        error = self.data["HQ_stderr"]
+        # initialize the profile and error array
+        dms_profile = np.array(profile)
+        with np.errstate(invalid='ignore'):
+            norm_error = np.zeros(error.shape)
+            mask = profile > 0
+            norm_error[mask] = (error[mask]/profile[mask])**2
+
+        def get_norm_factors(data):
+            finite_data = data[np.isfinite(data)]
+            lower, upper = np.percentile(finite_data, [90., 99.])  # 99
+            mask = (finite_data >= lower) & (finite_data <= upper)
+            norm_set = finite_data[mask]
+            average = np.mean(norm_set)
+            std = np.std(norm_set)
+            return average, std/np.sqrt(len(norm_set))
+
+        ac_mask = np.isin(self.data["Sequence"], ['A', 'C'])
+        ac_norm_factor, ac_norm_error = get_norm_factors(dms_profile[ac_mask])
+        gu_mask = np.isin(self.data["Sequence"], ['G', 'U'])
+        gu_norm_factor, gu_norm_error = get_norm_factors(dms_profile[gu_mask])
+        dms_profile[ac_mask] /= ac_norm_factor
+        dms_profile[gu_mask] /= gu_norm_factor
+        if norm_error is not None:
+            norm_error[ac_mask] += (ac_norm_error/ac_norm_factor)**2
+            norm_error[gu_mask] += (gu_norm_error/gu_norm_factor)**2
+            for mask in [ac_mask, gu_mask]:
+                norm_error[mask] = np.sqrt(norm_error[mask])
+                norm_error[mask] *= np.abs(dms_profile[mask])
+
+        norm_factors = {'G': gu_norm_factor,
+                        'U': gu_norm_factor,
+                        'A': ac_norm_factor,
+                        'C': ac_norm_factor}
+
+        self.data["Norm_profile"] = dms_profile
+        self.data["Norm_stderr"] = norm_error
