@@ -14,7 +14,7 @@ class LinReg(Plot):
         self.labels = []
         self.pass_through = ["colorby"]
 
-    def get_rows_columns(self):
+    def get_rows_columns(self, rows=None, cols=None):
         return (self.length, self.length)
 
     def get_figsize(self):
