@@ -5,7 +5,7 @@ from .profile import Profile
 import matplotlib as mp
 import matplotlib.pyplot as plt
 import numpy as np
-from operator import ge, le, gt, lt
+from operator import ge, le, gt, lt, eq, ne
 
 
 class IJ(Data):
@@ -122,23 +122,26 @@ class IJ(Data):
         self.window = int(window)
         self.data = pd.read_csv(pairs, sep='\t', header=1)
 
-    def mask_on_sequence(self, compliment_only, nts):
+    def mask_on_sequence(self, compliment_only, nts, return_mask=False):
         mask = []
-        comp = {'A': 'U', 'U': 'A', 'G': 'CT', 'C': 'G'}
+        comp = {'A': 'U', 'U': 'AG', 'G': 'CU', 'C': 'G'}
         for _, i, j in self.data[["i", "j"]].itertuples():
-            t = True
+            keep = []
             for w in range(self.window):
-                seq_iw = self.sequence[i+w-1].upper()
-                seq_jw = self.sequence[j-w+2].upper()
+                i_nt = self.sequence[i+w-1].upper()
+                j_nt = self.sequence[j-w+1].upper()
                 if compliment_only:
-                    t = t and seq_iw in comp[seq_jw]
+                    keep.append(i_nt in comp[j_nt])
                 if nts is not None:
-                    t = t and seq_iw in nts and seq_jw in nts
-            mask.append(t)
-        self.update_mask(mask)
+                    keep.append(i_nt in nts and j_nt in nts)
+            mask.append(all(keep))
+        if return_mask:
+            return mask
+        else:
+            self.update_mask(mask)
 
-    def mask_on_ct(self, ct, cdAbove=None, cdBelow=None,
-                   ss_only=False, ds_only=False, paired_only=False):
+    def mask_on_ct(self, ct, cdAbove=None, cdBelow=None, ss_only=False,
+                   ds_only=False, paired_only=False, return_mask=False):
         if isinstance(ct, list):
             for each in ct:
                 self.mask_on_ct(each, cdAbove, cdBelow, ss_only, ds_only,
@@ -174,7 +177,10 @@ class IJ(Data):
                 if cdBelow is not None:
                     true_so_far = cd < cdBelow
             mask.append(true_so_far)
-        self.update_mask(mask)
+        if return_mask:
+            return mask
+        else:
+            self.update_mask(mask)
 
     def mask_on_profile(self, profile, profAbove=None, profBelow=None):
         alignment_map = self.get_alignment_map(profile)
@@ -184,8 +190,8 @@ class IJ(Data):
             index_i = alignment_map[i-1]
             index_j = alignment_map[j-1]
             if (index_i != -1) and (index_j != -1):
-                prof_i = norm_prof[index_i]
-                prof_j = norm_prof[index_j]
+                prof_i = np.median(norm_prof[index_i:index_i+self.window])
+                prof_j = np.median(norm_prof[index_j:index_j+self.window])
                 if profAbove is not None:
                     keep_ij = (prof_i >= profAbove) and (prof_j >= profAbove)
                 if profBelow is not None:
@@ -255,10 +261,20 @@ class IJ(Data):
         if negative_only:
             self.update_mask(self.data["Sign"] == -1)
         for key in kwargs.keys():
-            try:
+            if key in self.data.keys():
                 self.update_mask(self.data[key] > kwargs[key])
-            except KeyError:
-                print(f"{key} is invalid column of {self.datatype} dataFrame")
+            elif "_" in key:
+                key2, comparison = key.rsplit("_", 1)
+                operators = {"ge": ge, "le": le,
+                             "gt": gt, "lt": lt,
+                             "eq": eq, "ne": ne}
+                if key2 in self.data.keys() and comparison in operators.keys():
+                    operator = operators[comparison]
+                    self.update_mask(operator(self.data[key2], kwargs[key]))
+                else:
+                    print(f"{key}={kwargs[key]} is not a valid filter.")
+            else:
+                print(f"{key}={kwargs[key]} is not a valid filter.")
 
     def get_ij_colors(self, min_max=None, cmap=None):
         metric = self.metric
@@ -317,17 +333,16 @@ class IJ(Data):
 
     def set_3d_distances(self, pdb):
         alignment_map = self.get_alignment_map(pdb)
-        distances = []
-        for _, i, j in self.data[["i", "j"]].itertuples():
-            # for windows calculate average of window*window distances
-            # e.g. window==3 results in average of nine distances
-            distance = 0
-            for iw in range(self.window):
-                for jw in range(self.window):
-                    io = alignment_map[i+iw-1]+1
-                    jo = alignment_map[j+jw-1]+1
-                    distance += pdb.get_distance(io, jo)/(self.window**2)
-            distances.append(distance)
+        distance_matrix = pdb.get_distance_matrix()
+        i = self.data["i"].values
+        j = self.data["j"].values
+        distances = np.zeros(len(i))
+        pairs = self.window**2
+        for iw in range(self.window):
+            for jw in range(self.window):
+                io = alignment_map[i+iw-1]
+                jo = alignment_map[j+jw-1]
+                distances += distance_matrix[io, jo]/pairs
         self.data["Distance"] = distances
 
     def set_entropy(self, printOut=False, toFile=None):
