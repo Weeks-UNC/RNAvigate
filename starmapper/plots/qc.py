@@ -56,7 +56,7 @@ class QC(Plot):
         self.profiles = []
         plt.tight_layout()
 
-    def get_rows_columns(self):
+    def get_rows_columns(self, rows=None, cols=None):
         if self.length == 1:
             return (1, 3)
         else:
