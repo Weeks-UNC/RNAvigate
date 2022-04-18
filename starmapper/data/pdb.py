@@ -47,9 +47,7 @@ class PDB(Data):
         return xyz
 
     def get_distance(self, i, j, atom="O2'"):
-        valid = [nt.get_id()[1]
-                 for nt in self.pdb[0][self.chain].get_residues()]
-        if i in valid and j in valid:
+        if i in self.validres and j in self.validres:
             xi, yi, zi = self.get_xyz_coord(i, atom)
             xj, yj, zj = self.get_xyz_coord(j, atom)
             distance = ((xi-xj)**2 + (yi-yj)**2 + (zi-zj)**2)**0.5
@@ -58,9 +56,16 @@ class PDB(Data):
         return distance
 
     def get_distance_matrix(self, atom="O2'"):
-        matrix = np.full((self.length, self.length), np.nan)
-        for i in range(self.length):
-            for j in range(i, self.length):
-                matrix[i, j] = self.get_distance(i+1, j+1, atom)
-                matrix[j, i] = matrix[i, j]
+        if hasattr(self, 'distance_matrix'):
+            return self.distance_matrix
+        x = np.full(self.length, np.nan)
+        y = np.full(self.length, np.nan)
+        z = np.full(self.length, np.nan)
+        for i in self.validres:
+            x[i-1], y[i-1], z[i-1] = self.get_xyz_coord(i, atom)
+        a = x - x[:, np.newaxis]
+        b = y - y[:, np.newaxis]
+        c = z - z[:, np.newaxis]
+        matrix = np.sqrt(a*a + b*b + c*c)
+        self.distance_matrix = matrix
         return matrix
