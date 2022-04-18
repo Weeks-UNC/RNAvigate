@@ -8,6 +8,7 @@ from .mol import Mol
 from .circle import Circle
 from .linreg import LinReg
 from .plots import Plot
+from .disthist import DistHist
 
 __all__ = ["Skyline", "QC", "AP", "SM", "Heatmap", "SS", "Mol",
-           "LinReg", "Circle", "Plot"]
+           "LinReg", "Circle", "Plot", "DistHist"]
