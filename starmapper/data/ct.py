@@ -105,7 +105,7 @@ class CT(Data):
         self.header = header
         self.num = num
         self.sequence = seq
-        self.ct = bp
+        self.ct = np.array(bp)
         self.mask = mask
 
         if filterNC:

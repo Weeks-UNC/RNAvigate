@@ -73,7 +73,7 @@ class Data():
                 i += 1
         if full:
             return alignment_map, i
-        return alignment_map
+        return np.array(alignment_map)
 
     def get_colors(self, source, nt_colors='new', pos_cmap='turbo',
                    profile=None, ct=None):
