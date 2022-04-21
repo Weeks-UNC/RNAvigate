@@ -26,12 +26,13 @@ class IJ(Data):
                      "pairs": self.read_pairs
                      }[datatype]
         read_file(filepath)
+        self.columns = self.data.columns
 
     @property
     def min_max(self):
         min_max = {'Percentile': [0.98, 1.0],
                    "Statistic": [-100, 100],
-                   'Zij': [-20, 20],
+                   'Zij': [-8, 8],
                    "Class": [0, 2],
                    "Metric": [0, 0.001],
                    'Distance': [10, 80],
@@ -233,6 +234,7 @@ class IJ(Data):
                all_pairs=False,
                exclude_nts=None, isolate_nts=None,
                positive_only=False, negative_only=False,
+               resolve_conflicts=None,
                **kwargs):
         self.set_mask_offset(fit_to)
         if fit_to.datatype == 'pdb':
@@ -247,7 +249,10 @@ class IJ(Data):
             message = "Profile filters require a profile object."
             assert isinstance(profile, Profile), message
             self.mask_on_profile(profile, profAbove, profBelow)
-        if cdAbove is not None or cdBelow is not None or ss_only or ds_only or paired_only:
+        mask_on_ct = any([cdAbove is not None,
+                          cdBelow is not None,
+                          ss_only, ds_only, paired_only])
+        if mask_on_ct:
             self.mask_on_ct(ct, cdAbove, cdBelow,
                             ss_only, ds_only, paired_only)
         if compliments_only or nts is not None:
@@ -275,6 +280,8 @@ class IJ(Data):
                     print(f"{key}={kwargs[key]} is not a valid filter.")
             else:
                 print(f"{key}={kwargs[key]} is not a valid filter.")
+        if resolve_conflicts is not None:
+            self.resolve_conflicts(resolve_conflicts)
 
     def get_ij_colors(self, min_max=None, cmap=None):
         metric = self.metric
@@ -312,17 +319,14 @@ class IJ(Data):
                 colors.append(cmap(datum))
         return i_list, j_list, colors
 
-    def print_new_file(self, outfile=None, **kwargs):
+    def print_new_file(self, outfile=None):
         data = self.data.copy()
         data = data[data["mask"]]
         data["i"] = data["i_offset"]
         data["j"] = data["j_offset"]
         if "Sign" in data.columns:
             data.rename({"Sign": "+/-"}, inplace=True)
-        exclude_columns = ["i_offset", "j_offset",
-                           "mask", "Distance", "Percentile"]
-        columns = [col for col in data.columns if col not in exclude_columns]
-        csv = data.to_csv(columns=columns, sep='\t', index=False,
+        csv = data.to_csv(columns=self.columns, sep='\t', index=False,
                           line_terminator='\n')
         if outfile is not None:
             with open(outfile, 'w') as out:
@@ -361,3 +365,93 @@ class IJ(Data):
                 for i, s in enumerate(entropy):
                     outf.write(f"{i+1}\t{s}\n")
         self.entropy = entropy
+
+    def resolve_conflicts(self, metric=None):
+        """Resolves conflicting windows using the Maximal Weighted Independent
+        Set. The weights are taken from the metric value. The graph is first
+        broken into components to speed up the identification of the MWIS. Then
+        the mask is updated to only include the MWIS.
+        """
+        def get_components(graph):
+            """Using DFS, returns a list of component subgraphs of graph."""
+            def dfs(key, value, component):
+                """Depth first seach to identify a component."""
+                visited[key] = True
+                component[key] = value
+                for v in value:
+                    if not visited[v]:
+                        component = dfs(v, graph[v], component)
+                return dict(component)
+
+            components = []
+            visited = {key: False for key in graph.keys()}
+            for key, value in graph.items():
+                if not visited[key]:
+                    components.append(dfs(key, value, {}))
+            return components
+
+        def graphSets(graph, node_weights):
+            """Finds the Maximal Weighted Independent Set of a graph."""
+            # Base Case - Given Graph has no nodes
+            if(len(graph) == 0):
+                return []
+            # Select a vertex from the graph
+            current_vertex = list(graph.keys())[0]
+            # Create a copy of the graph and remove the current vertex
+            new_graph = dict(graph)
+            del new_graph[current_vertex]
+            # Case 1 - excluding current Vertex
+            case_1 = graphSets(new_graph, node_weights)
+            # Case 2 - including current Vertex, and excluding neighbors
+            for neighbor in graph[current_vertex]:
+                if(neighbor in new_graph):
+                    del new_graph[neighbor]
+            case_2 = [current_vertex] + graphSets(new_graph, node_weights)
+            # Our final result is the one which has highest weight, return it
+            weight_1 = sum(node_weights[node] for node in case_1)
+            weight_2 = sum(node_weights[node] for node in case_2)
+            if(weight_1 > weight_2):
+                return case_1
+            return case_2
+
+        # Building the graph ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        if metric is None:
+            metric = self.metric
+        # a list of indices relating back to the original mask
+        indices = np.where(self.data["mask"])[0]
+        # the correlation data to be considered
+        data = self.data.loc[indices].copy()
+        window = self.window
+        # node_weight[i from indices] = metric value for that correlation
+        node_weights = {}
+        # graph[i from indices] = list of indices of conflicting correlations
+        graph = {}
+        # for each considered correlation, record conflicts and node weights
+        for v1, i, j, g in data[["i", "j", metric]].itertuples():
+            if v1 not in graph:
+                graph[v1] = []
+            node_weights[v1] = g  # recording the node weight
+            # conflicts = indices of all overlapping, but not parallel corrs
+            conflicts = np.where(((abs(data["i"] - i) < window) |
+                                  (abs(data["j"] - i) < window) |
+                                  (abs(data["i"] - j) < window) |
+                                  (abs(data["j"] - j) < window)) &
+                                 ((data["j"] - j) != (i - data["i"])))[0]
+            # adding conflicts to graph dictionary
+            for conflict in conflicts:
+                v2 = indices[conflict]
+                if v2 > v1:  # prevents self-loop and parallel edges
+                    if v2 not in graph:
+                        graph[v2] = []
+                    graph[v1].append(v2)
+                    graph[v2].append(v1)
+        # Finding the maximum set ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        # Split the graph into components. Get the max set for each component.
+        # The graph's max set is the same as the union of these max sets.
+        max_set = []
+        for component in get_components(graph):
+            max_set += graphSets(component, node_weights)
+        # set these indices to true and update the original mask
+        new_mask = np.zeros(len(self.data), dtype=bool)
+        new_mask[max_set] = True
+        self.update_mask(new_mask)
