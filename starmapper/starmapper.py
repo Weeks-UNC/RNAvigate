@@ -3,7 +3,7 @@
 # general python packages
 import os.path
 
-# scripts in JNBTools
+# scripts in StarMapper
 from .data import *
 from .plots import *
 from .analysis import *
