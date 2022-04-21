@@ -37,7 +37,11 @@ class Mol(Plot):
             _, ax = plt.subplots(1, figsize=(6, 2))
             self.view_colormap(ax, ij, cmap=cmap)
         self.set_colors(viewer, profile, nt_color)
-        print(f"viewer: {viewer}, {label}")
+        self.view.addLabel(label,
+                           {"position": {"x": 400, "y": 50, "z": 0},
+                            "useScreen": True, "alignment": "center",
+                            "fontColor": "black", "backgroundColor": "white",
+                            "fontSize": 28}, viewer=viewer)
         self.i += 1
 
     def add_lines(self, i, j, color, viewer):
