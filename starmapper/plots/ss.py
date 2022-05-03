@@ -8,10 +8,10 @@ class SS(Plot):
         self.structure = structure
         xmin = min(self.structure.xcoordinates)
         xmax = max(self.structure.xcoordinates)
-        xbuffer = (xmax - xmin) * 0.05
+        xbuffer = 1
         ymin = min(self.structure.ycoordinates)
         ymax = max(self.structure.ycoordinates)
-        ybuffer = (ymax-ymin) * 0.05
+        ybuffer = 1
         super().__init__(num_samples)
         for i in range(self.length):
             ax = self.get_ax(i)
@@ -55,6 +55,8 @@ class SS(Plot):
         ax.plot(ss.xcoordinates, ss.ycoordinates, color="grey", zorder=0)
 
     def plot_sequence(self, ax, profile, nt_color, markers="o"):
+        if markers is None:
+            return
         ss = self.structure
         if isinstance(nt_color, list) and len(nt_color) == self.length["ss"]:
             self.colors = np.array(nt_color)
@@ -76,7 +78,7 @@ class SS(Plot):
                 xcoords = ss.xcoordinates[mask]
                 ycoords = ss.ycoordinates[mask]
                 marker = "$\mathsf{"+nuc+"}$"
-                ax.scatter(xcoords, ycoords, marker=marker, s=10**2,
+                ax.scatter(xcoords, ycoords, marker=marker, s=100,
                            c=nt_color[mask], lw=1)
         else:
             ax.scatter(ss.xcoordinates, ss.ycoordinates, marker=markers,
