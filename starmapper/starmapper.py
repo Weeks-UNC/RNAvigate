@@ -4,9 +4,9 @@
 import os.path
 
 # scripts in StarMapper
-from .data import *
-from .plots import *
-from .analysis import *
+from .data import Annotation, CT, Data, DotPlot, IJ, Log, PDB, Profile
+from .plots import AP, Circle, DistHist, Heatmap, LinReg, Mol, QC, Skyline, SM, SS
+from .analysis import LogCompare, LowSS
 
 
 def create_code_button():
@@ -126,6 +126,11 @@ class Sample():
         if profile is not None:
             self.data["profile"] = Profile(profile)
             prof_seq = self.data["profile"].sequence
+            self.has_profile = True
+        elif fasta is not None:
+            print("No profile present, using fasta as reference sequence.")
+            self.data["fasta"] = Data(fasta=fasta)
+            prof_seq = self.data["fasta"].sequence
             self.has_profile = True
         else:
             self.has_profile = False
@@ -272,9 +277,11 @@ class Sample():
             self.data[ij].metric = metric
         except KeyError:
             self.data[ij].metric = self.data[ij].default_metric
-        self.data[ij].filter(self.get_data(fit_to),
-                             profile=self.get_data("profile"),
-                             ct=self.get_data("ct"), **kwargs)
+        if "profile" in self.data.keys():
+            kwargs["profile"] = self.data["profile"]
+        if "ct" in self.data.keys():
+            kwargs["ct"] = self.data["ct"]
+        self.data[ij].filter(self.get_data(fit_to), **kwargs)
 
     def dance_filter(self, filterneg=True, cdfilter=15, sigfilter=23,
                      ssfilter=True):
@@ -332,19 +339,18 @@ class Sample():
     def make_skyline(self, dance=False):
         if dance:
             plot = array_skyline(self.dance)
-            plot.ax.legend(title="Comp: Percent")
-            plot.ax.set_title(f"{self.sample}: DANCE Reactivities")
+            plot.axes[0, 0].legend(title="Comp: Percent")
+            plot.axes[0, 0].set_title(f"{self.sample}: DANCE Reactivities")
             return plot
-        else:
-            plot = array_skyline([self])
-            return plot
+        plot = array_skyline([self])
+        return plot
 
     def make_shapemapper(self, plots=["profile", "rates", "depth"]):
         plot = SM(self.data["profile"].length, plots=plots)
         plot.add_sample(self, profile="profile", label="label")
         return plot
 
-    def make_ap(self, ct="ct", comp="compct", ij=None, ij2=None,
+    def make_ap(self, ct="ct", comp=None, ij=None, ij2=None,
                 profile="profile", label="label", dance=False, **kwargs):
         if dance:
             plot = array_ap(self.dance, ct, comp, "pairs", "rings", profile,
@@ -353,9 +359,10 @@ class Sample():
                 ax = plot.get_ax(i)
                 ax.set_title(
                     f"DANCE component: {i}, Percent: {self.dance_percents[i]}")
+            return plot
         return array_ap([self], ct, comp, ij, ij2, profile, label, **kwargs)
 
-    def make_ap_multifilter(self, filters, ct="ct", comp="compct", ij2=None,
+    def make_ap_multifilter(self, filters, ct="ct", comp=None, ij2=None,
                             profile="profile", label="label"):
         """Makes an array of arc plots of different filtered views of data from
         Sample.
@@ -413,11 +420,11 @@ class Sample():
         return plot
 
     def make_heatmap(self, structure=None, ij=None, levels=None, **kwargs):
-        array_heatmap([self], structure, ij, levels, **kwargs)
+        return array_heatmap([self], structure, ij, levels, **kwargs)
 
     def make_circle(self, ct=None, comp=None, ij=None, ij2=None, profile=None,
                     label="label", **kwargs):
-        array_circle([self], ct, comp, ij, ij2, profile, label, **kwargs)
+        return array_circle([self], ct, comp, ij, ij2, profile, label, **kwargs)
 
     def make_circle_multifilter(self, filters, ct=None, comp=None, ij2=None,
                                 profile=None, label="label"):
@@ -429,6 +436,22 @@ class Sample():
                             profile=profile, label=label)
         return plot
 
+    def make_disthist(self, structure="pdb", ij=None, label="label", **kwargs):
+        return array_disthist([self], structure, ij, label, **kwargs)
+
+    def make_disthist_multifilter(self, filters, structure="pdb", ij=None,
+                                  label="label", same_axis=True):
+        if same_axis:
+            plot = DistHist(1)
+            ax = plot.axes[0, 0]
+        else:
+            plot = DistHist(len(filters))
+            ax = None
+        for filter in filters:
+            ij = filter.pop("ij")
+            self.filter_ij(ij, "pdb", **filter)
+            plot.add_sample(structure, ij, label, ax)
+        return plot
 ###############################################################################
 # Plotting functions that accept a list of samples
 #   array_qc
@@ -457,7 +480,7 @@ def array_skyline(samples, **kwargs):
     return plot
 
 
-def array_ap(samples, ct="ct", comp="compct", ij=None, ij2=None,
+def array_ap(samples, ct="ct", comp=None, ij=None, ij2=None,
              profile="profile", label="label", **kwargs):
     plot = AP(len(samples), samples[0].get_data(ct).length)
     for sample in samples:
@@ -489,8 +512,7 @@ def array_mol(samples, ij=None, profile="profile", label="label", show=True,
                         nt_color=nt_color)
     if show:
         plot.view.show()
-    else:
-        return plot
+    return plot
 
 
 def array_heatmap(samples, structure=None, ij=None, levels=None, **kwargs):
@@ -517,3 +539,16 @@ def array_linreg(samples, ct="ct", profile="profile", label="label", **kwargs):
     for sample in samples:
         plot.add_sample(sample, ct=ct, profile=profile, label=label, **kwargs)
     return plot
+
+
+def array_disthist(samples, structure="pdb", ij=None, label="label",
+                   same_axis=False, **kwargs):
+    if same_axis:
+        plot = DistHist(1)
+        ax = plot.axes[0, 0]
+    else:
+        plot = DistHist(len(samples))
+        ax = None
+    for sample in samples:
+        sample.filter_ij(ij, "pdb", **kwargs)
+        plot.add_sample(structure=structure, ij=ij, label=label, ax=ax)
