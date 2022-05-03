@@ -110,9 +110,10 @@ class QC(Plot):
             data.append(profile.data[cols].copy().assign(Sample=i+1))
         data = pd.concat(data)
         data = pd.melt(data, id_vars=['Sample'], var_name=['Rate'])
-        ax = sns.boxplot(x="Sample", y="value",
-                         hue='Rate', data=data, orient='v', ax=self.ax_boxplot)
-        ax.set(yscale='log',
-               ylim=(0.0005, 0.5),
-               ylabel="Mutation Rate",
-               xticklabels=labels)
+        ax = sns.violinplot(x="Sample", y="value", hue='Rate', data=data,
+                            ax=self.ax_boxplot, split=True, scale='width')
+        ax.set(
+            #    yscale='log',
+            #    ylim=(0.00003, 0.3),
+            ylabel="Mutation Rate",
+            xticklabels=labels)
