@@ -13,6 +13,7 @@ import sys
 import numpy as np
 import xml.etree.ElementTree as xmlet
 from .data import Data
+from . import rna_renderer as RNA
 
 
 class CT(Data):
@@ -110,9 +111,9 @@ class CT(Data):
 
         if filterNC:
             self.filterNC()
-
         if filterSingle:
             self.filterSingleton()
+        self.get_coordinates()
 
     def read_db(self, db, filterNC=False, filterSingle=False):
         """Generates CT object from a dot-bracket notation file. Lines
@@ -127,18 +128,17 @@ class CT(Data):
             base pairs. Defaults to False.
         """
         self.name = db
-        header, seq, bp_str, pairs = "", "", "", []
+        header, seq, bp_str, = "", "", ""
         with open(db) as f:
             for line in f:
                 if line[0] in ">#":
                     header += line
                     continue
-                if all(nt in "guactGUACT" for nt in line.strip()):
+                if all(nt.upper() in "GUACT" for nt in line.strip()):
                     seq += line.strip()
                 elif all(s in ".][)(}{><" for s in line.strip()):
                     bp_str += line.strip()
-        assert len(bp_str) == len(
-            seq), ".db: seq and bp strings are mismatched"
+        assert len(bp_str) == len(seq), "db: seq and bp strings are mismatched"
         num = list(range(1, len(seq)+1))
         bp = [0 for _ in num]
         opens = {"[": [], "{": [], "(": [], "<": []}
@@ -149,12 +149,10 @@ class CT(Data):
             elif sym in "[{(<":
                 opens[sym].append(i)
             elif sym in "]})>":
-                pair_i = opens[sym_pair[sym]].pop()
-                pairs.append((pair_i, i))
+                j = opens[sym_pair[sym]].pop()
+                bp[i] = j + 1
+                bp[j] = i + 1
 
-        for i, j in pairs:
-            bp[i] = j + 1
-            bp[j] = i + 1
         self.name = db
         self.header = header
         self.num = num
@@ -166,6 +164,7 @@ class CT(Data):
             self.filterNC()
         if filterSingle:
             self.filterSingleton()
+        self.get_coordinates()
 
     def read_ss(self, ss):
         """Generates CT object data from an ss file, including nucleotide x and
@@ -272,6 +271,30 @@ class CT(Data):
         self.pair2CT(basepairs)
         self.xcoordinates = xcoords*coord_scale_factor
         self.ycoordinates = ycoords*coord_scale_factor
+
+    def get_dbn(self):
+        for pair in self.pairList():
+            # check for pseudoknots
+            for pair2 in self.pairList():
+                if (pair[0] < pair2[0] < pair[1]) and (pair[1] < pair2[1]):
+                    print("get_dbn doesn't support PKs, returning empty dbn")
+                    return '.' * self.length
+        dbn = ''
+        for i, pair in enumerate(self.ct):
+            if pair == 0:
+                dbn += '.'
+            elif pair > (i+1):
+                dbn += '('
+            elif pair < (i+1):
+                dbn += ')'
+        return dbn
+
+    def get_coordinates(self):
+        struct = self.get_dbn()
+        graph = RNA.RNARenderer()
+        graph.setup_tree(struct, 10, 20, 35, 1, 0)
+        self.xcoordinates = np.array(graph.xarray_) / 35
+        self.ycoordinates = np.array(graph.yarray_) / 35
 
     def filterNC(self):
         """

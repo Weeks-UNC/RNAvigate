@@ -16,8 +16,7 @@ class Annotation(Data):
         elif sequence is not None:
             self.sequence = sequence
         if sites is not None:
-            assert all(
-                x in [0, 1] for x in sites), "sites should be list of 0s and 1s"
+            assert all(x in [0, 1] for x in sites), "sites should be 0s and 1s"
             assert len(self.sequence) == len(
                 sites), "Sequence and sites lengths differ."
             self.sites = np.array(sites, dtype=bool)
