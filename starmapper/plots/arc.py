@@ -68,8 +68,9 @@ class AP(Plot):
                     fontsize=60, ha='left')
 
     def get_figsize(self):
-        dim = self.nt_length * 0.1 + 1
-        return (dim*self.columns, dim*self.rows)
+        width = self.nt_length * 0.1 + 1
+        height = min(self.nt_length, 402) * 0.1 + 1
+        return (width*self.columns, height*self.rows)
 
     def plot_profile(self, ax, profile, ct):
         if profile is None:
