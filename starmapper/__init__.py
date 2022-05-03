@@ -1,6 +1,41 @@
+from starmapper import analysis
 from .starmapper import *
 import starmapper.styles
 
-__all__ = ["Sample", "array_qc", "array_ap", "array_skyline", "array_ss",
-           "array_heatmap", "array_mol", "array_circle", "array_linreg",
-           "create_code_button"]
+sample = ["Sample",
+          "create_code_button"]
+
+arrays = ["array_qc",
+          "array_ap",
+          "array_skyline",
+          "array_ss",
+          "array_heatmap",
+          "array_mol",
+          "array_circle",
+          "array_linreg"]
+
+plots = ["AP",
+         "Circle",
+         "DistHist",
+         "HeatMaP",
+         "LinReg",
+         "Mol",
+         "Plots",
+         "QC",
+         "Skyline",
+         "SM",
+         "SS"]
+
+data = ["Annotation",
+        "CT",
+        "Data",
+        "DP",
+        "IJ",
+        "Log",
+        "PDB",
+        "Profile"]
+
+analysis = ["LowSS",
+            "LogCompare"]
+
+__all__ = sample + arrays + plots + data + analysis
