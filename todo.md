@@ -9,10 +9,9 @@ To-Do List
 ----------
 - windowed ijs that are (-1, -1) plots one line at (-1, 1)
 - calling significant sites with log-corrected profile min-diff comparison.
-- replace qc boxplot with split violin plots.
 - better nucleotide colors and display on linear regression plots.
 - Plotting only certain windows.
-- 3d/contact distance histograms.
+  - arc, skyline, ss
 - Plotting annotations
   - clouds, colors, or labels in 3D figures.
 - loading in annotations files

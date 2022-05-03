@@ -19,7 +19,6 @@ Data types
 * Forthcoming:
   * annotations
   * .cif and .pdbx formats
-  * Shannon entropy
 
 Plot types
 ----------
@@ -32,11 +31,12 @@ Plot types
 * heatmaps with structure contour maps
 * ShapeMapper profile plots
 * ShapeMapper quality control plots
+* 3D distance distributions
+* Annotations on arc and secondary structure
+* Profile, windowed shape and shannon, arcplot (classic)
 * Forthcoming:
-  * 3D distance distributions
-  * Annotations on skyline, arc, circle, secondary structure, and 3D structure
+  * Annotations on skyline, circle, and 3D structure
   * information funnel diagram
-  * Profile, windowed shape and shannon, arcplot (classic)
 
 Analyses
 --------
