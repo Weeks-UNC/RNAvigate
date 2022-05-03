@@ -98,7 +98,7 @@ class Data():
                 with np.errstate(invalid='ignore'):  # always false for nans
                     prof_colors = cmap[[sum(p > bins)
                                         for p in profile.data.Norm_profile]]
-            colors = np.full(self.length, 'gray', dtype='<U8')
+            colors = np.full(self.length, 'gray', dtype='<U16')
             am = profile.get_alignment_map(self)
             for i, i2 in enumerate(am):
                 if i2 != -1:
