@@ -14,12 +14,6 @@ class IJ(Data):
         super().__init__(sequence, fasta)
         self.datatype = datatype
         self.path = filepath
-        self.default_metric = {'rings': 'Statistic',
-                               'pairs': 'Class',
-                               'deletions': 'Percentile',
-                               'probs': 'Probability'
-                               }[self.datatype]
-        self._metric = self.default_metric
         read_file = {"probs": self.read_probs,
                      "rings": self.read_rings,
                      "deletions": self.read_deletions,
@@ -27,18 +21,12 @@ class IJ(Data):
                      }[datatype]
         read_file(filepath)
         self.columns = self.data.columns
-
-    @property
-    def min_max(self):
-        min_max = {'Percentile': [0.98, 1.0],
-                   "Statistic": [-100, 100],
-                   'Zij': [-8, 8],
-                   "Class": [0, 2],
-                   "Metric": [0, 0.001],
-                   'Distance': [10, 80],
-                   'Probability': [0, 1]
-                   }[self.metric]
-        return min_max
+        self.default_metric = {'rings': 'Statistic',
+                               'pairs': 'Class',
+                               'deletions': 'Percentile',
+                               'probs': 'Probability'
+                               }[self.datatype]
+        self.metric = self.default_metric
 
     @property
     def fill(self):
@@ -52,16 +40,14 @@ class IJ(Data):
 
     @property
     def cmap(self):
-        cmap = {'Class': mp.colors.ListedColormap([[0.3, 0.3, 0.3, 0.2],
-                                                   [0.0, 0.0, 0.95, 0.6],
-                                                   [0.12, 0.76, 1.0, 0.6]]),
-                'Statistic': 'bwr',
-                'Zij': 'bwr',
-                'Metric': 'YlGnBu',
-                'Distance': 'jet',
-                'Percentile': 'YlGnBu',
-                'Probability': 'viridis_r'
-                }[self.metric]
+        return self._cmap
+
+    @cmap.setter
+    def cmap(self, cmap):
+        if mp.colors.is_color_like(cmap):
+            cmap = mp.colors.ListedColormap([cmap])
+        elif isinstance(cmap, list) and all(mp.colors.is_color_like(c) for c in cmap):
+            cmap = mp.colors.ListedColormap(cmap)
         cmap = plt.get_cmap(cmap)
         cmap = cmap(np.arange(cmap.N))
         cmap[:, -1] = np.full((len(cmap)), 0.6)  # set default alpha to 0.6
@@ -71,7 +57,7 @@ class IJ(Data):
             # set color of max distance and no data distances to gray
             cmap[-1, :] = np.array([80/255., 80/255., 80/255., 0.2])
         cmap = mp.colors.ListedColormap(cmap)
-        return cmap
+        self._cmap = cmap
 
     @property
     def metric(self):
@@ -88,6 +74,24 @@ class IJ(Data):
         else:
             print(f"{value} is not a valid metric of {self.datatype}")
             self._metric = self.default_metric
+        self.cmap = {'Class': mp.colors.ListedColormap([[0.3, 0.3, 0.3, 0.2],
+                                                        [0.0, 0.0, 0.95, 0.6],
+                                                        [0.12, 0.76, 1.0, 0.6]]),
+                     'Statistic': 'bwr',
+                     'Zij': 'bwr',
+                     'Metric': 'YlGnBu',
+                     'Distance': 'jet',
+                     'Percentile': 'YlGnBu',
+                     'Probability': 'viridis_r'
+                     }[self._metric]
+        self.min_max = {'Percentile': [0.98, 1.0],
+                        "Statistic": [-100, 100],
+                        'Zij': [-8, 8],
+                        "Class": [0, 2],
+                        "Metric": [0, 0.001],
+                        'Distance': [10, 80],
+                        'Probability': [0, 1]
+                        }[self._metric]
 
     def read_probs(self, probs):
         with open(probs, 'r') as file:
