@@ -18,7 +18,7 @@ class Mol(Plot):
         view.zoomTo()
         self.view = view
         self.i = 0
-        self.pass_through = ["cmap", "nt_color"]
+        self.pass_through = ["nt_color"]
 
     def get_figsize(self):
         pass
@@ -30,12 +30,12 @@ class Mol(Plot):
         col = i % self.columns
         return (row, col)
 
-    def plot_data(self, ij, profile, label, cmap=None, nt_color="sequence"):
+    def plot_data(self, ij, profile, label, nt_color="sequence"):
         viewer = self.get_viewer()
         if ij is not None:
-            self.plot_ij(viewer, ij, cmap=cmap)
+            self.plot_ij(viewer, ij)
             _, ax = plt.subplots(1, figsize=(6, 2))
-            self.view_colormap(ax, ij, cmap=cmap)
+            self.view_colormap(ax, ij)
         self.set_colors(viewer, profile, nt_color)
         self.view.addLabel(label,
                            {"position": {"x": 400, "y": 50, "z": 0},
@@ -60,9 +60,9 @@ class Mol(Plot):
                           "color": color}
         self.view.addCylinder(cylinder_specs, viewer=viewer)
 
-    def plot_ij(self, viewer, ij, cmap=None):
+    def plot_ij(self, viewer, ij):
         window = ij.window
-        for i, j, color in zip(*ij.get_ij_colors(cmap=cmap)):
+        for i, j, color in zip(*ij.get_ij_colors()):
             color = "0x"+mpc.rgb2hex(color)[1:]
             for w in range(window):
                 io = i+w
@@ -70,20 +70,18 @@ class Mol(Plot):
                 self.add_lines(io, jo, color, viewer)
 
     def set_colors(self, viewer, profile, nt_color):
-        if nt_color in ["sequence", "profile"]:
-            colors = self.pdb.get_colors(nt_color, profile=profile)
-        elif nt_color == "position":
+        if nt_color == "position":
             return
+        colors = self.pdb.get_colors(nt_color, profile=profile)
         color_selector = {}
         valid_pdbres = []
         for res in self.pdb.validres:
-            res_off = res + self.pdb.offset
-            valid_pdbres.append(res_off)
-            color = colors[res-1]
+            valid_pdbres.append(res)
+            color = colors[res-1-self.pdb.offset]
             if color in color_selector.keys():
-                color_selector[color].append(res_off)
+                color_selector[color].append(res)
             else:
-                color_selector[color] = [res_off]
+                color_selector[color] = [res]
         for color in color_selector.keys():
             selector = {'chain': self.pdb.chain, 'resi': color_selector[color]}
             style = {"cartoon": {"color": color, "opacity": 0.8}}
