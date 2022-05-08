@@ -2,21 +2,23 @@ from .plots import Plot
 
 
 class Skyline(Plot):
-    def __init__(self, num_samples, nt_length):
+    def __init__(self, num_samples, nt_length, **kwargs):
         self.nt_length = nt_length
-        super().__init__(num_samples)
+        super().__init__(num_samples, **kwargs)
         self.ax = self.axes[0, 0]
         self.set_axis()
-        self.pass_through = ["column"]
+        self.pass_through = ["column", "seqbar"]
 
     def get_rows_columns(self, number_of_samples=None, rows=None, cols=None):
         return (1, 1)
 
-    def plot_data(self, profile, label, column="Reactivity_profile"):
+    def plot_data(self, profile, label, column="Reactivity_profile",
+                  seqbar=True):
         self.plot_profile(profile, label, column)
         self.i += 1
         if self.i == self.length:
-            self.add_sequence(self.ax, profile.sequence)
+            if seqbar:
+                self.add_sequence(self.ax, profile.sequence)
             self.set_labels()
 
     def get_figsize(self):
