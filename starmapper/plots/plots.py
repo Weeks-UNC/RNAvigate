@@ -6,12 +6,15 @@ from abc import ABC, abstractmethod, abstractproperty
 
 
 class Plot(ABC):
-    def __init__(self, num_samples, rows=None, cols=None):
+    def __init__(self, num_samples, rows=None, cols=None, figsize=None,
+                 **kwargs):
         self.length = num_samples
         self.rows, self.columns = self.get_rows_columns(rows, cols)
-        figsize = self.get_figsize()
+        if figsize is None:
+            figsize = self.get_figsize()
         self.fig, self.axes = plt.subplots(self.rows, self.columns,
-                                           figsize=figsize, squeeze=False)
+                                           figsize=figsize, squeeze=False,
+                                           **kwargs)
         self.i = 0
         self.pass_through = []
 
