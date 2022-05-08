@@ -46,10 +46,11 @@ class PDB(Data):
                [int(nt)][atom].get_coord()]
         return xyz
 
-    def get_distance(self, i, j, atom="O2'"):
-        if i in self.validres and j in self.validres:
-            xi, yi, zi = self.get_xyz_coord(i, atom)
-            xj, yj, zj = self.get_xyz_coord(j, atom)
+    def get_distance(self, i, j):
+        valid = [v - self.offset for v in self.validres]
+        if i in valid and j in valid:
+            xi, yi, zi = self.get_xyz_coord(i)
+            xj, yj, zj = self.get_xyz_coord(j)
             distance = ((xi-xj)**2 + (yi-yj)**2 + (zi-zj)**2)**0.5
         else:
             distance = 1000
