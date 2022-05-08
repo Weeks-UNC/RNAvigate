@@ -5,9 +5,9 @@ from matplotlib.collections import PatchCollection
 
 
 class AP(Plot):
-    def __init__(self, num_samples, nt_length, rows=None, cols=None):
+    def __init__(self, num_samples, nt_length, **kwargs):
         self.nt_length = nt_length
-        super().__init__(num_samples, rows=rows, cols=cols)
+        super().__init__(num_samples, **kwargs)
         for i in range(self.length):
             ax = self.get_ax(i)
             ax.set_aspect('equal')
@@ -18,27 +18,33 @@ class AP(Plot):
             ax.spines['top'].set_color('none')
             width = self.nt_length
             height = min(300, width/2)
-            ax.set(xlim=(0, width),
+            ax.set(xlim=(0.5, width+0.5),
                    ylim=(-height-5, height+1))
-        self.pass_through = ["ax"]
+        self.pass_through = ["ax", "colorbar", "seqbar", "title", "ij_panel",
+                             "ij2_panel", "ct_panel"]
 
-    def plot_data(self, ct, comp, ij, ij2, profile, label, ax=None):
+    def plot_data(self, ct, comp, ij, ij2, profile, label, ax=None,
+                  colorbar=True, seqbar=True, title=True, ij_panel="bottom",
+                  ij2_panel="bottom", ct_panel="top"):
         ax = self.get_ax(ax)
-        if ij is not None:
-            ax_ins1 = ax.inset_axes([0.05, 0.2, 0.3, 0.03])
-            self.view_colormap(ax_ins1, ij)
-        if ij2 is not None:
-            ax_ins2 = ax.inset_axes([0.05, 0.3, 0.3, 0.03])
-            self.view_colormap(ax_ins2, ij2)
-        if comp is not None:
-            ax_ins3 = ax.inset_axes([0.05, 0.8, 0.3, 0.03])
-            self.view_colormap(ax_ins3, "ct_compare")
-        self.add_patches(ax, ct, "top", comp)
-        self.add_patches(ax, ij, "bottom")
-        self.add_patches(ax, ij2, "bottom")
-        self.add_sequence(ax, ct.sequence, yvalue=0.5)
+        if colorbar:
+            if ij is not None:
+                ax_ins1 = ax.inset_axes([0.05, 0.2, 0.3, 0.03])
+                self.view_colormap(ax_ins1, ij)
+            if ij2 is not None:
+                ax_ins2 = ax.inset_axes([0.05, 0.3, 0.3, 0.03])
+                self.view_colormap(ax_ins2, ij2)
+            if comp is not None:
+                ax_ins3 = ax.inset_axes([0.05, 0.8, 0.3, 0.03])
+                self.view_colormap(ax_ins3, "ct_compare")
+        self.add_patches(ax, ct, ct_panel, comp)
+        self.add_patches(ax, ij, ij_panel)
+        self.add_patches(ax, ij2, ij2_panel)
         self.plot_profile(ax, profile, ct)
-        self.add_title(ax, label)
+        if seqbar:
+            self.add_sequence(ax, ct.sequence, yvalue=0.5)
+        if title:
+            self.add_title(ax, label)
         self.i += 1
 
     def add_patches(self, ax, data, panel, comp=None):
@@ -69,16 +75,18 @@ class AP(Plot):
 
     def get_figsize(self):
         width = self.nt_length * 0.1 + 1
-        height = min(self.nt_length, 402) * 0.1 + 1
+        height = min(self.nt_length, 602) * 0.1 + 1
         return (width*self.columns, height*self.rows)
 
     def plot_profile(self, ax, profile, ct):
         if profile is None:
             return
         column = {"RNP": "normedP",
-                  "profile": "Norm_profile"}[profile.datatype]
+                  "profile": "Norm_profile",
+                  "dance": "Norm_profile"}[profile.datatype]
         factor = {"RNP": 1,
-                  "profile": 5}[profile.datatype]
+                  "profile": 5,
+                  "dance": 5}[profile.datatype]
         am = profile.get_alignment_map(ct)
         values = np.full(ct.length, np.nan)
         colormap = ct.get_colors("profile", profile=profile)
