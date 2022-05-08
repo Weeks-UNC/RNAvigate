@@ -113,7 +113,6 @@ class CT(Data):
             self.filterNC()
         if filterSingle:
             self.filterSingleton()
-        self.get_coordinates()
 
     def read_db(self, db, filterNC=False, filterSingle=False):
         """Generates CT object from a dot-bracket notation file. Lines
@@ -164,7 +163,6 @@ class CT(Data):
             self.filterNC()
         if filterSingle:
             self.filterSingleton()
-        self.get_coordinates()
 
     def read_ss(self, ss):
         """Generates CT object data from an ss file, including nucleotide x and
@@ -1027,18 +1025,18 @@ class CT(Data):
             outputPath (string): path to output cte file to be created
         """
         # set scaling factors based on data source.
-        xscale = {'xrna': 1.525, 'varna': 0.469,
-                  'nsd': 1, 'cte': 1}[self.ss_type]
-        yscale = {'xrna': -1.525, 'varna': 0.469,
-                  'nsd': 1, 'cte': 1}[self.ss_type]
+        xscale = {'xrna': 1.525*20, 'varna': 0.469*65,
+                  'nsd': 30.5, 'cte': 30.5}[self.ss_type]
+        yscale = {'xrna': -1.525*20, 'varna': 0.469*65,
+                  'nsd': 30.5, 'cte': 30.5}[self.ss_type]
         w = open(outputPath, 'w')
         w.write('{0:6d} {1}\n'.format(self.length, self.name))
         line = ('{0:5d} {1} {2:5d} {3:5d} {4:5d} {0:5d} ' +
-                ';! X: {5:5d} Y: {6:5d}\n')
+                ';! X: {5:1f} Y: {6:1f}\n')
         for i in range(self.length):
             xcoord = round(xscale*self.xcoordinates[i])
             ycoord = round(yscale*self.ycoordinates[i])
-            num, seq, cti = self.num[i], self.seq[i], self.ct[i]
+            num, seq, cti = self.num[i], self.sequence[i], self.ct[i]
             # no nums after self.length, resets to zero
             nextnum = (num+1) % (self.length+1)
             cols = [num, seq, num-1, nextnum, cti, xcoord, ycoord]
@@ -1056,7 +1054,7 @@ class CT(Data):
         if compct is None:
             ct_pairs = self.pairList()
             for i, j in ct_pairs:
-                add_ij_color(i, j, (0.1, 0.1, 0.1, 0.7))
+                add_ij_color(i, j, (0.5, 0.5, 0.5, 0.7))
             return (i_list, j_list, colors)
         ct1 = set(self.pairList())
         ct2 = set(compct.pairList())
