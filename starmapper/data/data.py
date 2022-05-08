@@ -2,6 +2,7 @@ from Bio.pairwise2 import align
 import Bio.SeqIO
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.colors import is_color_like
 
 
 def get_nt_color(nt, colors="new"):
@@ -92,7 +93,7 @@ class Data():
             if profile.datatype == 'RNP':
                 cmap = np.array(["silver", "limegreen"])
                 prof_colors = cmap[profile.data["RNPsite"]]
-            elif profile.datatype == 'profile':
+            elif profile.datatype in ['profile', 'dance']:
                 cmap = np.array(['gray', 'black', 'orange', 'red'])
                 bins = np.array([0, 0.4, 0.85])
                 with np.errstate(invalid='ignore'):  # always false for nans
@@ -114,3 +115,13 @@ class Data():
                 if i2 != -1:
                     colors[i2] = ct_colors[i]
             return colors
+        elif (isinstance(source, list) and (len(source) == self.length)
+              and all(is_color_like(c) for c in source)):
+            return np.array(source)
+        elif is_color_like(source):
+            return np.full(self.length, source, dtype="<U16")
+        else:
+            print("Invalid colors: choices = profile, sequence, position, " +
+                  "a list of mpl colors, or a single mpl color. " +
+                  "Defaulting to sequence.")
+            return self.get_colors("sequence")
