@@ -46,6 +46,8 @@ class Data():
         return len(self.sequence)
 
     def get_alignment_map(self, fit_to, full=False):
+        if self.sequence.upper() == fit_to.sequence.upper():
+            return np.arange(len(self.sequence))
         alignment = align.globalxs(self.sequence, fit_to.sequence, -1, -0.1,
                                    penalize_end_gaps=False)
         # get an index map from this sequence to that.
