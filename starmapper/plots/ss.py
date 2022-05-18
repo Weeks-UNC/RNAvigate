@@ -93,12 +93,13 @@ class SS(Plot):
                     if (r*0.299 + g*0.587 + b*0.114) < 200/256:
                         nt_color[i] = 'w'
         elif apply_color_to == "sequence":
+            sequence = True
             nt_color = ss.get_colors(colors, profile=profile,
                                      ct=self.structure)
             bg_color = "white"
             self.plot_structure(ax, ss.get_colors('grey'))
         ax.scatter(ss.xcoordinates, ss.ycoordinates, marker="o",
-                   c=bg_color, s=256)
+                   c=bg_color, s=256, zorder=1)
         if sequence:
             for nuc in "GUAC":
                 mask = [nt == nuc for nt in ss.sequence]
@@ -106,7 +107,7 @@ class SS(Plot):
                 ycoords = ss.ycoordinates[mask]
                 marker = "$\mathsf{"+nuc+"}$"
                 ax.scatter(xcoords, ycoords, marker=marker, s=100,
-                           c=nt_color[mask], lw=1)
+                           c=nt_color[mask], lw=1, zorder=2)
 
     def add_lines(self, ax, i, j, color, linewidth=1.5):
         ss = self.structure
