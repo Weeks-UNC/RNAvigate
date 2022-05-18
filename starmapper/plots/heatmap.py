@@ -43,15 +43,18 @@ class Heatmap(Plot):
     def plot_contour_distances(self, ax, levels, atom):
         structure = self.structure
         distances = structure.get_distance_matrix(atom)
+        for i in range(structure.length):
+            for j in range(i, structure.length):
+                distances[i, j] = 0
         if levels is None:
             levels = {"ct": [5],
                       "ss": [5],
-                      "pdb": [20, 500]
+                      "pdb": [20]
                       }[structure.datatype]
         cmap = LinearSegmentedColormap.from_list('contours', ['black', 'gray'])
         x_y = list(range(1, structure.length+1))
         ax.contour(x_y, x_y, distances, levels=levels, cmap=cmap,
-                   linewidths=0.5)
+                   linewidths=1)
 
     def plot_heatmap_data(self, ax, ij, interpolation):
         structure = self.structure
