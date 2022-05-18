@@ -12,9 +12,7 @@ starmapper
 .. autosummary::
    :toctree: generated
 
-   modules
    Sample
-   Sample.__init__
    array_qc
    array_skyline
    array_ap
