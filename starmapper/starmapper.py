@@ -281,8 +281,11 @@ class Sample():
         """
         if "metric" in kwargs.keys():
             metric = kwargs.pop("metric")
-            if metric == "Distance":
-                self.data[ij].set_3d_distances(self.data["pdb"])
+            if metric.startswith("Distance_"):
+                metric, atom = metric.split("_")
+                self.data[ij].set_3d_distances(self.data["pdb"], atom)
+            elif metric == "Distance":
+                self.data[ij].set_3d_distances(self.data["pdb"], "O2'")
             self.data[ij].metric = metric
         else:
             self.data[ij].metric = self.data[ij].default_metric
