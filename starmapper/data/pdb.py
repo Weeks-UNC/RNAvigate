@@ -22,6 +22,7 @@ class PDB(Data):
             super().__init__(fasta=fasta)
         self.read_pdb(filepath)
         self.path = filepath
+        self.distance_matrix = {}
 
     def get_sequence_offset(self, pdb, get_seq=True, get_offset=True):
         with open(pdb) as file:
@@ -41,24 +42,31 @@ class PDB(Data):
             if res_id[0] == " ":
                 self.validres.append(res_id[1]-self.offset)
 
-    def get_xyz_coord(self, nt, atom="O2'"):
+    def get_xyz_coord(self, nt, atom):
+        if atom == "DMS":
+            if self.sequence.upper()[nt-1] in "AG":
+                atom = "N1"
+            elif self.sequence.upper()[nt-1] in "UC":
+                atom = "N3"
         xyz = [float(c) for c in self.pdb[0][self.chain]
                [int(nt)][atom].get_coord()]
         return xyz
 
-    def get_distance(self, i, j):
+    def get_distance(self, i, j, atom="O2'"):
+        if atom in self.distance_matrix.keys():
+            return self.distance_matrix[atom][i-1, j-1]
         valid = [v - self.offset for v in self.validres]
         if i in valid and j in valid:
-            xi, yi, zi = self.get_xyz_coord(i)
-            xj, yj, zj = self.get_xyz_coord(j)
+            xi, yi, zi = self.get_xyz_coord(i, atom)
+            xj, yj, zj = self.get_xyz_coord(j, atom)
             distance = ((xi-xj)**2 + (yi-yj)**2 + (zi-zj)**2)**0.5
         else:
             distance = 1000
         return distance
 
     def get_distance_matrix(self, atom="O2'"):
-        if hasattr(self, 'distance_matrix'):
-            return self.distance_matrix
+        if atom in self.distance_matrix.keys():
+            return self.distance_matrix[atom]
         x = np.full(self.length, np.nan)
         y = np.full(self.length, np.nan)
         z = np.full(self.length, np.nan)
@@ -68,5 +76,5 @@ class PDB(Data):
         b = y - y[:, np.newaxis]
         c = z - z[:, np.newaxis]
         matrix = np.sqrt(a*a + b*b + c*c)
-        self.distance_matrix = matrix
+        self.distance_matrix[atom] = np.nan_to_num(matrix, nan=1000)
         return matrix

@@ -18,7 +18,7 @@ class Mol(Plot):
         view.zoomTo()
         self.view = view
         self.i = 0
-        self.pass_through = ["nt_color"]
+        self.pass_through = ["nt_color", "atom"]
 
     def get_figsize(self):
         pass
@@ -30,10 +30,10 @@ class Mol(Plot):
         col = i % self.columns
         return (row, col)
 
-    def plot_data(self, ij, profile, label, nt_color="sequence"):
+    def plot_data(self, ij, profile, label, nt_color="sequence", atom="O2'"):
         viewer = self.get_viewer()
         if ij is not None:
-            self.plot_ij(viewer, ij)
+            self.plot_ij(viewer, ij, atom)
             _, ax = plt.subplots(1, figsize=(6, 2))
             self.view_colormap(ax, ij)
         self.set_colors(viewer, profile, nt_color)
@@ -44,14 +44,14 @@ class Mol(Plot):
                             "fontSize": 28}, viewer=viewer)
         self.i += 1
 
-    def add_lines(self, i, j, color, viewer):
+    def add_lines(self, i, j, color, viewer, atom):
         pdb = self.pdb
         if i not in pdb.validres or j not in pdb.validres:
             return
         i += self.pdb.offset
         j += self.pdb.offset
-        xi, yi, zi = pdb.get_xyz_coord(i)
-        xj, yj, zj = pdb.get_xyz_coord(j)
+        xi, yi, zi = pdb.get_xyz_coord(i, atom)
+        xj, yj, zj = pdb.get_xyz_coord(j, atom)
         cylinder_specs = {"start": {"x": xi, "y": yi, "z": zi},
                           "end":  {"x": xj, "y": yj, "z": zj},
                           "radius": 0.5,
@@ -60,14 +60,14 @@ class Mol(Plot):
                           "color": color}
         self.view.addCylinder(cylinder_specs, viewer=viewer)
 
-    def plot_ij(self, viewer, ij):
+    def plot_ij(self, viewer, ij, atom):
         window = ij.window
         for i, j, color in zip(*ij.get_ij_colors()):
             color = "0x"+mpc.rgb2hex(color)[1:]
             for w in range(window):
                 io = i+w
                 jo = j+window-1-w
-                self.add_lines(io, jo, color, viewer)
+                self.add_lines(io, jo, color, viewer, atom)
 
     def set_colors(self, viewer, profile, nt_color):
         if nt_color == "position":

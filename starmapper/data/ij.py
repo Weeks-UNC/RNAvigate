@@ -339,9 +339,9 @@ class IJ(Data):
         else:
             print(self.header, csv)
 
-    def set_3d_distances(self, pdb):
+    def set_3d_distances(self, pdb, atom):
         alignment_map = self.get_alignment_map(pdb)
-        distance_matrix = pdb.get_distance_matrix()
+        distance_matrix = pdb.get_distance_matrix(atom=atom)
         i = self.data["i"].values
         j = self.data["j"].values
         distances = np.zeros(len(i))

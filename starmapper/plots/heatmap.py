@@ -15,15 +15,15 @@ class Heatmap(Plot):
             mn_mx = (0.5, structure.length + 0.5)
             ax.set(ylim=mn_mx, xlim=mn_mx,
                    xticks=list(range(50, structure.length+1, 50)))
-        self.pass_through = ["levels", "regions", "interpolation"]
+        self.pass_through = ["levels", "regions", "interpolation", "atom"]
 
     def plot_data(self, ij, label, levels=None, regions=None,
-                  interpolation='none'):
+                  interpolation='none', atom="O2'"):
         ax = self.get_ax()
         if regions is not None:
             self.plot_contour_regions(ax, ij, regions)
         else:
-            self.plot_contour_distances(ax, levels)
+            self.plot_contour_distances(ax, levels, atom)
         self.plot_heatmap_data(ax, ij, interpolation)
         ax.set_title(label)
         self.i += 1
@@ -40,9 +40,9 @@ class Heatmap(Plot):
         x_y = list(range(1, ij.length+1))
         ax.contour(x_y, x_y, matrix, levels=levels, cmap=cmap, linewidths=1)
 
-    def plot_contour_distances(self, ax, levels):
+    def plot_contour_distances(self, ax, levels, atom):
         structure = self.structure
-        distances = structure.get_distance_matrix()
+        distances = structure.get_distance_matrix(atom)
         if levels is None:
             levels = {"ct": [5],
                       "ss": [5],
