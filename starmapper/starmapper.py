@@ -26,6 +26,9 @@ def create_code_button():
 
 
 class Sample():
+    """
+    The main starmapper object, representing an RNA probing experiment.
+    """
 
     def __init__(self,
                  sample=None,
@@ -259,16 +262,22 @@ class Sample():
         return data_list
 
     def filter_ij(self, ij, fit_to, **kwargs):
-        """Fits ij Data object to fit_to Data object's sequence. For example,
-        for plotting IJ data containing structure cassettes against a CT
-        without, or plotting sequence variants together using a best pairwise
-        alignment. Kwargs are passed to IJ.filter(). Refer to that method for
-        more detail on filters.
+        """Aligns sequence to fit_to, sets properties, filters and aligns data.
+
+        For example, for plotting IJ data containing structure cassettes
+        against a CT without, or plotting sequence variants together using a
+        best pairwise alignment. If kwargs contains metric, cmap, or min_max,
+        these properties of the IJ data are set. Other kwargs are passed to
+        IJ.filter(). Refer to that method for more detail on filters:
+        help(MaP.IJ.filter)
 
         Args:
             ij (IJ): IJ object to be filtered and fitted
             fit_to (Data (any)): Data object containing a sequence for IJ to be
                 fit to for plotting purposes.
+            **kwargs: metric, cmap, and min_max. Others passed to ij.filter()
+                      For metric="Distance" you can specify an atom or reagent:
+                      metric="Distance_O3'" or metric="Distance_DMS"
         """
         if "metric" in kwargs.keys():
             metric = kwargs.pop("metric")
@@ -336,6 +345,7 @@ class Sample():
 ###############################################################################
 
     def make_qc(self, **kwargs):
+        """Makes a QC plot. See help(MaP.array_qc) for more."""
         return array_qc([self], **kwargs)
 
     def make_ss(self, **kwargs):
@@ -571,5 +581,5 @@ def array_disthist(samples, structure="pdb", ij=None, label="label",
     pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
     for sample in samples:
         sample.filter_ij(ij, "pdb", **kwargs)
-        plot.add_sample(structure=structure, ij=ij,
+        plot.add_sample(sample, structure=structure, ij=ij,
                         label=label, ax=ax, **pt_kwargs)
