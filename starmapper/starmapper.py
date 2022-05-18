@@ -429,12 +429,14 @@ class Sample():
         return plot
 
     def make_ss_multifilter(self, filters, ss="ss", profile="profile",
-                            label="label"):
+                            label="label", ij2=None, **kwargs):
         plot = SS(len(filters), self.get_data(ss))
+        pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
         for filter in filters:
             ij = filter.pop("ij")
             self.filter_ij(ij, ss, **filter)
-            plot.add_sample(self, ij=ij, profile=profile, label=label)
+            plot.add_sample(self, ij=ij, ij2=ij2, profile=profile,
+                            label=label, **pt_kwargs)
         return plot
 
     def make_mol_multifilter(self, filters, profile="profile", label="label",
