@@ -426,12 +426,14 @@ class Sample():
         return plot
 
     def make_mol_multifilter(self, filters, profile="profile", label="label",
-                             show=True):
+                             show=True, **kwargs):
         plot = Mol(len(filters), self.data["pdb"])
+        pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
         for filter in filters:
             ij = filter.pop("ij")
             self.filter_ij(ij, "pdb", **filter)
-            plot.add_sample(self, ij=ij, profile=profile, label=label)
+            plot.add_sample(self, ij=ij, profile=profile, label=label,
+                            **pt_kwargs)
         if show:
             plot.view.show()
         return plot
@@ -503,6 +505,8 @@ def array_ap(samples, ct="ct", comp=None, ij=None, ij2=None, ij2_filter={},
     plot = AP(len(samples), samples[0].data[ct].length, **plot_kwargs)
     pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
     for sample in samples:
+        if ct not in ["ss", "ct"]:
+            sample.filter_ij(ct, ct)
         if ij is not None:
             sample.filter_ij(ij, ct, **kwargs)
         if ij2 is not None:
