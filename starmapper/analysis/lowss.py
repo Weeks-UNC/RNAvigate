@@ -10,8 +10,11 @@ class LowSS():
         assert window % 2 == 1, "Window must be an odd number."
         self.sample = sample
         self.window = window
-        self.region = region
         self.nt_length = sample.data["ct"].length
+        if region == 'all':
+            self.region = [1, self.nt_length]
+        else:
+            self.region = region
 
         profile = sample.data["profile"].data["Norm_profile"].values
         self.median_profile = np.median(profile[~np.isnan(profile)])
