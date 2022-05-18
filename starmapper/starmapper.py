@@ -2,6 +2,7 @@
 
 # general python packages
 import os.path
+import numpy as np
 
 # scripts in StarMapper
 from .data import Annotation, CT, Data, DotPlot, IJ, Log, PDB, Profile
@@ -23,6 +24,14 @@ def create_code_button():
                  <form action="javascript:code_toggle()">
                  <input type="submit" value="Hide/show raw code.">
                  </form>'''))
+
+
+def get_color_list(length, default, color_regions):
+    c_list = np.full(length, default, dtype='<U16')
+    for color, regions in color_regions.items():
+        for r in regions:
+            c_list[r[0]-1: r[1]] = color
+    return list(c_list)
 
 
 class Sample():

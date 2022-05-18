@@ -3,7 +3,8 @@ from .starmapper import *
 import starmapper.styles
 
 sample = ["Sample",
-          "create_code_button"]
+          "create_code_button",
+          "get_color_list"]
 
 arrays = ["array_qc",
           "array_ap",
