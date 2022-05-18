@@ -48,15 +48,6 @@ Other features
 * Calculating 3D distance and contact distances
 * Automatic data alignment for comparing sequence variants
 
-Example Jupyter Notebooks
--------------------------
-* [single sample plots](JNB-example/starmapper-example.md)
-* [multiple samples plots](JNB-example/starmapper-multiple-examples.md)
-* [Arc Plot options](JNB-example/ap_test.md)
-* [Secondary Structure options](JNB-example/ss_test.md)
-* [3D plot options](JNB-example/3d_test.md)
-* [heatmap options](JNB-example/heatmap_test.md)
-
 General notes
 -------------
 * PDB format can be picky, and there are mistakes in some files from the PDB.
