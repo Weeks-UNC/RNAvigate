@@ -2,11 +2,16 @@ from .plots import Plot
 
 
 class Skyline(Plot):
-    def __init__(self, num_samples, nt_length, **kwargs):
-        self.nt_length = nt_length
+    def __init__(self, num_samples, nt_length, region="all", **kwargs):
+        if region == "all":
+            self.nt_length = nt_length
+            self.region = (1, nt_length)
+        else:
+            self.nt_length = region[1] - region[0] + 1
+            self.region = region
         super().__init__(num_samples, **kwargs)
         self.ax = self.axes[0, 0]
-        self.set_axis()
+        self.set_axis(self.ax)
         self.pass_through = ["column", "seqbar"]
 
     def get_rows_columns(self, number_of_samples=None, rows=None, cols=None):
@@ -19,7 +24,7 @@ class Skyline(Plot):
         if self.i == self.length:
             if seqbar:
                 self.add_sequence(self.ax, profile.sequence)
-            self.set_labels()
+            self.set_labels(self.ax)
 
     def get_figsize(self):
         left_inches = 0.9
@@ -29,20 +34,21 @@ class Skyline(Plot):
         fig_width = max(7, ax_width + left_inches + right_inches)
         return (fig_width, fig_height)
 
-    def set_axis(self, xlim=None, xticks=20, xticks_minor=5):
-        if xlim is None:
-            xlim = [0, self.nt_length]
-        self.ax.set_xlim(xlim)
-        self.ax.set_xticks(range(xlim[0], xlim[1], xticks))
-        self.ax.set_xticks(range(xlim[0], xlim[1], xticks_minor), minor=True)
+    def set_axis(self, ax, xticks=20, xticks_minor=5):
+        xlim = self.region
+        ax.set_xlim([xlim[0] - 0.5, xlim[1] + 0.5])
+        xrange = range(xlim[0], xlim[1]+1)
+        ax.set_xticks([x for x in xrange if (x % xticks) == 0])
+        ax.set_xticks([x for x in xrange if (x % xticks_minor) == 0],
+                      minor=True)
 
-    def set_labels(self, axis_title="Raw Reactivity Profile",
+    def set_labels(self, ax, axis_title="Raw Reactivity Profile",
                    legend_title="Samples", xlabel="Nucleotide",
                    ylabel="Profile"):
-        self.ax.set_title(axis_title)
-        self.ax.set_xlabel(xlabel)
-        self.ax.set_ylabel(ylabel)
-        self.ax.legend(title=legend_title)
+        ax.set_title(axis_title)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        ax.legend(title=legend_title)
 
     def plot_profile(self, profile, label, column):
         x = [0.5]

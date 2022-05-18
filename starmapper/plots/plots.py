@@ -38,7 +38,10 @@ class Plot(ABC):
     @classmethod
     def view_colormap(self, ax=None, ij=None, metric=None, ticks=None, values=None,
                       title=None, cmap=None):
-        if ij == "ct_compare":
+        if ij is None or type(ij).__name__ == "CT":
+            ax.remove()
+            return
+        elif ij == "ct_compare":
             metric = "Pairing"
             ticks = [10/6, 30/6, 50/6]
             values = ["Shared", "Structure 1", "Structure 2"]
@@ -93,7 +96,6 @@ class Plot(ABC):
             rows = math.ceil(self.length / cols)
         return rows, cols
 
-    @classmethod
     def add_sequence(self, ax, sequence, yvalue=0.005):
         # set font style and colors for each nucleotide
         font_prop = mp.font_manager.FontProperties(
@@ -104,10 +106,11 @@ class Plot(ABC):
         ymin, ymax = ax.get_ylim()
         yvalue = (ymax-ymin)*yvalue + ymin
         for i, seq in enumerate(sequence):
-            col = color_dict[seq.upper()]
-            ax.annotate(seq, xy=(i + 1, yvalue), xycoords='data',
-                        fontproperties=font_prop,
-                        color=col, horizontalalignment="center")
+            if self.region[0] <= (i+1) <= self.region[1]:
+                col = color_dict[seq.upper()]
+                ax.annotate(seq, xy=(i + 1, yvalue), xycoords='data',
+                            fontproperties=font_prop,
+                            color=col, horizontalalignment="center")
 
     @abstractmethod
     def get_figsize(self):

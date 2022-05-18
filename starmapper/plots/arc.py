@@ -5,38 +5,46 @@ from matplotlib.collections import PatchCollection
 
 
 class AP(Plot):
-    def __init__(self, num_samples, nt_length, **kwargs):
-        self.nt_length = nt_length
+    def __init__(self, num_samples, nt_length, region="all", **kwargs):
+        if region == "all":
+            self.nt_length = nt_length
+            self.region = (1, nt_length)
+        else:
+            self.nt_length = region[1]-region[0]+1
+            self.region = region
         super().__init__(num_samples, **kwargs)
         for i in range(self.length):
-            ax = self.get_ax(i)
-            ax.set_aspect('equal')
-            ax.yaxis.set_visible(False)
-            ax.spines['left'].set_color('none')
-            ax.spines['right'].set_color('none')
-            ax.spines['bottom'].set_position('zero')
-            ax.spines['top'].set_color('none')
-            width = self.nt_length
-            height = min(300, width/2)
-            ax.set(xlim=(0.5, width+0.5),
-                   ylim=(-height-5, height+1))
+            self.set_axis(self.get_ax(i))
         self.pass_through = ["ax", "colorbar", "seqbar", "title", "ij_panel",
                              "ij2_panel", "ct_panel"]
+
+    def set_axis(self, ax, xticks=20, xticks_minor=5):
+        ax.set_aspect('equal')
+        ax.yaxis.set_visible(False)
+        ax.spines['left'].set_color('none')
+        ax.spines['right'].set_color('none')
+        ax.spines['bottom'].set_position('zero')
+        ax.spines['top'].set_color('none')
+        height = min(300, self.nt_length/2)
+        mn, mx = self.region
+        ax.set(xlim=(mn - 0.5, mx + 0.5),
+               ylim=(-height-5, height+1),
+               xticks=list(range(xticks, mx, xticks)))
 
     def plot_data(self, ct, comp, ij, ij2, profile, label, ax=None,
                   colorbar=True, seqbar=True, title=True, ij_panel="bottom",
                   ij2_panel="bottom", ct_panel="top"):
         ax = self.get_ax(ax)
         if colorbar:
-            if ij is not None:
-                ax_ins1 = ax.inset_axes([0.05, 0.2, 0.3, 0.03])
-                self.view_colormap(ax_ins1, ij)
-            if ij2 is not None:
-                ax_ins2 = ax.inset_axes([0.05, 0.3, 0.3, 0.03])
-                self.view_colormap(ax_ins2, ij2)
+            ax_ins1 = ax.inset_axes([0.05, 0.2, 0.3, 0.03])
+            self.view_colormap(ax_ins1, ij)
+            ax_ins2 = ax.inset_axes([0.05, 0.3, 0.3, 0.03])
+            self.view_colormap(ax_ins2, ij2)
+            ax_ins3 = ax.inset_axes([0.05, 0.8, 0.3, 0.03])
             if comp is not None:
-                ax_ins3 = ax.inset_axes([0.05, 0.8, 0.3, 0.03])
                 self.view_colormap(ax_ins3, "ct_compare")
+            else:
+                self.view_colormap(ax_ins3, ct)
         self.add_patches(ax, ct, ct_panel, comp)
         self.add_patches(ax, ij, ij_panel)
         self.add_patches(ax, ij2, ij2_panel)
@@ -55,7 +63,10 @@ class AP(Plot):
         else:
             return
         patches = []
+        mn, mx = self.region
         for i, j, color in zip(*ij_colors):
+            if ((i < mn) and (j < mn)) or ((i > mx) and (j > mx)):
+                continue
             if panel == "top":
                 center = ((i+j)/2., 0)
                 theta1 = 0
@@ -97,6 +108,8 @@ class AP(Plot):
                 values[i2] = profile.data.loc[i1, column]
                 if 'Norm_stderr' in profile.data.columns:
                     yerr[i2] = profile.data.loc[i1, 'Norm_stderr']
-        ax.bar(nts, values*factor, align="center",
-               width=1.05, color=colormap, edgecolor=colormap, linewidth=0.0,
-               yerr=yerr, ecolor=(0, 0, 1 / 255.0), capsize=1)
+        mn, mx = self.region
+        ax.bar(nts[mn-1:mx], values[mn-1:mx]*factor, align="center",
+               width=1.05, color=colormap[mn-1:mx],
+               edgecolor=colormap[mn-1:mx], linewidth=0.0,
+               yerr=yerr[mn-1:mx], ecolor=(0, 0, 1 / 255.0), capsize=1)
