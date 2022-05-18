@@ -10,7 +10,7 @@ class Mol(Plot):
         self.length = num_samples
         self.rows, self.columns = self.get_rows_columns()
         view = py3Dmol.view(viewergrid=(self.rows, self.columns),
-                            width=800*self.columns, height=800*self.rows)
+                            width=400*self.columns, height=400*self.rows)
         with open(self.pdb.path, 'r') as pdb_file:
             pdb_str = pdb_file.read()
         view.addModel(pdb_str, 'pdb')
@@ -38,7 +38,7 @@ class Mol(Plot):
             self.view_colormap(ax, ij)
         self.set_colors(viewer, profile, nt_color)
         self.view.addLabel(label,
-                           {"position": {"x": 400, "y": 50, "z": 0},
+                           {"position": {"x": 200, "y": 50, "z": 0},
                             "useScreen": True, "alignment": "center",
                             "fontColor": "black", "backgroundColor": "white",
                             "fontSize": 28}, viewer=viewer)
