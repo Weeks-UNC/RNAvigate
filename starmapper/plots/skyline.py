@@ -12,19 +12,19 @@ class Skyline(Plot):
         super().__init__(num_samples, **kwargs)
         self.ax = self.axes[0, 0]
         self.set_axis(self.ax)
-        self.pass_through = ["column", "seqbar"]
+        self.pass_through = ["columns", "seqbar"]
 
     def get_rows_columns(self, number_of_samples=None, rows=None, cols=None):
         return (1, 1)
 
-    def plot_data(self, profile, label, column="Reactivity_profile",
+    def plot_data(self, profile, label, columns="Reactivity_profile",
                   seqbar=True):
-        self.plot_profile(profile, label, column)
+        self.plot_profile(profile, label, columns)
         self.i += 1
         if self.i == self.length:
             if seqbar:
                 self.add_sequence(self.ax, profile.sequence)
-            self.set_labels(self.ax)
+            self.set_labels(self.ax, axis_title=columns)
 
     def get_figsize(self):
         left_inches = 0.9
@@ -50,13 +50,11 @@ class Skyline(Plot):
         ax.set_ylabel(ylabel)
         ax.legend(title=legend_title)
 
-    def plot_profile(self, profile, label, column):
-        x = [0.5]
-        y = [0]
-        # converts standard plot to skyline plot.
-        for n, r in zip(profile.data['Nucleotide'], profile.data[column]):
-            x.extend([n - 0.5, n + 0.5])
-            y.extend([r, r])
-        x.append(x[-1])
-        y.append(0)
-        self.ax.plot(x, y, label=label)
+    def plot_profile(self, profile, label, columns):
+        if isinstance(columns, list):
+            for column in columns:
+                self.ax.plot(profile.data["Nucleotide"], profile.data[column],
+                             label=f"{label} {column}", drawstyle="steps-mid")
+        elif isinstance(columns, str):
+            self.ax.plot(profile.data["Nucleotide"], profile.data[columns],
+                         label=f"{label} {columns}", drawstyle="steps-mid")
