@@ -12,14 +12,14 @@ class Skyline(Plot):
         super().__init__(num_samples, **kwargs)
         self.ax = self.axes[0, 0]
         self.set_axis(self.ax)
-        self.pass_through = ["columns", "seqbar"]
+        self.pass_through = ["columns", "seqbar", "errorbars"]
 
     def get_rows_columns(self, number_of_samples=None, rows=None, cols=None):
         return (1, 1)
 
     def plot_data(self, profile, label, columns="Reactivity_profile",
-                  seqbar=True):
-        self.plot_profile(profile, label, columns)
+                  seqbar=True, errorbars=None):
+        self.plot_profile(profile, label, columns, errorbars)
         self.i += 1
         if self.i == self.length:
             if seqbar:
@@ -50,11 +50,19 @@ class Skyline(Plot):
         ax.set_ylabel(ylabel)
         ax.legend(title=legend_title)
 
-    def plot_profile(self, profile, label, columns):
+    def plot_profile(self, profile, label, columns, errorbars):
         if isinstance(columns, list):
             for column in columns:
                 self.ax.plot(profile.data["Nucleotide"], profile.data[column],
                              label=f"{label} {column}", drawstyle="steps-mid")
         elif isinstance(columns, str):
-            self.ax.plot(profile.data["Nucleotide"], profile.data[columns],
-                         label=f"{label} {columns}", drawstyle="steps-mid")
+            x = profile.data["Nucleotide"]
+            profile_values = profile.data[columns]
+
+            self.ax.plot(x, profile_values, label=f"{label} {columns}",
+                         drawstyle="steps-mid")
+            if errorbars is not None:
+                stderr = profile.data[errorbars]
+                self.ax.fill_between(x, profile_values-stderr,
+                                     profile_values+stderr, step='mid',
+                                     color='C0', alpha=0.25, lw=0)
