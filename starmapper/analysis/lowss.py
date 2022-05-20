@@ -13,8 +13,10 @@ class LowSS():
         self.nt_length = sample.data["ct"].length
         if region == 'all':
             self.region = [1, self.nt_length]
+            self.region_length = self.nt_length
         else:
             self.region = region
+            self.region_length = region[1] - region[0] + 1
 
         profile = sample.data["profile"].data["Norm_profile"].values
         self.median_profile = np.median(profile[~np.isnan(profile)])
@@ -56,16 +58,17 @@ class LowSS():
 
         # Plot windowed profile and windowed entropy
         x_values = np.arange(self.region[0], self.region[1]+1)
-        ax.fill_between(x_values, [self.median_profile*350+600]*self.nt_length,
+        ax.fill_between(x_values,
+                        [self.median_profile*350+600]*self.region_length,
                         self.windowed_profile[region]*350+600, fc='0.3')
-        ax.fill_between(x_values, [300]*self.nt_length,
+        ax.fill_between(x_values, [300]*self.region_length,
                         self.windowed_entropy[region]*600 + 300, fc='C1')
 
         # add shaded vertical bars over LowSS regions
 
-        xvals = (np.arange(self.nt_length)+1)/self.nt_length
-        ax.fill_between(xvals, [0]*self.nt_length, self.in_lssr, alpha=0.2,
-                        fc='grey', transform=ax.transAxes)
+        xvals = (np.arange(self.region_length)+1)/self.region_length
+        ax.fill_between(xvals, [0]*self.region_length, self.in_lssr[region],
+                        alpha=0.2, fc='grey', transform=ax.transAxes)
 
         # add ct and pairing probabilities track
         self.sample.filter_ij("probs", "probs")
