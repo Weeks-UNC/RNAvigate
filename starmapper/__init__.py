@@ -1,6 +1,5 @@
-from starmapper import analysis
 from .starmapper import *
-import starmapper.styles
+from . import data, plots, analysis, styles
 
 sample = ["Sample",
           "create_code_button",
@@ -15,28 +14,6 @@ arrays = ["array_qc",
           "array_circle",
           "array_linreg"]
 
-plots = ["AP",
-         "Circle",
-         "DistHist",
-         "HeatMaP",
-         "LinReg",
-         "Mol",
-         "Plots",
-         "QC",
-         "Skyline",
-         "SM",
-         "SS"]
+modules = ["plots", "data", "analysis", "styles"]
 
-data = ["Annotation",
-        "CT",
-        "Data",
-        "DP",
-        "IJ",
-        "Log",
-        "PDB",
-        "Profile"]
-
-analysis = ["LowSS",
-            "LogCompare"]
-
-__all__ = sample + arrays + plots + data + analysis
+__all__ = sample + arrays + modules
