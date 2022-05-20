@@ -3,7 +3,8 @@ StarMapper.py - Secondary and Tertiary Structural Annotation of RNA
 StarMapper provides a framework for rapidly exploring interrelationships between
 chemical probing data, RNA structures, and motif annotations for multiple
 experimental samples within a Jupyter Notebook environment.
-* Click here to see [features, plan, and todo list](todo.md)
+[Full documentation]()
+[RNA 2022 poster]()
 
 Data types
 ----------

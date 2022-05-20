@@ -7,7 +7,6 @@ Example Notebooks
 
    examples/3d_test
    examples/ap_test
-   examples/beta-tests
    examples/heatmap_test
    examples/logcompare_test
    examples/lowss_test

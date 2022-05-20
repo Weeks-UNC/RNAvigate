@@ -7,13 +7,15 @@ Welcome to RNAvigate's documentation!
 =====================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Contents:
 
+   installation
+   examples/starmapper-example
+   rna2022
    api
+   modules
    examples
-
-
 
 Indices and tables
 ==================
