@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 import numpy as np
 from .plots import Plot
 from matplotlib.patches import Rectangle
@@ -8,11 +7,8 @@ from ..styles import rx_color, bg_color, dc_color, apply_style, sm
 class SM(Plot):
     def __init__(self, nt_length, plots=["profile", "rates", "depth"]):
         self.nt_length = nt_length
-        super().__init__(len(plots))
+        super().__init__(len(plots), len(plots), cols=1)
         self.plots = plots
-
-    def get_rows_columns(self, plots):
-        return (plots, 1)
 
     def get_figsize(self):
         left_inches = 0.9
