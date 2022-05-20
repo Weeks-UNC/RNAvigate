@@ -65,4 +65,4 @@ class Skyline(Plot):
                 stderr = profile.data[errorbars]
                 self.ax.fill_between(x, profile_values-stderr,
                                      profile_values+stderr, step='mid',
-                                     color='C0', alpha=0.25, lw=0)
+                                     color='C'+str(self.i), alpha=0.25, lw=0)
