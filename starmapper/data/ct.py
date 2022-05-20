@@ -13,7 +13,6 @@ import sys
 import numpy as np
 import xml.etree.ElementTree as xmlet
 from .data import Data
-from . import rna_renderer as RNA
 
 
 class CT(Data):
@@ -287,13 +286,6 @@ class CT(Data):
                 dbn += ')'
         return dbn
 
-    def get_coordinates(self):
-        struct = self.get_dbn()
-        graph = RNA.RNARenderer()
-        graph.setup_tree(struct, 10, 20, 35, 1, 0)
-        self.xcoordinates = np.array(graph.xarray_) / 35
-        self.ycoordinates = np.array(graph.yarray_) / 35
-
     def filterNC(self):
         """
         Filter out non-canonical basepairs from the ct datastructure
@@ -496,7 +488,6 @@ class CT(Data):
             self.filterSingleton()
 
     def getNTslice(self, start=None, end=None):
-
         offset = self.num[0]
 
         try:
@@ -931,13 +922,24 @@ class CT(Data):
             return
 
     def computePPVSens(self, compCT, exact=True, mask=False):
-        """compute the ppv and sensitivity between the current CT and the
-        passed CT
+        """Compute the PPV and sensitivity between self and another CT.
 
-        exact = True will require BPs to be exactly correct.
-                False allows +/-1 bp slippage (RNAstructure convention)
-        mask = True will exclude masked regions from calculation
+        Args:
+            compCT (CT object): The CT to compare to.
+            exact (bool, optional): Require BPs to be exactly correct.
+                                    Defaults to True.
+            mask (bool, optional): Exclude masked regions from calculation.
+                                   Defaults to False.
+
+        Returns:
+            float, float, tuple: PPV, Sensitivity, (TP, TP+FP, TP+FN)
         """
+        # compute the ppv and sensitivity between the current CT and the
+        # passed CT
+
+        # exact = True will require BPs to be exactly correct.
+        #         False allows +/-1 bp slippage (RNAstructure convention)
+        # mask = True will exclude masked regions from calculation
 
         # check mask is properly set up if using
         if mask:
