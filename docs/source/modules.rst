@@ -1,7 +1,7 @@
-starmapper
-==========
+RNAvigate API
+=============
 
 .. toctree::
    :maxdepth: 4
 
-   starmapper
+   rnavigate
