@@ -1,4 +1,4 @@
-from starmapper.plots import AP
+from rnavigate.plots import AP
 import matplotlib.pyplot as plt
 import numpy as np
 

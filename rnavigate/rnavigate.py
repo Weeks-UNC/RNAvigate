@@ -4,7 +4,7 @@
 import os.path
 import numpy as np
 
-# scripts in StarMapper
+# modules in RNAvigate
 from .data import Annotation, CT, Data, DotPlot, IJ, Log, PDB, Profile
 from .plots import AP, Circle, DistHist, Heatmap, LinReg, Mol, QC, Skyline, SM, SS
 from .analysis import LogCompare, LowSS
@@ -36,7 +36,7 @@ def get_color_list(length, default, color_regions):
 
 class Sample():
     """
-    The main starmapper object, representing an RNA probing experiment.
+    The main RNAvigate object, representing an RNA probing experiment.
     """
 
     def __init__(self,
@@ -418,7 +418,7 @@ class Sample():
             label (str, optional): Defaults to "label", same as Sample.sample.
 
         Returns:
-            starmapper.plots.AP
+            rnavigate.plots.AP
         """
         plot = AP(len(filters), self.get_data(ct).length)
         for filter in filters:

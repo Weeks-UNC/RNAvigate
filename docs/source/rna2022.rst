@@ -2,7 +2,7 @@
 RNA 2022 Poster
 ===============================================================================
 
-.. image:: poster/StarMapperPoster.jpg
+.. image:: poster/RNAvigatePoster.jpg
 
 .. toctree::
    :maxdepth: 2

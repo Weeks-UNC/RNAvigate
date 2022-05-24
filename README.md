@@ -1,6 +1,6 @@
-StarMapper.py - Secondary and Tertiary Structural Annotation of RNA
+RNAvigate (RNA vizualization and graphical analysis toolset)
 ==============================================================================
-StarMapper provides a framework for rapidly exploring interrelationships between
+RNAvigate provides a framework for rapidly exploring interrelationships between
 chemical probing data, RNA structures, and motif annotations for multiple
 experimental samples within a Jupyter Notebook environment.
 [Full documentation]()

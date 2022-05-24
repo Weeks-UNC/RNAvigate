@@ -1,4 +1,4 @@
-from .starmapper import *
+from .rnavigate import *
 from . import data, plots, analysis, styles
 
 sample = ["Sample",

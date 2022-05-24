@@ -70,14 +70,14 @@ Currently, there is no CLI interface, but this is how I imagine it working.
   - delta - deltaSHAPE
   - lr - linear regression
 ```
-starmapper.py sl --profiles prof1.txt prof2.txt prof3.txt
-starmapper.py sl --dance sample1-reactivities.txt
-starmapper.py sl --jump jump1.file jump2.file jump3.file jump4.file
-starmapper.py ap --ct targetrna.ct
+rnavigate.py sl --profiles prof1.txt prof2.txt prof3.txt
+rnavigate.py sl --dance sample1-reactivities.txt
+rnavigate.py sl --jump jump1.file jump2.file jump3.file jump4.file
+rnavigate.py ap --ct targetrna.ct
                  --samples sample1 sample2 sample3 sample4
                  --profile-suffix _targetrna_profile.txt
                  --rings-suffix -targetrna.corrs
-starmapper.py ss --ss targetrna.xrna
+rnavigate.py ss --ss targetrna.xrna
                  --samples sample1 sample2 sample3 sample4
                  --profile-suffix _targetrna_profile.txt
                  --rings-suffix -targetrna.corrs

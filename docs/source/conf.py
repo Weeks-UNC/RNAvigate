@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.abspath('../../'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'StarMapper'
+project = 'RNAvigate'
 copyright = '2022, Patrick Irving'
 author = 'Patrick Irving'
 

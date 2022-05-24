@@ -11,4 +11,4 @@ Example Notebooks
    examples/logcompare_test
    examples/lowss_test
    examples/ss_test
-   examples/starmapper-multiple-examples
+   examples/rnavigate-multiple-examples
