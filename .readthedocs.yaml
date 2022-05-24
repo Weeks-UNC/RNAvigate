@@ -13,7 +13,6 @@ conda:
   environment: docs/source/env.yml
 
 python:
-  version: 3.6
   install:
     - method: setuptools
       path: .
