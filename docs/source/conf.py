@@ -38,7 +38,7 @@ extensions = [
     'nbsphinx',
     'sphinx_rtd_theme',
 ]
-nbsphinx_kernel_name = 'latest'
+nbsphinx_kernel_name = 'python3'
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
