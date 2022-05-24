@@ -11,3 +11,6 @@ sphinx:
 
 conda:
   environment: docs/source/env.yml
+
+python:
+  setup_py_install: true
