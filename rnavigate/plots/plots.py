@@ -121,3 +121,6 @@ class Plot(ABC):
     @abstractmethod
     def plot_data(self):
         pass
+
+    def png(self, filename):
+        plt.savefig(filename)

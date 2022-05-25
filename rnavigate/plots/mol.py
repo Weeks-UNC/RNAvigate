@@ -5,20 +5,20 @@ import matplotlib.pyplot as plt
 
 
 class Mol(Plot):
-    def __init__(self, num_samples, pdb):
+    def __init__(self, num_samples, pdb, width=400, height=400):
         self.pdb = pdb
         self.length = num_samples
         self.rows, self.columns = self.get_rows_columns()
         view = py3Dmol.view(viewergrid=(self.rows, self.columns),
-                            width=400*self.columns, height=400*self.rows)
+                            width=width*self.columns, height=height*self.rows)
         with open(self.pdb.path, 'r') as pdb_file:
             pdb_str = pdb_file.read()
         view.addModel(pdb_str, 'pdb')
-        view.setStyle({"cartoon": {'color': 'spectrum', 'opacity': 0.8}})
+        view.setStyle({"cartoon": {'color': 'spectrum'}})
         view.zoomTo()
         self.view = view
         self.i = 0
-        self.pass_through = ["nt_color", "atom"]
+        self.pass_through = ["nt_color", "atom", "title"]
 
     def get_figsize(self):
         pass
@@ -30,18 +30,22 @@ class Mol(Plot):
         col = i % self.columns
         return (row, col)
 
-    def plot_data(self, ij, profile, label, nt_color="sequence", atom="O2'"):
+    def plot_data(self, ij, profile, label, nt_color="sequence", atom="O2'",
+                  title=True):
         viewer = self.get_viewer()
         if ij is not None:
             self.plot_ij(viewer, ij, atom)
             _, ax = plt.subplots(1, figsize=(6, 2))
             self.view_colormap(ax, ij)
         self.set_colors(viewer, profile, nt_color)
-        self.view.addLabel(label,
-                           {"position": {"x": 200, "y": 50, "z": 0},
-                            "useScreen": True, "alignment": "center",
-                            "fontColor": "black", "backgroundColor": "white",
-                            "fontSize": 28}, viewer=viewer)
+        if title:
+            self.view.addLabel(label,
+                               {"position": {"x": 200, "y": 50, "z": 0},
+                                "useScreen": True,
+                                "alignment": "center",
+                                "fontColor": "black",
+                                "backgroundColor": "white",
+                                "fontSize": 28}, viewer=viewer)
         self.i += 1
 
     def add_lines(self, i, j, color, viewer, atom):
@@ -75,18 +79,30 @@ class Mol(Plot):
         colors = self.pdb.get_colors(nt_color, profile=profile)
         color_selector = {}
         valid_pdbres = []
-        for res in self.pdb.validres:
+        for i, res in enumerate(self.pdb.validres+self.pdb.offset):
+            res = int(res)
             valid_pdbres.append(res)
-            color = colors[res-1-self.pdb.offset]
+            color = colors[i]
             if color in color_selector.keys():
                 color_selector[color].append(res)
             else:
                 color_selector[color] = [res]
         for color in color_selector.keys():
             selector = {'chain': self.pdb.chain, 'resi': color_selector[color]}
-            style = {"cartoon": {"color": color, "opacity": 0.8}}
+            style = {"cartoon": {"color": color}}
             self.view.setStyle(selector, style, viewer=viewer)
         selector = {'chain': self.pdb.chain,
                     'resi': valid_pdbres, 'invert': 'true'}
         style = {"cross": {"hidden": "true"}}
         self.view.setStyle(selector, style, viewer=viewer)
+
+    def png(self):
+        '''output png image of viewer, which must already be instantiated'''
+        script = '''<script>
+            var pngdata = viewer_{0}.pngURI()
+            </script>'''.format(self.view.uniqueid)
+        print("To view png in notebook, type:\n"
+              "IPython.display.publish_display_data({'text/html': plot.png()})\n"
+              "Then, to save: right click image and click 'save as'\n"
+              "Currently not working correctly in VSCode, only Jupyter")
+        return script
