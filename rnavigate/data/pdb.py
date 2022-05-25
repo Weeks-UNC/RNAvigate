@@ -41,6 +41,7 @@ class PDB(Data):
             res_id = res.get_id()
             if res_id[0] == " ":
                 self.validres.append(res_id[1]-self.offset)
+        self.validres = np.array(self.validres)
 
     def get_xyz_coord(self, nt, atom):
         if atom == "DMS":
