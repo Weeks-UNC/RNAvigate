@@ -562,7 +562,7 @@ def array_heatmap(samples, structure=None, ij=None, label="label", **kwargs):
     plot = Heatmap(len(samples), samples[0].data[structure])
     pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
     for sample in samples:
-        sample.filter_ij(ij, ij, **kwargs)
+        sample.filter_ij(ij, structure, **kwargs)
         plot.add_sample(sample, ij=ij, label=label, **pt_kwargs)
     return plot
 

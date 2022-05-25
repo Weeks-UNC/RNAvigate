@@ -1,6 +1,7 @@
 
 from matplotlib.colors import LinearSegmentedColormap, ListedColormap
 import matplotlib.pyplot as plt
+import seaborn as sns
 import numpy as np
 from .plots import Plot
 
@@ -15,16 +16,22 @@ class Heatmap(Plot):
             mn_mx = (0.5, structure.length + 0.5)
             ax.set(ylim=mn_mx, xlim=mn_mx,
                    xticks=list(range(50, structure.length+1, 50)))
-        self.pass_through = ["levels", "regions", "interpolation", "atom"]
+        self.pass_through = ["levels", "regions", "interpolation", "atom",
+                             "plot_type"]
 
     def plot_data(self, ij, label, levels=None, regions=None,
-                  interpolation='none', atom="O2'"):
+                  interpolation='none', atom="O2'", plot_type="heatmap"):
         ax = self.get_ax()
         if regions is not None:
             self.plot_contour_regions(ax, ij, regions)
         else:
             self.plot_contour_distances(ax, levels, atom)
-        self.plot_heatmap_data(ax, ij, interpolation)
+        assert plot_type in ["heatmap",
+                             "kde"], "plot_type must be heatmap or kde"
+        if plot_type == "heatmap":
+            self.plot_heatmap_data(ax, ij, interpolation)
+        elif plot_type == "kde":
+            self.plot_kde_data(ax, ij)
         ax.set_title(label)
         self.i += 1
 
@@ -94,3 +101,9 @@ class Heatmap(Plot):
         cmap = ListedColormap(cmap)
         ax.imshow(data_im, cmap=cmap, vmin=min_max[0], vmax=min_max[1],
                   interpolation=interpolation)
+
+    def plot_kde_data(self, ax, ij, **kwargs):
+        data = ij.data.loc[ij.data["mask"]]
+        sns.kdeplot(ax=ax, data=data, x="i_offset", y="j_offset",
+                    fill=True, levels=5, bw_adjust=0.2, cmap=ij.cmap, common_norm=True,
+                    ** kwargs)
