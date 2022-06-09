@@ -7,27 +7,26 @@ Installation
    If you are using UNC's Longleaf computing cluster, skip ahead to "Longleaf
    installation".
 
-Open a terminal and navigate to the directory you'll be saving RNAvigate, then
-clone the github repository. Navigate into the RNAvigate directory and install
-the package.
+1. Open a terminal and navigate to the directory you'll be saving RNAvigate.
+2. Clone the github repository.
+3. Navigate into the RNAvigate directory.
+4. Create and activate a conda enviroment using the included env.yaml file
+5. Install the RNAvigate package in the new conda environment.
 
 .. code-block::
    :caption: Downloading the github repository
 
    git clone https://github.com/Weeks-UNC/RNAvigate.git
    cd RNAvigate
+   conda env create -f env.yaml -n rnavigate
+   source activate rnavigate
    pip install .
 
-If you are using Anaconda to manage environments, the easiest way to ensure an
-appropriate environment is to create one using the included env.yaml file. If
-not, open the yaml file in a text editor. There you will find the dependencies
-that you will need to install.
-
+If you are planning to use Jupyter Notebooks to do your analyses (highly
+recommended), you will need to make the new conda environment available to Jupyter.
 .. code-block::
    :caption: Creating a Jupyter Notebook conda environment
 
-   conda env create -f RNAvigate/env.yaml -n rnavigate
-   source activate rnavigate
    python -m ipykernel install --user --name=rnavigate
 
 If this occured without errors, your installation is complete.
