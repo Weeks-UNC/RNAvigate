@@ -81,6 +81,8 @@ class SS(Plot):
             struct_color = ss.get_colors(colors, profile=profile,
                                          ct=self.structure)
             self.plot_structure(ax, struct_color)
+            ax.scatter(ss.xcoordinates, ss.ycoordinates, marker=".",
+                       c=struct_color, zorder=1)
             return
         elif apply_color_to == "background":
             bg_color = ss.get_colors(colors, profile=profile,
