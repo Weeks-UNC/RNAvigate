@@ -91,6 +91,7 @@ class Data():
                                for n in range(self.length)])
             return colors
         elif source == "profile":
+            # TODO: this should be implemented in Profile for reusability
             assert type(profile).__name__ == "Profile", "Invalid profile"
             if profile.datatype == 'RNP':
                 cmap = np.array(["silver", "limegreen"])
@@ -108,6 +109,7 @@ class Data():
                     colors[i2] = prof_colors[i]
             return colors
         elif source == "structure":
+            # TODO: this should be implemented in CT object for reusability
             assert type(ct).__name__ == "CT", "Invalid ct"
             cmap = np.array(['C0', 'C1'])
             ct_colors = cmap[[int(nt == 0) for nt in ct.ct]]

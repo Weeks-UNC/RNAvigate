@@ -270,7 +270,7 @@ class Sample():
             data_list.append(data)
         return data_list
 
-    def filter_ij(self, ij, fit_to, **kwargs):
+    def filter_ij(self, ij, fit_to, suppress=False, **kwargs):
         """Aligns sequence to fit_to, sets properties, filters and aligns data.
 
         For example, for plotting IJ data containing structure cassettes
@@ -288,8 +288,19 @@ class Sample():
                       For metric="Distance" you can specify an atom or reagent:
                       metric="Distance_O3'" or metric="Distance_DMS"
         """
+        # check for valid ij
+        if ij not in self.data.keys():
+            if not suppress:
+                print(f"{ij} not found in sample data")
+            return
+        if not isinstance(self.data[ij], IJ):
+            if not suppress:
+                print(f"{ij} is not an IJ datatype")
+            return
+
         if "metric" in kwargs.keys():
             metric = kwargs.pop("metric")
+            # TODO: This should be implemented in IJ.metric.setter
             if metric.startswith("Distance_"):
                 metric, atom = metric.split("_")
                 self.data[ij].set_3d_distances(self.data["pdb"], atom)
@@ -305,10 +316,10 @@ class Sample():
             min_max = kwargs.pop("min_max")
             self.data[ij].min_max = min_max
         for data in ["profile", "ct"]:
-            if data in self.data.keys():
+            if data in kwargs.keys():
+                continue
+            elif data in self.data.keys():
                 kwargs[data] = self.data[data]
-        if "ct" in self.data.keys():
-            kwargs["ct"] = self.data["ct"]
         self.data[ij].filter(self.get_data(fit_to), **kwargs)
 
     def dance_filter(self, filterneg=True, cdfilter=15, sigfilter=23,
