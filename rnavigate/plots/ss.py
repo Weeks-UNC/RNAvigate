@@ -39,10 +39,10 @@ class SS(Plot):
 
     def get_figsize(self):
         ss = self.structure
-        xmin = min(ss.xcoordinates)
-        xmax = max(ss.xcoordinates)
-        ymin = min(ss.ycoordinates)
-        ymax = max(ss.ycoordinates)
+        xmin = min(ss.xcoordinates)-1
+        xmax = max(ss.xcoordinates)+1
+        ymin = min(ss.ycoordinates)-1
+        ymax = max(ss.ycoordinates)+3
         scale = 0.55
         width = (xmax-xmin)*scale
         height = (ymax-ymin)*scale
