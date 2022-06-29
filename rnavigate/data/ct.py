@@ -249,14 +249,18 @@ class CT(Data):
                         item = "pairs"
                         continue
                     if item == "strand":
-                        nt = [item.split(':') for item in line]
-                        sequence += nt[2][1]
-                        xcoords.append(float(nt[4][1]))
-                        ycoords.append(-float(nt[5][1]))
+                        nt = {}
+                        for field in line:
+                            key, value = field.split(':')
+                            nt[key] = value
+                        sequence += nt["Base"]
+                        xcoords.append(float(nt["X"]))
+                        ycoords.append(-float(nt["Y"]))
                     elif item == "pairs":
-                        pairs = line[1].split(":")[1:]
-                        basepair = [int(nuc.strip('"')) for nuc in pairs]
-                        basepairs.append(basepair)
+                        for field in line:
+                            if field.startswith("Pair"):
+                                field = field.strip('Pair:"').split(":")
+                                basepairs.append([int(nuc) for nuc in field])
             xcoords = np.array(xcoords)
             ycoords = np.array(ycoords)
         # store attributes
