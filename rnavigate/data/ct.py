@@ -239,7 +239,7 @@ class CT(Data):
             with open(ss, 'r') as file:
                 item = ""
                 for line in file.readlines():
-                    line = line.strip().split(' ')
+                    line = line.strip("}{ ").split(' ')
                     if "Strand:[" in line:
                         item = "strand"
                         continue
