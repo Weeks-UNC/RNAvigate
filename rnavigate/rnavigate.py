@@ -237,11 +237,11 @@ class Sample():
         """
         if key == "label":
             return self.sample
-        elif key == None:
+        elif key is None:
             return None
         try:
             return self.data[key]
-        except (KeyError, TypeError) as e:
+        except (KeyError, TypeError) as _:
             try:
                 return self.parent.data[key]
             except (KeyError, AttributeError):
@@ -354,27 +354,46 @@ class Sample():
 
 ###############################################################################
 # sample plotting functions
-#     make_skyline
-#     make_shapemapper
-#     make_ap
-#     make_ap_multifilter
+#     make_qc
 #     make_ss
-#     make_ss_multifilter
 #     make_mol
-#     make_mol_multifilter
 #     make_heatmap
 #     make_circle
+#     make_disthist
+#     make_skyline
+#     make_ap
+#     make_shapemapper
+#     make_ap_multifilter
+#     make_ss_multifilter
+#     make_mol_multifilter
 #     make_circle_multifilter
+#     make_disthist_multifilter
 ###############################################################################
 
     def make_qc(self, **kwargs):
         """Makes a QC plot. See help(MaP.array_qc) for more."""
         return array_qc([self], **kwargs)
 
-    def make_ss(self, **kwargs):
+    def make_ss(self, dance=False, **kwargs):
+        if dance:
+            self.dance_filter()
+            plot = array_ss(self.dance, prefiltered=True, **kwargs)
+            for i, dance in enumerate(self.dance):
+                ax = plot.get_ax(i)
+                ax.set_title(
+                    f"DANCE component: {i}, Percent: {self.dance_percents[i]}")
+            return plot
         return array_ss([self], **kwargs)
 
-    def make_mol(self, **kwargs):
+    def make_mol(self, dance=False, **kwargs):
+        if dance:
+            self.dance_filter()
+            plot = array_ap(self.dance, prefiltered=True, **kwargs)
+            for i, dance in enumerate(self.dance):
+                ax = plot.get_ax(i)
+                ax.set_title(
+                    f"DANCE component: {i}, Percent: {self.dance_percents[i]}")
+            return plot
         return array_mol([self], **kwargs)
 
     def make_heatmap(self, **kwargs):
@@ -397,7 +416,8 @@ class Sample():
 
     def make_ap(self, dance=False, **kwargs):
         if dance:
-            plot = array_ap(self.dance, **kwargs)
+            self.dance_filter()
+            plot = array_ap(self.dance, prefiltered=True, **kwargs)
             for i, dance in enumerate(self.dance):
                 ax = plot.get_ax(i)
                 ax.set_title(
@@ -486,8 +506,10 @@ class Sample():
             self.filter_ij(ij, "pdb", **filter)
             plot.add_sample(structure, ij, label, ax)
         return plot
+
 ###############################################################################
 # Plotting functions that accept a list of samples
+#   extract_passthrough_kwargs
 #   array_qc
 #   array_skyline
 #   array_ap
@@ -496,6 +518,7 @@ class Sample():
 #   array_heatmap
 #   array_circle
 #   array_linreg
+#   array_disthist
 ###############################################################################
 
 
@@ -526,42 +549,47 @@ def array_skyline(samples, plot_kwargs={}, **kwargs):
 
 
 def array_ap(samples, ct="ct", comp=None, ij=None, ij2=None, ij2_filter={},
-             profile="profile", label="label", plot_kwargs={}, **kwargs):
+             profile="profile", label="label", plot_kwargs={},
+             prefiltered=False, **kwargs):
     plot = AP(len(samples), samples[0].data[ct].length, **plot_kwargs)
     pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
     for sample in samples:
-        if ct not in ["ss", "ct"]:
-            sample.filter_ij(ct, ct)
-        if ij is not None:
-            sample.filter_ij(ij, ct, **kwargs)
-        if ij2 is not None:
-            sample.filter_ij(ij2, ct, **ij2_filter)
+        if not prefiltered:
+            if ct not in ["ss", "ct"]:
+                sample.filter_ij(ct, ct)
+            if ij is not None:
+                sample.filter_ij(ij, ct, **kwargs)
+            if ij2 is not None:
+                sample.filter_ij(ij2, ct, **ij2_filter)
         plot.add_sample(sample, ct=ct, comp=comp, ij=ij, ij2=ij2,
                         profile=profile, label=label, **pt_kwargs)
     return plot
 
 
 def array_ss(samples, ss="ss", ij=None, ij2=None, ij2_filter={},
-             profile="profile", label="label", plot_kwargs={}, **kwargs):
+             profile="profile", label="label", plot_kwargs={},
+             prefiltered=False, **kwargs):
     plot = SS(len(samples), samples[0].data[ss], **plot_kwargs)
     pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
     for sample in samples:
-        if ij is not None:
-            sample.filter_ij(ij, ss, **kwargs)
-        if ij2 is not None:
-            sample.filter_ij(ij2, ss, **ij2_filter)
+        if not prefiltered:
+            if ij is not None:
+                sample.filter_ij(ij, ss, **kwargs)
+            if ij2 is not None:
+                sample.filter_ij(ij2, ss, **ij2_filter)
         plot.add_sample(sample, ij=ij, ij2=ij2, profile=profile,
                         label=label, **pt_kwargs)
     return plot
 
 
 def array_mol(samples, ij=None, profile="profile", label="label", show=True,
-              **kwargs):
+              prefiltered=False, **kwargs):
     plot = Mol(len(samples), samples[0].data["pdb"])
     pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
     for sample in samples:
-        if ij is not None:
-            sample.filter_ij(ij, "pdb", **kwargs)
+        if not prefiltered:
+            if ij is not None:
+                sample.filter_ij(ij, "pdb", **kwargs)
         plot.add_sample(sample, ij=ij, profile=profile,
                         label=label, **pt_kwargs)
     if show:
