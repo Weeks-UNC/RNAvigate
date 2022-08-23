@@ -36,8 +36,8 @@ class Plot(ABC):
         self.plot_data(**kwargs)
 
     @classmethod
-    def view_colormap(self, ax=None, ij=None, metric=None, ticks=None, values=None,
-                      title=None, cmap=None):
+    def view_colormap(self, ax=None, ij=None, metric=None, ticks=None,
+                      values=None, title=None, cmap=None):
         if ij is None or type(ij).__name__ == "CT":
             ax.remove()
             return
@@ -97,22 +97,24 @@ class Plot(ABC):
         return rows, cols
 
     @classmethod
-    def add_sequence(self, ax, sequence, yvalue=0.005):
+    def add_sequence(self, ax, sequence, yvalue=0.005, ytrans="axes"):
         # set font style and colors for each nucleotide
         font_prop = mp.font_manager.FontProperties(
             family="monospace", style="normal", weight="bold", size="12")
         color_dict = {"A": "#f20000", "U": "#f28f00",
                       "G": "#00509d", "C": "#00c200"}
         # transform yvalue to a y-axis data value
-        ymin, ymax = ax.get_ylim()
-        yvalue = (ymax-ymin)*yvalue + ymin
+        ytrans = {"axes": ax.transAxes,
+                  "data": ax.transData}[ytrans]
+        trans = mp.transforms.blended_transform_factory(ax.transData, ytrans)
         if hasattr(self, 'region'):
             sequence = sequence[self.region[0]-1, self.region[1]]
         for i, seq in enumerate(sequence):
             col = color_dict[seq.upper()]
             ax.annotate(seq, xy=(i + 1, yvalue), xycoords='data',
-                        fontproperties=font_prop,
-                        color=col, horizontalalignment="center")
+                        fontproperties=font_prop, transform=trans,
+                        color=col, horizontalalignment="center",
+                        verticalalignment="center")
 
     @abstractmethod
     def get_figsize(self):
