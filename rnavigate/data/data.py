@@ -2,7 +2,7 @@ from Bio.pairwise2 import align
 import Bio.SeqIO
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.colors import is_color_like
+import matplotlib.colors as mpc
 
 
 def get_nt_color(nt, colors="new"):
@@ -30,11 +30,11 @@ def get_pairs_sens_PPV(self, ct="ct"):
 
 
 class Data():
-    def __init__(self, sequence=None, fasta=None):
+    def __init__(self, sequence=None, filepath=None):
         if sequence is not None:
             self.sequence = sequence
-        elif fasta is not None:
-            self.read_fasta(fasta)
+        elif filepath is not None:
+            self.read_fasta(filepath)
 
     def read_fasta(self, fasta):
         fasta = list(Bio.SeqIO.parse(open(fasta), 'fasta'))
@@ -44,6 +44,19 @@ class Data():
     @property
     def length(self):
         return len(self.sequence)
+
+    def get_cmap(self, cmap):
+        if mpc.is_color_like(cmap):
+            cmap = mpc.ListedColormap([cmap])
+        elif isinstance(cmap, list) and all(mpc.is_color_like(c) for c in cmap):
+            cmap = mpc.ListedColormap(cmap)
+        else:
+            assert cmap in plt.colormaps(), ("cmap must be one of: valid mpl "
+                                             "color, list of mpl colors, or "
+                                             "mpl colormap."
+                                             + str(cmap))
+        cmap = plt.get_cmap(cmap)
+        return cmap
 
     def get_alignment_map(self, fit_to, full=False):
         if self.sequence.upper() == fit_to.sequence.upper():
@@ -91,22 +104,12 @@ class Data():
                                for n in range(self.length)])
             return colors
         elif source == "profile":
-            # TODO: this should be implemented in Profile for reusability
-            assert type(profile).__name__ == "Profile", "Invalid profile"
-            if profile.datatype == 'RNP':
-                cmap = np.array(["silver", "limegreen"])
-                prof_colors = cmap[profile.data["RNPsite"]]
-            elif profile.datatype in ['profile', 'dance']:
-                cmap = np.array(['gray', 'black', 'orange', 'red'])
-                bins = np.array([0, 0.4, 0.85])
-                with np.errstate(invalid='ignore'):  # always false for nans
-                    prof_colors = cmap[[sum(p > bins)
-                                        for p in profile.data.Norm_profile]]
+            prof_colors = profile.colors
             colors = np.full(self.length, 'gray', dtype='<U16')
             am = profile.get_alignment_map(self)
             for i, i2 in enumerate(am):
                 if i2 != -1:
-                    colors[i2] = prof_colors[i]
+                    colors[i2] = mpc.to_hex(prof_colors[i])
             return colors
         elif source == "structure":
             # TODO: this should be implemented in CT object for reusability
@@ -120,9 +123,9 @@ class Data():
                     colors[i2] = ct_colors[i]
             return colors
         elif (isinstance(source, list) and (len(source) == self.length)
-              and all(is_color_like(c) for c in source)):
+              and all(mpc.is_color_like(c) for c in source)):
             return np.array(source)
-        elif is_color_like(source):
+        elif mpc.is_color_like(source):
             return np.full(self.length, source, dtype="<U16")
         else:
             print("Invalid colors: choices = profile, sequence, position, " +
