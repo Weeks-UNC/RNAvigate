@@ -1,4 +1,3 @@
-from turtle import color
 from .plots import Plot
 import numpy as np
 import matplotlib.pyplot as plt
@@ -90,7 +89,7 @@ class SS(Plot):
             self.plot_structure(ax, ss.get_colors("grey"))
             if sequence:
                 nt_color = np.full(bg_color.shape, 'k')
-                for i, color in enumerate(nt_color):
+                for i, color in enumerate(bg_color):
                     r, g, b = to_rgb(color)
                     if (r*0.299 + g*0.587 + b*0.114) < 200/256:
                         nt_color[i] = 'w'
