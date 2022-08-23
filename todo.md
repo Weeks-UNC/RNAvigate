@@ -1,28 +1,27 @@
-Master Plan for Plot-MaP
-========================
+Plan for RNAvigate
+==================
 Plot-MaP should be an easy to use, universal tool for plotting Mutational
 Profiling (MaP) and Juxtaposed Merged Pairs (JuMP) data and quality control
 information. It should be easily extensible to accomodate new plots, data, and
 analysis.
 
-To-Do List
-----------
-- windowed ijs that are (-1, -1) plots one line at (-1, 1)
+Coding To-Do List
+-----------------
 - calling significant sites with log-corrected profile min-diff comparison.
 - better nucleotide colors and display on linear regression plots.
-- Plotting only certain windows.
-  - arc, skyline, ss
-- Plotting annotations
-  - clouds, colors, or labels in 3D figures.
 - loading in annotations files
 - Reformatting heatmaps to be more familiar.
 - deltaSHAPE
-- RNP-MaP
-- Bin by MutsPerMol
-- Keep documentation updated for testers.
-- easy and robust installation guidelines.
-- guide for more custom use cases.
-- Class and method descriptions.
+- send to file for all plots
+
+Documentation To-Do List
+------------------------
+- Installation instructions
+- One page for each plot type
+  - arcplot, circleplot, ss-diagram, 3d mol, skyline, qc, heatmap, linreg, sm
+- guide for custom use cases
+  = loading profile data, loading ij data, plots with mpl, data with pandas
+- good doc strings
 
 Features
 --------
@@ -31,25 +30,24 @@ A python interface and CLI interface for all of the following:
 ###Loading MaP/JuMP data and plotting
 - Implemented python interface: Y
 - Implemented CLI interface: YY
-- Beautifully represents data: Done
 - Not applicable: ---
 
-| plot type | log | profiles | dance | rings | pairs | deletions | frags | array | probs |
-|-----------|-----|----------|-------|-------|-------|-----------|-------|-------|-------|
-| load data | Y   | Y        | Y     | Y     | Y     | Y         |       | ----- | Y     |
-| QC plots  | Y   | Y        | ---   | ---   | ---   | ---       | ---   | Y     | ---   |
-| Regression| --- | Y        | Y     | ---   | ---   | ---       | ---   | Y     | ---   |
-| skyline   | --- | Y        | Y     | ---   | ---   | ---       |       | Y     | ---   |
-| arc plots | --- | Y        | ---   | Y     | Y     | Y         |       | Y     | Y     |
-| secondary | --- | Y        | ---   | Y     | Y     | Y         |       | Y     | Y     |
-| tertiary  | --- | Y        | ---   | Y     | Y     | Y         |       | Y     | Y     |
-| heatmaps  | --- |          | Y     | Y     | Y     | Y         |       | Y     | Y     |
+| plot type | log | profiles | dance | rings | pairs | deletions | array | probs |
+|-----------|-----|----------|-------|-------|-------|-----------|-------|-------|
+| load data | Y   | Y        | Y     | Y     | Y     | Y         | ----- | Y     |
+| QC plots  | Y   | Y        | ---   | ---   | ---   | ---       | Y     | ---   |
+| Regression| --- | Y        | Y     | ---   | ---   | ---       | Y     | ---   |
+| skyline   | --- | Y        | Y     | ---   | ---   | ---       | Y     | ---   |
+| arc plots | --- | Y        | ---   | Y     | Y     | Y         | Y     | Y     |
+| secondary | --- | Y        | ---   | Y     | Y     | Y         | Y     | Y     |
+| tertiary  | --- | Y        | ---   | Y     | Y     | Y         | Y     | Y     |
+| heatmaps  | --- |          | Y     | Y     | Y     | Y         | Y     | Y     |
 
 - Reading in structural information
 
-| ct | compct | xrna | varna | nsd | cte | pdb |
-|----|--------|------|-------|-----|-----|-----|
-| Y  | Y      | Y    | Y     | Y   | Y   | Y   |
+| ct | xrna | varna | nsd | cte | pdb |
+|----|------|-------|-----|-----|-----|
+| Y  | Y    | Y     | Y   | Y   | Y   |
 
 - Analyses
   - [ ] RNP-MaP
