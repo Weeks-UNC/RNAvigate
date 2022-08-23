@@ -19,7 +19,7 @@ class PDB(Data):
         if not get_offset:
             self.offset = offset
         if not get_seq:
-            super().__init__(fasta=fasta)
+            super().__init__(filepath=fasta)
         self.read_pdb(filepath)
         self.path = filepath
         self.distance_matrix = {}
