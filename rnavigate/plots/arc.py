@@ -17,6 +17,9 @@ class AP(Plot):
                              "ij2_panel", "ct_panel", "annotations"]
 
     def set_axis(self, ax, annotations=0, xticks=20, xticks_minor=10):
+        def get_ticks(x, mn, mx):
+            return [tick for tick in range(x, mx+1, x) if mn <= tick <= mx]
+
         ax.set_aspect('equal')
         ax.yaxis.set_visible(False)
         ax.spines['left'].set_color('none')
@@ -28,9 +31,9 @@ class AP(Plot):
         mn, mx = self.region
         ax.set(xlim=(mn - 0.5, mx + 0.5),
                ylim=(-height-1-(2*annotations), height+1),
-               xticks=list(range(xticks, mx, xticks)),
+               xticks=get_ticks(xticks, mn, mx),
                axisbelow=False)
-        ax.set_xticks(list(range(xticks_minor, mx, xticks_minor)), minor=True)
+        ax.set_xticks(get_ticks(xticks_minor, mn, mx), minor=True)
         for label in ax.get_xticklabels():
             label.set_bbox({"facecolor": "white",
                             "edgecolor": "None",
@@ -77,7 +80,7 @@ class AP(Plot):
         patches = []
         mn, mx = self.region
         for i, j, color in zip(*ij_colors):
-            if j > i:  # flip the order
+            if j < i:  # flip the order
                 i, j = j, i
             if ((i < mn) and (j < mn)) or ((i > mx) and (j > mx)):
                 continue

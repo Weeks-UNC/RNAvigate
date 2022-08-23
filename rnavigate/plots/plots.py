@@ -96,7 +96,6 @@ class Plot(ABC):
             rows = math.ceil(self.length / cols)
         return rows, cols
 
-    @classmethod
     def add_sequence(self, ax, sequence, yvalue=0.005, ytrans="axes"):
         # set font style and colors for each nucleotide
         font_prop = mp.font_manager.FontProperties(
@@ -107,11 +106,10 @@ class Plot(ABC):
         ytrans = {"axes": ax.transAxes,
                   "data": ax.transData}[ytrans]
         trans = mp.transforms.blended_transform_factory(ax.transData, ytrans)
-        if hasattr(self, 'region'):
-            sequence = sequence[self.region[0]-1, self.region[1]]
+        sequence = sequence[self.region[0]-1: self.region[1]]
         for i, seq in enumerate(sequence):
             col = color_dict[seq.upper()]
-            ax.annotate(seq, xy=(i + 1, yvalue), xycoords='data',
+            ax.annotate(seq, xy=(i + self.region[0], yvalue), xycoords='data',
                         fontproperties=font_prop, transform=trans,
                         color=col, horizontalalignment="center",
                         verticalalignment="center")
