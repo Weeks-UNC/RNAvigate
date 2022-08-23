@@ -1,53 +1,104 @@
 import pandas as pd
 from .data import Data
 import numpy as np
+import matplotlib.colors as mpc
+import matplotlib.pyplot as plt
 
 
 class Profile(Data):
-    def __init__(self, filepath, datatype="profile", component=None):
+    def __init__(self, datatype="profile",
+                 column=None, ap_scale_factor=1,
+                 dataframe=None, sequence=None, fasta=None,
+                 filepath=None, sep="\t", read_csv_kw={},
+                 cmap=None, norm_method=None, norm_values=None,
+                 color_column=None, colors=None):
         self.datatype = datatype
-        if datatype == "profile":
-            self.read_profile(filepath, '\t')
-        elif datatype == "RNP":
-            self.read_profile(filepath, ',')
-        elif datatype == "dance":
-            assert component is not None, "Must pass a dance component number"
-            self.read_dance_reactivities(filepath, component)
+        self.default_column = column
+        self.ap_scale_factor = ap_scale_factor
+        self.set_color_defaults(column=color_column, cmap=cmap,
+                                norm_method=norm_method,
+                                norm_values=norm_values)
+        # assign data
+        if dataframe is not None:
+            self.data = dataframe
+        elif filepath is not None:
+            self.read_file(filepath=filepath, sep=sep, read_csv_kw=read_csv_kw)
+        else:
+            print("Profile initialized without data.")
+        # assign sequence
+        if fasta is not None:
+            self.read_fasta(fasta)
+        elif sequence is not None:
+            self.sequence = sequence.upper().replace("T", "U")
+        elif "Sequence" in self.data.columns:
+            self.sequence = self.get_seq_from_data()
+        else:
+            print("Profile initialized without a sequence.")
+        # assign colors
+        if colors is not None:
+            self.colors = colors
+        elif "Colors" in self.data.columns:
+            self.colors = self.data["Colors"]
+        else:
+            self.set_profile_colors(start_from="defaults")
 
-    def read_profile(self, profile, sep):
-        self.data = pd.read_csv(profile, sep=sep)
-        sequence = ''.join(self.data["Sequence"].values)
-        self.sequence = sequence.upper().replace("T", "U")
+    def read_file(self, filepath, sep, read_csv_kw):
+        self.data = pd.read_csv(filepath, sep=sep, **read_csv_kw)
+        self.filepath = filepath
 
-    def read_dance_reactivities(self, filepath, component):
-        # parse header
-        with open(filepath) as f:
-            header1 = f.readline()
-            header2 = f.readline()
-        self.header = header1 + header2
-        self.components = int(header1.strip().split()[0])
-        self.percents = [float(x) for x in header2.strip().split()[1:]]
-        self.component = component
-        self.percent = self.percents[component]
-        # parse datatable
-        read_kwargs = {}
-        read_kwargs['names'] = ["Nucleotide", "Sequence", "Norm_profile",
-                                "Modified_rate", "Untreated_rate"]
-        col_offset = 3 * component
-        bg_col = 3 * self.components + 2
-        read_kwargs["usecols"] = [0, 1, 2+col_offset, 3+col_offset, bg_col]
-        self.data = pd.read_csv(filepath, sep='\t', header=2, **read_kwargs)
-        stripped = []
-        for x in self.data["Untreated_rate"]:
-            if type(x) is float:
-                stripped.append(x)
-            else:
-                stripped.append(float(x.rstrip(' i')))
-        self.data["Untreated_rate"] = stripped
-        self.data["Reactivity_profile"] = (self.data["Modified_rate"] -
-                                           self.data["Untreated_rate"])
+    def get_seq_from_data(self):
         sequence = ''.join(self.data["Sequence"].values)
-        self.sequence = sequence.upper().replace("T", "U")
+        return sequence.upper().replace("T", "U")
+
+    def set_color_defaults(self, column, cmap, norm_method, norm_values):
+        self._color_defaults = {"column": column,
+                                "cmap": self.get_cmap(cmap),
+                                "norm_method": norm_method,
+                                "norm_values": norm_values}
+
+    def set_color_values(self, start_from, **kwargs):
+        if start_from == "defaults":
+            self.color_values = self._color_defaults
+        elif start_from == "current":
+            pass
+        for key in kwargs:
+            if key not in self.color_values:
+                print(f"{key} is not a valid color argument.")
+            elif key == "cmap":
+                self.color_values[key] = self.get_cmap(kwargs[key])
+            elif kwargs[key] is not None:
+                self.color_values[key] = kwargs[key]
+
+    def set_profile_colors(self, start_from="current", **kwargs):
+        self.set_color_values(start_from=start_from, **kwargs)
+        cv = self.color_values
+        if cv["norm_method"] == "bins":
+            norm = mpc.BoundaryNorm(cv["norm_values"],
+                                    cv["cmap"].N, extend="both")
+        elif cv["norm_method"] == "min_max":
+            norm = plt.Normalize(cv["norm_values"][0], cv["norm_values"][1])
+        elif cv["norm_method"] == "0_1":
+            norm = plt.Normalize()
+        elif cv["norm_method"] is None:
+            def norm(x): return x  # does nothing to values
+        self.colors = cv["cmap"](norm(self.data[cv["column"]]))
+
+
+class SHAPEMaP(Profile):
+    def __init__(self, filepath, dms=False, datatype="shapemap", **kwargs):
+        super().__init__(filepath=filepath,
+                         datatype=datatype,
+                         sep="\t",
+                         column="Norm_profile",
+                         ap_scale_factor=5,
+                         color_column="Norm_profile",
+                         cmap=["gray", "black", "orange", "red"],
+                         norm_method="bins",
+                         norm_values=[0, 0.4, 0.85],
+                         **kwargs)
+        if dms:
+            self.set_dms_profile()
+            self.set_profile_colors(start_from="defaults")
 
     def set_dms_profile(self):
         """Perform normalization of data based on DMS reactivities (AC seperate
@@ -84,10 +135,57 @@ class Profile(Data):
                 norm_error[mask] = np.sqrt(norm_error[mask])
                 norm_error[mask] *= np.abs(dms_profile[mask])
 
-        norm_factors = {'G': gu_norm_factor,
-                        'U': gu_norm_factor,
-                        'A': ac_norm_factor,
-                        'C': ac_norm_factor}
+        self.norm_factors = {'G': gu_norm_factor,
+                             'U': gu_norm_factor,
+                             'A': ac_norm_factor,
+                             'C': ac_norm_factor}
 
         self.data["Norm_profile"] = dms_profile
         self.data["Norm_stderr"] = norm_error
+
+
+class DanceMaP(SHAPEMaP):
+    def __init__(self, filepath, component, datatype="dancemap", **kwargs):
+        self.component = component
+        super().__init__(filepath=filepath, datatype=datatype, **kwargs)
+
+    def read_file(self, sep='\t', read_csv_kw={}):
+        # parse header
+        with open(self.filepath) as f:
+            header1 = f.readline()
+            header2 = f.readline()
+        self.header = header1 + header2
+        self.components = int(header1.strip().split()[0])
+        self.percents = [float(x) for x in header2.strip().split()[1:]]
+        self.percent = self.percents[self.component]
+        # parse datatable
+        read_csv_kw['names'] = ["Nucleotide", "Sequence", "Norm_profile",
+                                "Modified_rate", "Untreated_rate"]
+        col_offset = 3 * self.component
+        bg_col = 3 * self.components + 2
+        read_csv_kw["usecols"] = [0, 1, 2+col_offset, 3+col_offset, bg_col]
+        self.data = pd.read_csv(self.filepath, sep=sep, header=2,
+                                **read_csv_kw)
+        # some rows have an "i" added to the final column
+        stripped = []
+        for x in self.data["Untreated_rate"]:
+            if type(x) is float:
+                stripped.append(x)
+            else:
+                stripped.append(float(x.rstrip(' i')))
+        self.data["Untreated_rate"] = stripped
+        self.data["Reactivity_profile"] = (self.data["Modified_rate"] -
+                                           self.data["Untreated_rate"])
+        sequence = ''.join(self.data["Sequence"].values)
+        self.sequence = sequence.upper().replace("T", "U")
+
+
+class RNPMaP(Profile):
+    def __init__(self, filepath, datatype="rnpmap", **kwargs):
+        super().__init__(filepath=filepath,
+                         datatype=datatype,
+                         sep=",",
+                         column="NormedP",
+                         color_column="RNPsite",
+                         cmap=["silver", "limegreen"],
+                         **kwargs)
