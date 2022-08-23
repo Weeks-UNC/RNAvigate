@@ -65,6 +65,8 @@ class AP(Plot):
         patches = []
         mn, mx = self.region
         for i, j, color in zip(*ij_colors):
+            if j > i:  # flip the order
+                i, j = j, i
             if ((i < mn) and (j < mn)) or ((i > mx) and (j > mx)):
                 continue
             if panel == "top":

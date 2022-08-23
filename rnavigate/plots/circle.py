@@ -57,6 +57,8 @@ class Circle(Plot):
             return
         patches = []
         for i, j, color in zip(*ij_colors):
+            if j > i:  # flip the order
+                i, j = j, i
             x_i = self.x[i-1]
             y_i = self.y[i-1]
             x_j = self.x[j-1]
