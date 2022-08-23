@@ -5,7 +5,10 @@ import os.path
 import numpy as np
 
 # modules in RNAvigate
-from .data import Annotation, CT, Data, DotPlot, IJ, Log, PDB, Profile
+from .data import Annotation, CT, Data, DotPlot, Log, PDB
+from .data.ct import CT, DotBracket, XRNA, VARNA, NSD, CTE
+from .data.ij import IJ, RINGMaP, PAIRMaP, PairProb, SHAPEJuMP
+from .data.profile import Profile, SHAPEMaP, DanceMaP, RNPMaP
 from .plots import AP, Circle, DistHist, Heatmap, LinReg, Mol, QC, Skyline, SM, SS
 from .analysis import LogCompare, LowSS
 
@@ -41,137 +44,115 @@ class Sample():
 
     def __init__(self,
                  sample=None,
-                 fasta=None,
-                 profile=None,
-                 rnp=None,
+                 pdb=None,
+                 pdb_kwargs={'chain': 'A'},
                  ct=None,
                  compct=None,
                  ss=None,
+                 fasta=None,
                  log=None,
-                 rings=None,
-                 deletions=None,
-                 pairs=None,
+                 shapemap=None,
+                 dmsmap=None,
+                 dancemap=None,
+                 rnpmap=None,
+                 ringmap=None,
+                 shapejump=None,
+                 pairmap=None,
                  allcorrs=None,
-                 pdb=None,
-                 pdb_kwargs={'chain': 'A'},
-                 probs=None,
+                 pairprob=None,
                  dance_prefix=None):
         """Creates a sample object which connects all chemical probing and
         structural data for a single experiment. Contains convenience methods
-        to plot, filter, compare and retrieve this data.
+        to plot, filter, compare and retrieve this data. Every argument is
+        optional and defaults to None.
 
         Args:
             sample (str, optional): This string will serve as a label for this
                 sample within plots.
-                Defaults to None.
-            fasta (str, optional): Path to a fasta file which will provide the
-                reference sequence for ShapeJumper Data.
-                Defaults to None.
-            profile (str, optional): Path to a ShapeMapper profile.txt output
-                file.
-                Defaults to None.
-            rnp (str, optional): Path to an RNPMapper .csv file.
-                Defaults to None.
-            ct (str, optional): Path to a .ct, .dbn, or .bracket structure
-                file.
-                Defaults to None.
-            compct (str, optional): Same as ct above, but serves as a
-                comparison structure for plotting.
-                Defaults to None.
-            ss (str, optional): Path to a .xrna, .varna, .nsd, or .cte
-                secondary structure drawing file.
-                Defaults to None.
-            log (str, optional): Path to a ShapeMapper shapemapper_log.txt
-                output file.
-                Defaults to None.
-            rings (str, optional): Path to a RingMapper output file.
-                Defaults to None.
-            deletions (str, optional): Path to a ShapeJumper output file.
-                Defaults to None.
-            pairs (str, optional): Path to a PairMapper pairmap.txt output
-                file.
-                Defaults to None.
-            allcorrs (str, optional): Path to a PairMapper allcorrs.txt output
-                file.
-                Defaults to None.
             pdb (str, optional): Path to a .pdb atom coordinates file.
-                Defaults to None.
             pdb_kwargs (dict, optional): Dictionary containing info needed to
                 parse provided .pdb. "chain" is required. "fasta" and "offset"
                 may be required if not provided in header.
                 Defaults to {'chain':'A'}.
-            probs (dict, optional): Path to an RNAStructure .dp pairing
+            ct (str, optional): Path to a .ct, .dbn, or .bracket structure
+                file.
+            compct (str, optional): Same as ct above, but serves as a
+                comparison structure for plotting.
+            ss (str, optional): Path to a .xrna, .varna, .nsd, or .cte
+                secondary structure drawing file.
+            fasta (str, optional): Path to a fasta file which will provide the
+                reference sequence for ShapeJumper Data.
+            log (str, optional): Path to a ShapeMapper shapemapper_log.txt.
+            shapemap (str, optional): Path to a ShapeMapper profile.txt.
+            dmsmap (str, optional): Path to a ShapeMapper profile.txt, which
+                will be renormalized using DMS conventions.
+            dancemap (str, optional): Use dance_prefix instead.
+            rnpmap (str, optional): Path to an RNPMapper .csv file.
+            ringmap (str, optional): Path to a RingMapper output file.
+            shapejump (str, optional): Path to a ShapeJumper output file.
+            pairmap (str, optional): Path to a PairMapper pairmap.txt output
+                file.
+            allcorrs (str, optional): Path to a PairMapper allcorrs.txt output
+                file.
+            probs (str, optional): Path to an RNAStructure .dp pairing
                 probability file.
-                Defaults to None.
             dance_prefix (str, optional): Path prefix for DanceMapper output
                 files.
-                Defaults to None.
         """
-        self.paths = {"fasta": fasta,
-                      "profile": profile,
-                      "rnp": rnp,
-                      "ct": ct,
-                      "comptct": compct,
-                      "ss": ss,
-                      "log": log,
-                      "rings": rings,
-                      "deletions": deletions,
-                      "pairs": pairs,
-                      "allcorrs": allcorrs,
-                      "pdb": pdb,
-                      "probs": probs}
+        # returns the instantiator using the filepath extension
+        def get_ss_class(filepath):
+            if filepath is None:
+                return None
+            extension = filepath.split('.')[-1]
+            return {"varna": VARNA,
+                    "xrna": XRNA,
+                    "nsd": NSD,
+                    "cte": CTE,
+                    "ct": CT,
+                    "dbn": DotBracket,
+                    "bracket": DotBracket
+                    }[extension]
+        # for each input
+        # [0] filepath
+        # [1] instantiation class
+        # [2] sequence source
+        # [3] kwargs
+        self.inputs = {
+            "fasta": [fasta, Data, "self", {}],
+            "log": [log, Log, "self", {}],
+            "shapemap": [shapemap, SHAPEMaP, "self", {}],
+            "dmsmap": [dmsmap, SHAPEMaP, "self", {"dms": True}],
+            "dancemap": [dancemap, DanceMaP, "self", {}],
+            "rnpmap": [rnpmap, RNPMaP, "self", {}],
+            "ringmap": [ringmap, RINGMaP, "profile", {}],
+            "pairmap": [pairmap, PAIRMaP, "profile", {}],
+            "allcorrs": [allcorrs, RINGMaP, "profile", {}],
+            "shapejump": [shapejump, SHAPEJuMP, "fasta", {}],
+            "pairprob": [pairprob, PairProb, "profile", {}],
+            "ct": [ct, get_ss_class(ct), "self", {}],
+            "compct": [compct, get_ss_class(compct), "self", {}],
+            "ss": [ss, get_ss_class(ss), "self", {}],
+            "pdb": [pdb, PDB, "self", pdb_kwargs],
+            "dance_prefix": [dance_prefix, self.init_dance, "self", {}]
+        }
+        self.default_profiles = ["shapemap", "dmsmap", "dancemap", "rnpmap"]
+
         self.sample = sample
         self.parent = None
         self.data = {}  # stores profile, ij, and structure objects
-        if ct is not None:
-            filetype = ct.split(".")[-1]
-            self.data["ct"] = CT(filetype, ct)
-        if compct is not None:
-            filetype = ct.split(".")[-1]
-            self.data["compct"] = CT(filetype, compct)
-        if ss is not None:
-            self.data["ss"] = CT("ss", ss)
-        if pdb is not None:
-            self.data["pdb"] = PDB(pdb, **pdb_kwargs)
+        # load data
+        for input in self.inputs.keys():
+            path, instantiator, source, kwargs = self.inputs[input]
+            if path is None:
+                continue
+            if source != "self":
+                kwargs.update({"sequence": self.data[source].sequence})
+            self.data[input] = instantiator(filepath=path, **kwargs)
+            if ((input in self.default_profiles) and
+                    ("profile" not in self.data)):
+                self.data["profile"] = self.data[input]
 
-        # ShapeMapper downstream analysis requires sequence given from profile
-        if profile is not None:
-            self.data["profile"] = Profile(profile)
-            prof_seq = self.data["profile"].sequence
-            self.has_profile = True
-        elif fasta is not None:
-            print("No profile present, using fasta as reference sequence.")
-            self.data["fasta"] = Data(fasta=fasta)
-            prof_seq = self.data["fasta"].sequence
-            self.has_profile = True
-        else:
-            self.has_profile = False
-        no_profile_message = "{} requires a sequence from ShapeMapper profile."
-        if rnp is not None:
-            self.data["rnp"] = Profile(rnp, 'RNP')
-        if log is not None:
-            self.data["log"] = Log(log)
-        if rings is not None:
-            assert self.has_profile, no_profile_message.format("Rings")
-            self.data["rings"] = IJ("rings", rings, prof_seq)
-        if pairs is not None:
-            assert self.has_profile, no_profile_message.format("Pairs")
-            self.data["pairs"] = IJ("pairs", pairs, prof_seq)
-        if allcorrs is not None:
-            assert self.has_profile, no_profile_message.format("allcorrs")
-            self.data["allcorrs"] = IJ("rings", allcorrs, prof_seq)
-        if probs is not None:
-            assert self.has_profile, no_profile_message.format("Probabilities")
-            self.data["probs"] = IJ("probs", probs, prof_seq)
-
-        # Deletions requires a reference sequence in fasta format.
-        if deletions is not None:
-            assert fasta is not None, "Deletions plotting requires fasta"
-            self.data["deletions"] = IJ("deletions", deletions, fasta=fasta)
-        if dance_prefix is not None:
-            self.init_dance(dance_prefix)
-
-    def init_dance(self, prefix):
+    def init_dance(self, filepath):
         """Initializes a list of Sample objects which each represent a
         component of the DANCE model, available as Sample.dance.
 
@@ -179,7 +160,7 @@ class Sample():
             prefix (str): Path to DanceMapper output file prefixes. Finds
                 profiles, rings, pairs, and structure predictions if present.
         """
-        reactivityfile = f"{prefix}-reactivities.txt"
+        reactivityfile = f"{filepath}-reactivities.txt"
         # read in 2 line header
         with open(reactivityfile) as inf:
             header1 = inf.readline().strip().split()
@@ -189,30 +170,28 @@ class Sample():
         # population percentage of each component
         self.dance_percents = header2[1:]
         # dance is a list containing one sample for each component
-        self.dance = [Sample() for _ in range(self.dance_components)]
+        self.dance = []
         # build column names for reading in BM file
         for i, sample in enumerate(self.dance):
-            sample.sample = f"{self.sample}: {i} - {self.dance_percents[i]}"
-            sample.paths = {"profile": reactivityfile,
-                            "rings": f"{prefix}-{i}-rings.txt",
-                            "pairs": f"{prefix}-{i}-pairmap.txt",
-                            "ct": [f"{prefix}-{i}.f.ct",  # if using --pk
-                                   f"{prefix}-{i}.ct"]}  # if regular fold used
-            # read in "profile" from reactivities
-            sample.data["profile"] = Profile(reactivityfile, "dance", i)
-            # read in other attributes
-            if os.path.isfile(sample.paths["rings"]):
-                sample.data["rings"] = IJ("rings", sample.paths["rings"],
-                                          sample.data["profile"].sequence)
-            if os.path.isfile(sample.paths["pairs"]):
-                sample.data["pairs"] = IJ("pairs", sample.paths["pairs"],
-                                          sample.data["profile"].sequence)
-            # ! possible that these both exist
-            for ct_file in sample.paths["ct"]:
-                if os.path.isfile(ct_file):
-                    sample.data["ct"] = CT("ct", ct_file)
-                    sample.paths["ct"] = ct_file
+            kwargs = {
+                "sample": f"{self.sample}: {i} - {self.dance_percents[i]}",
+                "dancemap": reactivityfile,
+                "ringmap": f"{filepath}-{i}-rings.txt",
+                "pairmap": f"{filepath}-{i}-pairmap.txt",
+                "ct": [f"{filepath}-{i}.f.ct",  # if using --pk
+                       f"{filepath}-{i}.ct"]  # if regular fold used
+            }
+            for key in ["dancemap", "ringmap", "pairmap"]:
+                if not os.path.isfile(kwargs[key]):
+                    kwargs.pop(key)
+            for ct in kwargs["ct"]:
+                if os.path.isfile(ct):
+                    kwargs["ct"] = ct
+            if isinstance(kwargs["ct"], list):
+                kwargs.pop("ct")
+            sample = Sample(**kwargs)
             sample.parent = self
+            self.dance.append(sample)
 
 ###############################################################################
 # filtering and data retrieval
