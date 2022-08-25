@@ -142,16 +142,27 @@ class Sample():
         self.parent = None
         self.data = {}  # stores profile, ij, and structure objects
         # load data
-        for input in self.inputs.keys():
-            path, instantiator, source, kwargs = self.inputs[input]
-            if path is None:
-                continue
-            if source != "self":
-                kwargs.update({"sequence": self.data[source].sequence})
-            self.data[input] = instantiator(filepath=path, **kwargs)
-            if ((input in self.default_profiles) and
-                    ("profile" not in self.data)):
-                self.data["profile"] = self.data[input]
+        for input, (path, instantiator, source, kwargs) in self.inputs.items():
+            if path is not None:
+                self.set_data(
+                    name=input,
+                    filepath=path,
+                    instantiator=instantiator,
+                    seq_source=source,
+                    kwargs=kwargs)
+
+    def set_data(self, name, filepath, instantiator, seq_source, kwargs,
+                 overwrite=False):
+        if not overwrite:
+            assert name not in self.data, (f"{name} data already exists. "
+                                           "Set overwrite=True to ignore.")
+        if filepath is not None:
+            assert os.path.exists(filepath), f"{filepath}: file not found."
+        if seq_source != "self":
+            kwargs.update({"sequence": self.data[seq_source].sequence})
+        self.data[name] = instantiator(filepath=filepath, **kwargs)
+        if name in self.default_profiles and "profile" not in self.data:
+            self.data["profile"] = self.data[name]
 
     def init_dance(self, filepath):
         """Initializes a list of Sample objects which each represent a
@@ -540,7 +551,7 @@ def array_ap(samples, ct="ct", comp=None, ij=None, ij2=None, ij2_filter={},
 
 
 def array_ss(samples, ss="ss", ij=None, ij2=None, ij2_filter={},
-             profile="profile", label="label", plot_kwargs={},
+             profile="profile", annotations=[], label="label", plot_kwargs={},
              prefiltered=False, **kwargs):
     plot = SS(len(samples), samples[0].data[ss], **plot_kwargs)
     pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
@@ -551,7 +562,7 @@ def array_ss(samples, ss="ss", ij=None, ij2=None, ij2_filter={},
             if ij2 is not None:
                 sample.filter_ij(ij2, ss, **ij2_filter)
         plot.add_sample(sample, ij=ij, ij2=ij2, profile=profile,
-                        label=label, **pt_kwargs)
+                        annotations=annotations, label=label, **pt_kwargs)
     return plot
 
 
