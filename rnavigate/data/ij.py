@@ -47,7 +47,8 @@ class IJ(Data):
     def cmap(self, cmap):
         if mp.colors.is_color_like(cmap):
             cmap = mp.colors.ListedColormap([cmap])
-        elif isinstance(cmap, list) and all(mp.colors.is_color_like(c) for c in cmap):
+        elif (isinstance(cmap, list) and
+              all(mp.colors.is_color_like(c) for c in cmap)):
             cmap = mp.colors.ListedColormap(cmap)
         cmap = plt.get_cmap(cmap)
         cmap = cmap(np.arange(cmap.N))

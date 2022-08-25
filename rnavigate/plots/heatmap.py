@@ -1,4 +1,3 @@
-
 from matplotlib.colors import LinearSegmentedColormap, ListedColormap
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -105,5 +104,5 @@ class Heatmap(Plot):
     def plot_kde_data(self, ax, ij, **kwargs):
         data = ij.data.loc[ij.data["mask"]]
         sns.kdeplot(ax=ax, data=data, x="i_offset", y="j_offset",
-                    fill=True, levels=5, bw_adjust=0.2, cmap=ij.cmap, common_norm=True,
-                    ** kwargs)
+                    fill=True, levels=5, bw_adjust=0.2, cmap=ij.cmap,
+                    common_norm=True, ** kwargs)
