@@ -189,3 +189,25 @@ class RNPMaP(Profile):
                          color_column="RNPsite",
                          cmap=["silver", "limegreen"],
                          **kwargs)
+
+
+class DeltaProfile(Profile):
+    def __init__(self, profile1, profile2, column=None, norm_method="min_max",
+                 norm_values=[-0.8, 0.8], cmap="bwr"):
+        if column is None:
+            column = profile1.default_column
+        columns = ["Nucleotide", "Sequence", column]
+        new_data = profile1.data[columns].copy()
+        new_data = pd.merge(profile1.data[columns], profile2.data[columns],
+                            how="outer", on=["Nucleotide", "Sequence"],
+                            suffixes=["_1", "_2"])
+        new_data.eval(f"Delta_profile = {column}_1 - {column}_2",
+                      inplace=True)
+        super().__init__(datatype="deltaprofile",
+                         column="Delta_profile",
+                         ap_scale_factor=5,
+                         dataframe=new_data,
+                         cmap=cmap,
+                         norm_method=norm_method,
+                         norm_values=norm_values,
+                         color_column="Delta_profile")
