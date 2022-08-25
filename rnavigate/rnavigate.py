@@ -228,27 +228,19 @@ class Sample():
                 print(f"{key} data not found in {self.sample}")
                 return None
 
-    def get_data_list(self, *keys):
+    def get_data_list(self, keys):
         """Calls Sample.get_data() on a list of keys, also accepts "ctcompare",
         which is equivalent to ["ct", "compct"]
 
         Returns:
             list of data objects
         """
-        data_list = []
-        for key in keys:
-            if key == "ctcompare":
-                data = self.get_data_list("ct", "compct")
-                if data[1] is None:
-                    data = data[0]
-            elif key == "label":
-                return self.sample
-            elif isinstance(key, list):
-                data = self.get_data_list(*key)
-            else:
-                data = self.get_data(key)
-            data_list.append(data)
-        return data_list
+        if isinstance(keys, list):
+            return [self.get_data_list(key) for key in keys]
+        elif keys == "ctcompare":
+            return self.get_data_list(["ct", "compct"])
+        else:
+            return self.get_data(keys)
 
     def filter_ij(self, ij, fit_to, suppress=False, **kwargs):
         """Aligns sequence to fit_to, sets properties, filters and aligns data.
@@ -300,7 +292,7 @@ class Sample():
                 continue
             elif data in self.data.keys():
                 kwargs[data] = self.data[data]
-        self.data[ij].filter(self.get_data(fit_to), **kwargs)
+        self.data[ij].filter(self.get_data_list(fit_to), **kwargs)
 
     def dance_filter(self, filterneg=True, cdfilter=15, sigfilter=23,
                      ssfilter=True):
@@ -431,7 +423,7 @@ class Sample():
         Returns:
             rnavigate.plots.AP
         """
-        plot = AP(len(filters), self.get_data(ct).length)
+        plot = AP(len(filters), self.get_data_list(ct).length)
         for filter in filters:
             ij = filter.pop("ij")
             self.filter_ij(ij, ct, **filter)
@@ -441,7 +433,7 @@ class Sample():
 
     def make_ss_multifilter(self, filters, ss="ss", profile="profile",
                             label="label", ij2=None, **kwargs):
-        plot = SS(len(filters), self.get_data(ss))
+        plot = SS(len(filters), self.get_data_list(ss))
         pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
         for filter in filters:
             ij = filter.pop("ij")

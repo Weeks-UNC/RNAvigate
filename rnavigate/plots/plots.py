@@ -2,7 +2,7 @@ import matplotlib as mp
 import matplotlib.pyplot as plt
 import math
 import numpy as np
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 
 
 class Plot(ABC):
@@ -32,13 +32,14 @@ class Plot(ABC):
             return
         for key in kwargs.keys():
             if key not in self.pass_through:
-                kwargs[key] = sample.get_data(kwargs[key])
+                kwargs[key] = sample.get_data_list(kwargs[key])
         self.plot_data(**kwargs)
 
     @classmethod
     def view_colormap(self, ax=None, ij=None, metric=None, ticks=None,
                       values=None, title=None, cmap=None):
-        if ij is None or type(ij).__name__ == "CT":
+        if ((ij is None or type(ij).__name__ == "CT") and
+                None in [ticks, values, title, cmap]):
             ax.remove()
             return
         elif ij == "ct_compare":
