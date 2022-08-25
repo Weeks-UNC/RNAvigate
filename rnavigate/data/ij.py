@@ -420,7 +420,8 @@ class RINGMaP(IJ):
         self.data = pd.read_csv(filepath, sep='\t', header=1)
         self.data.rename(columns={"+/-": "Sign"}, inplace=True)
 
-    def data_specific_filter(self, positive_only, negative_only, **kwargs):
+    def data_specific_filter(self, positive_only=False, negative_only=False,
+                             **kwargs):
         if positive_only:
             self.update_mask(self.data["Sign"] == 1)
         if negative_only:
