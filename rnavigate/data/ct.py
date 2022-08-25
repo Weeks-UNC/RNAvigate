@@ -52,10 +52,10 @@ class CT(Data):
         Args:
             structNum (int, optional): If ct file contains multiple structures,
                 uses the given structure. Defaults to 0.
-            filterNC (bool, optional): If True, will filter out non-canonical base
-                pairs. Defaults to False.
-            filterSingle (bool, optional): If True, will filter out any singleton
+            filterNC (bool, optional): If True, will filter out non-canonical
                 base pairs. Defaults to False.
+            filterSingle (bool, optional): If True, will filter out any
+                singleton base pairs. Defaults to False.
         """
         fIN = self.filepath
         num, seq, bp, mask = [], '', [], []
@@ -204,7 +204,7 @@ class CT(Data):
         for i in range(len(self.num)):
             nt = self.num[i]
             prev = nt-1
-            next = nt+1 % len(self.ct+1)  # last nt goes back to zero
+            next = nt+1 % (len(self.ct)+1)  # last nt goes back to zero
             seq = self.sequence[i]
             ct = self.ct[i]
             if mask and self.mask[i]:
@@ -301,7 +301,7 @@ class CT(Data):
         length is implied from the given sequence
         """
 
-        # See if sequence has been defined either as self.sequence or as seq keyword
+        # See if sequence has been defined
         if seq is None:
             assert hasattr(self, "sequence"), "Sequence is not defined"
             assert self.sequence is not None, "Sequence is not defined"
@@ -1011,7 +1011,7 @@ class XRNA(CT):
         # get and check file extension, then read
         self.ss_type = "xrna"
         # Parse file and get sequence, xcoords, ycoords, and list of pairs.
-        tree = xmlet.parse(ss)
+        tree = xmlet.parse(self.filepath)
         root = tree.getroot()
         # extract sequence, x and y coordinates
         nucList = root.findall('./Complex/RNAMolecule/')
@@ -1062,7 +1062,7 @@ class CTE(CT):
         self.ss_type = "cte"
         # Parse file and get sequence, xcoords, ycoords, and list of pairs.
         names = ['nuc', 'seq', 'pair', 'xcoords', 'ycoords']
-        ct = pd.read_csv(ss, sep=r'\s+', usecols=[0, 1, 4, 8, 10],
+        ct = pd.read_csv(self.filepath, sep=r'\s+', usecols=[0, 1, 4, 8, 10],
                          names=names, header=0)
         sequence = ''.join(list(ct['seq']))
         xcoords = np.array([float(x) for x in ct.xcoords])
@@ -1092,7 +1092,7 @@ class NSD(CT):
         self.ss_type = "nsd"
         # Parse file and get sequence, xcoords, ycoords, and list of pairs.
         basepairs, sequence, xcoords, ycoords = [], '', [], []
-        with open(ss, 'r') as file:
+        with open(self.filepath, 'r') as file:
             item = ""
             for line in file.readlines():
                 line = line.strip("}{ ").split(' ')
@@ -1105,8 +1105,11 @@ class NSD(CT):
                     item = "pairs"
                     continue
                 if item == "strand":
-                    nt = {k: v for f in line for k, v in f.split(":")}
-                    print(nt)
+                    nt = {}
+                    for field in line:
+                        if ':' in field:
+                            key, value = field.split(':')
+                            nt[key] = value
                     sequence += nt["Base"]
                     xcoords.append(float(nt["X"]))
                     ycoords.append(-float(nt["Y"]))
@@ -1129,19 +1132,19 @@ class DotBracket(CT):
     def __init__(self, datatype="ct", dataframe=None, filepath=None, **kwargs):
         super().__init__(datatype, dataframe, filepath, **kwargs)
 
-    def read_file(self, db, filterNC=False, filterSingle=False):
+    def read_file(self, filterNC=False, filterSingle=False):
         """Generates CT object from a dot-bracket notation file. Lines
         starting with ">" or "#" are ignored. First non-ignored line is the
         sequence and the second is the structure.
 
         Args:
-            filterNC (bool, optional): If True, will filter out non-canonical base
-            pairs. Defaults to False.
-            filterSingle (bool, optional): If True, will filter out any singleton
-            base pairs. Defaults to False.
+            filterNC (bool, optional): If True, will filter out non-canonical
+                base pairs. Defaults to False.
+            filterSingle (bool, optional): If True, will filter out any
+                singleton base pairs. Defaults to False.
         """
         header, seq, bp_str, = "", "", ""
-        with open(db) as f:
+        with open(self.filepath) as f:
             for line in f:
                 if line[0] in ">#":
                     header += line
