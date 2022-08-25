@@ -7,7 +7,8 @@ class Annotation(Data):
     def __init__(self, name=None, datatype="annotation",
                  dataframe=None, filepath=None, read_csv_kw={},
                  fasta=None, sequence=None,
-                 site_list=None, span_list=None, motif=None, orf=False,
+                 site_list=None, span_list=None, groups=None,
+                 motif=None, orf=False,
                  color="blue"):
         super().__init__(filepath=fasta, sequence=sequence)
         self.name = name
@@ -22,12 +23,16 @@ class Annotation(Data):
 
         self.sites = []
         self.spans = []
+        self.groups = []
         if site_list is not None:
             self.annotation_type = "sites"
             self.sites = site_list
         elif span_list is not None:
             self.annotation_type = "spans"
             self.spans = span_list
+        elif groups is not None:
+            self.annotation_type = "groups"
+            self.groups = groups
         elif motif is not None:
             self.annotation_type = "spans"
             self.get_spans_from_motif(motif)
