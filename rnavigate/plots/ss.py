@@ -32,8 +32,9 @@ class SS(Plot):
                        "sequence": 20,
                        "position": 25}
 
-    def plot_data(self, ij, ij2, profile, annotations, label, colors="sequence",
-                  sequence=False, apply_color_to="background", colorbar=True,
+    def plot_data(self, ij, ij2, profile, annotations, label,
+                  colors="sequence", sequence=False,
+                  apply_color_to="background", colorbar=True,
                   positions=False):
         ax = self.get_ax()
         self.plot_sequence(ax=ax, profile=profile, colors=colors,
@@ -108,7 +109,7 @@ class SS(Plot):
             sequence = True
             nt_color = ss.get_colors(colors, profile=profile,
                                      ct=self.structure)
-            bg_color = "white"
+            bg_color = ss.get_colors("white")
             self.plot_structure(ax, ss.get_colors('grey'))
         else:
             nt_color = np.full(bg_color.shape, 'k')
@@ -169,12 +170,21 @@ class SS(Plot):
     def plot_annotation(self, ax, annotation):
         color = annotation.color
         zorder = self.zorder["annotations"]
-        for start, end in annotation.spans:
-            x = self.structure.xcoordinates[start-1:end]
-            y = self.structure.ycoordinates[start-1:end]
-            ax.plot(x, y,
-                    color=color, alpha=0.2, lw=30, zorder=zorder)
-        x = self.structure.xcoordinates[annotation.sites]
-        y = self.structure.ycoordinates[annotation.sites]
-        ax.scatter(x, y, color=color, marker='*', ec="none", alpha=0.7,
-                   s=50**2, zorder=zorder)
+        if annotation.annotation_type == "spans":
+            for start, end in annotation.spans:
+                x = self.structure.xcoordinates[start-1:end]
+                y = self.structure.ycoordinates[start-1:end]
+                ax.plot(x, y, color=color, alpha=0.2, lw=30, zorder=zorder)
+        elif annotation.annotation_type == "sites":
+            x = self.structure.xcoordinates[annotation.sites]
+            y = self.structure.ycoordinates[annotation.sites]
+            ax.scatter(x, y, color=color, marker='*', ec="none", alpha=0.7,
+                       s=50**2, zorder=zorder)
+        elif annotation.annotation_type == "groups":
+            for group in annotation.groups:
+                x = self.structure.xcoordinates[group["sites"]]
+                y = self.structure.ycoordinates[group["sites"]]
+                color = group["color"]
+                ax.plot(x, y, color=color, alpha=0.2, lw=30, zorder=zorder)
+                ax.scatter(x, y, color=color, marker='o', ec="none", alpha=0.4,
+                           s=30**2, zorder=zorder)
