@@ -521,8 +521,8 @@ def array_skyline(samples, plot_kwargs={}, **kwargs):
 
 
 def array_ap(samples, ct="ct", comp=None, ij=None, ij2=None, ij2_filter={},
-             profile="profile", label="label", plot_kwargs={},
-             prefiltered=False, **kwargs):
+             profile="profile", annotations=[], label="label",
+             plot_kwargs={}, prefiltered=False, **kwargs):
     plot = AP(len(samples), samples[0].data[ct].length, **plot_kwargs)
     pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
     for sample in samples:
@@ -534,7 +534,8 @@ def array_ap(samples, ct="ct", comp=None, ij=None, ij2=None, ij2_filter={},
             if ij2 is not None:
                 sample.filter_ij(ij2, ct, **ij2_filter)
         plot.add_sample(sample, ct=ct, comp=comp, ij=ij, ij2=ij2,
-                        profile=profile, label=label, **pt_kwargs)
+                        profile=profile, label=label, annotations=annotations,
+                        **pt_kwargs)
     return plot
 
 

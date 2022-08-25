@@ -1,43 +1,68 @@
 import re
-import numpy as np
 from .data import Data
 import pandas as pd
 
 
 class Annotation(Data):
-    def __init__(self, name, filepath=None, fasta=None, sequence=None,
-                 sites=None, motif=None, color="blue"):
+    def __init__(self, name=None, datatype="annotation",
+                 dataframe=None, filepath=None, read_csv_kw={},
+                 fasta=None, sequence=None,
+                 site_list=None, span_list=None, motif=None, orf=False,
+                 color="blue"):
+        super().__init__(filepath=fasta, sequence=sequence)
         self.name = name
         self.color = color
-        if filepath is not None:
-            self.read_sites(filepath)
-        elif fasta is not None:
-            self.read_fasta(fasta)
-        elif sequence is not None:
-            self.sequence = sequence
-        if sites is not None:
-            assert all(x in [0, 1] for x in sites), "sites should be 0s and 1s"
-            assert len(self.sequence) == len(
-                sites), "Sequence and sites lengths differ."
-            self.sites = np.array(sites, dtype=bool)
+        self.datatype = datatype
+        if dataframe is not None:
+            self.data = dataframe
+        elif filepath is not None:
+            self.read_sites(filepath=filepath, read_csv_kw=read_csv_kw)
+        super().__init__(filepath=fasta, sequence=sequence,
+                         dataframe=dataframe)
+
+        self.sites = []
+        self.spans = []
+        if site_list is not None:
+            self.annotation_type = "sites"
+            self.sites = site_list
+        elif span_list is not None:
+            self.annotation_type = "spans"
+            self.spans = span_list
         elif motif is not None:
-            self.get_sites_from_motif(motif)
+            self.annotation_type = "spans"
+            self.get_spans_from_motif(motif)
+        elif orf:
+            self.annotation_type = "spans"
+            self.get_spans_from_orf()
 
-    def read_sites(self, filepath):
-        data = pd.read_csv(filepath, sep='\t')
-        self.sequence = ''.join(data["Sequence"].values)
-        self.sites = np.array(data["sites"].values, dtype=bool)
+    def read_sites(self, filepath, sep, read_csv_kw):
+        self.data = pd.read_csv(filepath, sep=sep, **read_csv_kw)
 
-    def get_sites_from_motif(self, motif):
+    def get_spans_from_motif(self, motif):
         nuc_codes = {"A": "A", "T": "T", "U": "U", "G": "G", "C": "C",
                      "B": "[CGTU]", "D": "[ATUG]", "H": "[ATUC]", "V": "[ACG]",
                      "W": "[ATU]", "S": "[CG]",  # strong and weak
                      "M": "[AC]", "K": "[GTU]",  # amino and ketone
                      "R": "[AG]", "Y": "[CTU]",  # purine and pyrimidine
                      "N": "[ATUGC]"}  # any nuc
-        self.sites = np.zeros(len(self.sequence), dtype=bool)
         re_pattern = ''.join([nuc_codes[n] for n in motif])
+        self.spans = []
         for match in re.finditer(re_pattern, self.sequence):
             start, end = match.span()
-            for i in range(start, end):
-                self.sites[i] = True
+            self.spans.append([start+1, end])
+
+    def get_spans_from_orf(self):
+        spans = []
+        stop_codons = "UAA|UAG|UGA"
+        stop_sites = []
+        for match in re.finditer(stop_codons, self.sequence):
+            stop_sites.append(match.span()[1])
+        start_codon = "AUG"
+        start_sites = []
+        for match in re.finditer(start_codon, self.sequence):
+            start_sites.append(match.span()[0]+1)
+        for start in start_sites:
+            for stop in stop_sites:
+                if (stop-start) % 3 == 2:
+                    spans.append([start, stop])
+        self.spans = spans
