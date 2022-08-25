@@ -91,7 +91,7 @@ class SS(Plot):
                 nt_color = np.full(bg_color.shape, 'k')
                 for i, color in enumerate(bg_color):
                     r, g, b = to_rgb(color)
-                    if (r*0.299 + g*0.587 + b*0.114) < 200/256:
+                    if (r*0.299 + g*0.587 + b*0.114) < 175/256:
                         nt_color[i] = 'w'
         elif apply_color_to == "sequence":
             sequence = True
