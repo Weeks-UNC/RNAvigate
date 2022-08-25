@@ -14,9 +14,9 @@ class AP(Plot):
             self.region = region
         super().__init__(num_samples, **kwargs)
         self.pass_through = ["ax", "colorbar", "seqbar", "title", "ij_panel",
-                             "ij2_panel", "ct_panel", "annotations"]
+                             "ij2_panel", "ct_panel", "annotation_mode"]
 
-    def set_axis(self, ax, annotations=0, xticks=20, xticks_minor=10):
+    def set_axis(self, ax, annotation_gap=0, xticks=20, xticks_minor=10):
         def get_ticks(x, mn, mx):
             return [tick for tick in range(x, mx+1, x) if mn <= tick <= mx]
 
@@ -24,13 +24,13 @@ class AP(Plot):
         ax.yaxis.set_visible(False)
         ax.spines['left'].set_color('none')
         ax.spines['right'].set_color('none')
-        ax.spines['bottom'].set(position=('data', -2*annotations),
+        ax.spines['bottom'].set(position=('data', -annotation_gap),
                                 visible=False)
         ax.spines['top'].set_color('none')
         height = min(300, self.nt_length/2)
         mn, mx = self.region
         ax.set(xlim=(mn - 0.5, mx + 0.5),
-               ylim=(-height-1-(2*annotations), height+1),
+               ylim=(-height-1-annotation_gap, height+1),
                xticks=get_ticks(xticks, mn, mx),
                axisbelow=False)
         ax.set_xticks(get_ticks(xticks_minor, mn, mx), minor=True)
@@ -42,10 +42,14 @@ class AP(Plot):
 
     def plot_data(self, ct, comp, ij, ij2, profile, label, ax=None,
                   colorbar=True, seqbar=True, title=True, ij_panel="bottom",
-                  ij2_panel="bottom", ct_panel="top", annotations=[]):
+                  ij2_panel="bottom", ct_panel="top", annotations=[],
+                  annotation_mode="track"):
         ax = self.get_ax(ax)
-        annotations = len(annotations) + seqbar
-        self.set_axis(ax=ax, annotations=annotations)
+        if annotation_mode == "track":
+            annotation_gap = 2*(2*len(annotations) + seqbar)
+        else:
+            annotation_gap = 2*seqbar
+        self.set_axis(ax=ax, annotation_gap=annotation_gap)
         if colorbar:
             ax_ins1 = ax.inset_axes([0.05, 0.2, 0.3, 0.03])
             self.view_colormap(ax_ins1, ij)
@@ -57,20 +61,23 @@ class AP(Plot):
             else:
                 self.view_colormap(ax_ins3, ct)
         self.add_patches(ax=ax, data=ct, panel=ct_panel,
-                         annotations=annotations, comp=comp)
+                         annotation_gap=annotation_gap, comp=comp)
         self.add_patches(ax=ax, data=ij, panel=ij_panel,
-                         annotations=annotations)
+                         annotation_gap=annotation_gap)
         self.add_patches(ax=ax, data=ij2, panel=ij2_panel,
-                         annotations=annotations)
-        self.plot_profile(ax, profile, ct)
+                         annotation_gap=annotation_gap)
+        self.plot_profile(ax=ax, profile=profile, ct=ct)
+        for i, annotation in enumerate(annotations):
+            self.plot_annotation(ax, annotation=annotation, yvalue=-2-(4*i),
+                                 mode=annotation_mode)
         if seqbar:
-            self.add_sequence(ax, ct.sequence, yvalue=1-(2*annotations),
+            self.add_sequence(ax, ct.sequence, yvalue=1-annotation_gap,
                               ytrans="data")
         if title:
             self.add_title(ax, label)
         self.i += 1
 
-    def add_patches(self, ax, data, panel, annotations, comp=None):
+    def add_patches(self, ax, data, panel, annotation_gap, comp=None):
         if comp is not None:
             ij_colors = data.get_ij_colors(comp)
         elif data is not None:
@@ -89,7 +96,7 @@ class AP(Plot):
                 theta1 = 0
                 theta2 = 180
             elif panel == "bottom":
-                center = ((i+j)/2., -2*annotations)
+                center = ((i+j)/2., -annotation_gap)
                 theta1 = 180
                 theta2 = 360
             radius = 0.5+(j-i)/2.
@@ -126,3 +133,23 @@ class AP(Plot):
                width=1.05, color=colormap[mn-1:mx],
                edgecolor=colormap[mn-1:mx], linewidth=0.0,
                yerr=yerr[mn-1:mx], ecolor=(0, 0, 1 / 255.0), capsize=1)
+
+    def plot_annotation(self, ax, annotation, yvalue, mode):
+        color = annotation.color
+        modes = ["track", "vbar"]
+        assert mode in modes, f"annotation mode must be one of: {modes}"
+        if mode == "track":
+            for span in annotation.spans:
+                span = [span[0]-0.5, span[1]+0.5]
+                ax.plot(span, [yvalue]*len(span),
+                        color=color, alpha=0.7, lw=11)
+            sites = annotation.sites
+            ax.scatter(sites, [yvalue]*len(sites),
+                       color=color, marker='*', ec="none", alpha=0.7, s=20**2)
+        if mode == "vbar":
+            for span in annotation.spans:
+                ax.axvspan(span[0]-0.5, span[1]+0.5,
+                           fc=color, ec="none", alpha=0.1)
+            for site in annotation.sites:
+                ax.axvline(site,
+                           color=color, ls=":")
