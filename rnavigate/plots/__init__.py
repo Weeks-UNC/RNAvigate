@@ -1,14 +1,14 @@
-from .skyline import Skyline
-from .qc import QC
 from .arc import AP
+from .circle import Circle
+from .disthist import DistHist
+from .heatmap import Heatmap
+from .linreg import LinReg
+from .mol import Mol
+from .plots import Plot
+from .qc import QC
+from .skyline import Skyline
 from .sm import SM
 from .ss import SS
-from .heatmap import Heatmap
-from .mol import Mol
-from .circle import Circle
-from .linreg import LinReg
-from .plots import Plot
-from .disthist import DistHist
 
-__all__ = ["Skyline", "QC", "AP", "SM", "Heatmap", "SS", "Mol",
-           "LinReg", "Circle", "Plot", "DistHist"]
+__all__ = ["AP", "Circle", "DistHist", "Heatmap", "LinReg", "Mol", "Plot",
+           "QC", "Skyline", "SM", "SS"]

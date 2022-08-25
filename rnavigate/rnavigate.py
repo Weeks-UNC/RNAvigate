@@ -5,11 +5,12 @@ import os.path
 import numpy as np
 
 # modules in RNAvigate
-from .data import Annotation, CT, Data, DotPlot, Log, PDB
-from .data.ct import CT, DotBracket, XRNA, VARNA, NSD, CTE
-from .data.ij import IJ, RINGMaP, PAIRMaP, PairProb, SHAPEJuMP
-from .data.profile import Profile, SHAPEMaP, DanceMaP, RNPMaP
-from .plots import AP, Circle, DistHist, Heatmap, LinReg, Mol, QC, Skyline, SM, SS
+from .data import Data, PDB, Log
+from .data import CT, DotBracket, XRNA, VARNA, NSD, CTE
+from .data import IJ, RINGMaP, PAIRMaP, PairProb, SHAPEJuMP
+from .data import Profile, SHAPEMaP, DanceMaP, RNPMaP
+from .plots import AP, Circle, DistHist, Heatmap, LinReg, Mol
+from .plots import QC, Skyline, SM, SS
 from .analysis import LogCompare, LowSS
 
 
