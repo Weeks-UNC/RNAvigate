@@ -24,16 +24,10 @@ class Profile(Data):
         elif filepath is not None:
             self.read_file(filepath=filepath, sep=sep, read_csv_kw=read_csv_kw)
         else:
-            print("Profile initialized without data.")
+            print(f"{self.datatype} initialized without data.")
         # assign sequence
-        if fasta is not None:
-            self.read_fasta(fasta)
-        elif sequence is not None:
-            self.sequence = sequence.upper().replace("T", "U")
-        elif "Sequence" in self.data.columns:
-            self.sequence = self.get_seq_from_data()
-        else:
-            print("Profile initialized without a sequence.")
+        super().__init__(filepath=fasta, sequence=sequence,
+                         dataframe=self.data)
         # assign colors
         if colors is not None:
             self.colors = colors
@@ -45,10 +39,6 @@ class Profile(Data):
     def read_file(self, filepath, sep, read_csv_kw):
         self.data = pd.read_csv(filepath, sep=sep, **read_csv_kw)
         self.filepath = filepath
-
-    def get_seq_from_data(self):
-        sequence = ''.join(self.data["Sequence"].values)
-        return sequence.upper().replace("T", "U")
 
     def set_color_defaults(self, column, cmap, norm_method, norm_values):
         self._color_defaults = {"column": column,
