@@ -30,16 +30,24 @@ def get_pairs_sens_PPV(self, ct="ct"):
 
 
 class Data():
-    def __init__(self, sequence=None, filepath=None):
+    def __init__(self, sequence=None, filepath=None, dataframe=None):
         if sequence is not None:
             self.sequence = sequence
         elif filepath is not None:
             self.read_fasta(filepath)
+        elif dataframe is not None:
+            self.get_seq_from_data(dataframe)
+        else:
+            print(f"{self.datatype} initialized without sequence.")
 
     def read_fasta(self, fasta):
         fasta = list(Bio.SeqIO.parse(open(fasta), 'fasta'))
         self.sequence = str(fasta[0].seq).upper().replace("T", "U")
         self.gene = fasta[0].id
+
+    def get_seq_from_data(self, dataframe):
+        sequence = ''.join(dataframe["Sequence"].values)
+        self.sequence = sequence.upper().replace("T", "U")
 
     @property
     def length(self):
@@ -117,8 +125,8 @@ class Data():
             cmap = np.array(['C0', 'C1'])
             ct_colors = cmap[[int(nt == 0) for nt in ct.ct]]
             colors = np.full(self.length, 'gray', dtype='<U8')
-            am = ct.get_alignment_map(self)
-            for i, i2 in enumerate(am):
+            alignment_map = ct.get_alignment_map(self)
+            for i, i2 in enumerate(alignment_map):
                 if i2 != -1:
                     colors[i2] = ct_colors[i]
             return colors
