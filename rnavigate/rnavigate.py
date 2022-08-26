@@ -526,12 +526,13 @@ def array_qc(samples=[], **kwargs):
     return plot
 
 
-def array_skyline(samples, plot_kwargs={}, **kwargs):
+def array_skyline(samples, annoations=[], plot_kwargs={}, **kwargs):
     plot = Skyline(len(samples), samples[0].data["profile"].length,
                    **plot_kwargs)
     pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
     for sample in samples:
-        plot.add_sample(sample, profile="profile", label="label", **pt_kwargs)
+        plot.add_sample(sample, profile="profile", annotations=annotations,
+                        label="label", **pt_kwargs)
     return plot
 
 
