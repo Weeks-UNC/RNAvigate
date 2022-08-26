@@ -17,7 +17,7 @@ class Skyline(Plot):
     def get_rows_columns(self, number_of_samples=None, rows=None, cols=None):
         return (1, 1)
 
-    def plot_data(self, profile, label, columns="Reactivity_profile",
+    def plot_data(self, profile, annotations, label, columns="Reactivity_profile",
                   seqbar=True, errorbars=None):
         self.plot_profile(profile, label, columns, errorbars)
         self.i += 1
@@ -25,6 +25,8 @@ class Skyline(Plot):
             if seqbar:
                 self.add_sequence(self.ax, profile.sequence)
             self.set_labels(self.ax, axis_title=columns)
+            for annotation in annotations:
+                self.plot_annotations(ax=self.ax, annotation=annotation)
 
     def get_figsize(self):
         left_inches = 0.9
@@ -66,3 +68,11 @@ class Skyline(Plot):
                 self.ax.fill_between(x, profile_values-stderr,
                                      profile_values+stderr, step='mid',
                                      color='C'+str(self.i), alpha=0.25, lw=0)
+
+    def plot_annotation(self, ax, annotation, mode="vbar"):
+        color = annotation.color
+        for span in annotation.spans:
+            ax.axvspan(span[0]-0.5, span[1]+0.5,
+                       fc=color, ec="none", alpha=0.1)
+        for site in annotation.sites:
+            ax.axvline(site, color=color, ls=":")

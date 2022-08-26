@@ -5,7 +5,7 @@ import os.path
 import numpy as np
 
 # modules in RNAvigate
-from .data import Data, PDB, Log
+from .data import Data, PDB, Log, Annotation
 from .data import CT, DotBracket, XRNA, VARNA, NSD, CTE
 from .data import IJ, RINGMaP, PAIRMaP, PairProb, SHAPEJuMP
 from .data import Profile, SHAPEMaP, DanceMaP, RNPMaP
@@ -61,7 +61,10 @@ class Sample():
                  pairmap=None,
                  allcorrs=None,
                  pairprob=None,
-                 dance_prefix=None):
+                 dance_prefix=None,
+                 sites=None,
+                 spans=None,
+                 groups=None):
         """Creates a sample object which connects all chemical probing and
         structural data for a single experiment. Contains convenience methods
         to plot, filter, compare and retrieve this data. Every argument is
@@ -134,7 +137,10 @@ class Sample():
             "compct": [compct, get_ss_class(compct), "self", {}],
             "ss": [ss, get_ss_class(ss), "self", {}],
             "pdb": [pdb, PDB, "self", pdb_kwargs],
-            "dance_prefix": [dance_prefix, self.init_dance, "self", {}]
+            "dance_prefix": [dance_prefix, self.init_dance, "self", {}],
+            "sites": ["", Annotation, sites.pop("seq_source"), sites],
+            "spans": ["", Annotation, spans.pop("seq_source"), spans],
+            "groups": ["", Annotation, groups.pop("seq_source"), groups],
         }
         self.default_profiles = ["shapemap", "dmsmap", "dancemap", "rnpmap"]
 
@@ -156,8 +162,6 @@ class Sample():
         if not overwrite:
             assert name not in self.data, (f"{name} data already exists. "
                                            "Set overwrite=True to ignore.")
-        if filepath is not None:
-            assert os.path.exists(filepath), f"{filepath}: file not found."
         if seq_source != "self":
             kwargs.update({"sequence": self.data[seq_source].sequence})
         self.data[name] = instantiator(filepath=filepath, **kwargs)

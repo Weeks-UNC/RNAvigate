@@ -5,7 +5,7 @@ import pandas as pd
 
 class Annotation(Data):
     def __init__(self, name=None, datatype="annotation",
-                 dataframe=None, filepath=None, read_csv_kw={},
+                 filepath="",
                  fasta=None, sequence=None,
                  site_list=None, span_list=None, groups=None,
                  motif=None, orf=False,
@@ -14,12 +14,6 @@ class Annotation(Data):
         self.name = name
         self.color = color
         self.datatype = datatype
-        if dataframe is not None:
-            self.data = dataframe
-        elif filepath is not None:
-            self.read_sites(filepath=filepath, read_csv_kw=read_csv_kw)
-        super().__init__(filepath=fasta, sequence=sequence,
-                         dataframe=dataframe)
 
         self.sites = []
         self.spans = []
