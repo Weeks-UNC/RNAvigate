@@ -26,7 +26,7 @@ class Skyline(Plot):
                 self.add_sequence(self.ax, profile.sequence)
             self.set_labels(self.ax, axis_title=columns)
             for annotation in annotations:
-                self.plot_annotations(ax=self.ax, annotation=annotation)
+                self.plot_annotation(ax=self.ax, annotation=annotation)
 
     def get_figsize(self):
         left_inches = 0.9
