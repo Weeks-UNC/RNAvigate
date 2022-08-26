@@ -62,9 +62,9 @@ class Sample():
                  allcorrs=None,
                  pairprob=None,
                  dance_prefix=None,
-                 sites=None,
-                 spans=None,
-                 groups=None):
+                 sites={},
+                 spans={},
+                 groups={}):
         """Creates a sample object which connects all chemical probing and
         structural data for a single experiment. Contains convenience methods
         to plot, filter, compare and retrieve this data. Every argument is
