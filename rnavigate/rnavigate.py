@@ -138,9 +138,9 @@ class Sample():
             "ss": [ss, get_ss_class(ss), "self", {}],
             "pdb": [pdb, PDB, "self", pdb_kwargs],
             "dance_prefix": [dance_prefix, self.init_dance, "self", {}],
-            "sites": ["", Annotation, sites.pop("seq_source"), sites],
-            "spans": ["", Annotation, spans.pop("seq_source"), spans],
-            "groups": ["", Annotation, groups.pop("seq_source"), groups],
+            "sites": ["", Annotation, sites.pop("seq_source", ""), sites],
+            "spans": ["", Annotation, spans.pop("seq_source", ""), spans],
+            "groups": ["", Annotation, groups.pop("seq_source", ""), groups],
         }
         self.default_profiles = ["shapemap", "dmsmap", "dancemap", "rnpmap"]
 
@@ -149,7 +149,7 @@ class Sample():
         self.data = {}  # stores profile, ij, and structure objects
         # load data
         for input, (path, instantiator, source, kwargs) in self.inputs.items():
-            if path is not None:
+            if path is not None and source != "":
                 self.set_data(
                     name=input,
                     filepath=path,
