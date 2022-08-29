@@ -55,7 +55,7 @@ class Sample():
                  log=None,
                  shapemap=None,
                  dmsmap=None,
-                 dancemap={"filepath": None},
+                 dancemap=None,
                  rnpmap=None,
                  ringmap=None,
                  shapejump=None,
@@ -63,11 +63,11 @@ class Sample():
                  allcorrs=None,
                  pairprob=None,
                  dance_prefix=None,
-                 sites={},
-                 spans={},
-                 groups={},
-                 orfs={},
-                 motif={}):
+                 sites=None,
+                 spans=None,
+                 groups=None,
+                 orfs=None,
+                 motif=None):
         """Creates a sample object which connects all chemical probing and
         structural data for a single experiment. Contains convenience methods
         to plot, filter, compare and retrieve this data. Every argument is
@@ -106,6 +106,19 @@ class Sample():
             dance_prefix (str, optional): Path prefix for DanceMapper output
                 files.
         """
+        if dancemap is None:
+            dancemap = {"filepath": None}
+        if sites is None:
+            sites = {}
+        if spans is None:
+            spans = {}
+        if groups is None:
+            groups = {}
+        if orfs is None:
+            orfs = {}
+        if motif is None:
+            motif = {}
+
         # returns the instantiator using the filepath extension
         def get_ss_class(filepath):
             if filepath is None:
