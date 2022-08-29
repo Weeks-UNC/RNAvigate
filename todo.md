@@ -7,11 +7,22 @@ analysis.
 
 Coding To-Do List
 -----------------
-- calling significant sites with log-corrected profile min-diff comparison.
+- improve sizing
+- setting size and dpi for all plots
+- turn off nt cylinders in Mol
+- renaming:
+  - ap to arcplot
+  - ss to secondary
+  - mol to mol3d
+  - sm to shapemap
+  - make_ to plot_
+  - array_ to plot_multisample_
+  - ij to interactions
+  - ct, compct to ss1, ss2, ss3, etc.
+- loading secondary structure files containing more than one structure
+- calling significant sites with log-corrected profile min-diff comparison
 - better nucleotide colors and display on linear regression plots.
 - loading in annotations files
-- Reformatting heatmaps to be more familiar.
-- deltaSHAPE
 - send to file for all plots
 
 Documentation To-Do List

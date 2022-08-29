@@ -12,7 +12,7 @@ Data types
 * RingMapper: rings.txt
 * PairMapper: pairmap.txt, allcorrs.txt
 * DanceMapper: profiles, rings, pairs, allcorrs, structure predictions
-* ShapeJumper: deletions.txt, .fasta
+* ShapeJumper: deletions.txt (requires .fasta)
 * Base-pairing: .ct, .db
 * Secondary Structure diagrams: .xrna, .varna, .nsd, .cte
 * 3-D molecular structures: .pdb
