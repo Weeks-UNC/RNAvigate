@@ -55,7 +55,7 @@ class Sample():
                  log=None,
                  shapemap=None,
                  dmsmap=None,
-                 dancemap=None,
+                 dancemap={},
                  rnpmap=None,
                  ringmap=None,
                  shapejump=None,
@@ -129,7 +129,7 @@ class Sample():
             "log": [log, Log, "self", {}],
             "shapemap": [shapemap, SHAPEMaP, "self", {}],
             "dmsmap": [dmsmap, SHAPEMaP, "self", {"dms": True}],
-            "dancemap": [dancemap, DanceMaP, "self", {}],
+            "dancemap": [dancemap.pop("filepath", None), DanceMaP, "self", dancemap],
             "rnpmap": [rnpmap, RNPMaP, "self", {}],
             "ringmap": [ringmap, RINGMaP, "profile", {}],
             "pairmap": [pairmap, PAIRMaP, "profile", {}],
@@ -196,7 +196,8 @@ class Sample():
         for i in range(self.dance_components):
             kwargs = {
                 "sample": f"{self.sample}: {i} - {self.dance_percents[i]}",
-                "dancemap": reactivityfile,
+                "dancemap": {"filepath": reactivityfile,
+                             "component": i},
                 "ringmap": f"{filepath}-{i}-rings.txt",
                 "pairmap": f"{filepath}-{i}-pairmap.txt",
                 "ct": [f"{filepath}-{i}.f.ct",  # if using --pk
