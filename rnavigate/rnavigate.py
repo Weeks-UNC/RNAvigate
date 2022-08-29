@@ -5,7 +5,8 @@ import os.path
 import numpy as np
 
 # modules in RNAvigate
-from .data import Data, PDB, Log, Annotation
+from .data import Data, PDB, Log
+from .data import Annotation, Motif, ORFs
 from .data import CT, DotBracket, XRNA, VARNA, NSD, CTE
 from .data import IJ, RINGMaP, PAIRMaP, PairProb, SHAPEJuMP
 from .data import Profile, SHAPEMaP, DanceMaP, RNPMaP
@@ -64,7 +65,9 @@ class Sample():
                  dance_prefix=None,
                  sites={},
                  spans={},
-                 groups={}):
+                 groups={},
+                 orfs={},
+                 motif={}):
         """Creates a sample object which connects all chemical probing and
         structural data for a single experiment. Contains convenience methods
         to plot, filter, compare and retrieve this data. Every argument is
@@ -141,6 +144,8 @@ class Sample():
             "sites": ["", Annotation, sites.pop("seq_source", ""), sites],
             "spans": ["", Annotation, spans.pop("seq_source", ""), spans],
             "groups": ["", Annotation, groups.pop("seq_source", ""), groups],
+            "orfs": ["", ORFs, orfs.pop("seq_source", ""), orfs],
+            "motif": ["", Motif, motif.pop("seq_source", ""), motif],
         }
         self.default_profiles = ["shapemap", "dmsmap", "dancemap", "rnpmap"]
 

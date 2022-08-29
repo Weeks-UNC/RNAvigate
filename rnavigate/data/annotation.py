@@ -4,11 +4,15 @@ import pandas as pd
 
 
 class Annotation(Data):
-    def __init__(self, name=None, datatype="annotation",
+    def __init__(self,
+                 name=None,
+                 datatype="annotation",
                  filepath="",
-                 fasta=None, sequence=None,
-                 site_list=None, span_list=None, groups=None,
-                 motif=None, orf=False,
+                 fasta=None,
+                 sequence=None,
+                 site_list=None,
+                 span_list=None,
+                 groups=None,
                  color="blue"):
         super().__init__(filepath=fasta, sequence=sequence)
         self.name = name
@@ -27,17 +31,24 @@ class Annotation(Data):
         elif groups is not None:
             self.annotation_type = "groups"
             self.groups = groups
-        elif motif is not None:
-            self.annotation_type = "spans"
-            self.get_spans_from_motif(motif)
-        elif orf:
-            self.annotation_type = "spans"
-            self.get_spans_from_orf()
 
     def read_sites(self, filepath, sep, read_csv_kw):
         self.data = pd.read_csv(filepath, sep=sep, **read_csv_kw)
 
-    def get_spans_from_motif(self, motif):
+
+class Motif(Annotation):
+    def __init__(self,
+                 name=None,
+                 datatype="sequence motif",
+                 fasta=None,
+                 sequence=None,
+                 motif=None,
+                 color="blue"):
+        span_list = self.get_spans_from_motif(sequence, motif)
+        super().__init__(name=name, datatype=datatype, fasta=fasta,
+                         sequence=sequence, span_list=span_list, color=color)
+
+    def get_spans_from_motif(self, sequence, motif):
         nuc_codes = {"A": "A", "T": "T", "U": "U", "G": "G", "C": "C",
                      "B": "[CGTU]", "D": "[ATUG]", "H": "[ATUC]", "V": "[ACG]",
                      "W": "[ATU]", "S": "[CG]",  # strong and weak
@@ -45,23 +56,36 @@ class Annotation(Data):
                      "R": "[AG]", "Y": "[CTU]",  # purine and pyrimidine
                      "N": "[ATUGC]"}  # any nuc
         re_pattern = ''.join([nuc_codes[n] for n in motif])
-        self.spans = []
-        for match in re.finditer(re_pattern, self.sequence):
+        spans = []
+        for match in re.finditer(re_pattern, sequence):
             start, end = match.span()
-            self.spans.append([start+1, end])
+            spans.append([start+1, end])
+        return spans
 
-    def get_spans_from_orf(self):
+
+class ORFs(Annotation):
+    def __init__(self,
+                 name=None,
+                 datatype="ORFs",
+                 fasta=None,
+                 sequence=None,
+                 color="blue"):
+        span_list = self.get_spans_from_orf(sequence)
+        super().__init__(name=name, datatype=datatype, fasta=fasta,
+                         sequence=sequence, span_list=span_list, color=color)
+
+    def get_spans_from_orf(self, sequence):
         spans = []
         stop_codons = "UAA|UAG|UGA"
         stop_sites = []
-        for match in re.finditer(stop_codons, self.sequence):
+        for match in re.finditer(stop_codons, sequence):
             stop_sites.append(match.span()[1])
         start_codon = "AUG"
         start_sites = []
-        for match in re.finditer(start_codon, self.sequence):
+        for match in re.finditer(start_codon, sequence):
             start_sites.append(match.span()[0]+1)
         for start in start_sites:
             for stop in stop_sites:
                 if (stop-start) % 3 == 2:
                     spans.append([start, stop])
-        self.spans = spans
+        return spans
