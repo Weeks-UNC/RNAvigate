@@ -23,7 +23,7 @@ class SS(Plot):
             ax.set(xlim=[xmin-xbuffer, xmax+xbuffer],
                    ylim=[ymin-3*ybuffer, ymax+ybuffer])
         self.pass_through = ["colors", "sequence", "apply_color_to",
-                             "colorbar", "positions"]
+                             "colorbar", "title", "positions"]
         self.zorder = {"structure": 0,
                        "backbone": 0,
                        "annotations": 5,
@@ -33,8 +33,11 @@ class SS(Plot):
                        "position": 25}
 
     def plot_data(self, ij, ij2, profile, annotations, label,
-                  colors="sequence", sequence=False,
-                  apply_color_to="background", colorbar=True,
+                  colors="sequence",
+                  sequence=False,
+                  apply_color_to="background",
+                  colorbar=True,
+                  title=True,
                   positions=False):
         ax = self.get_ax()
         self.plot_sequence(ax=ax, profile=profile, colors=colors,
@@ -44,7 +47,8 @@ class SS(Plot):
         self.plot_ij(ax=ax, ij=ij2, colorbar=colorbar, cmap_pos=1)
         for annotation in annotations:
             self.plot_annotation(ax=ax, annotation=annotation)
-        ax.set_title(label)
+        if title:
+            ax.set_title(label)
         self.i += 1
         if self.i == self.length:
             plt.tight_layout()
