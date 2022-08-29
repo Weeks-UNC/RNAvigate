@@ -292,12 +292,8 @@ class Sample():
 
         if "metric" in kwargs.keys():
             metric = kwargs.pop("metric")
-            # TODO: This should be implemented in IJ.metric.setter
-            if metric.startswith("Distance_"):
-                metric, atom = metric.split("_")
-                self.data[ij].set_3d_distances(self.data["pdb"], atom)
-            elif metric == "Distance":
-                self.data[ij].set_3d_distances(self.data["pdb"], "O2'")
+            if metric.startswith("Distance"):
+                metric = (metric, self.data["pdb"])
             self.data[ij].metric = metric
         else:
             self.data[ij].metric = self.data[ij].default_metric

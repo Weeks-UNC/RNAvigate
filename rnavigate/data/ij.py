@@ -68,11 +68,16 @@ class IJ(Data):
         return self._metric
 
     @metric.setter
-    def metric(self, value):
+    def metric(self, value, pdb=None):
         if value in self.data.keys():
             self._metric = value
+        elif value.startswith("Distance_"):
+            value, atom = value.split("_")
+            self.set_3d_distances(pdb, atom)
+            self._metric = value
         elif value == "Distance":
-            print("Please set 3D distances using IJ.set_3d_distances(PDB)")
+            self.set_3d_distances(pdb, "O2'")
+            self._metric = value
         elif value is None:
             self._metric = self.default_metric
         else:
