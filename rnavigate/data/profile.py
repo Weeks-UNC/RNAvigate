@@ -139,8 +139,9 @@ class DanceMaP(SHAPEMaP):
         self.component = component
         super().__init__(filepath=filepath, datatype=datatype, **kwargs)
 
-    def read_file(self, sep='\t', read_csv_kw={}):
+    def read_file(self, filepath, sep='\t', read_csv_kw={}):
         # parse header
+        self.filepath = filepath
         with open(self.filepath) as f:
             header1 = f.readline()
             header2 = f.readline()
