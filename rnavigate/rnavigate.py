@@ -193,14 +193,15 @@ class Sample():
         # dance is a list containing one sample for each component
         self.dance = []
         # build column names for reading in BM file
-        for i, sample in enumerate(self.dance):
+        for i in range(self.dance_components):
             kwargs = {
                 "sample": f"{self.sample}: {i} - {self.dance_percents[i]}",
                 "dancemap": reactivityfile,
                 "ringmap": f"{filepath}-{i}-rings.txt",
                 "pairmap": f"{filepath}-{i}-pairmap.txt",
                 "ct": [f"{filepath}-{i}.f.ct",  # if using --pk
-                       f"{filepath}-{i}.ct"]  # if regular fold used
+                       f"{filepath}-{i}.ct"],  # if regular fold used
+                "pairprob": f"{filepath}-{i}.dp"
             }
             for key in ["dancemap", "ringmap", "pairmap"]:
                 if not os.path.isfile(kwargs[key]):
