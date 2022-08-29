@@ -13,6 +13,7 @@ import sys
 import numpy as np
 import xml.etree.ElementTree as xmlet
 from .data import Data
+import pandas as pd
 
 
 class CT(Data):
@@ -1066,7 +1067,7 @@ class CTE(CT):
                          names=names, header=0)
         sequence = ''.join(list(ct['seq']))
         xcoords = np.array([float(x) for x in ct.xcoords])
-        ycoords = np.array([float(y) for y in ct.ycoords])
+        ycoords = np.array([-float(y) for y in ct.ycoords])
         ct = ct[ct.nuc < ct.pair]
         basepairs = [[int(i), int(j)] for i, j in zip(ct.nuc, ct.pair)]
         # store attributes
@@ -1095,7 +1096,7 @@ class NSD(CT):
         with open(self.filepath, 'r') as file:
             item = ""
             for line in file.readlines():
-                line = line.strip("}{ ").split(' ')
+                line = line.strip().split(' ')
                 if "Strand:[" in line:
                     item = "strand"
                     continue
