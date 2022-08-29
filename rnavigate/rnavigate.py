@@ -124,12 +124,16 @@ class Sample():
         # [1] instantiation class
         # [2] sequence source
         # [3] kwargs
+        if "filepath" in dancemap:
+            dancemap_file = dancemap.pop("filepath")
+        else:
+            dancemap_file = None
         self.inputs = {
             "fasta": [fasta, Data, "self", {}],
             "log": [log, Log, "self", {}],
             "shapemap": [shapemap, SHAPEMaP, "self", {}],
             "dmsmap": [dmsmap, SHAPEMaP, "self", {"dms": True}],
-            "dancemap": [dancemap.pop("filepath", None), DanceMaP, "self", dancemap],
+            "dancemap": [dancemap_file, DanceMaP, "self", dancemap],
             "rnpmap": [rnpmap, RNPMaP, "self", {}],
             "ringmap": [ringmap, RINGMaP, "profile", {}],
             "pairmap": [pairmap, PAIRMaP, "profile", {}],
