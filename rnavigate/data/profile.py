@@ -76,7 +76,6 @@ class Profile(Data):
         elif cv["norm_method"] is None:
             def norm(x): return x  # does nothing to values
         values = self.data[cv["column"]].values
-        print(values, norm)
         values = norm(values)
         self.colors = cv["cmap"](values)
 
