@@ -13,8 +13,8 @@ class AP(Plot):
             self.nt_length = region[1]-region[0]+1
             self.region = region
         super().__init__(num_samples, **kwargs)
-        self.pass_through = ["ax", "colorbar", "seqbar", "title", "ij_panel",
-                             "ij2_panel", "ct_panel", "annotation_mode"]
+        self.pass_through = ["ax", "colorbar", "seqbar", "title", "interactions_panel",
+                             "interactions2_panel", "ct_panel", "annotation_mode"]
 
     def set_axis(self, ax, annotation_gap=0, xticks=20, xticks_minor=10):
         def get_ticks(x, mn, mx):
@@ -40,9 +40,9 @@ class AP(Plot):
                             "alpha": 0.5,
                             "boxstyle": "round,pad=0.1,rounding_size=0.2"})
 
-    def plot_data(self, ct, comp, ij, ij2, profile, label, ax=None,
-                  colorbar=True, seqbar=True, title=True, ij_panel="bottom",
-                  ij2_panel="bottom", ct_panel="top", annotations=[],
+    def plot_data(self, ct, comp, interactions, interactions2, profile, label,
+                  ax=None, colorbar=True, seqbar=True, title=True, interactions_panel="bottom",
+                  interactions2_panel="bottom", ct_panel="top", annotations=[],
                   annotation_mode="track"):
         ax = self.get_ax(ax)
         if annotation_mode == "track":
@@ -52,9 +52,9 @@ class AP(Plot):
         self.set_axis(ax=ax, annotation_gap=annotation_gap)
         if colorbar:
             ax_ins1 = ax.inset_axes([0.05, 0.2, 0.3, 0.03])
-            self.view_colormap(ax_ins1, ij)
+            self.view_colormap(ax_ins1, interactions)
             ax_ins2 = ax.inset_axes([0.05, 0.3, 0.3, 0.03])
-            self.view_colormap(ax_ins2, ij2)
+            self.view_colormap(ax_ins2, interactions2)
             ax_ins3 = ax.inset_axes([0.05, 0.8, 0.3, 0.03])
             if comp is not None:
                 self.view_colormap(ax_ins3, "ct_compare")
@@ -62,9 +62,9 @@ class AP(Plot):
                 self.view_colormap(ax_ins3, ct)
         self.add_patches(ax=ax, data=ct, panel=ct_panel,
                          annotation_gap=annotation_gap, comp=comp)
-        self.add_patches(ax=ax, data=ij, panel=ij_panel,
+        self.add_patches(ax=ax, data=interactions, panel=interactions_panel,
                          annotation_gap=annotation_gap)
-        self.add_patches(ax=ax, data=ij2, panel=ij2_panel,
+        self.add_patches(ax=ax, data=interactions2, panel=interactions2_panel,
                          annotation_gap=annotation_gap)
         self.plot_profile(ax=ax, profile=profile, ct=ct)
         for i, annotation in enumerate(annotations):

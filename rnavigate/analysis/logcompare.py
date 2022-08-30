@@ -5,7 +5,7 @@ from ..plots import Plot
 
 
 class LogCompare():
-    def __init__(self, samples1, samples2, name1, name2):
+    def __init__(self, samples1, samples2, name1, name2, data="profile"):
         """Takes replicates of two samples for comparison. Replicates are
         required. Calculates the log division profile
         (log10(modified/untreated)) and minimizes the median of the absolute
@@ -18,25 +18,26 @@ class LogCompare():
             name2 (string): name of second sample
             data (str, optional): Datatype to compare. Defaults to "profile".
         """
+        self.data = data
         self.groups = {}
         self.load_replicates(*samples1, group=1)
         self.load_replicates(*samples2, group=2)
         sequences_match = self.groups[1]["seq"] == self.groups[2]["seq"]
         assert sequences_match, "Sample sequences do not match."
-        self.groups[2]["profile"] = self.rescale(self.groups[2]["profile"],
-                                                 self.groups[1]["profile"])
+        self.groups[2][self.data] = self.rescale(self.groups[2][self.data],
+                                                 self.groups[1][self.data])
         self.groups[1]["name"] = name1
         self.groups[2]["name"] = name2
         self.make_plots()
 
     def load_profile(self, sample):
-        df = sample.data["profile"].data
+        df = sample.data[self.data].data
         plus = df.Modified_rate.values.copy()
         minus = df.Untreated_rate.values.copy()
         profile = plus/minus
         profile = np.log(profile)
         profile[minus > 0.05] = np.nan
-        return profile, sample.data["profile"].sequence
+        return profile, sample.data[self.data].sequence
 
     def calc_scale_factor(self, profile, target_profile):
         def f(offset):
@@ -64,7 +65,7 @@ class LogCompare():
         stacked = np.vstack(profiles)
         avgprofile = np.nanmean(stacked, axis=0)
         stderr = np.std(stacked, axis=0)
-        self.groups[group] = {"profile": avgprofile,
+        self.groups[group] = {self.data: avgprofile,
                               "stderr": stderr,
                               "stacked": stacked,
                               "seq": seq}

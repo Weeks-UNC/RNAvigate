@@ -5,7 +5,7 @@ import numpy as np
 
 class LowSS():
     def __init__(self, sample, window=55, region="all"):
-        for data in ["profile", "probs", "ct"]:
+        for data in ["profile", "pairprob", "ct"]:
             assert data in sample.data.keys(), f"Sample missing {data} data"
         assert window % 2 == 1, "Window must be an odd number."
         self.sample = sample
@@ -22,8 +22,8 @@ class LowSS():
         self.median_profile = np.median(profile[~np.isnan(profile)])
         self.windowed_profile = self.windowed_median(profile)
 
-        sample.data["probs"].set_entropy()
-        entropies = sample.data["probs"].entropy
+        sample.data["pairprob"].set_entropy()
+        entropies = sample.data["pairprob"].entropy
         self.windowed_entropy = self.windowed_median(entropies)
 
         self.in_lssr = np.zeros(self.nt_length, dtype=int)
@@ -71,9 +71,10 @@ class LowSS():
                         alpha=0.2, fc='grey', transform=ax.transAxes)
 
         # add ct and pairing probabilities track
-        self.sample.filter_ij("probs", "probs")
-        plot.add_sample(self.sample, ct="ct", comp=None, ij="probs",
-                        ij2=None, profile=None, label="label",
+        self.sample.filter_interactions("pairprob", "pairprob")
+        plot.add_sample(self.sample, ct="ct", comp=None,
+                        interactions="pairprob",
+                        interactions2=None, profile=None, label="label",
                         colorbar=False, seqbar=False, title=False)
 
         # Place Track Labels

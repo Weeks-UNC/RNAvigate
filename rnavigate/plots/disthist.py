@@ -6,11 +6,11 @@ class DistHist(Plot):
         super().__init__(num_samples)
         self.pass_through = ["atom", "ax"]
 
-    def plot_data(self, structure, ij, label, atom="O2'", ax=None):
+    def plot_data(self, structure, interactions, label, atom="O2'", ax=None):
         if ax is None:
             ax = self.get_ax()
         self.plot_all_distances(ax, structure, atom)
-        self.plot_experimental_distances(ax, structure, ij, atom)
+        self.plot_experimental_distances(ax, structure, interactions, atom)
         ax.set_title(label)
         self.i += 1
 
@@ -28,8 +28,8 @@ class DistHist(Plot):
         ax2.hist(pdb_dists, bins=range(0, int(max(pdb_dists)), 5),
                  histtype="step", color="0.5", label="All distances")
 
-    def plot_experimental_distances(self, ax, structure, ij, atom):
-        ij.set_3d_distances(structure, atom)
-        ij_dists = ij.data.loc[ij.data["mask"], "Distance"]
+    def plot_experimental_distances(self, ax, structure, interactions, atom):
+        interactions.set_3d_distances(structure, atom)
+        ij_dists = interactions.data.loc[interactions.data["mask"], "Distance"]
         ax.hist(ij_dists, bins=range(0, int(max(ij_dists)), 5), width=5,
                 ec='none')

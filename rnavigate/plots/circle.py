@@ -26,21 +26,21 @@ class Circle(Plot):
         dim = self.nt_length / pi / 4
         return (dim * self.columns, dim * self.rows)
 
-    def plot_data(self, ct, comp, ij, ij2, profile, label):
+    def plot_data(self, ct, comp, interactions, interactions2, profile, label):
         ax = self.get_ax()
-        if ij is not None:
+        if interactions is not None:
             ax_ins1 = ax.inset_axes(
                 [-5, -0.4, 10, 0.8], transform=ax.transData)
-            self.view_colormap(ax_ins1, ij)
-        if ij2 is not None:
+            self.view_colormap(ax_ins1, interactions)
+        if interactions2 is not None:
             ax_ins2 = ax.inset_axes([10, -100, 100, 8], transform=ax.transData)
-            self.view_colormap(ax_ins2, ij2)
+            self.view_colormap(ax_ins2, interactions2)
         if comp is not None:
             ax_ins3 = ax.inset_axes([10, 80, 100, 8], transform=ax.transData)
             self.view_colormap(ax_ins3, "ct_compare")
         self.add_patches(ax, ct, comp)
-        self.add_patches(ax, ij)
-        self.add_patches(ax, ij2)
+        self.add_patches(ax, interactions)
+        self.add_patches(ax, interactions2)
         # self.add_sequence(ax, ct.sequence, yvalue=0.5)
         # self.plot_profile(ax, profile, ct)
         ax.set_title(label)

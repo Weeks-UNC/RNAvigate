@@ -10,6 +10,7 @@ Coding To-Do List
 - improve sizing
 - setting size and dpi for all plots
 - turn off nt cylinders in Mol
+- implement profiles for interaction data
 - renaming:
   - ap to arcplot
   - ss to secondary
@@ -17,7 +18,6 @@ Coding To-Do List
   - sm to shapemap
   - make_ to plot_
   - array_ to plot_multisample_
-  - ij to interactions
   - ct, compct to ss1, ss2, ss3, etc.
 - loading secondary structure files containing more than one structure
 - calling significant sites with log-corrected profile min-diff comparison
@@ -31,7 +31,8 @@ Documentation To-Do List
 - One page for each plot type
   - arcplot, circleplot, ss-diagram, 3d mol, skyline, qc, heatmap, linreg, sm
 - guide for custom use cases
-  = loading profile data, loading ij data, plots with mpl, data with pandas
+  = loading profile data, loading interactions data, plots with mpl, data with
+    pandas
 - good doc strings
 
 Features
@@ -43,16 +44,16 @@ A python interface and CLI interface for all of the following:
 - Implemented CLI interface: YY
 - Not applicable: ---
 
-| plot type | log | profiles | dance | rings | pairs | deletions | array | probs |
-|-----------|-----|----------|-------|-------|-------|-----------|-------|-------|
-| load data | Y   | Y        | Y     | Y     | Y     | Y         | ----- | Y     |
-| QC plots  | Y   | Y        | ---   | ---   | ---   | ---       | Y     | ---   |
-| Regression| --- | Y        | Y     | ---   | ---   | ---       | Y     | ---   |
-| skyline   | --- | Y        | Y     | ---   | ---   | ---       | Y     | ---   |
-| arc plots | --- | Y        | ---   | Y     | Y     | Y         | Y     | Y     |
-| secondary | --- | Y        | ---   | Y     | Y     | Y         | Y     | Y     |
-| tertiary  | --- | Y        | ---   | Y     | Y     | Y         | Y     | Y     |
-| heatmaps  | --- |          | Y     | Y     | Y     | Y         | Y     | Y     |
+| plot type | log | profiles | dance | rings | pairs | deletions | array | pairprob |
+|-----------|-----|----------|-------|-------|-------|-----------|-------|----------|
+| load data | Y   | Y        | Y     | Y     | Y     | Y         | ----- | Y        |
+| QC plots  | Y   | Y        | ---   | ---   | ---   | ---       | Y     | ---      |
+| Regression| --- | Y        | Y     | ---   | ---   | ---       | Y     | ---      |
+| skyline   | --- | Y        | Y     | ---   | ---   | ---       | Y     | ---      |
+| arc plots | --- | Y        | ---   | Y     | Y     | Y         | Y     | Y        |
+| secondary | --- | Y        | ---   | Y     | Y     | Y         | Y     | Y        |
+| tertiary  | --- | Y        | ---   | Y     | Y     | Y         | Y     | Y        |
+| heatmaps  | --- |          | Y     | Y     | Y     | Y         | Y     | Y        |
 
 - Reading in structural information
 

@@ -36,13 +36,13 @@ class Plot(ABC):
         self.plot_data(**kwargs)
 
     @classmethod
-    def view_colormap(self, ax=None, ij=None, metric=None, ticks=None,
+    def view_colormap(self, ax=None, interactions=None, metric=None, ticks=None,
                       values=None, title=None, cmap=None):
-        if ((ij is None or type(ij).__name__ == "CT") and
+        if ((interactions is None or type(interactions).__name__ == "CT") and
                 None in [ticks, values, title, cmap]):
             ax.remove()
             return
-        elif ij == "ct_compare":
+        elif interactions == "ct_compare":
             metric = "Pairing"
             ticks = [10/6, 30/6, 50/6]
             values = ["Shared", "Structure 1", "Structure 2"]
@@ -50,8 +50,8 @@ class Plot(ABC):
             cmap = mp.colors.ListedColormap([(0.6, 0.6, 0.6, 0.7),
                                              (0.15, 0.8, 0.6, 0.7),
                                              (0.6, 0.0, 1.0, 0.7)])
-        elif ij is not None:
-            metric = ij.metric
+        elif interactions is not None:
+            metric = interactions.metric
         if ticks is None:
             if metric == "Class":
                 ticks = [10/6, 30/6, 50/6]
@@ -61,12 +61,12 @@ class Plot(ABC):
             if metric == "Class":
                 values = ['Complementary', 'Primary', 'Secondary']
             else:
-                mn, mx = ij.min_max
+                mn, mx = interactions.min_max
                 values = [f"{mn + ((mx-mn)/5)*i:.1f}" for i in range(6)]
         if title is None:
-            title = f"{ij.datatype.capitalize()}: {metric.lower()}"
+            title = f"{interactions.datatype.capitalize()}: {metric.lower()}"
         if cmap is None:
-            cmap = ij.cmap
+            cmap = interactions.cmap
         else:
             cmap = plt.get_cmap(cmap)
         colors = cmap(np.arange(cmap.N))

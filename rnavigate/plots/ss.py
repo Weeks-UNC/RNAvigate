@@ -32,7 +32,7 @@ class SS(Plot):
                        "sequence": 20,
                        "position": 25}
 
-    def plot_data(self, ij, ij2, profile, annotations, label,
+    def plot_data(self, interactions, interactions2, profile, annotations, label,
                   colors="sequence",
                   sequence=False,
                   apply_color_to="background",
@@ -43,8 +43,8 @@ class SS(Plot):
         self.plot_sequence(ax=ax, profile=profile, colors=colors,
                            sequence=sequence, apply_color_to=apply_color_to,
                            positions=positions)
-        self.plot_ij(ax=ax, ij=ij, colorbar=colorbar, cmap_pos=0)
-        self.plot_ij(ax=ax, ij=ij2, colorbar=colorbar, cmap_pos=1)
+        self.plot_interactions(ax=ax, interactions=interactions, colorbar=colorbar, cmap_pos=0)
+        self.plot_interactions(ax=ax, interactions=interactions2, colorbar=colorbar, cmap_pos=1)
         for annotation in annotations:
             self.plot_annotation(ax=ax, annotation=annotation)
         if title:
@@ -142,11 +142,11 @@ class SS(Plot):
         y = [ss.ycoordinates[i-1], ss.ycoordinates[j-1]]
         ax.plot(x, y, color=color, linewidth=linewidth, zorder=zorder)
 
-    def plot_ij(self, ax, ij, colorbar, cmap_pos):
-        if ij is None:
+    def plot_interactions(self, ax, interactions, colorbar, cmap_pos):
+        if interactions is None:
             return
-        ij_colors = ij.get_ij_colors()
-        window = ij.window
+        ij_colors = interactions.get_ij_colors()
+        window = interactions.window
         if window == 1:
             lw = 3
         else:
@@ -156,7 +156,7 @@ class SS(Plot):
         if colorbar:
             x, width = [(0, 0.49), (0.51, 0.49)][cmap_pos]
             ax_ins1 = ax.inset_axes([x, 0, width, 0.05])
-            self.view_colormap(ax_ins1, ij)
+            self.view_colormap(ax_ins1, interactions)
 
     def plot_positions(self, ax, text_color, bbox_color, spacing=20):
         ss = self.structure

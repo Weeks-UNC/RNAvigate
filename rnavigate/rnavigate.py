@@ -8,7 +8,7 @@ import numpy as np
 from .data import Data, PDB, Log
 from .data import Annotation, Motif, ORFs
 from .data import CT, DotBracket, XRNA, VARNA, NSD, CTE
-from .data import IJ, RINGMaP, PAIRMaP, PairProb, SHAPEJuMP
+from .data import Interactions, RINGMaP, PAIRMaP, PairProb, SHAPEJuMP
 from .data import Profile, SHAPEMaP, DanceMaP, RNPMaP
 from .plots import AP, Circle, DistHist, Heatmap, LinReg, Mol
 from .plots import QC, Skyline, SM, SS
@@ -101,7 +101,7 @@ class Sample():
                 file.
             allcorrs (str, optional): Path to a PairMapper allcorrs.txt output
                 file.
-            probs (str, optional): Path to an RNAStructure .dp pairing
+            pairprob (str, optional): Path to an RNAStructure .dp pairing
                 probability file.
             dance_prefix (str, optional): Path prefix for DanceMapper output
                 files.
@@ -164,7 +164,7 @@ class Sample():
 
         self.sample = sample
         self.parent = None
-        self.data = {}  # stores profile, ij, and structure objects
+        self.data = {}  # stores profile, interactions, and structure objects
         # load data
         for input, (path, instantiator, source, kwargs) in self.inputs.items():
             if path is not None and source != "":
@@ -233,7 +233,7 @@ class Sample():
 # filtering and data retrieval
 #     get_data
 #     get_data_list
-#     filter_ij
+#     filter_interactions
 #     filter_dance
 ###############################################################################
 
@@ -256,7 +256,7 @@ class Sample():
             return None
         try:
             return self.data[key]
-        except (KeyError, TypeError) as _:
+        except (KeyError, TypeError):
             try:
                 return self.parent.data[key]
             except (KeyError, AttributeError):
@@ -277,53 +277,55 @@ class Sample():
         else:
             return self.get_data(keys)
 
-    def filter_ij(self, ij, fit_to, suppress=False, **kwargs):
+    def filter_interactions(self, interactions, fit_to,
+                            suppress=False, **kwargs):
         """Aligns sequence to fit_to, sets properties, filters and aligns data.
 
-        For example, for plotting IJ data containing structure cassettes
-        against a CT without, or plotting sequence variants together using a
-        best pairwise alignment. If kwargs contains metric, cmap, or min_max,
-        these properties of the IJ data are set. Other kwargs are passed to
-        IJ.filter(). Refer to that method for more detail on filters:
-        help(MaP.IJ.filter)
+        For example, for plotting interaction data containing structure
+        cassettes against a CT without, or plotting sequence variants together
+        using a best pairwise alignment. If kwargs contains metric, cmap, or
+        min_max, these properties of the Interactions object are set. Other
+        kwargs are passed to Interactions.filter(). Refer to that method for
+        more detail on filters: help(MaP.Interactions.filter)
 
         Args:
-            ij (IJ): IJ object to be filtered and fitted
-            fit_to (Data (any)): Data object containing a sequence for IJ to be
-                fit to for plotting purposes.
-            **kwargs: metric, cmap, and min_max. Others passed to ij.filter()
-                      For metric="Distance" you can specify an atom or reagent:
-                      metric="Distance_O3'" or metric="Distance_DMS"
+            interactions (Interactions): Interactions object to be filtered
+            fit_to (Data (any)): Data object containing a sequence for
+                Interactions to be fitted to for plotting purposes.
+            **kwargs: metric, cmap, and min_max. Others passed to
+                interactions.filter() For metric="Distance" you can specify an
+                atom or reagent: metric="Distance_O2'" or metric="Distance_DMS"
         """
-        # check for valid ij
-        if ij not in self.data.keys():
+        data = self.data[interactions]
+        # check for valid interactions data
+        if interactions not in self.data.keys():
             if not suppress:
-                print(f"{ij} not found in sample data")
+                print(f"{interactions} not found in sample data")
             return
-        if not isinstance(self.data[ij], IJ):
+        if not isinstance(data, Interactions):
             if not suppress:
-                print(f"{ij} is not an IJ datatype")
+                print(f"{Interactions} is not an Interactions datatype")
             return
 
         if "metric" in kwargs.keys():
             metric = kwargs.pop("metric")
             if metric.startswith("Distance"):
                 metric = (metric, self.data["pdb"])
-            self.data[ij].metric = metric
+            data.metric = metric
         else:
-            self.data[ij].metric = self.data[ij].default_metric
+            data.metric = data.default_metric
         if "cmap" in kwargs.keys():
             cmap = kwargs.pop("cmap")
-            self.data[ij].cmap = cmap
+            data.cmap = cmap
         if "min_max" in kwargs.keys():
             min_max = kwargs.pop("min_max")
-            self.data[ij].min_max = min_max
+            data.min_max = min_max
         for data in ["profile", "ct"]:
             if data in kwargs.keys():
-                continue
+                kwargs[data] = self.data[kwargs[data]]
             elif data in self.data.keys():
                 kwargs[data] = self.data[data]
-        self.data[ij].filter(self.get_data_list(fit_to), **kwargs)
+        data.filter(self.get_data_list(fit_to), **kwargs)
 
     def dance_filter(self, filterneg=True, cdfilter=15, sigfilter=23,
                      ssfilter=True):
@@ -433,19 +435,21 @@ class Sample():
         plot.add_sample(self, profile="profile", label="label")
         return plot
 
-    def make_ap_multifilter(self, filters, ct="ct", comp=None, ij2=None,
-                            profile="profile", label="label"):
+    def make_ap_multifilter(self, filters, ct="ct", comp=None,
+                            interactions2=None, profile="profile",
+                            label="label"):
         """Makes an array of arc plots of different filtered views of data from
         Sample.
 
         Args:
             filters (dict): Dictionary containing filtering kwargs for each
-                plot in this array. Requires "ij" and "fit_to".
+                plot in this array. Requires "interactions" and "fit_to".
             ct (str, optional): key for data object to use as ct.
                 Defaults to "ct".
             comp (str, optional): key for data object to use as comparison ct.
                 Defaults to "compct".
-            ij2 (_type_, optional): key for data object to use as second ij.
+            interactions2 (_type_, optional): key for data object to use as
+                second interactions.
                 Defaults to None.
             profile (str, optional): key for data object to use as profile.
                 Defaults to "profile".
@@ -456,20 +460,20 @@ class Sample():
         """
         plot = AP(len(filters), self.get_data_list(ct).length)
         for filter in filters:
-            ij = filter.pop("ij")
-            self.filter_ij(ij, ct, **filter)
-            plot.add_sample(self, ct=ct, comp=comp, ij=ij, ij2=ij2,
+            interactions = filter.pop("interactions")
+            self.filter_interactions(interactions, ct, **filter)
+            plot.add_sample(self, ct=ct, comp=comp, interactions=interactions, interactions2=interactions2,
                             profile=profile, label=label)
         return plot
 
     def make_ss_multifilter(self, filters, ss="ss", profile="profile",
-                            label="label", ij2=None, **kwargs):
+                            label="label", interactions2=None, **kwargs):
         plot = SS(len(filters), self.get_data_list(ss))
         pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
         for filter in filters:
-            ij = filter.pop("ij")
-            self.filter_ij(ij, ss, **filter)
-            plot.add_sample(self, ij=ij, ij2=ij2, profile=profile,
+            interactions = filter.pop("interactions")
+            self.filter_interactions(interactions, ss, **filter)
+            plot.add_sample(self, interactions=interactions, interactions2=interactions2, profile=profile,
                             label=label, **pt_kwargs)
         return plot
 
@@ -478,25 +482,25 @@ class Sample():
         plot = Mol(len(filters), self.data["pdb"])
         pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
         for filter in filters:
-            ij = filter.pop("ij")
-            self.filter_ij(ij, "pdb", **filter)
-            plot.add_sample(self, ij=ij, profile=profile, label=label,
+            interactions = filter.pop("interactions")
+            self.filter_interactions(interactions, "pdb", **filter)
+            plot.add_sample(self, interactions=interactions, profile=profile, label=label,
                             **pt_kwargs)
         if show:
             plot.view.show()
         return plot
 
-    def make_circle_multifilter(self, filters, ct=None, comp=None, ij2=None,
+    def make_circle_multifilter(self, filters, ct=None, comp=None, interactions2=None,
                                 profile=None, label="label"):
         plot = Circle(len(filters), self.data["profile"].length)
         for filter in filters:
-            ij = filter.pop("ij")
-            self.filter_ij(ij, "profile", **filter)
-            plot.add_sample(self, ct=ct, comp=comp, ij=ij, ij2=ij2,
+            interactions = filter.pop("interactions")
+            self.filter_interactions(interactions, "profile", **filter)
+            plot.add_sample(self, ct=ct, comp=comp, interactions=interactions, interactions2=interactions2,
                             profile=profile, label=label)
         return plot
 
-    def make_disthist_multifilter(self, filters, structure="pdb", ij=None,
+    def make_disthist_multifilter(self, filters, structure="pdb", interactions=None,
                                   label="label", same_axis=True):
         if same_axis:
             plot = DistHist(1)
@@ -505,9 +509,9 @@ class Sample():
             plot = DistHist(len(filters))
             ax = None
         for filter in filters:
-            ij = filter.pop("ij")
-            self.filter_ij(ij, "pdb", **filter)
-            plot.add_sample(structure, ij, label, ax)
+            interactions = filter.pop("interactions")
+            self.filter_interactions(interactions, "pdb", **filter)
+            plot.add_sample(structure, interactions, label, ax)
         return plot
 
 ###############################################################################
@@ -542,17 +546,17 @@ def array_qc(samples=[], **kwargs):
     return plot
 
 
-def array_skyline(samples, annotations=[], plot_kwargs={}, **kwargs):
-    plot = Skyline(len(samples), samples[0].data["profile"].length,
+def array_skyline(samples, profile="profile", annotations=[], plot_kwargs={}, **kwargs):
+    plot = Skyline(len(samples), samples[0].data[profile].length,
                    **plot_kwargs)
     pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
     for sample in samples:
-        plot.add_sample(sample, profile="profile", annotations=annotations,
+        plot.add_sample(sample, profile=profile, annotations=annotations,
                         label="label", **pt_kwargs)
     return plot
 
 
-def array_ap(samples, ct="ct", comp=None, ij=None, ij2=None, ij2_filter={},
+def array_ap(samples, ct="ct", comp=None, interactions=None, interactions2=None, interactions2_filter={},
              profile="profile", annotations=[], label="label",
              plot_kwargs={}, prefiltered=False, **kwargs):
     plot = AP(len(samples), samples[0].data[ct].length, **plot_kwargs)
@@ -560,65 +564,68 @@ def array_ap(samples, ct="ct", comp=None, ij=None, ij2=None, ij2_filter={},
     for sample in samples:
         if not prefiltered:
             if ct not in ["ss", "ct"]:
-                sample.filter_ij(ct, ct)
-            if ij is not None:
-                sample.filter_ij(ij, ct, **kwargs)
-            if ij2 is not None:
-                sample.filter_ij(ij2, ct, **ij2_filter)
-        plot.add_sample(sample, ct=ct, comp=comp, ij=ij, ij2=ij2,
+                sample.filter_interactions(ct, ct)
+            if interactions is not None:
+                sample.filter_interactions(interactions, ct, **kwargs)
+            if interactions2 is not None:
+                sample.filter_interactions(
+                    interactions2, ct, **interactions2_filter)
+        plot.add_sample(sample, ct=ct, comp=comp, interactions=interactions, interactions2=interactions2,
                         profile=profile, label=label, annotations=annotations,
                         **pt_kwargs)
     return plot
 
 
-def array_ss(samples, ss="ss", ij=None, ij2=None, ij2_filter={},
+def array_ss(samples, ss="ss", interactions=None, interactions2=None, interactions2_filter={},
              profile="profile", annotations=[], label="label", plot_kwargs={},
              prefiltered=False, **kwargs):
     plot = SS(len(samples), samples[0].data[ss], **plot_kwargs)
     pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
     for sample in samples:
         if not prefiltered:
-            if ij is not None:
-                sample.filter_ij(ij, ss, **kwargs)
-            if ij2 is not None:
-                sample.filter_ij(ij2, ss, **ij2_filter)
-        plot.add_sample(sample, ij=ij, ij2=ij2, profile=profile,
+            if interactions is not None:
+                sample.filter_interactions(interactions, ss, **kwargs)
+            if interactions2 is not None:
+                sample.filter_interactions(
+                    interactions2, ss, **interactions2_filter)
+        plot.add_sample(sample, interactions=interactions, interactions2=interactions2, profile=profile,
                         annotations=annotations, label=label, **pt_kwargs)
     return plot
 
 
-def array_mol(samples, ij=None, profile="profile", label="label", show=True,
+def array_mol(samples, interactions=None, profile="profile", label="label", show=True,
               prefiltered=False, **kwargs):
     plot = Mol(len(samples), samples[0].data["pdb"])
     pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
     for sample in samples:
         if not prefiltered:
-            if ij is not None:
-                sample.filter_ij(ij, "pdb", **kwargs)
-        plot.add_sample(sample, ij=ij, profile=profile,
+            if interactions is not None:
+                sample.filter_interactions(interactions, "pdb", **kwargs)
+        plot.add_sample(sample, interactions=interactions, profile=profile,
                         label=label, **pt_kwargs)
     if show:
         plot.view.show()
     return plot
 
 
-def array_heatmap(samples, structure=None, ij=None, label="label", **kwargs):
+def array_heatmap(samples, structure=None, interactions=None, label="label", **kwargs):
     plot = Heatmap(len(samples), samples[0].data[structure])
     pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
     for sample in samples:
-        sample.filter_ij(ij, structure, **kwargs)
-        plot.add_sample(sample, ij=ij, label=label, **pt_kwargs)
+        sample.filter_interactions(interactions, structure, **kwargs)
+        plot.add_sample(sample, interactions=interactions,
+                        label=label, **pt_kwargs)
     return plot
 
 
-def array_circle(samples, ct=None, comp=None, ij=None, ij2=None, profile=None,
+def array_circle(samples, ct=None, comp=None, interactions=None, interactions2=None, profile=None,
                  label="label", **kwargs):
     plot = Circle(len(samples), samples[0].data["profile"].length)
     pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
     for sample in samples:
-        if ij is not None:
-            sample.filter_ij(ij, "profile", **kwargs)
-        plot.add_sample(sample, ct=ct, comp=comp, ij=ij, ij2=ij2,
+        if interactions is not None:
+            sample.filter_interactions(interactions, "profile", **kwargs)
+        plot.add_sample(sample, ct=ct, comp=comp, interactions=interactions, interactions2=interactions2,
                         profile=profile, label=label, **pt_kwargs)
     return plot
 
@@ -632,7 +639,7 @@ def array_linreg(samples, ct="ct", profile="profile", label="label", **kwargs):
     return plot
 
 
-def array_disthist(samples, structure="pdb", ij=None, label="label",
+def array_disthist(samples, structure="pdb", interactions=None, label="label",
                    same_axis=False, **kwargs):
     if same_axis:
         plot = DistHist(1)
@@ -642,6 +649,6 @@ def array_disthist(samples, structure="pdb", ij=None, label="label",
         ax = None
     pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
     for sample in samples:
-        sample.filter_ij(ij, "pdb", **kwargs)
-        plot.add_sample(sample, structure=structure, ij=ij,
+        sample.filter_interactions(interactions, "pdb", **kwargs)
+        plot.add_sample(sample, structure=structure, interactions=interactions,
                         label=label, ax=ax, **pt_kwargs)

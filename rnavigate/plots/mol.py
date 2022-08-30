@@ -30,13 +30,13 @@ class Mol(Plot):
         col = i % self.columns
         return (row, col)
 
-    def plot_data(self, ij, profile, label, nt_color="sequence", atom="O2'",
+    def plot_data(self, interactions, profile, label, nt_color="sequence", atom="O2'",
                   title=True):
         viewer = self.get_viewer()
-        if ij is not None:
-            self.plot_ij(viewer, ij, atom)
+        if interactions is not None:
+            self.plot_interactions(viewer, interactions, atom)
             _, ax = plt.subplots(1, figsize=(6, 2))
-            self.view_colormap(ax, ij)
+            self.view_colormap(ax, interactions)
         self.set_colors(viewer, profile, nt_color)
         if title:
             self.view.addLabel(label,
@@ -64,9 +64,9 @@ class Mol(Plot):
                           "color": color}
         self.view.addCylinder(cylinder_specs, viewer=viewer)
 
-    def plot_ij(self, viewer, ij, atom):
-        window = ij.window
-        for i, j, color in zip(*ij.get_ij_colors()):
+    def plot_interactions(self, viewer, interactions, atom):
+        window = interactions.window
+        for i, j, color in zip(*interactions.get_ij_colors()):
             color = "0x"+mpc.rgb2hex(color)[1:]
             for w in range(window):
                 io = i+w

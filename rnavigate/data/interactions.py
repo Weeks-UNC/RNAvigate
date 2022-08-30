@@ -8,9 +8,10 @@ import numpy as np
 from operator import ge, le, gt, lt, eq, ne
 
 
-class IJ(Data):
+class Interactions(Data):
 
-    def __init__(self, datatype="ij", dataframe=None, default_metric=None,
+    def __init__(self, datatype="interactions", dataframe=None,
+                 default_metric=None,
                  filepath=None, sep='\t', read_csv_kw={}, window=1,
                  sequence=None, fasta=None,
                  fill={}, cmaps={}, mins_maxes={}):
@@ -388,7 +389,7 @@ class IJ(Data):
         self.update_mask(new_mask)
 
 
-class SHAPEJuMP(IJ):
+class SHAPEJuMP(Interactions):
     def __init__(self, filepath, datatype="shapejump", sequence=None):
         default_metric = 'Percentile'
         fill = {'Metric': 0.0, 'Percentile': 0.0}
@@ -406,7 +407,7 @@ class SHAPEJuMP(IJ):
         self.window = 1
 
 
-class RINGMaP(IJ):
+class RINGMaP(Interactions):
     def __init__(self, filepath, datatype="ringmap", sequence=None):
         default_metric = 'Statistic'
         fill = {'Statistic': 0.0, 'Zij': 0.0}
@@ -448,7 +449,7 @@ class RINGMaP(IJ):
         return data[columns]
 
 
-class PAIRMaP(IJ):
+class PAIRMaP(Interactions):
     def __init__(self, filepath, datatype="pairmap", sequence=None):
         default_metric = 'Class'
         fill = {'Class': -1, 'Statistic': 0.0, 'Zij': 0.0}
@@ -494,7 +495,7 @@ class PAIRMaP(IJ):
         return data
 
 
-class PairProb(IJ):
+class PairProb(Interactions):
     def __init__(self, filepath, datatype="pairprob", sequence=None):
         default_metric = 'Probability'
         fill = {'Probability': 0}
@@ -515,7 +516,6 @@ class PairProb(IJ):
         self.data = data
 
     def set_entropy(self, printOut=False, toFile=None):
-        assert self.datatype == "probs", "IJ must be a pairing probability .dp"
         self.data.eval('nlogn = log10p * 10 ** ( - log10p )', inplace=True)
         entropy = np.zeros(self.length)
         for i in range(self.length):
