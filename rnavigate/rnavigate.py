@@ -320,11 +320,11 @@ class Sample():
         if "min_max" in kwargs.keys():
             min_max = kwargs.pop("min_max")
             data.min_max = min_max
-        for data in ["profile", "ct"]:
-            if data in kwargs.keys():
-                kwargs[data] = self.data[kwargs[data]]
-            elif data in self.data.keys():
-                kwargs[data] = self.data[data]
+        for datatype in ["profile", "ct"]:
+            if datatype in kwargs.keys():
+                kwargs[datatype] = self.data[kwargs[datatype]]
+            elif datatype in self.data.keys():
+                kwargs[datatype] = self.data[datatype]
         data.filter(self.get_data_list(fit_to), **kwargs)
 
     def dance_filter(self, filterneg=True, cdfilter=15, sigfilter=23,
