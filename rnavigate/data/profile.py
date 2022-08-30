@@ -9,9 +9,13 @@ class Profile(Data):
     def __init__(self, datatype="profile",
                  column=None, ap_scale_factor=1,
                  dataframe=None, sequence=None, fasta=None,
-                 filepath=None, sep="\t", read_csv_kw={},
+                 filepath=None, sep=None, read_csv_kw=None,
                  cmap=None, norm_method=None, norm_values=None,
                  color_column=None, colors=None):
+        if sep is None:
+            sep = '\t'
+        if read_csv_kw is None:
+            read_csv_kw = {}
         self.datatype = datatype
         self.default_column = column
         self.ap_scale_factor = ap_scale_factor
@@ -71,7 +75,10 @@ class Profile(Data):
             norm = plt.Normalize()
         elif cv["norm_method"] is None:
             def norm(x): return x  # does nothing to values
-        self.colors = cv["cmap"](norm(self.data[cv["column"]]))
+        values = self.data[cv["column"]].values
+        print(values, norm)
+        values = norm(values)
+        self.colors = cv["cmap"](values)
 
 
 class SHAPEMaP(Profile):

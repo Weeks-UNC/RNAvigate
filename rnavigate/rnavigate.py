@@ -217,7 +217,7 @@ class Sample():
                        f"{filepath}-{i}.ct"],  # if regular fold used
                 "pairprob": f"{filepath}-{i}.dp"
             }
-            for key in ["ringmap", "pairmap"]:
+            for key in ["ringmap", "pairmap", "pairprob"]:
                 if not os.path.isfile(kwargs[key]):
                     kwargs.pop(key)
             for ct in kwargs["ct"]:
