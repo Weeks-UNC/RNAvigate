@@ -7,18 +7,21 @@ analysis.
 
 Coding To-Do List
 -----------------
-- improve sizing
+- refactoring:
+  - ss (plot) to 2d
+  - mol to 3d
+  - sm to shapemap
+  - ct, compct, ss to basepairs or ss or something
+  - ct, ij, ij2 to tops, bottoms (passing dictionaries)
+- better figure scaling using subplotpars -> set_size_inches
 - setting size and dpi for all plots
+- enable multiple structure inputs for SS plotting
+  - scale data points equally for ct-like objects
+  - center on 0, 0
+  - share x and y axes
+  - scale figure size using subplotpars
 - turn off nt cylinders in Mol
 - implement profiles for interaction data
-- renaming:
-  - ap to arcplot
-  - ss to secondary
-  - mol to mol3d
-  - sm to shapemap
-  - make_ to plot_
-  - array_ to plot_multisample_
-  - ct, compct to ss1, ss2, ss3, etc.
 - loading secondary structure files containing more than one structure
 - calling significant sites with log-corrected profile min-diff comparison
 - better nucleotide colors and display on linear regression plots.
@@ -34,6 +37,14 @@ Documentation To-Do List
   = loading profile data, loading interactions data, plots with mpl, data with
     pandas
 - good doc strings
+
+Paper figures
+-------------
+- abstract
+- 4 basic panel
+- lowss
+- time-resolved
+- dance
 
 Features
 --------
