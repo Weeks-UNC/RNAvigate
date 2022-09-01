@@ -13,37 +13,14 @@ class AP(Plot):
             self.nt_length = region[1]-region[0]+1
             self.region = region
         super().__init__(num_samples, **kwargs)
-        self.pass_through = ["ax", "colorbar", "seqbar", "title", "interactions_panel",
-                             "interactions2_panel", "ct_panel", "annotation_mode"]
-
-    def set_axis(self, ax, annotation_gap=0, xticks=20, xticks_minor=10):
-        def get_ticks(x, mn, mx):
-            return [tick for tick in range(x, mx+1, x) if mn <= tick <= mx]
-
-        ax.set_aspect('equal')
-        ax.yaxis.set_visible(False)
-        ax.spines['left'].set_color('none')
-        ax.spines['right'].set_color('none')
-        ax.spines['bottom'].set(position=('data', -annotation_gap),
-                                visible=False)
-        ax.spines['top'].set_color('none')
-        height = min(300, self.nt_length/2)
-        mn, mx = self.region
-        ax.set(xlim=(mn - 0.5, mx + 0.5),
-               ylim=(-height-1-annotation_gap, height+1),
-               xticks=get_ticks(xticks, mn, mx),
-               axisbelow=False)
-        ax.set_xticks(get_ticks(xticks_minor, mn, mx), minor=True)
-        for label in ax.get_xticklabels():
-            label.set_bbox({"facecolor": "white",
-                            "edgecolor": "None",
-                            "alpha": 0.5,
-                            "boxstyle": "round,pad=0.1,rounding_size=0.2"})
+        self.pass_through = ["ax", "colorbar", "seqbar", "title",
+                             "interactions_panel", "interactions2_panel",
+                             "ct_panel", "annotation_mode"]
 
     def plot_data(self, ct, comp, interactions, interactions2, profile, label,
-                  ax=None, colorbar=True, seqbar=True, title=True, interactions_panel="bottom",
-                  interactions2_panel="bottom", ct_panel="top", annotations=[],
-                  annotation_mode="track"):
+                  ax=None, colorbar=True, seqbar=True, title=True,
+                  interactions_panel="bottom", interactions2_panel="bottom",
+                  ct_panel="top", annotations=[], annotation_mode="track"):
         ax = self.get_ax(ax)
         if annotation_mode == "track":
             annotation_gap = 2*(2*len(annotations) + seqbar)
@@ -76,6 +53,30 @@ class AP(Plot):
         if title:
             self.add_title(ax, label)
         self.i += 1
+
+    def set_axis(self, ax, annotation_gap=0, xticks=20, xticks_minor=10):
+        def get_ticks(x, mn, mx):
+            return [tick for tick in range(x, mx+1, x) if mn <= tick <= mx]
+
+        ax.set_aspect('equal')
+        ax.yaxis.set_visible(False)
+        ax.spines['left'].set_color('none')
+        ax.spines['right'].set_color('none')
+        ax.spines['bottom'].set(position=('data', -annotation_gap),
+                                visible=False)
+        ax.spines['top'].set_color('none')
+        height = min(300, self.nt_length/2)
+        mn, mx = self.region
+        ax.set(xlim=(mn - 0.5, mx + 0.5),
+               ylim=(-height-1-annotation_gap, height+1),
+               xticks=get_ticks(xticks, mn, mx),
+               axisbelow=False)
+        ax.set_xticks(get_ticks(xticks_minor, mn, mx), minor=True)
+        for label in ax.get_xticklabels():
+            label.set_bbox({"facecolor": "white",
+                            "edgecolor": "None",
+                            "alpha": 0.5,
+                            "boxstyle": "round,pad=0.1,rounding_size=0.2"})
 
     def add_patches(self, ax, data, panel, annotation_gap, comp=None):
         if comp is not None:
@@ -138,18 +139,36 @@ class AP(Plot):
         color = annotation.color
         modes = ["track", "vbar"]
         assert mode in modes, f"annotation mode must be one of: {modes}"
-        if mode == "track":
+        if annotation.annotation_type == "spans":
             for span in annotation.spans:
-                span = [span[0]-0.5, span[1]+0.5]
-                ax.plot(span, [yvalue]*len(span),
-                        color=color, alpha=0.7, lw=11)
+                if mode == "track":
+                    ax.plot(span, [yvalue]*2,
+                            color=color, alpha=0.7, lw=11)
+                elif mode == "vbar":
+                    ax.axvspan(span[0]-0.5, span[1]+0.5,
+                               fc=color, ec="none", alpha=0.1)
+        elif annotation.annotation_type == "sites":
             sites = annotation.sites
-            ax.scatter(sites, [yvalue]*len(sites),
-                       color=color, marker='*', ec="none", alpha=0.7, s=20**2)
-        if mode == "vbar":
-            for span in annotation.spans:
-                ax.axvspan(span[0]-0.5, span[1]+0.5,
-                           fc=color, ec="none", alpha=0.1)
-            for site in annotation.sites:
-                ax.axvline(site,
-                           color=color, ls=":")
+            if mode == "track":
+                ax.scatter(sites, [yvalue]*len(sites),
+                           color=color, marker='*',
+                           ec="none", alpha=0.7, s=20**2)
+            elif mode == "vbar":
+                for site in sites:
+                    ax.axvline(site, color=color, ls=":")
+        elif annotation.annotation_type == "groups":
+            for group in annotation.groups:
+                sites = group["sites"]
+                color = group["color"]
+                span = [min(sites), max(sites)]
+                if mode == "track":
+                    ax.plot(span, [yvalue, yvalue],
+                            color=color, alpha=0.4, lw=11)
+                    ax.scatter(sites, [yvalue]*len(sites),
+                               color=color, marker='o', ec="none", alpha=0.7,
+                               s=11**2)
+                elif mode == "vbar":
+                    ax.axvspan(span[0]-0.5, span[1]+0.5,
+                               fc=color, ec="none", alpha=0.1)
+                    for site in sites:
+                        ax.axvline(site, color=color, ls=":")
