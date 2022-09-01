@@ -1,0 +1,12 @@
+site_name: RNAvigate
+site_url: https://rnavigate.readthedocs.io
+nav:
+  - Home: index.md
+  - RNA 2022 Poster: rna2022.md
+  - Installation: installation.md
+  - Getting Started: getting-started.md
+  - Plots: plots.md
+  - Filters: filters.md
+plugins:
+  - mkdocs-jupyter
+theme: readthedocs
