@@ -1,22 +1,18 @@
 from rnavigate.plots import AP
+from rnavigate.data import Annotation
 import matplotlib.pyplot as plt
 import numpy as np
 
 
 class LowSS():
-    def __init__(self, sample, window=55, region="all"):
+    def __init__(self, sample, window=55, region=None, show=True):
         for data in ["profile", "pairprob", "ct"]:
             assert data in sample.data.keys(), f"Sample missing {data} data"
         assert window % 2 == 1, "Window must be an odd number."
         self.sample = sample
+        self.sequence = self.sample.data["ct"].sequence
         self.window = window
         self.nt_length = sample.data["ct"].length
-        if region == 'all':
-            self.region = [1, self.nt_length]
-            self.region_length = self.nt_length
-        else:
-            self.region = region
-            self.region_length = region[1] - region[0] + 1
 
         profile = sample.data["profile"].data["Norm_profile"].values
         self.median_profile = np.median(profile[~np.isnan(profile)])
@@ -24,74 +20,134 @@ class LowSS():
 
         sample.data["pairprob"].set_entropy()
         entropies = sample.data["pairprob"].entropy
+        self.median_entropy = np.median(entropies)
         self.windowed_entropy = self.windowed_median(entropies)
 
-        self.in_lssr = np.zeros(self.nt_length, dtype=int)
-        self.lowss_regions = []
-        lssr = None
-        for i, (ent, prof) in enumerate(zip(self.windowed_entropy,
-                                            self.windowed_profile)):
-            if (ent < 0.08) & (prof < self.median_profile):
+        self.in_lowss_region = np.zeros(self.nt_length, dtype=int)
+        lowss_regions = []
+        lowss_region = None
+        for i, (entropy, profile) in enumerate(zip(self.windowed_entropy,
+                                                   self.windowed_profile)):
+            if (entropy < 0.08) & (profile < self.median_profile):
                 start = max(0, i-(self.window//2))
                 stop = min(self.nt_length, i+(self.window//2)+1)
-                if lssr is None:
-                    lssr = [start, stop]
-                elif lssr[0] < start < lssr[1]:
-                    lssr[1] = stop
-                elif start > lssr[1]:
-                    self.lowss_regions.append(lssr)
-                    lssr = [start, stop]
-                self.in_lssr[start:stop] = 1
+                if lowss_region is None:
+                    lowss_region = [start, stop]
+                elif lowss_region[0] < start < lowss_region[1]:
+                    lowss_region[1] = stop
+                elif start > lowss_region[1]:
+                    lowss_regions.append(lowss_region)
+                    self.in_lowss_region[start:stop] = 1
+                    lowss_region = [start, stop]
+        self.lowss_regions = Annotation(span_list=lowss_regions, color="grey",
+                                        sequence=self.sequence)
+        sample.data["lowss"] = self.lowss_regions
+        if show:
+            self.plot_LowSS(region=region)
 
-        self.plot_LowSS()
+    def plot_LowSS(self, region=None):
+        if region is None:
+            start = 1
+            stop = self.nt_length
+            region = [start, stop]
+            region_length = self.nt_length
+        elif isinstance(region, int):
+            region = self.lowss_regions[region-1]
+            start, stop = region
+            start = max(start - 150, 1)
+            stop = min(stop + 150, self.nt_length)
+            region_length = stop - start + 1
+        else:
+            start, stop = region
+            region_length = stop - start + 1
 
-    def plot_LowSS(self):
-        figsize = (self.nt_length/100, 12.06)
-        plot = AP(1, self.nt_length, cols=1, rows=1, figsize=figsize,
-                  region=self.region)
-        region = np.s_[self.region[0]-1: self.region[1]]
+        plot = AP(1, region_length, cols=1, rows=1, region=region)
         ax = plot.axes[0, 0]
-        ax.set_ylim([-305, 901])
-        ax.set_xticks(list(range(500, self.region[1], 500)))
-        ax.tick_params(axis='x', which='major', labelsize=36)
-        ax.spines['bottom'].set_position(('outward', 2))
 
         # Plot windowed profile and windowed entropy
-        x_values = np.arange(self.region[0], self.region[1]+1)
-        ax.fill_between(x_values,
-                        [self.median_profile*350+600]*self.region_length,
-                        self.windowed_profile[region]*350+600, fc='0.3')
-        ax.fill_between(x_values, [300]*self.region_length,
-                        self.windowed_entropy[region]*600 + 300, fc='C1')
+        def adjust_spines(ax, spines):
+            for loc, spine in ax.spines.items():
+                if loc in spines:
+                    spine.set_position(('outward', 10))  # outward by 10 points
+                else:
+                    spine.set_color('none')  # don't draw spine
+            if 'left' in spines:
+                ax.yaxis.set_ticks_position('left')
+                ticks = ax.get_yticks()
+                ax.spines['left'].set_bounds((ticks[0], ticks[-1]))
+            else:
+                ax.yaxis.set_ticks([])
+            if 'bottom' in spines:
+                ax.xaxis.set_ticks_position('bottom')
+                
+            else:
+                ax.xaxis.set_ticks([])
 
-        # add shaded vertical bars over LowSS regions
+        x_values = np.arange(start, stop + 1)
+        prof_ax = ax.twinx()
+        prof_ax.set_ylim(-3, 1)
+        prof_ax.set_yticks([0.0, 0.4, 0.85])
+        prof_ax.fill_between(x_values, [self.median_profile]*region_length,
+                             self.windowed_profile[start-1:stop],
+                             fc='0.3', lw=0)
+        adjust_spines(prof_ax, ["left"])
 
-        xvals = (np.arange(self.region_length)+1)/self.region_length
-        ax.fill_between(xvals, [0]*self.region_length, self.in_lssr[region],
-                        alpha=0.2, fc='grey', transform=ax.transAxes)
+        ent_ax = ax.twinx()
+        ent_ax.set_ylim(-1.5, 1.5)
+        ent_ax.set_yticks(ticks=[0, 0.08, 0.5])
+        ent_ax.fill_between(x_values, [0.08]*region_length,
+                            self.windowed_entropy[start-1:stop],
+                            fc='C1', lw=0)
+        adjust_spines(ent_ax, ["left"])
 
         # add ct and pairing probabilities track
         self.sample.filter_interactions("pairprob", "pairprob")
-        plot.add_sample(self.sample, ct="ct", comp=None,
-                        interactions="pairprob",
-                        interactions2=None, profile=None, label="label",
-                        colorbar=False, seqbar=False, title=False)
+        plot.plot_data(ct=self.sample.data["ct"], comp=None,
+                       interactions=self.sample.data["pairprob"],
+                       interactions2=None, profile=None, label="label",
+                       colorbar=False, seqbar=False, title=False,
+                       annotations=[self.lowss_regions],
+                       annotation_mode="vbar")
 
         # Place Track Labels
-        ax.text(0.002, 0.95, f"{self.sample.sample} {self.region}",
-                transform=ax.transAxes, fontsize=48)
-        ax.text(1.002, 0.85, f"{self.window} nt median SHAPE Reactivity",
-                fontsize=36, transform=ax.transAxes,
-                verticalalignment='center')
-        ax.text(1.002, 0.55, f"{self.window} nt median Shannon entropy",
-                fontsize=36, transform=ax.transAxes,
-                verticalalignment='center')
-        ax.text(1.002, 0.35, "Secondary Structure", transform=ax.transAxes,
-                verticalalignment='center', fontsize=36)
-        ax.text(1.002, 0.15, "Pairing Probabilities", transform=ax.transAxes,
-                verticalalignment='center', fontsize=36)
+        ax.set_title(f"{self.sample.sample}\n{start} - {stop}", loc='left',
+                     fontdict={"fontsize": 48})
+        ax.text(1.002, 7/8, f"SHAPE\nReactivity",
+                fontsize=36, transform=ax.transAxes, va='center')
+        ax.text(1.002, 5/8, f"Shannon\nEntropy",
+                fontsize=36, transform=ax.transAxes, va='center')
+        ax.text(1.002, 3/8, "Secondary\nStructure",
+                transform=ax.transAxes, fontsize=36, va='center')
+        ax.text(1.002, 1/8, "Pairing\nProbability",
+                transform=ax.transAxes, va='center', fontsize=36)
 
-        plt.tight_layout()
+        # Place region labels
+        for i, (lssr_start, lssr_stop) in enumerate(self.lowss_regions):
+            middle = (lssr_stop + lssr_start) / 2
+            if start < middle < stop:
+                ax.text(middle, 550, str(i+1),
+                        ha='center', va='center', fontsize=36)
+
+        ax.set_ylim([-305, 915])
+        ax.set_xticks(ticks=[x for x in range(500, stop, 500) if x > start])
+        ax.set_xticks(ticks=[x for x in range(100, stop, 100) if x > start],
+                      minor=True)
+        ax.tick_params(axis='x', which='major', labelsize=36)
+        adjust_spines(ax, ['bottom'])
+        ax.grid(axis='x')
+
+        # set figure size by axis size + current figure margins
+        l_ax, r_ax = ax.get_xlim()
+        b_ax, t_ax = ax.get_ylim()
+        w_ax = (r_ax - l_ax) / 100
+        h_ax = (t_ax - b_ax) / 100
+        l_fig = ax.figure.subplotpars.left
+        r_fig = ax.figure.subplotpars.right
+        t_fig = ax.figure.subplotpars.top
+        b_fig = ax.figure.subplotpars.bottom
+        figw = w_ax/(r_fig-l_fig)
+        figh = h_ax/(t_fig-b_fig)
+        ax.figure.set_size_inches(figw, figh)
 
     def windowed_median(self, data):
         pads = [np.nan]*(self.window//2)
