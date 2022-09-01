@@ -38,8 +38,8 @@ class Plot(ABC):
     @classmethod
     def view_colormap(self, ax=None, interactions=None, metric=None, ticks=None,
                       values=None, title=None, cmap=None):
-        if ((interactions is None or type(interactions).__name__ == "CT") and
-                None in [ticks, values, title, cmap]):
+        if ((interactions is None or interactions.datatype == "ct") and
+                (None in [ticks, values, title, cmap])):
             ax.remove()
             return
         elif interactions == "ct_compare":
