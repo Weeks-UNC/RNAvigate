@@ -374,91 +374,90 @@ class Sample():
         ctlist = [dance.data["ct"] for dance in self.dance]
         for dance in self.dance:
             dance_ct = dance.data["ct"]
-            dance.data["rings"].filter(dance_ct, ct=dance_ct, **kwargs)
-            dance.data["rings"].mask_on_ct(ctlist, cdAbove=cdfilter)
-            dance.data["pairs"].filter(dance_ct, ct=dance_ct, paired_only=True)
+            dance.data["ringmap"].filter(dance_ct, ct=dance_ct, **kwargs)
+            dance.data["ringmap"].mask_on_ct(ctlist, cdAbove=cdfilter)
+            dance.data["pairmap"].filter(dance_ct, ct=dance_ct,
+                                         paired_only=True)
 
 ###############################################################################
 # sample plotting functions
-#     make_qc
-#     make_ss
-#     make_mol
-#     make_heatmap
-#     make_circle
-#     make_disthist
-#     make_skyline
-#     make_ap
-#     make_shapemapper
-#     make_ap_multifilter
-#     make_ss_multifilter
-#     make_mol_multifilter
-#     make_circle_multifilter
-#     make_disthist_multifilter
+#     plot_qc
+#     plot_ss
+#     plot_mol
+#     plot_heatmap
+#     plot_circle
+#     plot_disthist
+#     plot_skyline
+#     plot_arcs
+#     plot_shapemapper
+#     plot_arcs_multifilter
+#     plot_ss_multifilter
+#     plot_mol_multifilter
+#     plot_circle_multifilter
+#     plot_disthist_multifilter
 ###############################################################################
 
-    def make_qc(self, **kwargs):
-        """Makes a QC plot. See help(MaP.array_qc) for more."""
-        return array_qc([self], **kwargs)
+    def plot_qc(self, **kwargs):
+        """Makes a QC plot. See help(MaP.plot_qc_multisample) for more."""
+        return plot_qc_multisample([self], **kwargs)
 
-    def make_ss(self, dance=False, **kwargs):
+    def plot_ss(self, dance=False, **kwargs):
         if dance:
             self.dance_filter()
-            plot = array_ss(self.dance, prefiltered=True, **kwargs)
+            plot = plot_ss_multisample(self.dance, prefiltered=True, **kwargs)
             for i, dance in enumerate(self.dance):
                 ax = plot.get_ax(i)
                 ax.set_title(
                     f"DANCE component: {i}, Percent: {self.dance_percents[i]}")
             return plot
-        return array_ss([self], **kwargs)
+        return plot_ss_multisample([self], **kwargs)
 
-    def make_mol(self, dance=False, **kwargs):
+    def plot_mol(self, dance=False, **kwargs):
         if dance:
             self.dance_filter()
-            plot = array_ap(self.dance, prefiltered=True, **kwargs)
+            plot = plot_arcs_multisample(
+                self.dance, prefiltered=True, **kwargs)
             for i, dance in enumerate(self.dance):
                 ax = plot.get_ax(i)
                 ax.set_title(
                     f"DANCE component: {i}, Percent: {self.dance_percents[i]}")
             return plot
-        return array_mol([self], **kwargs)
+        return plot_mol_multisample([self], **kwargs)
 
-    def make_heatmap(self, **kwargs):
-        return array_heatmap([self], **kwargs)
+    def plot_heatmap(self, **kwargs):
+        return plot_heatmap_multisample([self], **kwargs)
 
-    def make_circle(self, **kwargs):
-        return array_circle([self], **kwargs)
+    def plot_circle(self, **kwargs):
+        return plot_circle_multisample([self], **kwargs)
 
-    def make_disthist(self, **kwargs):
-        return array_disthist([self], **kwargs)
+    def plot_disthist(self, **kwargs):
+        return plot_disthist_multisample([self], **kwargs)
 
-    def make_skyline(self, dance=False, **kwargs):
+    def plot_skyline(self, dance=False, **kwargs):
         if dance:
-            plot = array_skyline(self.dance, **kwargs)
+            plot = plot_skyline_multisample(self.dance, **kwargs)
             plot.axes[0, 0].legend(title="Comp: Percent")
             plot.axes[0, 0].set_title(f"{self.sample}: DANCE Reactivities")
             return plot
-        plot = array_skyline([self], **kwargs)
+        plot = plot_skyline_multisample([self], **kwargs)
         return plot
 
-    def make_ap(self, dance=False, **kwargs):
+    def plot_arcs(self, dance=False, **kwargs):
         if dance:
             self.dance_filter()
-            plot = array_ap(self.dance, prefiltered=True, **kwargs)
-            for i, dance in enumerate(self.dance):
-                ax = plot.get_ax(i)
-                ax.set_title(
-                    f"DANCE component: {i}, Percent: {self.dance_percents[i]}")
+            plot = plot_arcs_multisample(samples=self.dance,
+                                         prefiltered=True, **kwargs)
             return plot
-        return array_ap([self], **kwargs)
+        return plot_arcs_multisample([self], **kwargs)
 
-    def make_shapemapper(self, plots=["profile", "rates", "depth"]):
+    def plot_shapemapper(self, plots=["profile", "rates", "depth"]):
         plot = SM(self.data["profile"].length, plots=plots)
         plot.add_sample(self, profile="profile", label="label")
         return plot
 
-    def make_ap_multifilter(self, filters, ct="ct", comp=None,
-                            interactions2=None, profile="profile",
-                            label="label"):
+    def plot_arcs_multifilter(self, filters, ct="ct", comp=None,
+                              interactions2=None, profile="profile",
+                              label="label"):
         """Makes an array of arc plots of different filtered views of data from
         Sample.
 
@@ -483,46 +482,51 @@ class Sample():
         for filter in filters:
             interactions = filter.pop("interactions")
             self.filter_interactions(interactions, ct, **filter)
-            plot.add_sample(self, ct=ct, comp=comp, interactions=interactions, interactions2=interactions2,
+            plot.add_sample(self, ct=ct, comp=comp, interactions=interactions,
+                            interactions2=interactions2,
                             profile=profile, label=label)
         return plot
 
-    def make_ss_multifilter(self, filters, ss="ss", profile="profile",
+    def plot_ss_multifilter(self, filters, ss="ss", profile="profile",
                             label="label", interactions2=None, **kwargs):
         plot = SS(len(filters), self.get_data_list(ss))
         pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
         for filter in filters:
             interactions = filter.pop("interactions")
             self.filter_interactions(interactions, ss, **filter)
-            plot.add_sample(self, interactions=interactions, interactions2=interactions2, profile=profile,
+            plot.add_sample(self, interactions=interactions,
+                            interactions2=interactions2, profile=profile,
                             label=label, **pt_kwargs)
         return plot
 
-    def make_mol_multifilter(self, filters, profile="profile", label="label",
+    def plot_mol_multifilter(self, filters, profile="profile", label="label",
                              show=True, **kwargs):
         plot = Mol(len(filters), self.data["pdb"])
         pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
         for filter in filters:
             interactions = filter.pop("interactions")
             self.filter_interactions(interactions, "pdb", **filter)
-            plot.add_sample(self, interactions=interactions, profile=profile, label=label,
-                            **pt_kwargs)
+            plot.add_sample(self, interactions=interactions, profile=profile,
+                            label=label, **pt_kwargs)
         if show:
             plot.view.show()
         return plot
 
-    def make_circle_multifilter(self, filters, ct=None, comp=None, interactions2=None,
-                                profile=None, label="label"):
+    def plot_circle_multifilter(self, filters, ct=None, comp=None,
+                                interactions2=None, profile=None,
+                                label="label"):
         plot = Circle(len(filters), self.data["profile"].length)
         for filter in filters:
             interactions = filter.pop("interactions")
             self.filter_interactions(interactions, "profile", **filter)
-            plot.add_sample(self, ct=ct, comp=comp, interactions=interactions, interactions2=interactions2,
+            plot.add_sample(self, ct=ct, comp=comp, interactions=interactions,
+                            interactions2=interactions2,
                             profile=profile, label=label)
         return plot
 
-    def make_disthist_multifilter(self, filters, structure="pdb", interactions=None,
-                                  label="label", same_axis=True):
+    def plot_disthist_multifilter(self, filters, structure="pdb",
+                                  interactions=None, label="label",
+                                  same_axis=True):
         if same_axis:
             plot = DistHist(1)
             ax = plot.axes[0, 0]
@@ -538,15 +542,15 @@ class Sample():
 ###############################################################################
 # Plotting functions that accept a list of samples
 #   extract_passthrough_kwargs
-#   array_qc
-#   array_skyline
-#   array_ap
-#   array_ss
-#   array_mol
-#   array_heatmap
-#   array_circle
-#   array_linreg
-#   array_disthist
+#   plot_qc_multisample
+#   plot_skyline_multisample
+#   plot_arcs_multisample
+#   plot_ss_multisample
+#   plot_mol_multisample
+#   plot_heatmap_multisample
+#   plot_circle_multisample
+#   plot_linreg_multisample
+#   plot_disthist_multisample
 ###############################################################################
 
 
@@ -558,16 +562,19 @@ def extract_passthrough_kwargs(plot, kwargs):
     return pt_kwargs
 
 
-def array_qc(samples=[], **kwargs):
+def plot_qc_multisample(samples=[], labels=None, **kwargs):
     plot = QC(len(samples))
     pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
-    for sample in samples:
-        plot.add_sample(sample, log="log", profile="profile", label="label",
+    if labels is None:
+        labels = ["label"]*len(samples)
+    for sample, label in zip(samples, labels):
+        plot.add_sample(sample, log="log", profile="profile", label=label,
                         **pt_kwargs)
     return plot
 
 
-def array_skyline(samples, profile="profile", annotations=[], plot_kwargs={}, **kwargs):
+def plot_skyline_multisample(samples, profile="profile", annotations=[],
+                             plot_kwargs={}, **kwargs):
     plot = Skyline(len(samples), samples[0].data[profile].length,
                    **plot_kwargs)
     pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
@@ -577,9 +584,11 @@ def array_skyline(samples, profile="profile", annotations=[], plot_kwargs={}, **
     return plot
 
 
-def array_ap(samples, ct="ct", comp=None, interactions=None, interactions2=None, interactions2_filter={},
-             profile="profile", annotations=[], label="label",
-             plot_kwargs={}, prefiltered=False, **kwargs):
+def plot_arcs_multisample(samples, ct="ct", comp=None,
+                          interactions=None, interactions_filter={},
+                          interactions2=None, interactions2_filter={},
+                          profile="profile", annotations=[], label="label",
+                          plot_kwargs={}, prefiltered=False, **kwargs):
     plot = AP(len(samples), samples[0].data[ct].length, **plot_kwargs)
     pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
     for sample in samples:
@@ -587,41 +596,49 @@ def array_ap(samples, ct="ct", comp=None, interactions=None, interactions2=None,
             if ct not in ["ss", "ct"]:
                 sample.filter_interactions(ct, ct)
             if interactions is not None:
-                sample.filter_interactions(interactions, ct, **kwargs)
+                sample.filter_interactions(interactions, ct,
+                                           **interactions_filter)
             if interactions2 is not None:
-                sample.filter_interactions(
-                    interactions2, ct, **interactions2_filter)
-        plot.add_sample(sample, ct=ct, comp=comp, interactions=interactions, interactions2=interactions2,
-                        profile=profile, label=label, annotations=annotations,
-                        **pt_kwargs)
+                sample.filter_interactions(interactions2, ct,
+                                           **interactions2_filter)
+        plot.add_sample(sample, ct=ct, comp=comp, interactions=interactions,
+                        interactions2=interactions2, profile=profile,
+                        label=label, annotations=annotations, **pt_kwargs)
     return plot
 
 
-def array_ss(samples, ss="ss", interactions=None, interactions2=None, interactions2_filter={},
-             profile="profile", annotations=[], label="label", plot_kwargs={},
-             prefiltered=False, **kwargs):
+def plot_ss_multisample(samples, ss="ss",
+                        interactions=None, interactions_filter={},
+                        interactions2=None, interactions2_filter={},
+                        profile="profile", annotations=[], label="label",
+                        plot_kwargs={}, prefiltered=False, **kwargs):
     plot = SS(len(samples), samples[0].data[ss], **plot_kwargs)
     pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
     for sample in samples:
         if not prefiltered:
             if interactions is not None:
-                sample.filter_interactions(interactions, ss, **kwargs)
+                sample.filter_interactions(interactions, ss,
+                                           **interactions_filter)
             if interactions2 is not None:
-                sample.filter_interactions(
-                    interactions2, ss, **interactions2_filter)
-        plot.add_sample(sample, interactions=interactions, interactions2=interactions2, profile=profile,
+                sample.filter_interactions(interactions2, ss,
+                                           **interactions2_filter)
+        plot.add_sample(sample, interactions=interactions,
+                        interactions2=interactions2, profile=profile,
                         annotations=annotations, label=label, **pt_kwargs)
     return plot
 
 
-def array_mol(samples, interactions=None, profile="profile", label="label", show=True,
-              prefiltered=False, **kwargs):
+def plot_mol_multisample(samples,
+                         interactions=None, interactions_filter={},
+                         profile="profile", label="label", show=True,
+                         prefiltered=False, **kwargs):
     plot = Mol(len(samples), samples[0].data["pdb"])
     pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
     for sample in samples:
         if not prefiltered:
             if interactions is not None:
-                sample.filter_interactions(interactions, "pdb", **kwargs)
+                sample.filter_interactions(interactions, "pdb",
+                                           **interactions_filter)
         plot.add_sample(sample, interactions=interactions, profile=profile,
                         label=label, **pt_kwargs)
     if show:
@@ -629,29 +646,33 @@ def array_mol(samples, interactions=None, profile="profile", label="label", show
     return plot
 
 
-def array_heatmap(samples, structure=None, interactions=None, label="label", **kwargs):
+def plot_heatmap_multisample(samples, structure=None, interactions=None,
+                             interactions_filter={}, label="label", **kwargs):
     plot = Heatmap(len(samples), samples[0].data[structure])
     pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
     for sample in samples:
-        sample.filter_interactions(interactions, structure, **kwargs)
+        sample.filter_interactions(interactions, structure,
+                                   **interactions_filter)
         plot.add_sample(sample, interactions=interactions,
                         label=label, **pt_kwargs)
     return plot
 
 
-def array_circle(samples, ct=None, comp=None, interactions=None, interactions2=None, profile=None,
-                 label="label", **kwargs):
-    plot = Circle(len(samples), samples[0].data["profile"].length)
+def plot_circle_multisample(samples, ct=None, comp=None,
+                            interactions=None, interactions_filter={},
+                            interactions2=None, interactions2_filter={},
+                            profile=None, label="label", **kwargs):
+    plot = Circle(len(samples), samples[0].data[ct].length)
     pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
     for sample in samples:
         if interactions is not None:
-            sample.filter_interactions(interactions, "profile", **kwargs)
+            sample.filter_interactions(interactions, ct, **kwargs)
         plot.add_sample(sample, ct=ct, comp=comp, interactions=interactions, interactions2=interactions2,
                         profile=profile, label=label, **pt_kwargs)
     return plot
 
 
-def array_linreg(samples, ct="ct", profile="profile", label="label", **kwargs):
+def plot_linreg_multisample(samples, ct="ct", profile="profile", label="label", **kwargs):
     plot = LinReg(len(samples))
     pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
     for sample in samples:
@@ -660,8 +681,8 @@ def array_linreg(samples, ct="ct", profile="profile", label="label", **kwargs):
     return plot
 
 
-def array_disthist(samples, structure="pdb", interactions=None, label="label",
-                   same_axis=False, **kwargs):
+def plot_disthist_multisample(samples, structure="pdb", interactions=None, label="label",
+                              same_axis=False, **kwargs):
     if same_axis:
         plot = DistHist(1)
         ax = plot.axes[0, 0]
