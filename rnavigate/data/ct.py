@@ -16,6 +16,21 @@ from .data import Data
 import pandas as pd
 
 
+def get_ss_class(filepath, **kwargs):
+    if filepath is None:
+        return None
+    extension = filepath.split('.')[-1]
+    instantiator = {
+        "varna": VARNA,
+        "xrna": XRNA,
+        "nsd": NSD,
+        "cte": CTE,
+        "ct": CT,
+        "dbn": DotBracket,
+        "bracket": DotBracket
+        }[extension]
+    return instantiator(filepath=filepath, **kwargs)
+
 class CT(Data):
 
     def __init__(self, datatype="ct", dataframe=None, filepath=None, **kwargs):
@@ -955,7 +970,7 @@ class CT(Data):
 
 
 class VARNA(CT):
-    def __init__(self, filepath, datatype="varna", **kwargs):
+    def __init__(self, filepath, datatype="ct", **kwargs):
         """
         if givin an input file .varna construct the ct object automatically
         """

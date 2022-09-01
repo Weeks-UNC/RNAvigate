@@ -7,7 +7,7 @@ import numpy as np
 # modules in RNAvigate
 from .data import Data, PDB, Log
 from .data import Annotation, Motif, ORFs
-from .data import CT, DotBracket, XRNA, VARNA, NSD, CTE
+from .data import CT, DotBracket, XRNA, VARNA, NSD, CTE, get_ss_class
 from .data import Interactions, RINGMaP, PAIRMaP, PairProb, SHAPEJuMP
 from .data import Profile, SHAPEMaP, DanceMaP, RNPMaP
 from .plots import AP, Circle, DistHist, Heatmap, LinReg, Mol
@@ -119,46 +119,62 @@ class Sample():
         if motif is None:
             motif = {}
 
-        # returns the instantiator using the filepath extension
-        def get_ss_class(filepath):
-            if filepath is None:
-                return None
-            extension = filepath.split('.')[-1]
-            return {"varna": VARNA,
-                    "xrna": XRNA,
-                    "nsd": NSD,
-                    "cte": CTE,
-                    "ct": CT,
-                    "dbn": DotBracket,
-                    "bracket": DotBracket
-                    }[extension]
         # for each input
         # [0] filepath
         # [1] instantiation class
         # [2] sequence source
         # [3] kwargs
         self.inputs = {
-            "fasta": [fasta, Data, "self", {}],
-            "log": [log, Log, "self", {}],
-            "shapemap": [shapemap, SHAPEMaP, "self", {}],
-            "dmsmap": [dmsmap, SHAPEMaP, "self", {"dms": True}],
-            "dancemap": [dancemap.pop("filepath"), DanceMaP, "self", dancemap],
-            "rnpmap": [rnpmap, RNPMaP, "self", {}],
-            "ringmap": [ringmap, RINGMaP, "profile", {}],
-            "pairmap": [pairmap, PAIRMaP, "profile", {}],
-            "allcorrs": [allcorrs, RINGMaP, "profile", {}],
-            "shapejump": [shapejump, SHAPEJuMP, "fasta", {}],
-            "pairprob": [pairprob, PairProb, "profile", {}],
-            "ct": [ct, get_ss_class(ct), "self", {}],
-            "compct": [compct, get_ss_class(compct), "self", {}],
-            "ss": [ss, get_ss_class(ss), "self", {}],
-            "pdb": [pdb, PDB, "self", pdb_kwargs],
-            "dance_prefix": [dance_prefix, self.init_dance, "self", {}],
-            "sites": ["", Annotation, sites.pop("seq_source", ""), sites],
-            "spans": ["", Annotation, spans.pop("seq_source", ""), spans],
-            "groups": ["", Annotation, groups.pop("seq_source", ""), groups],
-            "orfs": ["", ORFs, orfs.pop("seq_source", ""), orfs],
-            "motif": ["", Motif, motif.pop("seq_source", ""), motif],
+            "fasta": {"filepath": fasta, "instantiator": Data,
+                      "seq_source": "self", "kwargs": {}},
+            "log": {"filepath": log, "instantiator": Log,
+                    "seq_source": "self", "kwargs": {}},
+            "shapemap": {"filepath": shapemap, "instantiator": SHAPEMaP,
+                         "seq_source": "self", "kwargs": {}},
+            "dmsmap": {"filepath": dmsmap, "instantiator": SHAPEMaP,
+                       "seq_source": "self", "kwargs": {"dms": True}},
+            "dancemap": {"filepath": dancemap.pop("filepath"),
+                         "instantiator": DanceMaP, "seq_source": "self",
+                         "kwargs": dancemap},
+            "rnpmap": {"filepath": rnpmap, "instantiator": RNPMaP,
+                       "seq_source": "self", "kwargs": {}},
+            "ringmap": {"filepath": ringmap, "instantiator": RINGMaP,
+                        "seq_source": "profile", "kwargs": {}},
+            "pairmap": {"filepath": pairmap, "instantiator": PAIRMaP,
+                        "seq_source": "profile", "kwargs": {}},
+            "allcorrs": {"filepath": allcorrs, "instantiator": RINGMaP,
+                         "seq_source": "profile", "kwargs": {}},
+            "shapejump": {"filepath": shapejump, "instantiator": SHAPEJuMP,
+                          "seq_source": "profile", "kwargs": {}},
+            "pairprob": {"filepath": pairprob, "instantiator": PairProb,
+                         "seq_source": "profile", "kwargs": {}},
+            "ct": {"filepath": ct, "instantiator": get_ss_class,
+                   "seq_source": "self", "kwargs": {}},
+            "compct": {"filepath": compct, "instantiator": get_ss_class,
+                       "seq_source": "self", "kwargs": {}},
+            "ss": {"filepath": ss, "instantiator": get_ss_class,
+                   "seq_source": "self", "kwargs": {}},
+            "pdb": {"filepath": pdb, "instantiator": PDB,
+                    "seq_source": "self", "kwargs": pdb_kwargs},
+            "dance_prefix": {"filepath": dance_prefix,
+                             "instantiator": self.init_dance,
+                             "seq_source": "self",
+                             "kwargs": {}},
+            "sites": {"filepath": "", "instantiator": Annotation,
+                      "seq_source": sites.pop("seq_source", ""),
+                      "kwargs": sites},
+            "spans": {"filepath": "", "instantiator": Annotation,
+                      "seq_source": spans.pop("seq_source", ""),
+                      "kwargs": spans},
+            "groups": {"filepath": "", "instantiator": Annotation,
+                       "seq_source": groups.pop("seq_source", ""),
+                       "kwargs": groups},
+            "orfs": {"filepath": "", "instantiator": ORFs,
+                     "seq_source": orfs.pop("seq_source", ""),
+                     "kwargs": orfs},
+            "motif": {"filepath": "", "instantiator": Motif,
+                      "seq_source": motif.pop("seq_source", ""),
+                      "kwargs": motif},
         }
         self.default_profiles = ["shapemap", "dmsmap", "dancemap", "rnpmap"]
 
@@ -166,22 +182,27 @@ class Sample():
         self.parent = None
         self.data = {}  # stores profile, interactions, and structure objects
         # load data
-        for input, (path, instantiator, source, kwargs) in self.inputs.items():
-            if path is not None and source != "":
-                self.set_data(
-                    name=input,
-                    filepath=path,
-                    instantiator=instantiator,
-                    seq_source=source,
-                    kwargs=kwargs)
+        for input, kwargs in self.inputs.items():
+            if kwargs["filepath"] is not None and kwargs["seq_source"] != "":
+                # additional_kwargs = kwargs.pop("kwargs", {})
+                kwargs.update(kwargs.pop("kwargs", {}))
+                self.set_data(name=input, **kwargs)
 
-    def set_data(self, name, filepath, instantiator, seq_source, kwargs,
-                 overwrite=False):
-        if not overwrite:
-            assert name not in self.data, (f"{name} data already exists. "
-                                           "Set overwrite=True to ignore.")
+    def set_data(self, name, filepath=None, instantiator=None, seq_source=None,
+                 **kwargs):
+        if instantiator is None:
+            instantiator = self.inputs[name]["instantiator"]
+        if seq_source is None:
+            seq_source = self.inputs[name]["seq_source"]
         if seq_source != "self":
             kwargs.update({"sequence": self.data[seq_source].sequence})
+        if isinstance(filepath, list):
+            for i, path in enumerate(filepath):
+                self.set_data(name=f"{name}_{i+1}",
+                              filepath=path,
+                              instantiator=instantiator,
+                              seq_source=seq_source,
+                              **kwargs)
         self.data[name] = instantiator(filepath=filepath, **kwargs)
         if name in self.default_profiles and "profile" not in self.data:
             self.data["profile"] = self.data[name]
