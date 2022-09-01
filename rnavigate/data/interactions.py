@@ -112,8 +112,7 @@ class Interactions(Data):
                 self.mask_on_ct(each, cdAbove, cdBelow, ss_only, ds_only,
                                 paired_only)
                 return
-        message = "CT filtering requires a ct object."
-        assert isinstance(ct, CT), message
+        assert ct.datatype == "ct", "CT filtering requires a ct object."
         am = self.get_alignment_map(ct)
         mask = []
         i_j_keep = ["i", "j", "mask"]
@@ -399,7 +398,7 @@ class SHAPEJuMP(Interactions):
                          default_metric=default_metric, sequence=sequence,
                          fill=fill, cmaps=cmaps, mins_maxes=mins_maxes)
 
-    def read_file(self, filepath, **kwargs):
+    def read_file(self, filepath, sep=None, read_csv_kw=None):
         column_names = ['Gene', 'i', 'j', 'Metric']
         data = pd.read_csv(filepath, sep='\t', names=column_names, header=0)
         data["Percentile"] = data['Metric'].rank(method='max', pct=True)
@@ -417,7 +416,7 @@ class RINGMaP(Interactions):
                          default_metric=default_metric, sequence=sequence,
                          fill=fill, cmaps=cmaps, mins_maxes=mins_maxes)
 
-    def read_file(self, filepath, **kwargs):
+    def read_file(self, filepath, sep=None, read_csv_kw=None):
         with open(filepath, 'r') as file:
             self.header = file.readline()
         split_header = self.header.split('\t')
@@ -463,7 +462,7 @@ class PAIRMaP(Interactions):
                          default_metric=default_metric, sequence=sequence,
                          fill=fill, cmaps=cmaps, mins_maxes=mins_maxes)
 
-    def read_file(self, filepath, **kwargs):
+    def read_file(self, filepath, sep=None, read_csv_kw=None):
         with open(filepath, 'r') as file:
             self.header = file.readline()
         self.window = int(self.header.split('\t')[1].split('=')[1])
@@ -505,7 +504,7 @@ class PairProb(Interactions):
                          default_metric=default_metric, sequence=sequence,
                          fill=fill, cmaps=cmaps, mins_maxes=mins_maxes)
 
-    def read_file(self, filepath, **kwargs):
+    def read_file(self, filepath, sep=None, read_csv_kw=None):
         with open(filepath, 'r') as file:
             self.header = file.readline()
         lengths_match = int(self.header.strip()) == self.length
