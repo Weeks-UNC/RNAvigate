@@ -1,0 +1,18 @@
+name: RNAvigate
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - scipy=1.6.2
+  - py3dmol=0.8.0
+  - jupyter=1.0.0
+  - matplotlib=3.3.4
+  - python=3.9.2
+  - seaborn=0.11.1
+  - biopython=1.78
+  - matplotlib-inline=0.1.2
+  - numpy=1.20.1
+  - pandas=1.2.4
+  - ipykernel=5.5.4
+  - scikit-learn=1.0.2
+  - jinja2<3.1.0
