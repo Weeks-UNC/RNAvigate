@@ -81,10 +81,16 @@ class Profile(Data):
 
 
 class SHAPEMaP(Profile):
-    def __init__(self, filepath, dms=False, datatype="shapemap", **kwargs):
+    def __init__(self, filepath, dms=False, datatype="shapemap",
+                 read_csv_kw=None, **kwargs):
+        if filepath.endswith(".map"):
+            read_csv_kw = {"names": ["Nucleotide", "Norm_profile",
+                                     "Norm_stderr", "Sequence"],
+                           "na_values": "-999"}
         super().__init__(filepath=filepath,
                          datatype=datatype,
                          sep="\t",
+                         read_csv_kw=read_csv_kw,
                          column="Norm_profile",
                          ap_scale_factor=5,
                          color_column="Norm_profile",
@@ -143,7 +149,8 @@ class SHAPEMaP(Profile):
 class DanceMaP(SHAPEMaP):
     def __init__(self, filepath, component, datatype="dancemap", **kwargs):
         self.component = component
-        super().__init__(filepath=filepath, datatype=datatype, **kwargs)
+        super().__init__(filepath=filepath, datatype=datatype,
+                         read_csv_kw={}, **kwargs)
 
     def read_file(self, filepath, sep='\t', read_csv_kw={}):
         # parse header
