@@ -14,10 +14,10 @@ class Annotation(Data):
                  span_list=None,
                  groups=None,
                  color="blue"):
-        super().__init__(filepath=fasta, sequence=sequence)
         self.name = name
         self.color = color
         self.datatype = datatype
+        super().__init__(filepath=fasta, sequence=sequence)
 
         self.sites = []
         self.spans = []
@@ -25,20 +25,30 @@ class Annotation(Data):
         if site_list is not None:
             self.annotation_type = "sites"
             self.sites = site_list
+            self._list = site_list
         elif span_list is not None:
             self.annotation_type = "spans"
             self.spans = span_list
+            self._list = span_list
         elif groups is not None:
             self.annotation_type = "groups"
             self.groups = groups
+            self._list = groups
 
     def read_sites(self, filepath, sep, read_csv_kw):
         self.data = pd.read_csv(filepath, sep=sep, **read_csv_kw)
+
+    def __getitem__(self, i):
+        return self._list[i]
+
+    def __len__(self):
+        return len(self._list)
 
 
 class Motif(Annotation):
     def __init__(self,
                  name=None,
+                 filepath=None,
                  datatype="sequence motif",
                  fasta=None,
                  sequence=None,
@@ -66,6 +76,7 @@ class Motif(Annotation):
 class ORFs(Annotation):
     def __init__(self,
                  name=None,
+                 filepath=None,
                  datatype="ORFs",
                  fasta=None,
                  sequence=None,
@@ -86,6 +97,6 @@ class ORFs(Annotation):
             start_sites.append(match.span()[0]+1)
         for start in start_sites:
             for stop in stop_sites:
-                if (stop-start) % 3 == 2:
+                if ((stop-start) % 3 == 2) and (start < stop):
                     spans.append([start, stop])
         return spans
