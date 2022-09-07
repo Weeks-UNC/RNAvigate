@@ -68,7 +68,7 @@ class Profile(Data):
         cv = self.color_values
         if cv["norm_method"] == "bins":
             norm = mpc.BoundaryNorm(cv["norm_values"],
-                                    cv["cmap"].N, extend="both")
+                                    cv["cmap"].N-1, extend="both")
         elif cv["norm_method"] == "min_max":
             norm = plt.Normalize(cv["norm_values"][0], cv["norm_values"][1])
         elif cv["norm_method"] == "0_1":
@@ -94,9 +94,9 @@ class SHAPEMaP(Profile):
                          column="Norm_profile",
                          ap_scale_factor=5,
                          color_column="Norm_profile",
-                         cmap=["gray", "black", "orange", "red"],
+                         cmap=["grey", "black", "orange", "grey", "red"],
                          norm_method="bins",
-                         norm_values=[0, 0.4, 0.85],
+                         norm_values=[-0.4, 0.4, 0.85],
                          **kwargs)
         if dms:
             self.set_dms_profile()
