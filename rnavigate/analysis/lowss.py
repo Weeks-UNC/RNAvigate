@@ -1,4 +1,5 @@
 from rnavigate.plots import AP
+from rnavigate.plots.plots import adjust_spines
 from rnavigate.data import Annotation
 import matplotlib.pyplot as plt
 import numpy as np
@@ -64,25 +65,6 @@ class LowSS():
         plot = AP(1, region_length, cols=1, rows=1, region=region)
         ax = plot.axes[0, 0]
 
-        # Plot windowed profile and windowed entropy
-        def adjust_spines(ax, spines):
-            for loc, spine in ax.spines.items():
-                if loc in spines:
-                    spine.set_position(('outward', 10))  # outward by 10 points
-                else:
-                    spine.set_color('none')  # don't draw spine
-            if 'left' in spines:
-                ax.yaxis.set_ticks_position('left')
-                ticks = ax.get_yticks()
-                ax.spines['left'].set_bounds((ticks[0], ticks[-1]))
-            else:
-                ax.yaxis.set_ticks([])
-            if 'bottom' in spines:
-                ax.xaxis.set_ticks_position('bottom')
-                
-            else:
-                ax.xaxis.set_ticks([])
-
         x_values = np.arange(start, stop + 1)
         prof_ax = ax.twinx()
         prof_ax.set_ylim(-3, 1)
@@ -112,9 +94,9 @@ class LowSS():
         # Place Track Labels
         ax.set_title(f"{self.sample.sample}\n{start} - {stop}", loc='left',
                      fontdict={"fontsize": 48})
-        ax.text(1.002, 7/8, f"SHAPE\nReactivity",
+        ax.text(1.002, 7/8, "SHAPE\nReactivity",
                 fontsize=36, transform=ax.transAxes, va='center')
-        ax.text(1.002, 5/8, f"Shannon\nEntropy",
+        ax.text(1.002, 5/8, "Shannon\nEntropy",
                 fontsize=36, transform=ax.transAxes, va='center')
         ax.text(1.002, 3/8, "Secondary\nStructure",
                 transform=ax.transAxes, fontsize=36, va='center')

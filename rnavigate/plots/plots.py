@@ -125,3 +125,29 @@ class Plot(ABC):
 
     def png(self, filename):
         plt.savefig(filename)
+
+
+def adjust_spines(ax, spines):
+    for loc, spine in ax.spines.items():
+        if loc in spines:
+            spine.set_position(('outward', 10))  # outward by 10 points
+        else:
+            spine.set_color('none')  # don't draw spine
+    if 'left' in spines:
+        ax.yaxis.set_ticks_position('left')
+    else:
+        ax.yaxis.set_ticks([])
+    if 'bottom' in spines:
+        ax.xaxis.set_ticks_position('bottom')
+    else:
+        ax.xaxis.set_ticks([])
+
+
+def clip_spines(ax, spines):
+    for spine in spines:
+        if spine in ['left', 'right']:
+            ticks = ax.get_yticks()
+        if spine in ['top', 'bottom']:
+            ticks = ax.get_xticks()
+        print(ticks)
+        ax.spines[spine].set_bounds((min(ticks), max(ticks)))
