@@ -619,59 +619,65 @@ def extract_passthrough_kwargs(plot, kwargs):
     return pt_kwargs
 
 
-def plot_qc_multisample(samples=[], labels=None, **kwargs):
-    plot = QC(len(samples))
-    pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
+def plot_qc_multisample(samples=[], labels=None, plot_kwargs={}, **kwargs):
+    plot = QC(num_samples=len(samples), **plot_kwargs)
     if labels is None:
         labels = ["label"]*len(samples)
     for sample, label in zip(samples, labels):
-        plot.add_sample(sample, log="log", profile="profile", label=label,
-                        **pt_kwargs)
+        plot.add_sample(sample=sample, log="log", profile="profile",
+                        label=label, **kwargs)
     return plot
 
 
-def plot_skyline_multisample(samples, profile="profile", annotations=[],
-                             plot_kwargs={}, **kwargs):
-    plot = Skyline(len(samples), samples[0].data[profile].length,
+def plot_skyline_multisample(samples, profile="profile", labels=None,
+                             annotations=[], region="all", plot_kwargs={},
+                             **kwargs):
+    plot = Skyline(num_samples=len(samples),
+                   nt_length=samples[0].data[profile].length,
+                   region=region,
                    **plot_kwargs)
-    pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
     for sample in samples:
         plot.add_sample(sample, profile=profile, annotations=annotations,
-                        label="label", **pt_kwargs)
+                        label="label", **kwargs)
     return plot
 
 
 def plot_arcs_multisample(samples, ct="ct", comp=None,
                           interactions=None, interactions_filter={},
                           interactions2=None, interactions2_filter={},
-                          profile="profile", annotations=[], label="label",
-                          plot_kwargs={}, prefiltered=False, **kwargs):
-    plot = AP(len(samples), samples[0].data[ct].length, **plot_kwargs)
-    pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
-    for sample in samples:
+                          profile="profile", annotations=[], labels=None,
+                          region="all", plot_kwargs={}, prefiltered=False,
+                          **kwargs):
+    plot = AP(num_samples=len(samples), nt_length=samples[0].data[ct].length,
+              region=region, **plot_kwargs)
+    if labels is None:
+        labels = ["labels"]*len(samples)
+    for sample, label in zip(samples, labels):
         if not prefiltered:
-            if ct not in ["ss", "ct"]:
-                sample.filter_interactions(ct, ct)
+            if ct not in ["ss", "ct", "compct"]:
+                sample.filter_interactions(interactions=ct, fit_to=ct)
             if interactions is not None:
-                sample.filter_interactions(interactions, ct,
-                                           **interactions_filter)
+                sample.filter_interactions(interactions=interactions,
+                                           fit_to=ct, **interactions_filter)
             if interactions2 is not None:
-                sample.filter_interactions(interactions2, ct,
-                                           **interactions2_filter)
-        plot.add_sample(sample, ct=ct, comp=comp, interactions=interactions,
-                        interactions2=interactions2, profile=profile,
-                        label=label, annotations=annotations, **pt_kwargs)
+                sample.filter_interactions(interactions=interactions2,
+                                           fit_to=ct, **interactions2_filter)
+        plot.add_sample(sample=sample, ct=ct, comp=comp,
+                        interactions=interactions, interactions2=interactions2,
+                        profile=profile, label=label, annotations=annotations,
+                        **kwargs)
     return plot
 
 
-def plot_ss_multisample(samples, ss="ss",
+def plot_ss_multisample(samples, ss="ss", profile="profile", annotations=[],
                         interactions=None, interactions_filter={},
                         interactions2=None, interactions2_filter={},
-                        profile="profile", annotations=[], label="label",
-                        plot_kwargs={}, prefiltered=False, **kwargs):
+                        labels=None, plot_kwargs={}, prefiltered=False,
+                        **kwargs):
     plot = SS(len(samples), samples[0].data[ss], **plot_kwargs)
-    pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
-    for sample in samples:
+    if labels is None:
+        labels = ["label"]*len(samples)
+    for sample, label in zip(samples, labels):
         if not prefiltered:
             if interactions is not None:
                 sample.filter_interactions(interactions, ss,
@@ -681,23 +687,24 @@ def plot_ss_multisample(samples, ss="ss",
                                            **interactions2_filter)
         plot.add_sample(sample, interactions=interactions,
                         interactions2=interactions2, profile=profile,
-                        annotations=annotations, label=label, **pt_kwargs)
+                        annotations=annotations, label=label, **kwargs)
     return plot
 
 
-def plot_mol_multisample(samples,
+def plot_mol_multisample(samples, structure="pdb",
                          interactions=None, interactions_filter={},
-                         profile="profile", label="label", show=True,
+                         profile="profile", labels=None, show=True,
                          prefiltered=False, **kwargs):
-    plot = Mol(len(samples), samples[0].data["pdb"])
-    pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
-    for sample in samples:
+    plot = Mol(len(samples), samples[0].data[structure])
+    if labels is None:
+        labels = ["label"]*len(samples)
+    for sample, label in zip(samples, labels):
         if not prefiltered:
             if interactions is not None:
-                sample.filter_interactions(interactions, "pdb",
+                sample.filter_interactions(interactions, structure,
                                            **interactions_filter)
         plot.add_sample(sample, interactions=interactions, profile=profile,
-                        label=label, **pt_kwargs)
+                        label=label, **kwargs)
     if show:
         plot.view.show()
     return plot
@@ -706,12 +713,11 @@ def plot_mol_multisample(samples,
 def plot_heatmap_multisample(samples, structure=None, interactions=None,
                              interactions_filter={}, label="label", **kwargs):
     plot = Heatmap(len(samples), samples[0].data[structure])
-    pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
     for sample in samples:
         sample.filter_interactions(interactions, structure,
                                    **interactions_filter)
         plot.add_sample(sample, interactions=interactions,
-                        label=label, **pt_kwargs)
+                        label=label, **kwargs)
     return plot
 
 
@@ -720,16 +726,21 @@ def plot_circle_multisample(samples, ct=None, comp=None,
                             interactions2=None, interactions2_filter={},
                             profile=None, label="label", **kwargs):
     plot = Circle(len(samples), samples[0].data[ct].length)
-    pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
     for sample in samples:
         if interactions is not None:
-            sample.filter_interactions(interactions, ct, **kwargs)
-        plot.add_sample(sample, ct=ct, comp=comp, interactions=interactions, interactions2=interactions2,
-                        profile=profile, label=label, **pt_kwargs)
+            sample.filter_interactions(interactions, ct,
+                                       **interactions_filter)
+        if interactions2 is not None:
+            sample.filter_interactions(interactions2, ct,
+                                       **interactions2_filter)
+        plot.add_sample(sample, ct=ct, comp=comp, interactions=interactions,
+                        interactions2=interactions2, profile=profile,
+                        label=label, **kwargs)
     return plot
 
 
-def plot_linreg_multisample(samples, ct="ct", profile="profile", label="label", **kwargs):
+def plot_linreg_multisample(samples, ct="ct", profile="profile", label="label",
+                            **kwargs):
     plot = LinReg(len(samples))
     pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
     for sample in samples:
@@ -738,8 +749,9 @@ def plot_linreg_multisample(samples, ct="ct", profile="profile", label="label", 
     return plot
 
 
-def plot_disthist_multisample(samples, structure="pdb", interactions=None, label="label",
-                              same_axis=False, **kwargs):
+def plot_disthist_multisample(samples, structure="pdb", interactions=None,
+                              interactions_filter={},
+                              label="label", same_axis=False, **kwargs):
     if same_axis:
         plot = DistHist(1)
         ax = plot.axes[0, 0]
@@ -748,6 +760,7 @@ def plot_disthist_multisample(samples, structure="pdb", interactions=None, label
         ax = None
     pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
     for sample in samples:
-        sample.filter_interactions(interactions, "pdb", **kwargs)
+        sample.filter_interactions(interactions=interactions, fit_to="pdb",
+                                   **interactions_filter)
         plot.add_sample(sample, structure=structure, interactions=interactions,
                         label=label, ax=ax, **pt_kwargs)
