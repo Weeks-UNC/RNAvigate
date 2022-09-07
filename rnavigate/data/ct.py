@@ -28,8 +28,9 @@ def get_ss_class(filepath, **kwargs):
         "ct": CT,
         "dbn": DotBracket,
         "bracket": DotBracket
-        }[extension]
+    }[extension]
     return instantiator(filepath=filepath, **kwargs)
+
 
 class CT(Data):
 
@@ -521,7 +522,7 @@ class CT(Data):
             distance_matrix[i, :] = level
         # store the distance matrix from the search and return
         self.distance_matrix = distance_matrix
-        return self.distance_matrix
+        return self.distance_matrix.copy
 
     def contactDistance(self, i, j):
         """
