@@ -1,4 +1,4 @@
-from .plots import Plot
+from .plots import Plot, adjust_spines
 
 
 class Skyline(Plot):
@@ -11,22 +11,28 @@ class Skyline(Plot):
             self.region = region
         super().__init__(num_samples, **kwargs)
         self.ax = self.axes[0, 0]
-        self.set_axis(self.ax)
         self.pass_through = ["columns", "seqbar", "errorbars"]
 
     def get_rows_columns(self, number_of_samples=None, rows=None, cols=None):
         return (1, 1)
 
-    def plot_data(self, profile, annotations, label, columns="Reactivity_profile",
-                  seqbar=True, errorbars=None):
+    def plot_data(self, profile, annotations, label,
+                  columns="Reactivity_profile", seqbar=True, errorbars=None):
         self.plot_profile(profile, label, columns, errorbars)
         self.i += 1
         if self.i == self.length:
             if seqbar:
                 self.add_sequence(self.ax, profile.sequence)
-            self.set_labels(self.ax, axis_title=columns)
+            if isinstance(columns, list):
+                ylabel = [column.replace("_", " ") for column in columns]
+                ylabel = ', '.join(ylabel)
+            else:
+                ylabel = columns.replace("_", " ")
+            self.set_labels(ax=self.ax, ylabel=ylabel, axis_title=None,
+                            legend_title=None)
             for annotation in annotations:
                 self.plot_annotation(ax=self.ax, annotation=annotation)
+            self.set_axis(self.ax)
 
     def get_figsize(self):
         left_inches = 0.9
@@ -43,26 +49,31 @@ class Skyline(Plot):
         ax.set_xticks([x for x in xrange if (x % xticks) == 0])
         ax.set_xticks([x for x in xrange if (x % xticks_minor) == 0],
                       minor=True)
+        ax.spines['bottom'].set_visible(False)
+        ax.spines['left'].set_visible(False)
+        ax.grid(axis='y', visible=True)
+        ax.tick_params(axis='y', length=0, grid_alpha=0.4)
+        adjust_spines(ax, ["left", "bottom"])
 
     def set_labels(self, ax, axis_title="Raw Reactivity Profile",
-                   legend_title="Samples", xlabel="Nucleotide",
+                   legend_title="Samples", xlabel="Nucleotide Position",
                    ylabel="Profile"):
         ax.set_title(axis_title)
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
-        ax.legend(title=legend_title)
+        ax.legend(title=legend_title, labelcolor="linecolor", frameon=False,
+                  handlelength=0)
 
     def plot_profile(self, profile, label, columns, errorbars):
         if isinstance(columns, list):
             for column in columns:
                 self.ax.plot(profile.data["Nucleotide"], profile.data[column],
-                             label=f"{label} {column}", drawstyle="steps-mid")
+                             label=f"{label}: {column.replace('_', ' ')}",
+                             drawstyle="steps-mid")
         elif isinstance(columns, str):
             x = profile.data["Nucleotide"]
             profile_values = profile.data[columns]
-
-            self.ax.plot(x, profile_values, label=f"{label} {columns}",
-                         drawstyle="steps-mid")
+            self.ax.plot(x, profile_values, label=label, drawstyle="steps-mid")
             if errorbars is not None:
                 stderr = profile.data[errorbars]
                 self.ax.fill_between(x, profile_values-stderr,
