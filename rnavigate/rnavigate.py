@@ -47,7 +47,6 @@ class Sample():
     def __init__(self,
                  sample=None,
                  pdb=None,
-                 pdb_kwargs={'chain': 'A'},
                  ct=None,
                  compct=None,
                  ss=None,
@@ -76,11 +75,10 @@ class Sample():
         Args:
             sample (str, optional): This string will serve as a label for this
                 sample within plots.
-            pdb (str, optional): Path to a .pdb atom coordinates file.
-            pdb_kwargs (dict, optional): Dictionary containing info needed to
-                parse provided .pdb. "chain" is required. "fasta" and "offset"
-                may be required if not provided in header.
-                Defaults to {'chain':'A'}.
+            pdb (str, optional): A dictionary, which must contain at least
+                "filepath": the path to your pdb file
+                "chain": the chain ID of your RNA in the pdb file
+                Other options include "offset" and "fasta".
             ct (str, optional): Path to a .ct, .dbn, or .bracket structure
                 file.
             compct (str, optional): Same as ct above, but serves as a
@@ -118,6 +116,10 @@ class Sample():
             orfs = {}
         if motif is None:
             motif = {}
+        if shapejump is None:
+            shapejump = {"filepath": None}
+        if pdb is None:
+            pdb = {"filepath": None}
 
         # for each input
         # [0] filepath
@@ -125,56 +127,111 @@ class Sample():
         # [2] sequence source
         # [3] kwargs
         self.inputs = {
-            "fasta": {"filepath": fasta, "instantiator": Data,
-                      "seq_source": "self", "kwargs": {}},
-            "log": {"filepath": log, "instantiator": Log,
-                    "seq_source": "self", "kwargs": {}},
-            "shapemap": {"filepath": shapemap, "instantiator": SHAPEMaP,
-                         "seq_source": "self", "kwargs": {}},
-            "dmsmap": {"filepath": dmsmap, "instantiator": SHAPEMaP,
-                       "seq_source": "self", "kwargs": {"dms": True}},
-            "dancemap": {"filepath": dancemap.pop("filepath"),
-                         "instantiator": DanceMaP, "seq_source": "self",
-                         "kwargs": dancemap},
-            "rnpmap": {"filepath": rnpmap, "instantiator": RNPMaP,
-                       "seq_source": "self", "kwargs": {}},
-            "ringmap": {"filepath": ringmap, "instantiator": RINGMaP,
-                        "seq_source": "profile", "kwargs": {}},
-            "pairmap": {"filepath": pairmap, "instantiator": PAIRMaP,
-                        "seq_source": "profile", "kwargs": {}},
-            "allcorrs": {"filepath": allcorrs, "instantiator": RINGMaP,
-                         "seq_source": "profile", "kwargs": {}},
-            "shapejump": {"filepath": shapejump, "instantiator": SHAPEJuMP,
-                          "seq_source": "profile", "kwargs": {}},
-            "pairprob": {"filepath": pairprob, "instantiator": PairProb,
-                         "seq_source": "profile", "kwargs": {}},
-            "ct": {"filepath": ct, "instantiator": get_ss_class,
-                   "seq_source": "self", "kwargs": {}},
-            "compct": {"filepath": compct, "instantiator": get_ss_class,
-                       "seq_source": "self", "kwargs": {}},
-            "ss": {"filepath": ss, "instantiator": get_ss_class,
-                   "seq_source": "self", "kwargs": {}},
-            "pdb": {"filepath": pdb, "instantiator": PDB,
-                    "seq_source": "self", "kwargs": pdb_kwargs},
-            "dance_prefix": {"filepath": dance_prefix,
-                             "instantiator": self.init_dance,
-                             "seq_source": "self",
-                             "kwargs": {}},
-            "sites": {"filepath": "", "instantiator": Annotation,
-                      "seq_source": sites.pop("seq_source", ""),
-                      "kwargs": sites},
-            "spans": {"filepath": "", "instantiator": Annotation,
-                      "seq_source": spans.pop("seq_source", ""),
-                      "kwargs": spans},
-            "groups": {"filepath": "", "instantiator": Annotation,
-                       "seq_source": groups.pop("seq_source", ""),
-                       "kwargs": groups},
-            "orfs": {"filepath": "", "instantiator": ORFs,
-                     "seq_source": orfs.pop("seq_source", ""),
-                     "kwargs": orfs},
-            "motif": {"filepath": "", "instantiator": Motif,
-                      "seq_source": motif.pop("seq_source", ""),
-                      "kwargs": motif},
+            "fasta": {
+                "filepath": fasta,
+                "instantiator": Data,
+                "seq_source": "self",
+                "kwargs": {}},
+            "log": {
+                "filepath": log,
+                "instantiator": Log,
+                "seq_source": "self",
+                "kwargs": {}},
+            "shapemap": {
+                "filepath": shapemap,
+                "instantiator": SHAPEMaP,
+                "seq_source": "self",
+                "kwargs": {}},
+            "dmsmap": {
+                "filepath": dmsmap,
+                "instantiator": SHAPEMaP,
+                "seq_source": "self",
+                "kwargs": {"dms": True}},
+            "dancemap": {
+                "filepath": dancemap.pop("filepath"),
+                "instantiator": DanceMaP,
+                "seq_source": "self",
+                "kwargs": dancemap},
+            "rnpmap": {
+                "filepath": rnpmap,
+                "instantiator": RNPMaP,
+                "seq_source": "self",
+                "kwargs": {}},
+            "ringmap": {
+                "filepath": ringmap,
+                "instantiator": RINGMaP,
+                "seq_source": "profile",
+                "kwargs": {}},
+            "pairmap": {
+                "filepath": pairmap,
+                "instantiator": PAIRMaP,
+                "seq_source": "profile",
+                "kwargs": {}},
+            "allcorrs": {
+                "filepath": allcorrs,
+                "instantiator": RINGMaP,
+                "seq_source": "profile",
+                "kwargs": {}},
+            "shapejump": {
+                "filepath": shapejump.pop("filepath", None),
+                "instantiator": SHAPEJuMP,
+                "seq_source": "self",
+                "kwargs": shapejump},
+            "pairprob": {
+                "filepath": pairprob,
+                "instantiator": PairProb,
+                "seq_source": "profile",
+                "kwargs": {}},
+            "ct": {
+                "filepath": ct,
+                "instantiator": get_ss_class,
+                "seq_source": "self",
+                "kwargs": {}},
+            "compct": {
+                "filepath": compct,
+                "instantiator": get_ss_class,
+                "seq_source": "self",
+                "kwargs": {}},
+            "ss": {
+                "filepath": ss,
+                "instantiator": get_ss_class,
+                "seq_source": "self",
+                "kwargs": {}},
+            "pdb": {
+                "filepath": pdb.pop("filepath", None),
+                "instantiator": PDB,
+                "seq_source": "self",
+                "kwargs": pdb},
+            "dance_prefix": {
+                "filepath": dance_prefix,
+                "instantiator": self.init_dance,
+                "seq_source": "self",
+                "kwargs": {}},
+            "sites": {
+                "filepath": "",
+                "instantiator": Annotation,
+                "seq_source": sites.pop("seq_source", ""),
+                "kwargs": sites},
+            "spans": {
+                "filepath": "",
+                "instantiator": Annotation,
+                "seq_source": spans.pop("seq_source", ""),
+                "kwargs": spans},
+            "groups": {
+                "filepath": "",
+                "instantiator": Annotation,
+                "seq_source": groups.pop("seq_source", ""),
+                "kwargs": groups},
+            "orfs": {
+                "filepath": "",
+                "instantiator": ORFs,
+                "seq_source": orfs.pop("seq_source", ""),
+                "kwargs": orfs},
+            "motif": {
+                "filepath": "",
+                "instantiator": Motif,
+                "seq_source": motif.pop("seq_source", ""),
+                "kwargs": motif},
         }
         self.default_profiles = ["shapemap", "dmsmap", "dancemap", "rnpmap"]
 
