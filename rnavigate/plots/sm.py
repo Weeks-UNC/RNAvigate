@@ -5,8 +5,11 @@ from ..styles import rx_color, bg_color, dc_color, apply_style, sm
 
 
 class SM(Plot):
-    def __init__(self, nt_length, plots=["profile", "rates", "depth"]):
-        self.nt_length = nt_length
+    def __init__(self, nt_length, region=None,
+                 plots=["profile", "rates", "depth"]):
+        if region is None:
+            self.nt_length = nt_length
+            self.region = [1, nt_length]
         super().__init__(len(plots), len(plots), cols=1)
         self.plots = plots
 
@@ -104,7 +107,7 @@ class SM(Plot):
             line.set_markeredgewidth(1)
 
         # put nuc sequence below axis
-        self.add_sequence(ax, profile.sequence)
+        self.add_sequence(ax, profile.sequence, yvalue=0.01)
 
     def plot_sm_depth(self, ax, profile):
         """Plots classic ShapeMapper read depth on the given axis
