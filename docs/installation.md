@@ -43,6 +43,7 @@ package soon, and this section will hopefully be obsolete.
 
 To install manually, you will need the following dependencies in your python
 environment:
+
 - scipy >= 1.6.2
 - py3dmol >= 0.8.0
 - matplotlib >= 3.3.4

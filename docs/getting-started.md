@@ -2,7 +2,7 @@ Getting started
 ===============
 
 This guide is meant to help users get started, whether they are seasoned python
-professionals or if they are wondering what RNA has to do with snakes.
+pros or if they have never used python.
 
 If you have not already installed RNAvigate, visit the
 [installation guide](installation.md).
@@ -10,8 +10,15 @@ If you have not already installed RNAvigate, visit the
 Open a Jupyter Notebook
 -----------------------
 
+The easiest way is to install Anaconda, and start a notebook using Anaconda
+Navigator.
+
 Import RNAvigate
 ----------------
+
+```python
+import rnavigate as MaP
+```
 
 Load your data files
 --------------------
@@ -37,6 +44,7 @@ sample_name = MaP.Sample(
 analysis to refer to this sample.
 
 `datatype_1`, `datatype_2`, ..., `datatype_n` should be replaced with any of:
+
 - `ct`, `compct`, or `ss`: a structure file - DB, CT, NSD, CTE, XRNA, or VARNA
 - `shapemap`: Shapemapper2 output _profile.txt (recommended) or .map
 - `dmsmap`: same file as `shapemap`, but RNAvigate will renormalize the profile
@@ -52,6 +60,7 @@ analysis to refer to this sample.
   - many RNA structure prediction packages can output this file
 
 `annotation_type` should be replaced with:
+
 - `sites={"site_list": [list], "seq_source": "datatype"}` 
   - `[list]` is a comma-seperated list of sites of interest in square brackets
 - `spans={"span_list": [[span_1], ..., [span_n]], "seq_source": "datatype"}`
@@ -111,6 +120,7 @@ sample_name.plot_plottype_multifilter(
     plot_keyword=value
 )
 ```
+
 ```python
 # Multiple samples
 MaP.plot_plottype_multisample(

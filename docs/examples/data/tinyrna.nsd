@@ -1,0 +1,46 @@
+[
+  { Version:"1.0" Title:tinyrna }
+  {
+    Title:tinyrna
+    Mode:Standard
+    Flip:true
+    Strands:[
+      {
+        Strand:[
+          { ID:1 Base:C X:38.3 Y:205.2 }
+          { ID:2 Base:C X:38.3 Y:187.6 }
+          { ID:3 Base:G X:38.3 Y:170.0 }
+          { ID:4 Base:G X:38.3 Y:152.4 }
+          { ID:5 Base:C X:38.3 Y:134.8 }
+          { ID:6 Base:A X:38.7 Y:115.5 }
+          { ID:7 Base:G X:48.0 Y:98.5 }
+          { ID:8 Base:U X:56.8 Y:83.3 }
+          { ID:9 Base:G X:65.6 Y:68.1 }
+          { ID:10 Base:U X:74.4 Y:52.8 }
+          { ID:11 Base:G X:88.4 Y:40.2 }
+          { ID:12 Base:C X:104.7 Y:49.6 }
+          { ID:13 Base:A X:100.7 Y:68.0 }
+          { ID:14 Base:C X:91.9 Y:83.3 }
+          { ID:15 Base:A X:83.1 Y:98.5 }
+          { ID:16 Base:C X:74.3 Y:113.7 }
+          { ID:17 Base:G X:68.7 Y:134.8 }
+          { ID:18 Base:U X:68.7 Y:152.4 }
+          { ID:19 Base:C X:68.7 Y:170.0 }
+          { ID:20 Base:G X:68.7 Y:187.6 }
+          { ID:21 Base:G X:68.7 Y:205.2 }
+        ]
+      }
+    ]
+    Pairs:[
+      { Pair:"1:21" Type:BP }
+      { Pair:"2:20" Type:BP }
+      { Pair:"3:19" Type:BP }
+      { Pair:"4:18" Type:BP }
+      { Pair:"5:17" Type:BP }
+      { Pair:"7:16" Type:BP }
+      { Pair:"8:15" Type:BP }
+      { Pair:"9:14" Type:BP }
+      { Pair:"10:13" Type:BP }
+    ]
+  }
+]
