@@ -99,7 +99,7 @@ class Data():
             return alignment_map, i
         return np.array(alignment_map)
 
-    def get_colors(self, source, nt_colors='new', pos_cmap='turbo',
+    def get_colors(self, source, nt_colors='new', pos_cmap='rainbow',
                    profile=None, ct=None):
         if source == "sequence":
             seq = self.sequence
@@ -121,7 +121,6 @@ class Data():
             return colors
         elif source == "structure":
             # TODO: this should be implemented in CT object for reusability
-            assert type(ct).__name__ == "CT", "Invalid ct"
             cmap = np.array(['C0', 'C1'])
             ct_colors = cmap[[int(nt == 0) for nt in ct.ct]]
             colors = np.full(self.length, 'gray', dtype='<U8')
