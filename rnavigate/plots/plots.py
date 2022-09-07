@@ -97,23 +97,23 @@ class Plot(ABC):
             rows = math.ceil(self.length / cols)
         return rows, cols
 
-    def add_sequence(self, ax, sequence, yvalue=0.005, ytrans="axes"):
+    def add_sequence(self, ax, sequence, yvalue=0, ytrans="axes"):
         # set font style and colors for each nucleotide
         font_prop = mp.font_manager.FontProperties(
             family="monospace", style="normal", weight="bold", size="12")
         color_dict = {"A": "#f20000", "U": "#f28f00",
                       "G": "#00509d", "C": "#00c200"}
         # transform yvalue to a y-axis data value
-        ytrans = {"axes": ax.transAxes,
-                  "data": ax.transData}[ytrans]
-        trans = mp.transforms.blended_transform_factory(ax.transData, ytrans)
+        if ytrans == "axes":
+            trans = ax.get_xaxis_transform()
+        elif ytrans == "data":
+            trans = ax.transData
         sequence = sequence[self.region[0]-1: self.region[1]]
         for i, seq in enumerate(sequence):
             col = color_dict[seq.upper()]
-            ax.annotate(seq, xy=(i + self.region[0], yvalue), xycoords='data',
-                        fontproperties=font_prop, transform=trans,
-                        color=col, horizontalalignment="center",
-                        verticalalignment="center")
+            ax.text(i + self.region[0], yvalue, seq, fontproperties=font_prop,
+                    transform=trans, color=col, horizontalalignment="center",
+                    verticalalignment="center")
 
     @abstractmethod
     def get_figsize(self):
