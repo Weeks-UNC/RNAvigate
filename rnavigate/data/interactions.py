@@ -69,16 +69,18 @@ class Interactions(Data):
         return self._metric
 
     @metric.setter
-    def metric(self, value, pdb=None):
+    def metric(self, value):
         if value in self.data.keys():
             self._metric = value
-        elif value.startswith("Distance_"):
-            value, atom = value.split("_")
-            self.set_3d_distances(pdb, atom)
-            self._metric = value
-        elif value == "Distance":
-            self.set_3d_distances(pdb, "O2'")
-            self._metric = value
+        elif isinstance(value, tuple):
+            value, pdb = value
+            if value.startswith("Distance_"):
+                value, atom = value.split("_")
+                self.set_3d_distances(pdb, atom)
+                self._metric = value
+            elif value == "Distance":
+                self.set_3d_distances(pdb, "O2'")
+                self._metric = value
         elif value is None:
             self._metric = self.default_metric
         else:
@@ -389,14 +391,16 @@ class Interactions(Data):
 
 
 class SHAPEJuMP(Interactions):
-    def __init__(self, filepath, datatype="shapejump", sequence=None):
+    def __init__(self, filepath, datatype="shapejump", fasta=None,
+                 sequence=None):
         default_metric = 'Percentile'
         fill = {'Metric': 0.0, 'Percentile': 0.0}
         cmaps = {'Metric': 'YlGnBu', 'Percentile': 'YlGnBu'}
         mins_maxes = {'Percentile': [0.98, 1.0], "Metric": [0, 0.001]}
         super().__init__(filepath=filepath, datatype=datatype,
-                         default_metric=default_metric, sequence=sequence,
-                         fill=fill, cmaps=cmaps, mins_maxes=mins_maxes)
+                         default_metric=default_metric, fasta=fasta,
+                         sequence=sequence, fill=fill, cmaps=cmaps,
+                         mins_maxes=mins_maxes)
 
     def read_file(self, filepath, sep=None, read_csv_kw=None):
         column_names = ['Gene', 'i', 'j', 'Metric']
