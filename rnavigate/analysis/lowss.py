@@ -1,5 +1,5 @@
 from rnavigate.plots import AP
-from rnavigate.plots.plots import adjust_spines
+from rnavigate.plots.plots import adjust_spines, clip_spines
 from rnavigate.data import Annotation
 import matplotlib.pyplot as plt
 import numpy as np
@@ -73,6 +73,7 @@ class LowSS():
                              self.windowed_profile[start-1:stop],
                              fc='0.3', lw=0)
         adjust_spines(prof_ax, ["left"])
+        clip_spines(prof_ax, ["left"])
 
         ent_ax = ax.twinx()
         ent_ax.set_ylim(-1.5, 1.5)
@@ -81,6 +82,7 @@ class LowSS():
                             self.windowed_entropy[start-1:stop],
                             fc='C1', lw=0)
         adjust_spines(ent_ax, ["left"])
+        clip_spines(ent_ax, ["left"])
 
         # add ct and pairing probabilities track
         self.sample.filter_interactions("pairprob", "pairprob")
