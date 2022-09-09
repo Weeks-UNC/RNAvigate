@@ -651,7 +651,7 @@ def plot_arcs_multisample(samples, ct="ct", comp=None,
     plot = AP(num_samples=len(samples), nt_length=samples[0].data[ct].length,
               region=region, **plot_kwargs)
     if labels is None:
-        labels = ["labels"]*len(samples)
+        labels = ["label"]*len(samples)
     for sample, label in zip(samples, labels):
         if not prefiltered:
             if ct not in ["ss", "ct", "compct"]:
