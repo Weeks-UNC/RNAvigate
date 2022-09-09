@@ -149,5 +149,4 @@ def clip_spines(ax, spines):
             ticks = ax.get_yticks()
         if spine in ['top', 'bottom']:
             ticks = ax.get_xticks()
-        print(ticks)
         ax.spines[spine].set_bounds((min(ticks), max(ticks)))
