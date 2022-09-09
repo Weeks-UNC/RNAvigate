@@ -64,9 +64,9 @@ class QC(Plot):
 
     def get_figsize(self):
         if self.length == 1:
-            return (15, 5)
+            return (30, 10)
         else:
-            return (20, 10)
+            return (40, 20)
 
     def plot_data(self, log, profile, label):
         self.plot_MutsPerMol(log, label)
