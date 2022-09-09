@@ -2,25 +2,25 @@ site_name: RNAvigate
 site_url: https://rnavigate.readthedocs.io
 nav:
 - Home: index.md
-- RNA 2022 Poster:
-  - 'Poster': 'rna2022.md'
-  - 'Time-resolved probing': 'poster/RNaseP/RNaseP.ipynb'
-  - 'DANCE-MaP': 'poster/addRS/AddWT.ipynb'
-  - 'Low SHAPE/Shannon entropy': 'poster/denv2/DENV2.ipynb'
 - Getting started:
   - 'Installation': 'installation.md'
   - 'Loading data': 'loading-data.md'
   - 'Basic plotting': 'examples/one_sample.ipynb'
 - Plotting options:
-  - '3D plots': 'plot-options/mol-plots.md'
   - 'Arc plots': 'plot-options/arc-plots.md'
   - 'Secondary structure plots': 'plot-options/ss-plots.md'
+  - '3D plots': 'plot-options/mol-plots.md'
 - Interactions filters:
   - 'Interactions reference': 'filters.md'
   - 'Interactions examples': 'examples/filtering.ipynb'
 - Annotations:
   - 'Annotation reference': 'annotations.md'
   - 'Annotation examples': 'examples/annotations.ipynb'
+- RNA 2022 Poster:
+  - 'Poster': 'rna2022.md'
+  - 'Time-resolved probing': 'poster/RNaseP/RNaseP.ipynb'
+  - 'DANCE-MaP': 'poster/addRS/AddWT.ipynb'
+  - 'Low SHAPE/Shannon entropy': 'poster/denv2/DENV2.ipynb'
 
 plugins:
   - mkdocs-jupyter
