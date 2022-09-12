@@ -60,14 +60,7 @@ this directory your $PYTHONPATH, and you are good to go.
 UNC Longleaf installation
 -------------------------
 
-Log into Longleaf using ssh and run the following code from the command line.
-
-```bash
-cd $HOME
-git clone https://github.com/Weeks-UNC/RNAvigate.git
-```
-
-Next we need to make sure that you have an Anaconda environment that includes
+First, we need to make sure that you have an Anaconda environment that includes
 all dependencies and that that environment is available to Jupyter. This does
 not change your default modules. They will be restored next time you log in.
 
@@ -88,9 +81,9 @@ UNC's platform for using interactive programs within Longleaf.
 
    1. Click on interactive apps, under servers, click on Jupyter Notebook.
    2. Enter the number of hours you will be working, 1 CPU, other fields blank.
-   3. DONT FORGET TO SAVE BEFORE YOUR NOTEBOOK SHUTS DOWN.
+   3. Don't forget to save before you run out of time!
 
 2. Navigate to your data directory, and open a new notebook using the
   "rnavigate" option.
-4. Type `import rnavigate as MaP` into the first code cell and run it.
-5. Your ready to starting exploring your data!
+4. Type `import rnavigate as rnav` into the first code cell and run it.
+5. You're ready to starting exploring your data!
