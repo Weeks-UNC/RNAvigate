@@ -7,39 +7,50 @@ analysis.
 
 Coding To-Do List
 -----------------
+
 - refactoring:
   - ss (plot) to 2d
   - mol to 3d
   - sm to shapemap
   - ct, compct, ss to basepairs or ss or something
-  - ct, ij, ij2 to tops, bottoms (passing dictionaries)
+  - ct, ij, ij2 to structures, interactions
 - better figure scaling using subplotpars -> set_size_inches
-- setting size and dpi for all plots
+- reasonable sizing for all plots
 - enable multiple structure inputs for SS plotting
   - scale data points equally for ct-like objects
   - center on 0, 0
   - share x and y axes
   - scale figure size using subplotpars
-- turn off nt cylinders in Mol
+- Expose arguments in Mol
+  - turn off nt cylinders
+  - width, height, background color
 - implement profiles for interaction data
+  - use get_data function to return profiles when expected
 - loading secondary structure files containing more than one structure
+- passing override values to init_dance
 - calling significant sites with log-corrected profile min-diff comparison
-- better nucleotide colors and display on linear regression plots.
+- better nucleotide colors and display on linear regression plots
 - loading in annotations files
 - send to file for all plots
+- improve labelling for disthist plots
+- reading in FORNA JSON
+
 
 Documentation To-Do List
 ------------------------
-- Installation instructions
-- One page for each plot type
-  - arcplot, circleplot, ss-diagram, 3d mol, skyline, qc, heatmap, linreg, sm
+
+- Update installation instructions
+- Reference page for each plot type
+  - circleplot, skyline, qc, heatmap, linreg, sm, disthit
 - guide for custom use cases
-  = loading profile data, loading interactions data, plots with mpl, data with
-    pandas
+  - loading custom profiles, interactions and annotations
+  - plot manipulation with mpl
+  - data manipulation with pandas
 - good doc strings
 
 Paper figures
 -------------
+
 - abstract
 - 4 basic panel
 - lowss
@@ -48,58 +59,29 @@ Paper figures
 
 Features
 --------
+
 A python interface and CLI interface for all of the following:
 
-###Loading MaP/JuMP data and plotting
 - Implemented python interface: Y
 - Implemented CLI interface: YY
 - Not applicable: ---
 
-| plot type | log | profiles | dance | rings | pairs | deletions | array | pairprob |
-|-----------|-----|----------|-------|-------|-------|-----------|-------|----------|
-| load data | Y   | Y        | Y     | Y     | Y     | Y         | ----- | Y        |
-| QC plots  | Y   | Y        | ---   | ---   | ---   | ---       | Y     | ---      |
-| Regression| --- | Y        | Y     | ---   | ---   | ---       | Y     | ---      |
-| skyline   | --- | Y        | Y     | ---   | ---   | ---       | Y     | ---      |
-| arc plots | --- | Y        | ---   | Y     | Y     | Y         | Y     | Y        |
-| secondary | --- | Y        | ---   | Y     | Y     | Y         | Y     | Y        |
-| tertiary  | --- | Y        | ---   | Y     | Y     | Y         | Y     | Y        |
-| heatmaps  | --- |          | Y     | Y     | Y     | Y         | Y     | Y        |
+Analyses
+--------
 
-- Reading in structural information
+- RNP-MaP
+- log(+/-) - k*log(+/-) Normalization
+- deltaSHAPE
 
-| ct | xrna | varna | nsd | cte | pdb |
-|----|------|-------|-----|-----|-----|
-| Y  | Y    | Y     | Y   | Y   | Y   |
+Command-Line interface
+----------------------
 
-- Analyses
-  - [ ] RNP-MaP
-  - [ ] log(+/-) - k*log(+/-) Normalization
-  - [ ] deltaSHAPE
-  - [ ] destabilization analysis
+Currently, there is no CLI interface, but this is how I imagine it working. I
+have to learn how to parse args dynamically, given the plotting function.
 
-CLI examples
-------------
-Currently, there is no CLI interface, but this is how I imagine it working.
-- aliases
-  - sl - skyline
-  - ap - arcplot
-  - ss - secondarystructure
-  - 3d - 3d structure
-  - qc - muts/mol, read length, and boxplots
-  - rnp - RNP-Map
-  - delta - deltaSHAPE
-  - lr - linear regression
 ```
-rnavigate.py sl --profiles prof1.txt prof2.txt prof3.txt
-rnavigate.py sl --dance sample1-reactivities.txt
-rnavigate.py sl --jump jump1.file jump2.file jump3.file jump4.file
-rnavigate.py ap --ct targetrna.ct
-                 --samples sample1 sample2 sample3 sample4
-                 --profile-suffix _targetrna_profile.txt
-                 --rings-suffix -targetrna.corrs
-rnavigate.py ss --ss targetrna.xrna
-                 --samples sample1 sample2 sample3 sample4
-                 --profile-suffix _targetrna_profile.txt
-                 --rings-suffix -targetrna.corrs
+rnavigate plottype --sample1 --datatype filepath --datatype filepath \
+                   --sample2 --datatype filepath --datatype filepath \
+                   --filter_arguments \
+                   --plot_arguments
 ```
