@@ -11,11 +11,13 @@ class DistHist(Plot):
             ax = self.get_ax()
         self.plot_all_distances(ax, structure, atom)
         self.plot_experimental_distances(ax, structure, interactions, atom)
-        ax.set_title(label)
+        ax.set(title=label,
+               ylabel="Experimental",
+               xlabel="3D distance")
         self.i += 1
 
     def get_figsize(self):
-        return (7*self.columns, 7*self.rows)
+        return (10*self.columns, 10*self.rows)
 
     def plot_all_distances(self, ax, structure, atom):
         matrix = structure.get_distance_matrix(atom=atom)
@@ -25,6 +27,7 @@ class DistHist(Plot):
                 if i+6 > j and matrix[i, j] != 1000:
                     pdb_dists.append(matrix.item(i, j))
         ax2 = ax.twinx()
+        ax2.set(ylabel="Pairwise")
         ax2.hist(pdb_dists, bins=range(0, int(max(pdb_dists)), 5),
                  histtype="step", color="0.5", label="All distances")
 

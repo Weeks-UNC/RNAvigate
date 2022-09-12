@@ -35,7 +35,7 @@ class Heatmap(Plot):
         self.i += 1
 
     def get_figsize(self):
-        return (7*self.columns, 7*self.rows)
+        return (10*self.columns, 10*self.rows)
 
     def plot_contour_regions(self, ax, interactions, regions):
         matrix = np.full([interactions.length, interactions.length], 0)
@@ -106,3 +106,5 @@ class Heatmap(Plot):
         sns.kdeplot(ax=ax, data=data, x="i_offset", y="j_offset",
                     fill=True, levels=5, bw_adjust=0.2, cmap=interactions.cmap,
                     common_norm=True, ** kwargs)
+        ax.set(xlabel="Position (i)",
+               ylabel="Position (j)")

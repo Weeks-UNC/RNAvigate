@@ -30,8 +30,8 @@ class Mol(Plot):
         col = i % self.columns
         return (row, col)
 
-    def plot_data(self, interactions, profile, label, nt_color="sequence", atom="O2'",
-                  title=True):
+    def plot_data(self, interactions, profile, label, nt_color="sequence",
+                  atom="O2'", title=True):
         viewer = self.get_viewer()
         if interactions is not None:
             self.plot_interactions(viewer, interactions, atom)
@@ -40,11 +40,10 @@ class Mol(Plot):
         self.set_colors(viewer, profile, nt_color)
         if title:
             self.view.addLabel(label,
-                               {"position": {"x": 200, "y": 50, "z": 0},
+                               {"position": {"x": 0, "y": 0, "z": 0},
                                 "useScreen": True,
-                                "alignment": "center",
                                 "fontColor": "black",
-                                "backgroundColor": "white",
+                                "backgroundOpacity": 0.0,
                                 "fontSize": 28}, viewer=viewer)
         self.i += 1
 
