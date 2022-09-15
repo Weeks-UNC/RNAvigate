@@ -68,9 +68,9 @@ not change your default modules. They will be restored next time you log in.
 module rm python pymol pyrosetta
 module load anaconda/2019.10
 conda env create -f /proj/kweeks/bin/RNAvigate/env.yaml
-conda activate rnavigate
+source activate RNAvigate
 conda develop /proj/kweeks/bin/RNAvigate/
-python -m ipykernel install --user --name=rnavigate
+python -m ipykernel install --user --name=RNAvigate
 ```
 
 If this occured without errors, exit longleaf and go to
@@ -86,4 +86,4 @@ UNC's platform for using interactive programs within Longleaf.
 2. Navigate to your data directory, and open a new notebook using the
   "rnavigate" option.
 4. Type `import rnavigate as rnav` into the first code cell and run it.
-5. You're ready to starting exploring your data!
+5. If no errors occur, you're ready to starting exploring your data!

@@ -26,19 +26,23 @@ Filtering on sequence
 
 Filtering on structure
 
-* `"cdAbove": #`: minumum *i*-to-*j* contact distance in the structure graph must be greater than #
-* `"cdBelow": #`: minimum *i*-to-*j* contact distance must be less than #
+* `"min_cd": #`: require *i*-to-*j* contact distance to be at least #
+* `"max_cd": #`: require *i*-to-*j* contact distance to be at most #
+    * DISCLAIMER: contact distance is an intensive computation. It will
+      take a long time for long RNAs. (e.g. 7 kb needs > 10 min)
 * `"ss_only": True`: include only if *i* and *j* are both unpaired (only works for 1-nt windows)
 * `"ds_only": True`: include only if *i* and *j* are both paired (only works for 1-nt windows)
 * `"paired_only": True`: include only if *i* and *j* are base-paired to each other
 
 Filtering by profile
 
-* `"profAbove": #`: include only if Normalized SHAPE reactivity is greater than #
-* `"profBelow": #`: include only if Normalized SHAPE reactivity is less than #
+* `"min_profile": #`: require profile value to be at least `#` for both *i* and *j*
+* `"max_profile": #`: require profile value to be at most `#` for both *i* and *j*
 
 Filtering by position
 
+* `"min_distance": #`: require *i* and *j* to be at least `#` of nucleotides away.
+* `"max_distance": #`: require *i* and *j* to be at most `#` of nucleotides away.
 * `"exclude_nts": [#, #, #]`: exclude interaction if *i* or *j* is in this list of nucleotide positions.
 * `"isolate_nts": [#, #, #]`: include only if each *i* and *j* is entirely within list of numbers.
 
