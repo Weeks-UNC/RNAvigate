@@ -107,11 +107,11 @@ class Interactions(Data):
         else:
             self.update_mask(mask)
 
-    def mask_on_ct(self, ct, cdAbove=None, cdBelow=None, ss_only=False,
+    def mask_on_ct(self, ct, min_cd=None, max_cd=None, ss_only=False,
                    ds_only=False, paired_only=False, return_mask=False):
         if isinstance(ct, list):
             for each in ct:
-                self.mask_on_ct(each, cdAbove, cdBelow, ss_only, ds_only,
+                self.mask_on_ct(each, min_cd, max_cd, ss_only, ds_only,
                                 paired_only)
                 return
         assert ct.datatype == "ct", "CT filtering requires a ct object."
@@ -132,16 +132,16 @@ class Interactions(Data):
                 true_so_far = (ct.ct[i-1] == 0) and (ct.ct[j-1] == 0)
             if ds_only and true_so_far:
                 true_so_far = (ct.ct[i-1] != 0) and (ct.ct[j-1] != 0)
-            if (cdAbove is not None or cdBelow is not None) and true_so_far:
+            if (min_cd is not None or max_cd is not None) and true_so_far:
                 cd = []
                 for iw in range(self.window):
                     for jw in range(self.window):
                         cd.append(ct.contactDistance(i+iw, j+jw))
                 cd = min(cd)
-                if cdAbove is not None:
-                    true_so_far = cd > cdAbove
-                if cdBelow is not None:
-                    true_so_far = cd < cdBelow
+                if min_cd is not None:
+                    true_so_far = cd > min_cd
+                if max_cd is not None:
+                    true_so_far = cd < max_cd
             mask.append(true_so_far)
         if return_mask:
             return mask
@@ -198,7 +198,7 @@ class Interactions(Data):
 
     def filter(self, fit_to,
                ct=None,  # required if any of next are passed
-               cdAbove=None, cdBelow=None,
+               min_cd=None, max_cd=None,
                paired_only=False, ss_only=False, ds_only=False,
                profile=None, profAbove=None, profBelow=None,
                compliments_only=False, nts=None,
@@ -212,10 +212,10 @@ class Interactions(Data):
             message = "Profile filters require a profile object."
             assert isinstance(profile, Profile), message
             self.mask_on_profile(profile, profAbove, profBelow)
-        mask_on_ct = any([cdAbove is not None, cdBelow is not None,
+        mask_on_ct = any([min_cd is not None, max_cd is not None,
                           ss_only, ds_only, paired_only])
         if mask_on_ct:
-            self.mask_on_ct(ct, cdAbove, cdBelow,
+            self.mask_on_ct(ct, min_cd, max_cd,
                             ss_only, ds_only, paired_only)
         if compliments_only or nts is not None:
             self.mask_on_sequence(compliments_only, nts)
