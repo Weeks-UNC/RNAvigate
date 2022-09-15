@@ -148,7 +148,7 @@ class Interactions(Data):
         else:
             self.update_mask(mask)
 
-    def mask_on_profile(self, profile, profAbove=None, profBelow=None):
+    def mask_on_profile(self, profile, min_profile=None, max_profile=None):
         alignment_map = self.get_alignment_map(profile)
         norm_prof = profile.data["Norm_profile"]
         mask = []
@@ -158,10 +158,12 @@ class Interactions(Data):
             if (index_i != -1) and (index_j != -1):
                 prof_i = np.median(norm_prof[index_i:index_i+self.window])
                 prof_j = np.median(norm_prof[index_j:index_j+self.window])
-                if profAbove is not None:
-                    keep_ij = (prof_i >= profAbove) and (prof_j >= profAbove)
-                if profBelow is not None:
-                    keep_ij = (prof_i <= profBelow) and (prof_j <= profBelow)
+                if min_profile is not None:
+                    keep_ij = (prof_i >= min_profile) and (
+                        prof_j >= min_profile)
+                if max_profile is not None:
+                    keep_ij = (prof_i <= max_profile) and (
+                        prof_j <= max_profile)
             mask.append(keep_ij)
         self.update_mask(mask)
 
@@ -200,7 +202,7 @@ class Interactions(Data):
                ct=None,  # required if any of next are passed
                min_cd=None, max_cd=None,
                paired_only=False, ss_only=False, ds_only=False,
-               profile=None, profAbove=None, profBelow=None,
+               profile=None, min_profile=None, max_profile=None,
                compliments_only=False, nts=None,
                exclude_nts=None, isolate_nts=None,
                resolve_conflicts=None,
@@ -208,10 +210,10 @@ class Interactions(Data):
         self.set_mask_offset(fit_to)
         if exclude_nts is not None or isolate_nts is not None:
             self.mask_nts(exclude_nts, isolate_nts)
-        if profAbove is not None or profBelow is not None:
+        if min_profile is not None or max_profile is not None:
             message = "Profile filters require a profile object."
             assert isinstance(profile, Profile), message
-            self.mask_on_profile(profile, profAbove, profBelow)
+            self.mask_on_profile(profile, min_profile, max_profile)
         mask_on_ct = any([min_cd is not None, max_cd is not None,
                           ss_only, ds_only, paired_only])
         if mask_on_ct:
