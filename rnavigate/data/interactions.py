@@ -178,6 +178,12 @@ class Interactions(Data):
                     mask[index] = False
         self.update_mask(mask)
 
+    def mask_distance(self, max_dist, min_dist):
+        if max_dist is not None:
+            self.update_mask(self.data.eval("(j - i) <= @max_dist"))
+        if min_dist is not None:
+            self.update_mask(self.data.eval("(j -i) >= @min_dist"))
+
     def set_mask_offset(self, fit_to):
         am = self.get_alignment_map(fit_to)
         i = np.array([am[i-1]+1 for i in self.data["i"].values])
@@ -204,12 +210,15 @@ class Interactions(Data):
                paired_only=False, ss_only=False, ds_only=False,
                profile=None, min_profile=None, max_profile=None,
                compliments_only=False, nts=None,
+               max_distance=None, min_distance=None,
                exclude_nts=None, isolate_nts=None,
                resolve_conflicts=None,
                **kwargs):
         self.set_mask_offset(fit_to)
         if exclude_nts is not None or isolate_nts is not None:
             self.mask_nts(exclude_nts, isolate_nts)
+        if max_distance is not None or min_distance is not None:
+            self.mask_distance(max_dist=max_distance, min_dist=min_distance)
         if min_profile is not None or max_profile is not None:
             message = "Profile filters require a profile object."
             assert isinstance(profile, Profile), message
