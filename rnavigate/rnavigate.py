@@ -260,6 +260,11 @@ class Sample():
                               instantiator=instantiator,
                               seq_source=seq_source,
                               **kwargs)
+        self.inputs[name] = {
+            "filepath": filepath,
+            "instantiator": instantiator,
+            "seq_source": seq_source,
+            "kwargs": kwargs}
         self.data[name] = instantiator(filepath=filepath, **kwargs)
         if name in self.default_profiles and "profile" not in self.data:
             self.data["profile"] = self.data[name]

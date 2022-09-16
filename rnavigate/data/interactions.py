@@ -513,7 +513,7 @@ class PairProb(Interactions):
     def __init__(self, filepath, datatype="pairprob", sequence=None):
         default_metric = 'Probability'
         fill = {'Probability': 0}
-        cmaps = {'Probability': 'inferno_r'}
+        cmaps = {'Probability': 'YlGnBu'}
         mins_maxes = {'Probability': [0, 1]}
         super().__init__(filepath=filepath, datatype=datatype,
                          default_metric=default_metric, sequence=sequence,

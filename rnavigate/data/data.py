@@ -39,6 +39,8 @@ class Data():
             self.get_seq_from_data(dataframe)
         else:
             print(f"{self.datatype} initialized without sequence.")
+        if not hasattr(self, "datatype"):
+            self.datatype = "data"
 
     def read_fasta(self, fasta):
         fasta = list(Bio.SeqIO.parse(open(fasta), 'fasta'))
