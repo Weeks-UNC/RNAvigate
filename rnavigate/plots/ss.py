@@ -43,8 +43,10 @@ class SS(Plot):
         self.plot_sequence(ax=ax, profile=profile, colors=colors,
                            sequence=sequence, apply_color_to=apply_color_to,
                            positions=positions)
-        self.plot_interactions(ax=ax, interactions=interactions, colorbar=colorbar, cmap_pos=0)
-        self.plot_interactions(ax=ax, interactions=interactions2, colorbar=colorbar, cmap_pos=1)
+        self.plot_interactions(
+            ax=ax, interactions=interactions, colorbar=colorbar, cmap_pos=0)
+        self.plot_interactions(
+            ax=ax, interactions=interactions2, colorbar=colorbar, cmap_pos=1)
         for annotation in annotations:
             self.plot_annotation(ax=ax, annotation=annotation)
         if title:
@@ -182,8 +184,8 @@ class SS(Plot):
         elif annotation.annotation_type == "sites":
             x = self.structure.xcoordinates[annotation.sites]
             y = self.structure.ycoordinates[annotation.sites]
-            ax.scatter(x, y, color=color, marker='*', ec="none", alpha=0.7,
-                       s=50**2, zorder=zorder)
+            ax.scatter(x, y, color=color, marker='o', ec="none", alpha=0.7,
+                       s=30**2, zorder=zorder)
         elif annotation.annotation_type == "groups":
             for group in annotation.groups:
                 x = self.structure.xcoordinates[group["sites"]]

@@ -519,7 +519,7 @@ class Sample():
 
     def plot_arcs_multifilter(self, filters, ct="ct", comp=None,
                               interactions2=None, profile="profile",
-                              label="label"):
+                              label="label", region="all"):
         """Makes an array of arc plots of different filtered views of data from
         Sample.
 
@@ -540,7 +540,7 @@ class Sample():
         Returns:
             rnavigate.plots.AP
         """
-        plot = AP(len(filters), self.get_data_list(ct).length)
+        plot = AP(len(filters), self.get_data_list(ct).length, region=region)
         for filter in filters:
             interactions = filter.pop("interactions")
             self.filter_interactions(interactions, ct, **filter)

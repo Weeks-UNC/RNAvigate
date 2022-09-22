@@ -197,7 +197,7 @@ class RNPMaP(Profile):
 
 class DeltaProfile(Profile):
     def __init__(self, profile1, profile2, column=None, norm_method="min_max",
-                 norm_values=[-0.8, 0.8], cmap="bwr"):
+                 norm_values=[-0.8, 0.8], cmap="coolwarm"):
         if column is None:
             column = profile1.default_column
         columns = ["Nucleotide", "Sequence", column]

@@ -6,6 +6,7 @@ import matplotlib as mp
 import matplotlib.pyplot as plt
 import numpy as np
 from operator import ge, le, gt, lt, eq, ne
+import seaborn as sns
 
 
 class Interactions(Data):
@@ -513,7 +514,8 @@ class PairProb(Interactions):
     def __init__(self, filepath, datatype="pairprob", sequence=None):
         default_metric = 'Probability'
         fill = {'Probability': 0}
-        cmaps = {'Probability': 'YlGnBu'}
+        cmaps = {'Probability': sns.cubehelix_palette(10, 0.7, 0.9, 1.5, 2.5,
+                                                      1, 0.4, False, True)}
         mins_maxes = {'Probability': [0, 1]}
         super().__init__(filepath=filepath, datatype=datatype,
                          default_metric=default_metric, sequence=sequence,
