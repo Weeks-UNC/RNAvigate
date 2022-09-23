@@ -23,7 +23,7 @@ class SS(Plot):
             ax.set(xlim=[xmin-xbuffer, xmax+xbuffer],
                    ylim=[ymin-3*ybuffer, ymax+ybuffer])
         self.pass_through = ["colors", "sequence", "apply_color_to",
-                             "colorbar", "title", "positions"]
+                             "colorbar", "title", "positions", "bp_style"]
         self.zorder = {"structure": 0,
                        "backbone": 0,
                        "annotations": 5,
@@ -32,17 +32,19 @@ class SS(Plot):
                        "sequence": 20,
                        "position": 25}
 
-    def plot_data(self, interactions, interactions2, profile, annotations, label,
+    def plot_data(self, interactions, interactions2, profile, annotations,
+                  label,
                   colors="sequence",
                   sequence=False,
                   apply_color_to="background",
                   colorbar=True,
                   title=True,
-                  positions=False):
+                  positions=False,
+                  bp_style="dotted"):
         ax = self.get_ax()
         self.plot_sequence(ax=ax, profile=profile, colors=colors,
                            sequence=sequence, apply_color_to=apply_color_to,
-                           positions=positions)
+                           positions=positions, bp_style=bp_style)
         self.plot_interactions(
             ax=ax, interactions=interactions, colorbar=colorbar, cmap_pos=0)
         self.plot_interactions(
@@ -66,7 +68,10 @@ class SS(Plot):
         height = (ymax-ymin)*scale
         return (width*self.columns, height*self.rows)
 
-    def plot_structure(self, ax, struct_color):
+    def plot_structure(self, ax, struct_color, bp_style):
+        bp_styles = ["conventional", "dotted", "line"]
+        assert bp_style in bp_styles, f"bp_style must be one of {bp_styles}"
+
         ss = self.structure
 
         x = ss.xcoordinates
@@ -84,13 +89,39 @@ class SS(Plot):
         ax.add_collection(lc)
 
         for pair in ss.pairList():
-            xcoords = [ss.xcoordinates[pair[0]-1], ss.xcoordinates[pair[1]-1]]
-            ycoords = [ss.ycoordinates[pair[0]-1], ss.ycoordinates[pair[1]-1]]
-            ax.plot(xcoords, ycoords, color="grey",
-                    linestyle=(0, (1, 1)), zorder=zorder)
+            x = ss.xcoordinates[[p-1 for p in pair]]
+            y = ss.ycoordinates[[p-1 for p in pair]]
+            xdist = x[1]-x[0]
+            ydist = y[1]-y[0]
+            if bp_style == "dotted":
+                x_dots = [x[0] + i * xdist / 6 for i in [2, 3, 4]]
+                y_dots = [y[0] + i * ydist / 6 for i in [2, 3, 4]]
+                ax.scatter(x_dots, y_dots, c="grey", marker='.', s=4,
+                           zorder=zorder)
+            if bp_style == "line":
+                x_caps = [x[0] + i * xdist / 3 for i in [1, 2]]
+                y_caps = [y[0] + i * ydist / 3 for i in [1, 2]]
+                ax.plot(x_caps, y_caps, color="grey", zorder=zorder)
+            if bp_style == "conventional":
+                nts = ''.join([ss.sequence[p-1] for p in pair])
+                x_caps = [x[0] + i * xdist / 7 for i in [2, 5]]
+                y_caps = [y[0] + i * ydist / 7 for i in [2, 5]]
+                if nts in ["UA", "AU", "GU", "UG", "GA", "AG"]:
+                    ax.plot(x_caps, y_caps, color="grey", zorder=zorder,
+                            solid_capstyle='butt')
+                if nts in ["GU", "UG", "AG", "GA"]:
+                    x_center = x[0] + xdist/2
+                    y_center = y[0] + ydist/2
+                    ax.scatter(x_center, y_center, zorder=zorder+1, s=36,
+                               color="grey", marker="o", fc='white', ec='grey')
+                if nts in ["GC", "CG"]:
+                    ax.plot(x_caps, y_caps, color="grey", zorder=zorder,
+                            linewidth=6, solid_capstyle='butt')
+                    ax.plot(x_caps, y_caps, color="white", zorder=zorder,
+                            linewidth=2)
 
     def plot_sequence(self, ax, profile, colors, sequence, apply_color_to,
-                      positions):
+                      positions, bp_style):
         ss = self.structure
         nuc_z = self.zorder["nucleotide"]
         seq_z = self.zorder["sequence"]
@@ -103,20 +134,20 @@ class SS(Plot):
         if apply_color_to == "structure":
             struct_color = ss.get_colors(colors, profile=profile,
                                          ct=self.structure)
-            self.plot_structure(ax, struct_color)
+            self.plot_structure(ax, struct_color, bp_style=bp_style)
             ax.scatter(ss.xcoordinates, ss.ycoordinates, marker=".",
                        c=struct_color, zorder=seq_z)
             return
         if apply_color_to == "background":
             bg_color = ss.get_colors(colors, profile=profile,
                                      ct=self.structure)
-            self.plot_structure(ax, ss.get_colors("grey"))
+            self.plot_structure(ax, ss.get_colors("grey"), bp_style=bp_style)
         if apply_color_to == "sequence":
             sequence = True
             nt_color = ss.get_colors(colors, profile=profile,
                                      ct=self.structure)
             bg_color = ss.get_colors("white")
-            self.plot_structure(ax, ss.get_colors('grey'))
+            self.plot_structure(ax, ss.get_colors('grey'), bp_style=bp_style)
         else:
             nt_color = np.full(bg_color.shape, 'k')
             for i, color in enumerate(bg_color):

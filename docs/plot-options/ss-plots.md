@@ -88,6 +88,12 @@ plot1 = sample.plot_arcs(
 
 * True or False, whether to display every 10th nucleotide position.
 
+`bp_style`
+
+* `"dotted"` draws three dots in a line between basepairs
+* `"line"` draws a solid line between basepairs
+* `"conventional"` draws single lines for A-U, double for G-C, circles for A-G and G-U
+
 `sequence`
 
 * True or False, whether to display nucleotide letters.
