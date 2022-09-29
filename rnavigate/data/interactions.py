@@ -491,7 +491,7 @@ class PAIRMaP(Interactions):
         return cmap
 
     def data_specific_filter(self, all_pairs=False, **kwargs):
-        if not all_pairs and self.datatype == 'pairs':
+        if not all_pairs:
             self.update_mask(self.data["Class"] != 0)
         return kwargs
 
