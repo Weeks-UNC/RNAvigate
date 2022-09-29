@@ -118,7 +118,8 @@ class CT(Data):
 
         if 'T' in seq:
             print("Note: T nucleotides have been recoded as U")
-            seq = ''.join(['U' if x == 'T' else x for x in seq])
+            seq = seq.replace('T', 'U')
+            seq = seq.replace('t', 'u')
 
         # check consistency!
         for i in range(len(bp)):
