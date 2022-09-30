@@ -699,8 +699,12 @@ def plot_ss_multisample(samples, ss="ss", profile="profile", annotations=[],
 def plot_mol_multisample(samples, structure="pdb",
                          interactions=None, interactions_filter={},
                          profile="profile", labels=None, show=True,
+                         width=400, height=400, background_alpha=1,
+                         hide_cylinders=False,
                          prefiltered=False, **kwargs):
-    plot = Mol(len(samples), samples[0].data[structure])
+    plot = Mol(len(samples), samples[0].data[structure], width=width,
+               height=height, background_alpha=background_alpha,
+               hide_cylinders=hide_cylinders)
     if labels is None:
         labels = ["label"]*len(samples)
     for sample, label in zip(samples, labels):
