@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 class Mol(Plot):
     def __init__(self, num_samples, pdb, width=400, height=400,
-                 background_alpha=1, hide_cylinders=False):
+                 background_alpha=1):
         self.pdb = pdb
         self.length = num_samples
         self.rows, self.columns = self.get_rows_columns()
@@ -19,12 +19,6 @@ class Mol(Plot):
         view.setStyle({"cartoon": {'color': 'spectrum'}})
         view.zoomTo()
         self.view = view
-        if hide_cylinders:
-            cylinder_spec = {'A': 'N1', 'G': 'N1', 'C': 'N3', 'U': 'N3'}
-            for resn, atom in cylinder_spec.items():
-                self.view.setStyle(
-                    {'resn': resn, 'atom': atom},
-                    {'cross': {'hidden': 'true'}})
         self.i = 0
         self.pass_through = ["nt_color", "atom", "title"]
 
@@ -102,6 +96,14 @@ class Mol(Plot):
                     'resi': valid_pdbres, 'invert': 'true'}
         style = {"cross": {"hidden": "true"}}
         self.view.setStyle(selector, style, viewer=viewer)
+
+    def hide_cylinders(self):
+        resns = ['A', 'G', 'C', 'U']
+        atoms = ['N1', 'N1', 'N3', 'N3']
+        for resn, atom in zip(resns, atoms):
+            self.view.setStyle(
+                {'resn': resn, 'atom': atom},
+                {'cross': {'hidden': 'true'}})
 
     def png(self):
         '''output png image of viewer, which must already be instantiated'''

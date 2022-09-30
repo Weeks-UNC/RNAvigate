@@ -703,8 +703,7 @@ def plot_mol_multisample(samples, structure="pdb",
                          hide_cylinders=False,
                          prefiltered=False, **kwargs):
     plot = Mol(len(samples), samples[0].data[structure], width=width,
-               height=height, background_alpha=background_alpha,
-               hide_cylinders=hide_cylinders)
+               height=height, background_alpha=background_alpha)
     if labels is None:
         labels = ["label"]*len(samples)
     for sample, label in zip(samples, labels):
@@ -714,6 +713,8 @@ def plot_mol_multisample(samples, structure="pdb",
                                            **interactions_filter)
         plot.add_sample(sample, interactions=interactions, profile=profile,
                         label=label, **kwargs)
+    if hide_cylinders:
+        plot.hide_cylinders()
     if show:
         plot.view.show()
     return plot
