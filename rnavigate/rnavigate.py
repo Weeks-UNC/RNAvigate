@@ -437,7 +437,7 @@ class Sample():
         for dance in self.dance:
             dance_ct = dance.data["ct"]
             dance.data["ringmap"].filter(dance_ct, ct=dance_ct, **kwargs)
-            dance.data["ringmap"].mask_on_ct(ctlist, cdAbove=cdfilter)
+            dance.data["ringmap"].mask_on_ct(ctlist, min_cd=cdfilter)
             dance.data["pairmap"].filter(dance_ct, ct=dance_ct,
                                          paired_only=True)
 
