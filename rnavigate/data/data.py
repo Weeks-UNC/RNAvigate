@@ -103,17 +103,17 @@ class Data():
 
     def get_colors(self, source, nt_colors='new', pos_cmap='rainbow',
                    profile=None, ct=None):
-        if source == "sequence":
+        if isinstance(source, str) and (source == "sequence"):
             seq = self.sequence
             colors = np.array([get_nt_color(nt.upper(), nt_colors)
                                for nt in seq])
             return colors
-        elif source == "position":
+        elif isinstance(source, str) and (source == "position"):
             cmap = plt.get_cmap(pos_cmap)
             colors = np.array([cmap(n/self.length)
                                for n in range(self.length)])
             return colors
-        elif source == "profile":
+        elif isinstance(source, str) and (source == "profile"):
             prof_colors = profile.colors
             colors = np.full(self.length, 'gray', dtype='<U16')
             am = profile.get_alignment_map(self)
@@ -121,7 +121,7 @@ class Data():
                 if i2 != -1:
                     colors[i2] = mpc.to_hex(prof_colors[i])
             return colors
-        elif source == "structure":
+        elif isinstance(source, str) and (source == "structure"):
             # TODO: this should be implemented in CT object for reusability
             cmap = np.array(['C0', 'C1'])
             ct_colors = cmap[[int(nt == 0) for nt in ct.ct]]
@@ -131,11 +131,11 @@ class Data():
                 if i2 != -1:
                     colors[i2] = ct_colors[i]
             return colors
-        elif (isinstance(source, list) and (len(source) == self.length)
-              and all(mpc.is_color_like(c) for c in source)):
-            return np.array(source)
         elif mpc.is_color_like(source):
             return np.full(self.length, source, dtype="<U16")
+        elif ((len(source) == self.length)
+              and all(mpc.is_color_like(c) for c in source)):
+            return np.array(list(source))
         else:
             print("Invalid colors: choices = profile, sequence, position, " +
                   "a list of mpl colors, or a single mpl color. " +
