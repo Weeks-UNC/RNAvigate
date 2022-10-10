@@ -106,14 +106,20 @@ class SS(Plot):
                 nts = ''.join([ss.sequence[p-1] for p in pair])
                 x_caps = [x[0] + i * xdist / 7 for i in [2, 5]]
                 y_caps = [y[0] + i * ydist / 7 for i in [2, 5]]
-                if nts in ["UA", "AU", "GU", "UG", "GA", "AG"]:
+                if nts in ["UA", "AU", "GU", "UG"]:
                     ax.plot(x_caps, y_caps, color="grey", zorder=zorder,
                             solid_capstyle='butt')
                 if nts in ["GU", "UG", "AG", "GA"]:
                     x_center = x[0] + xdist/2
                     y_center = y[0] + ydist/2
+                    if nts in ["GU", "UG"]:
+                        fc = 'white'
+                        ec = 'grey'
+                    elif nts in ["AG", "GA"]:
+                        fc = 'grey'
+                        ec = 'none'
                     ax.scatter(x_center, y_center, zorder=zorder+1, s=36,
-                               color="grey", marker="o", fc='white', ec='grey')
+                               color="grey", marker="o", fc=fc, ec=ec)
                 if nts in ["GC", "CG"]:
                     ax.plot(x_caps, y_caps, color="grey", zorder=zorder,
                             linewidth=6, solid_capstyle='butt')
@@ -148,12 +154,13 @@ class SS(Plot):
                                      ct=self.structure)
             bg_color = ss.get_colors("white")
             self.plot_structure(ax, ss.get_colors('grey'), bp_style=bp_style)
-        else:
-            nt_color = np.full(bg_color.shape, 'k')
+        elif sequence:
+            nt_color = ['k'] * len(bg_color)
             for i, color in enumerate(bg_color):
                 r, g, b = to_rgb(color)
                 if (r*0.299 + g*0.587 + b*0.114) < 175/256:
                     nt_color[i] = 'w'
+            nt_color = np.array(nt_color)
 
         if positions:
             self.plot_positions(ax, text_color=nt_color, bbox_color=bg_color)
