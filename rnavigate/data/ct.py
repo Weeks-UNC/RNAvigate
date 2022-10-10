@@ -523,7 +523,7 @@ class CT(Data):
             distance_matrix[i, :] = level
         # store the distance matrix from the search and return
         self.distance_matrix = distance_matrix
-        return self.distance_matrix.copy
+        return self.distance_matrix.copy()
 
     def contactDistance(self, i, j):
         """
