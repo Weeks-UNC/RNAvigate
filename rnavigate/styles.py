@@ -19,6 +19,7 @@ def set_defaults():
     ]
     sns.set_palette(colors)
     mpl.rcParams["font.sans-serif"].insert(0, "Arial")
+    mpl.rcParams["svg.fonttype"] = 'none'
 
 
 def apply_style(style_dict):
