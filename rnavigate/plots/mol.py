@@ -103,13 +103,9 @@ class Mol(Plot):
                 {'resn': resn, 'atom': atom},
                 {'cross': {'hidden': 'true'}})
 
-    def png(self):
+    def save(self):
         '''output png image of viewer, which must already be instantiated'''
-        script = '''<script>
-            var pngdata = viewer_{0}.pngURI()
-            </script>'''.format(self.view.uniqueid)
-        print("To view png in notebook, type:\n"
-              "IPython.display.publish_display_data({'text/html': plot.png()})\n"
-              "Then, to save: right click image and click 'save as'\n"
-              "Currently not working correctly in VSCode, only Jupyter")
-        return script
+        print("To save, orient the interactive plot to the view you'd like\n"
+              "save, then run plot.save() in a new cell. The resulting image\n"
+              "will be saveable as a png file")
+        return self.view.png()
