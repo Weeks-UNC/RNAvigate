@@ -123,8 +123,8 @@ class Plot(ABC):
     def plot_data(self):
         pass
 
-    def png(self, filename):
-        plt.savefig(filename)
+    def save(self, filename):
+        self.fig.savefig(filename)
 
 
 def adjust_spines(ax, spines):
