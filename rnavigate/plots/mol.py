@@ -75,8 +75,6 @@ class Mol(Plot):
                 self.add_lines(io, jo, color, viewer, atom)
 
     def set_colors(self, viewer, profile, nt_color):
-        if nt_color == "position":
-            return
         colors = self.pdb.get_colors(nt_color, profile=profile)
         color_selector = {}
         valid_pdbres = []
