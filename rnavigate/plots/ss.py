@@ -103,7 +103,7 @@ class SS(Plot):
                 y_caps = [y[0] + i * ydist / 3 for i in [1, 2]]
                 ax.plot(x_caps, y_caps, color="grey", zorder=zorder)
             if bp_style == "conventional":
-                nts = ''.join([ss.sequence[p-1] for p in pair])
+                nts = ''.join([ss.sequence[p-1] for p in pair]).upper()
                 x_caps = [x[0] + i * xdist / 7 for i in [2, 5]]
                 y_caps = [y[0] + i * ydist / 7 for i in [2, 5]]
                 if nts in ["UA", "AU", "GU", "UG"]:
@@ -167,7 +167,7 @@ class SS(Plot):
         ax.scatter(ss.xcoordinates, ss.ycoordinates, marker="o",
                    c=bg_color, s=256, zorder=nuc_z)
         if sequence:
-            for nuc in "GUAC":
+            for nuc in "GUACguac":
                 mask = [nt == nuc for nt in ss.sequence]
                 xcoords = ss.xcoordinates[mask]
                 ycoords = ss.ycoordinates[mask]
