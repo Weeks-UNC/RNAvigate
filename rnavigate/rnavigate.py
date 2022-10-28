@@ -731,17 +731,17 @@ def plot_heatmap_multisample(samples, structure=None, interactions=None,
     return plot
 
 
-def plot_circle_multisample(samples, ct=None, comp=None,
+def plot_circle_multisample(samples, seq_source="profile", ct=None, comp=None,
                             interactions=None, interactions_filter={},
                             interactions2=None, interactions2_filter={},
-                            profile=None, label="label", **kwargs):
-    plot = Circle(len(samples), samples[0].data[ct].length)
+                            profile="profile", label="label", **kwargs):
+    plot = Circle(len(samples), samples[0].data[seq_source])
     for sample in samples:
         if interactions is not None:
-            sample.filter_interactions(interactions, ct,
+            sample.filter_interactions(interactions, seq_source,
                                        **interactions_filter)
         if interactions2 is not None:
-            sample.filter_interactions(interactions2, ct,
+            sample.filter_interactions(interactions2, seq_source,
                                        **interactions2_filter)
         plot.add_sample(sample, ct=ct, comp=comp, interactions=interactions,
                         interactions2=interactions2, profile=profile,

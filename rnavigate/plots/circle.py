@@ -1,41 +1,52 @@
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Path, PathPatch
+from matplotlib.colors import to_rgb
 from math import sin, cos, pi
 from .plots import Plot
+import numpy as np
 
 
 class Circle(Plot):
 
-    def __init__(self, num_samples, nt_length):
-        self.nt_length = nt_length
+    def __init__(self, num_samples, seq_source):
+        self.sequence = seq_source
+        length = self.sequence.length
         super().__init__(num_samples)
-        self.x, self.y = [], []
-        diameter = self.nt_length / pi
-        for i in range(nt_length):
-            theta = 2*pi * (i+4)/(nt_length+8)
-            self.x.append(sin(theta)*10)
-            self.y.append(cos(theta)*10)
+        self.x, self.y = np.zeros(length), np.zeros(length)
+        diameter = length / pi
+        self.theta = np.array([2*pi * (i+4)/(length+8) for i in range(length)])
+        self.x = np.sin(self.theta)*diameter
+        self.y = np.cos(self.theta)*diameter
         for i in range(self.length):
             ax = self.get_ax(i)
             ax.set_aspect('equal')
             ax.axis('off')
-            ax.set(xlim=(-10, 10),
-                   ylim=(-10, 10))
+            # ax.set(xlim=(-10.1, 10.1),
+            #        ylim=(-10.1, 10.1))
+        self.pass_through = ["colors", "apply_color_to", "sequence", "colorbar",
+                             "title", "positions"]
+        self.zorder = {"annotations": 0,
+                       "data": 5,
+                       "nucleotide": 10,
+                       "sequence": 15,
+                       "position": 20}
 
     def get_figsize(self):
-        dim = self.nt_length / pi / 4
+        dim = self.sequence.length / pi / 4
         return (dim * self.columns, dim * self.rows)
 
-    def plot_data(self, ct, comp, interactions, interactions2, profile, label):
+    def plot_data(self, ct, comp, interactions, interactions2, profile, label,
+                  colors="sequence", apply_color_to="sequence", colorbar=True,
+                  title=True, positions=True):
         ax = self.get_ax()
-        if interactions is not None:
+        if interactions is not None and colorbar:
             ax_ins1 = ax.inset_axes(
                 [-5, -0.4, 10, 0.8], transform=ax.transData)
             self.view_colormap(ax_ins1, interactions)
-        if interactions2 is not None:
+        if interactions2 is not None and colorbar:
             ax_ins2 = ax.inset_axes([10, -100, 100, 8], transform=ax.transData)
             self.view_colormap(ax_ins2, interactions2)
-        if comp is not None:
+        if comp is not None and colorbar:
             ax_ins3 = ax.inset_axes([10, 80, 100, 8], transform=ax.transData)
             self.view_colormap(ax_ins3, "ct_compare")
         self.add_patches(ax, ct, comp)
@@ -44,9 +55,43 @@ class Circle(Plot):
         # self.add_sequence(ax, ct.sequence, yvalue=0.5)
         # self.plot_profile(ax, profile, ct)
         ax.set_title(label)
-        nuc_colors = profile.get_colors("profile", profile=profile)
-        ax.scatter(self.x, self.y, marker='o', c=nuc_colors)
+        self.plot_sequence(ax, profile, colors, apply_color_to)
+
         self.i += 1
+
+    def plot_sequence(self, ax, profile, colors, apply_color_to):
+        sequence = self.sequence
+        nuc_z = self.zorder["nucleotide"]
+        seq_z = self.zorder["sequence"]
+        valid_apply = ["background", "sequence", None]
+        message = f"invalid apply_color_to, must be in {valid_apply}"
+        assert apply_color_to in valid_apply, message
+        if colors is None or apply_color_to is None:
+            colors = sequence.get_colors("black")
+            apply_color_to = "sequence"
+        if apply_color_to == "background":
+            bg_color = sequence.get_colors(colors, profile=profile)
+        if apply_color_to == "sequence":
+            nt_color = sequence.get_colors(colors, profile=profile)
+            bg_color = sequence.get_colors("white")
+        elif sequence:
+            nt_color = ['k'] * len(bg_color)
+            for i, color in enumerate(bg_color):
+                r, g, b = to_rgb(color)
+                if (r*0.299 + g*0.587 + b*0.114) < 175/256:
+                    nt_color[i] = 'w'
+            nt_color = np.array(nt_color)
+        ax.scatter(self.x, self.y, marker="o", c=bg_color, s=256, zorder=nuc_z)
+        for nuc in "GUACguac":
+            mask = [nt == nuc for nt in sequence.sequence]
+            xcoords = self.x[mask]
+            ycoords = self.y[mask]
+            marker = "$\mathsf{"+nuc+"}$"
+            ax.scatter(xcoords, ycoords, marker=marker, s=100,
+                       c=nt_color[mask], lw=1, zorder=seq_z)
+
+    def plot_positions(self, interval=20):
+        return
 
     def add_patches(self, ax, data, comp=None):
         if comp is not None:
@@ -67,7 +112,7 @@ class Circle(Plot):
             y_center = (y_i+y_j)/2
             # scaling the center point towards zero depending on angle(i,j)
             # I should test taking the root of the center point
-            f = (1 - ((j - i) / (self.nt_length + 8))) ** 4
+            f = (1 - ((j - i) / (self.sequence.length + 8))) ** 4
             verts = [[x_i, y_i], [x_center*f, y_center*f], [x_j, y_j]]
             codes = [Path.MOVETO, Path.CURVE3, Path.CURVE3]
             patches.append(PathPatch(Path(verts, codes), fc="none", ec=color))
