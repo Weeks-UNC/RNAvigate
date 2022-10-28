@@ -13,10 +13,10 @@ class Circle(Plot):
         length = self.sequence.length
         super().__init__(num_samples)
         self.x, self.y = np.zeros(length), np.zeros(length)
-        diameter = length / pi
+        self.diameter = length / pi
         self.theta = np.array([2*pi * (i+4)/(length+8) for i in range(length)])
-        self.x = np.sin(self.theta)*diameter
-        self.y = np.cos(self.theta)*diameter
+        self.x = np.sin(self.theta)*self.diameter
+        self.y = np.cos(self.theta)*self.diameter
         for i in range(self.length):
             ax = self.get_ax(i)
             ax.set_aspect('equal')
@@ -35,7 +35,8 @@ class Circle(Plot):
         dim = self.sequence.length / pi / 4
         return (dim * self.columns, dim * self.rows)
 
-    def plot_data(self, ct, comp, interactions, interactions2, profile, label,
+    def plot_data(self, ct, comp, interactions, interactions2, profile,
+                  annotations, label,
                   colors="sequence", apply_color_to="sequence", colorbar=True,
                   title=True, positions=True):
         ax = self.get_ax()
@@ -54,9 +55,13 @@ class Circle(Plot):
         self.add_patches(ax, interactions2)
         # self.add_sequence(ax, ct.sequence, yvalue=0.5)
         # self.plot_profile(ax, profile, ct)
-        ax.set_title(label)
         self.plot_sequence(ax, profile, colors, apply_color_to)
-
+        for annotation in annotations:
+            self.plot_annotation(ax, annotation)
+        if title:
+            ax.set_title(label)
+        if positions:
+            self.plot_positions(ax)
         self.i += 1
 
     def plot_sequence(self, ax, profile, colors, apply_color_to):
@@ -90,8 +95,16 @@ class Circle(Plot):
             ax.scatter(xcoords, ycoords, marker=marker, s=100,
                        c=nt_color[mask], lw=1, zorder=seq_z)
 
-    def plot_positions(self, interval=20):
-        return
+    def plot_positions(self, ax, interval=20):
+        for i in np.arange(interval, self.sequence.length, interval):
+            x = self.x[i]
+            y = self.y[i]
+            theta = self.theta[i] * -180/np.pi
+            ax.plot([x, x*1.06], [y, y*1.06], c='k')
+            ha = ['left', 'right'][x < 0]
+            va = ['top', 'bottom'][y > 0]
+            ax.text(x*1.08, y*1.08, i, ha='center',
+                    va='center', rotation=theta)
 
     def add_patches(self, ax, data, comp=None):
         if comp is not None:
@@ -117,3 +130,37 @@ class Circle(Plot):
             codes = [Path.MOVETO, Path.CURVE3, Path.CURVE3]
             patches.append(PathPatch(Path(verts, codes), fc="none", ec=color))
         ax.add_collection(PatchCollection(patches, match_original=True))
+
+    def plot_annotation(self, ax, annotation):
+        color = annotation.color
+        zorder = self.zorder["annotations"]
+        if annotation.annotation_type == "spans":
+            for start, end in annotation.spans:
+                x = self.x[start-1:end]*1.03
+                y = self.y[start-1:end]*1.03
+                ax.plot(x, y, color=color, alpha=0.8, lw=10, zorder=zorder)
+        elif annotation.annotation_type == "sites":
+            x = self.x[annotation.sites]
+            y = self.y[annotation.sites]
+            ax.scatter(x, y, color=color, marker='o', ec="none", alpha=0.7,
+                       s=30**2, zorder=zorder)
+        elif annotation.annotation_type == "groups":
+            for group in annotation.groups:
+                x = self.structure.xcoordinates[group["sites"]]
+                y = self.structure.ycoordinates[group["sites"]]
+                color = group["color"]
+                ax.plot(x, y, color=color, alpha=0.2, lw=30, zorder=zorder)
+                ax.scatter(x, y, color=color, marker='o', ec="none", alpha=0.4,
+                           s=30**2, zorder=zorder)
+        elif annotation.annotation_type == "primers":
+            for start, end in annotation.primers:
+                if start < end:
+                    index = np.arange(start-1, end)
+                elif start > end:
+                    index = np.arange(start-1, end-2, -1)
+                index = np.append(index, index[-2])
+                x = self.x[index] * 1.03
+                y = self.y[index] * 1.03
+                x[-1] *= 1.03
+                y[-1] *= 1.03
+                ax.plot(x, y, color=color, alpha=0.8, zorder=zorder)

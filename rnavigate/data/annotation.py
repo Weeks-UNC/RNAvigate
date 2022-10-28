@@ -13,6 +13,7 @@ class Annotation(Data):
                  site_list=None,
                  span_list=None,
                  groups=None,
+                 primer_list=None,
                  color="blue"):
         self.name = name
         self.color = color
@@ -34,6 +35,10 @@ class Annotation(Data):
             self.annotation_type = "groups"
             self.groups = groups
             self._list = groups
+        elif primer_list is not None:
+            self.annotation_type = "primers"
+            self.primers = primer_list
+            self._list = primer_list
 
     def read_sites(self, filepath, sep, read_csv_kw):
         self.data = pd.read_csv(filepath, sep=sep, **read_csv_kw)
@@ -49,14 +54,13 @@ class Motif(Annotation):
     def __init__(self,
                  name=None,
                  filepath=None,
-                 datatype="sequence motif",
                  fasta=None,
                  sequence=None,
                  motif=None,
                  color="blue"):
         span_list = self.get_spans_from_motif(sequence, motif)
-        super().__init__(name=name, datatype=datatype, fasta=fasta,
-                         sequence=sequence, span_list=span_list, color=color)
+        super().__init__(name=name, fasta=fasta, sequence=sequence,
+                         span_list=span_list, color=color)
 
     def get_spans_from_motif(self, sequence, motif):
         nuc_codes = {"A": "A", "T": "T", "U": "U", "G": "G", "C": "C",
@@ -77,13 +81,12 @@ class ORFs(Annotation):
     def __init__(self,
                  name=None,
                  filepath=None,
-                 datatype="ORFs",
                  fasta=None,
                  sequence=None,
                  color="blue"):
         span_list = self.get_spans_from_orf(sequence)
-        super().__init__(name=name, datatype=datatype, fasta=fasta,
-                         sequence=sequence, span_list=span_list, color=color)
+        super().__init__(name=name, fasta=fasta, sequence=sequence,
+                         span_list=span_list, color=color)
 
     def get_spans_from_orf(self, sequence):
         spans = []

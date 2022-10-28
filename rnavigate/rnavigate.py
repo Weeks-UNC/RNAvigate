@@ -65,6 +65,7 @@ class Sample():
                  sites=None,
                  spans=None,
                  groups=None,
+                 primers=None,
                  orfs=None,
                  motif=None):
         """Creates a sample object which connects all chemical probing and
@@ -222,6 +223,11 @@ class Sample():
                 "instantiator": Annotation,
                 "seq_source": groups.pop("seq_source", ""),
                 "kwargs": groups},
+            "primers": {
+                "filepath": "",
+                "instantiator": Annotation,
+                "seq_source": primers.pop("seq_source", ""),
+                "kwargs": primers},
             "orfs": {
                 "filepath": "",
                 "instantiator": ORFs,
@@ -734,18 +740,20 @@ def plot_heatmap_multisample(samples, structure=None, interactions=None,
 def plot_circle_multisample(samples, seq_source="profile", ct=None, comp=None,
                             interactions=None, interactions_filter={},
                             interactions2=None, interactions2_filter={},
+                            annotations=[], prefiltered=False,
                             profile="profile", label="label", **kwargs):
     plot = Circle(len(samples), samples[0].data[seq_source])
     for sample in samples:
-        if interactions is not None:
-            sample.filter_interactions(interactions, seq_source,
-                                       **interactions_filter)
-        if interactions2 is not None:
-            sample.filter_interactions(interactions2, seq_source,
-                                       **interactions2_filter)
+        if not prefiltered:
+            if interactions is not None:
+                sample.filter_interactions(interactions, seq_source,
+                                           **interactions_filter)
+            if interactions2 is not None:
+                sample.filter_interactions(interactions2, seq_source,
+                                           **interactions2_filter)
         plot.add_sample(sample, ct=ct, comp=comp, interactions=interactions,
                         interactions2=interactions2, profile=profile,
-                        label=label, **kwargs)
+                        annotations=annotations, label=label, **kwargs)
     return plot
 
 

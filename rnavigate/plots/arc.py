@@ -139,15 +139,18 @@ class AP(Plot):
         color = annotation.color
         modes = ["track", "vbar"]
         assert mode in modes, f"annotation mode must be one of: {modes}"
-        if annotation.annotation_type == "spans":
-            for span in annotation.spans:
+        a_type = annotation.annotation_type
+        if a_type == "spans" or (a_type == "primers" and mode == "vbar"):
+            for start, end in annotation.spans:
+                if start > end:
+                    start, end = end, start
                 if mode == "track":
-                    ax.plot(span, [yvalue]*2,
+                    ax.plot([start, end], [yvalue]*2,
                             color=color, alpha=0.7, lw=11)
                 elif mode == "vbar":
-                    ax.axvspan(span[0]-0.5, span[1]+0.5,
+                    ax.axvspan(start-0.5, end+0.5,
                                fc=color, ec="none", alpha=0.1)
-        elif annotation.annotation_type == "sites":
+        elif a_type == "sites":
             sites = annotation.sites
             if mode == "track":
                 ax.scatter(sites, [yvalue]*len(sites),
@@ -156,7 +159,7 @@ class AP(Plot):
             elif mode == "vbar":
                 for site in sites:
                     ax.axvline(site, color=color, ls=":")
-        elif annotation.annotation_type == "groups":
+        elif a_type == "groups":
             for group in annotation.groups:
                 sites = group["sites"]
                 color = group["color"]
@@ -172,3 +175,13 @@ class AP(Plot):
                                fc=color, ec="none", alpha=0.1)
                     for site in sites:
                         ax.axvline(site, color=color, ls=":")
+        elif a_type == "primers":
+            for start, end in annotation.primers:
+                if mode == "track":
+                    if start < end:
+                        xs = [start, end, end-1]
+                        ys = [yvalue, yvalue, yvalue+1]
+                    elif start > end:
+                        xs = [start, end, end+1]
+                        ys = [yvalue, yvalue, yvalue-1]
+                    ax.plot(xs, ys, color=color, alpha=0.7)
