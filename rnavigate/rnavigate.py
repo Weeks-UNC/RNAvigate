@@ -113,6 +113,8 @@ class Sample():
             spans = {}
         if groups is None:
             groups = {}
+        if primers is None:
+            primers = {}
         if orfs is None:
             orfs = {}
         if motif is None:

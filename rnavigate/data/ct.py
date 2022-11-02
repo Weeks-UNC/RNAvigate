@@ -14,6 +14,7 @@ import numpy as np
 import xml.etree.ElementTree as xmlet
 from .data import Data
 import pandas as pd
+import json
 
 
 def get_ss_class(filepath, **kwargs):
@@ -27,7 +28,8 @@ def get_ss_class(filepath, **kwargs):
         "cte": CTE,
         "ct": CT,
         "dbn": DotBracket,
-        "bracket": DotBracket
+        "bracket": DotBracket,
+        "json": JSON,
     }[extension]
     return instantiator(filepath=filepath, **kwargs)
 
@@ -1010,6 +1012,7 @@ class VARNA(CT):
         # store attributes
         coord_scale_factor = 1/65
         self.sequence = sequence.upper().replace("T", "U")
+        self.num = np.arange(len(self.sequence))
         self.pair2CT(basepairs, **kwargs)
         self.xcoordinates = xcoords*coord_scale_factor
         self.ycoordinates = ycoords*coord_scale_factor
@@ -1060,6 +1063,7 @@ class XRNA(CT):
         # store attributes
         coord_scale_factor = 1/20
         self.sequence = sequence.upper().replace("T", "U")
+        self.num = np.arange(len(self.sequence))
         self.pair2CT(basepairs, **kwargs)
         self.xcoordinates = xcoords*coord_scale_factor
         self.ycoordinates = ycoords*coord_scale_factor
@@ -1090,6 +1094,7 @@ class CTE(CT):
         # store attributes
         coord_scale_factor = 1/30.5
         self.sequence = sequence.upper().replace("T", "U")
+        self.num = np.arange(len(self.sequence))
         self.pair2CT(basepairs, **kwargs)
         self.xcoordinates = xcoords*coord_scale_factor
         self.ycoordinates = ycoords*coord_scale_factor
@@ -1141,6 +1146,7 @@ class NSD(CT):
         # store attributes
         coord_scale_factor = 1/30.5
         self.sequence = sequence.upper().replace("T", "U")
+        self.num = np.arange(len(self.sequence))
         self.pair2CT(basepairs)
         self.xcoordinates = xcoords*coord_scale_factor
         self.ycoordinates = ycoords*coord_scale_factor
@@ -1196,3 +1202,42 @@ class DotBracket(CT):
             self.filterNC()
         if filterSingle:
             self.filterSingleton()
+
+
+class JSON(CT):
+    def __init__(self, datatype="ct", dataframe=None, filepath=None, **kwargs):
+        super().__init__(datatype, dataframe, filepath, **kwargs)
+
+    def read_file(self):
+        """Generates CT object data from an ss file, including nucleotide x and
+        y coordinates.
+
+        Args:
+            ss (file path): path to xrna, varna, nsd, or cte file
+        """
+        # get and check file extension, then read
+        self.ss_type = "nsd"
+        # Parse file and get sequence, xcoords, ycoords, and list of pairs.
+        basepairs, sequence, xcoords, ycoords = [], '', [], []
+        with open("Lys_RS-RF00168.colored.json", 'r') as file:
+            file = json.load(file)
+        for nt in file["rnaComplexes"][0]['rnaMolecules'][0]['sequence']:
+            if nt["residueName"] not in ["5'", "3'"]:
+                sequence += nt["residueName"]
+                xcoords.append(nt["x"])
+                ycoords.append(nt["y"])
+        sequence = sequence.replace("5'", "").replace("3'", "")
+        for bp in file["rnaComplexes"][0]['rnaMolecules'][0]['basePairs']:
+            i = bp["residueIndex1"]
+            j = bp["residueIndex2"]
+            if [i, j] not in basepairs:
+                basepairs.append([i, j])
+
+        xcoords = np.array(xcoords)
+        ycoords = np.array(ycoords)
+        # store attributes
+        coord_scale_factor = 1/12
+        self.sequence = sequence.upper().replace("T", "U")
+        self.pair2CT(basepairs)
+        self.xcoordinates = xcoords*coord_scale_factor
+        self.ycoordinates = -ycoords*coord_scale_factor
