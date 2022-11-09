@@ -1,4 +1,4 @@
-RNAvigate (RNA vizualization and graphical analysis toolset)
+RNAvigate (RNA visualization and graphical analysis toolset)
 ==============================================================================
 RNAvigate provides a framework for rapidly exploring interrelationships between
 chemical probing data, RNA structures, and motif annotations for multiple
