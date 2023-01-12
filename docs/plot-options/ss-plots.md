@@ -37,9 +37,10 @@ plot1 = sample.plot_arcs(
     colorbar=True,
     title=True,
     colors="sequence",
+    positions=False,
+    bp_style="dotted",
     sequence=False,
-    apply_color_to="background",
-    positions=False)
+    apply_color_to="background")
 ```
 
 `ss`
