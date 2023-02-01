@@ -11,7 +11,7 @@ from .data import CT, DotBracket, XRNA, VARNA, NSD, CTE, get_ss_class
 from .data import Interactions, RINGMaP, PAIRMaP, PairProb, SHAPEJuMP
 from .data import Profile, SHAPEMaP, DanceMaP, RNPMaP
 from .plots import AP, Circle, DistHist, Heatmap, LinReg, Mol
-from .plots import QC, Skyline, SM, SS
+from .plots import QC, Skyline, SM, SS, ROC
 from .analysis import LogCompare, LowSS
 
 
@@ -762,6 +762,16 @@ def plot_circle_multisample(samples, seq_source="profile", ct=None, comp=None,
 def plot_linreg_multisample(samples, ct="ct", profile="profile", label="label",
                             **kwargs):
     plot = LinReg(len(samples))
+    pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
+    for sample in samples:
+        plot.add_sample(sample, ct=ct, profile=profile,
+                        label=label, **pt_kwargs)
+    return plot
+
+
+def plot_roc_multisample(samples, ct="ct", profile="profile", label="label",
+                         **kwargs):
+    plot = ROC(len(samples))
     pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
     for sample in samples:
         plot.add_sample(sample, ct=ct, profile=profile,

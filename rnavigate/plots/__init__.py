@@ -9,6 +9,7 @@ from .qc import QC
 from .skyline import Skyline
 from .sm import SM
 from .ss import SS
+from .roc import ROC
 
 __all__ = ["AP", "Circle", "DistHist", "Heatmap", "LinReg", "Mol", "Plot",
-           "QC", "Skyline", "SM", "SS"]
+           "QC", "Skyline", "SM", "SS", "ROC"]
