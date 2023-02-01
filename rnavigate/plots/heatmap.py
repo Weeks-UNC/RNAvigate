@@ -32,10 +32,11 @@ class Heatmap(Plot):
         elif plot_type == "kde":
             self.plot_kde_data(ax, interactions)
         ax.set_title(label)
+        ax.plot([0, self.structure.length], [0, self.structure.length])
         self.i += 1
 
     def get_figsize(self):
-        return (10*self.columns, 10*self.rows)
+        return (100*self.columns, 100*self.rows)
 
     def plot_contour_regions(self, ax, interactions, regions):
         matrix = np.full([interactions.length, interactions.length], 0)
@@ -64,21 +65,20 @@ class Heatmap(Plot):
 
     def plot_heatmap_data(self, ax, interactions, interpolation):
         structure = self.structure
-        data = interactions.data.copy()
+        data = interactions.data.loc[interactions.data["mask"]].copy()
         metric = interactions.metric
-        columns = ["i", "j", metric]
+        columns = ["i_offset", "j_offset", metric]
         if interactions.datatype == "rings":
             data = data[columns+["Sign"]]
             data[metric] = data[metric]*data["Sign"]
         data = data[columns]
-        am = interactions.get_alignment_map(structure)
         length = structure.length
         data_im = np.full([length, length], interactions.fill)
         window = interactions.window
-        for _, i, j, value in data.itertuples():
-            i = am[i-1]
-            j = am[j-1]
-            data_im[j:j+window, i:i+window] = value
+        for _, row in data.iterrows():
+            i = int(row["i_offset"]-1)
+            j = int(row["j_offset"]-1)
+            data_im[j:j+window, i:i+window] = row[metric]
         min_max = interactions.min_max
         if metric == "Percentile":
             min_max = [0, 1]
