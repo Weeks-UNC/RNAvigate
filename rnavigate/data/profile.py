@@ -99,6 +99,7 @@ class SHAPEMaP(Profile):
                          norm_values=[-0.4, 0.4, 0.85],
                          **kwargs)
         if dms:
+            self.ap_scale_factor = 10
             self.set_dms_profile()
             self.set_profile_colors(start_from="defaults")
 
@@ -151,6 +152,7 @@ class DanceMaP(SHAPEMaP):
         self.component = component
         super().__init__(filepath=filepath, datatype=datatype,
                          read_csv_kw={}, **kwargs)
+        self.ap_scale_factor = 10
 
     def read_file(self, filepath, sep='\t', read_csv_kw={}):
         # parse header
