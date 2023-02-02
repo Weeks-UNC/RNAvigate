@@ -10,3 +10,5 @@ NOTES:
 CHANGES:
 - removed py3dmol version from env.yaml (uses most recent)
 - Added ROC plots
+- Added DeltaSHAPE
+
