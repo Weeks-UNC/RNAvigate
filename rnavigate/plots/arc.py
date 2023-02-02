@@ -15,12 +15,13 @@ class AP(Plot):
         super().__init__(num_samples, **kwargs)
         self.pass_through = ["ax", "colorbar", "seqbar", "title",
                              "interactions_panel", "interactions2_panel",
-                             "ct_panel", "annotation_mode"]
+                             "ct_panel", "annotation_mode", "plot_error"]
 
     def plot_data(self, ct, comp, interactions, interactions2, profile, label,
                   ax=None, colorbar=True, seqbar=True, title=True,
                   interactions_panel="bottom", interactions2_panel="bottom",
-                  ct_panel="top", annotations=[], annotation_mode="track"):
+                  ct_panel="top", annotations=[], annotation_mode="track",
+                  plot_error=True):
         ax = self.get_ax(ax)
         if annotation_mode == "track":
             annotation_gap = 2*(2*len(annotations) + seqbar)
@@ -43,7 +44,7 @@ class AP(Plot):
                          annotation_gap=annotation_gap)
         self.add_patches(ax=ax, data=interactions2, panel=interactions2_panel,
                          annotation_gap=annotation_gap)
-        self.plot_profile(ax=ax, profile=profile, ct=ct)
+        self.plot_profile(ax=ax, profile=profile, ct=ct, plot_error=plot_error)
         for i, annotation in enumerate(annotations):
             self.plot_annotation(ax, annotation=annotation, yvalue=-2-(4*i),
                                  mode=annotation_mode)
@@ -114,7 +115,7 @@ class AP(Plot):
         height = min(self.nt_length, 602) * 0.1 + 1
         return (width*self.columns, height*self.rows)
 
-    def plot_profile(self, ax, profile, ct):
+    def plot_profile(self, ax, profile, ct, plot_error=True):
         if profile is None:
             return
         column = profile.default_column
@@ -130,10 +131,15 @@ class AP(Plot):
                 if 'Norm_stderr' in profile.data.columns:
                     yerr[i2] = profile.data.loc[i1, 'Norm_stderr']
         mn, mx = self.region
-        ax.bar(nts[mn-1:mx], values[mn-1:mx]*factor, align="center",
-               width=1.05, color=colormap[mn-1:mx],
-               edgecolor=colormap[mn-1:mx], linewidth=0.0,
-               yerr=yerr[mn-1:mx], ecolor=(0, 0, 1 / 255.0), capsize=1)
+        if plot_error:
+            ax.bar(nts[mn-1:mx], values[mn-1:mx]*factor, align="center",
+                   width=1.05, color=colormap[mn-1:mx],
+                   edgecolor=colormap[mn-1:mx], linewidth=0.0,
+                   yerr=yerr[mn-1:mx], ecolor=(0, 0, 1 / 255.0), capsize=1)
+        else:
+            ax.bar(nts[mn-1:mx], values[mn-1:mx]*factor, align="center",
+                   width=1.05, color=colormap[mn-1:mx],
+                   edgecolor=colormap[mn-1:mx], linewidth=0.0)
 
     def plot_annotation(self, ax, annotation, yvalue, mode):
         color = annotation.color
