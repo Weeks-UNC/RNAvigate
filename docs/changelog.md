@@ -12,4 +12,6 @@ CHANGES:
 - Added ROC plots
 - Added DeltaSHAPE
 - Added Windowed AUROC
+- Fixed bug in logcompare
+- Added support for .cif files
 
