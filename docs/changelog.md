@@ -14,4 +14,5 @@ CHANGES:
 - Added Windowed AUROC
 - Fixed bug in logcompare
 - Added support for .cif files
+- Added seq_source to arc and circle plots
 

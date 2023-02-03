@@ -416,7 +416,9 @@ class Sample():
                 kwargs[datatype] = self.data[kwargs[datatype]]
             elif datatype in self.data.keys():
                 kwargs[datatype] = self.data[datatype]
-        data.filter(self.get_data_list(fit_to), **kwargs)
+        if not hasattr(fit_to, "sequence"):
+            fit_to = self.get_data_list(fit_to)
+        data.filter(fit_to, **kwargs)
 
     def dance_filter(self, filterneg=True, cdfilter=15, sigfilter=23,
                      ssfilter=True):
@@ -606,7 +608,9 @@ class Sample():
         for filter in filters:
             interactions = filter.pop("interactions")
             self.filter_interactions(interactions, "pdb", **filter)
-            plot.add_sample(structure, interactions, label, ax)
+            plot.add_sample(self, structure=structure,
+                            interactions=interactions,
+                            label=label, ax=ax)
         return plot
 
 ###############################################################################
@@ -622,6 +626,20 @@ class Sample():
 #   plot_linreg_multisample
 #   plot_disthist_multisample
 ###############################################################################
+
+
+def get_sequence(seq_source, sample, default):
+    if seq_source is None and default is not None:
+        seq_source = default
+    else:
+        raise ValueError("A seq_source must be provided.")
+    if seq_source in sample.data.keys():
+        sequence = sample.data[seq_source]
+    elif hasattr(seq_source, sequence):
+        sequence = seq_source
+    elif all([nt.upper() in "AUCGT" for nt in seq_source]):
+        sequence = Data(sequence=seq_source)
+    return sequence
 
 
 def extract_passthrough_kwargs(plot, kwargs):
@@ -655,26 +673,27 @@ def plot_skyline_multisample(samples, profile="profile", labels=None,
     return plot
 
 
-def plot_arcs_multisample(samples, ct="ct", comp=None,
+def plot_arcs_multisample(samples, seq_source=None, ct="ct", comp=None,
                           interactions=None, interactions_filter={},
                           interactions2=None, interactions2_filter={},
                           profile="profile", annotations=[], labels=None,
                           region="all", plot_kwargs={}, prefiltered=False,
                           **kwargs):
-    plot = AP(num_samples=len(samples), nt_length=samples[0].data[ct].length,
-              region=region, **plot_kwargs)
+    seq = get_sequence(seq_source=seq_source, sample=samples[0], default=ct)
+    plot = AP(num_samples=len(samples), nt_length=seq.length, region=region,
+              **plot_kwargs)
     if labels is None:
         labels = ["label"]*len(samples)
     for sample, label in zip(samples, labels):
         if not prefiltered:
             if ct not in ["ss", "ct", "compct"]:
-                sample.filter_interactions(interactions=ct, fit_to=ct)
+                sample.filter_interactions(interactions=ct, fit_to=seq)
             if interactions is not None:
                 sample.filter_interactions(interactions=interactions,
-                                           fit_to=ct, **interactions_filter)
+                                           fit_to=seq, **interactions_filter)
             if interactions2 is not None:
                 sample.filter_interactions(interactions=interactions2,
-                                           fit_to=ct, **interactions2_filter)
+                                           fit_to=seq, **interactions2_filter)
         plot.add_sample(sample=sample, ct=ct, comp=comp,
                         interactions=interactions, interactions2=interactions2,
                         profile=profile, label=label, annotations=annotations,
@@ -739,19 +758,20 @@ def plot_heatmap_multisample(samples, structure=None, interactions=None,
     return plot
 
 
-def plot_circle_multisample(samples, seq_source="profile", ct=None, comp=None,
+def plot_circle_multisample(samples, seq_source=None, ct=None, comp=None,
                             interactions=None, interactions_filter={},
                             interactions2=None, interactions2_filter={},
                             annotations=[], prefiltered=False,
                             profile="profile", label="label", **kwargs):
-    plot = Circle(len(samples), samples[0].data[seq_source])
+    sequence = get_sequence(seq_source, samples[0], profile)
+    plot = Circle(len(samples), sequence)
     for sample in samples:
         if not prefiltered:
             if interactions is not None:
-                sample.filter_interactions(interactions, seq_source,
+                sample.filter_interactions(interactions, sequence,
                                            **interactions_filter)
             if interactions2 is not None:
-                sample.filter_interactions(interactions2, seq_source,
+                sample.filter_interactions(interactions2, sequence,
                                            **interactions2_filter)
         plot.add_sample(sample, ct=ct, comp=comp, interactions=interactions,
                         interactions2=interactions2, profile=profile,
