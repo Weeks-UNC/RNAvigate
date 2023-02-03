@@ -34,7 +34,10 @@ class PDB(Data):
                     self.sequence += ''.join(line[4:])
 
     def read_pdb(self, pdb):
-        parser = Bio.PDB.PDBParser()
+        if pdb.split('.')[-1] == "pdb":
+            parser = Bio.PDB.PDBParser(QUIET=True)
+        elif pdb.split('.')[-1] == 'cif':
+            parser = Bio.PDB.MMCIFParser(QUIET=True)
         self.pdb = parser.get_structure('RNA', pdb)
         self.validres = []
         for res in self.pdb[0][self.chain].get_residues():

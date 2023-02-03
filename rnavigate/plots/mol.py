@@ -15,9 +15,12 @@ class Mol(Plot):
         view.setBackgroundColor('white', background_alpha)
         with open(self.pdb.path, 'r') as pdb_file:
             pdb_str = pdb_file.read()
-        view.addModel(pdb_str, 'pdb')
+        if self.pdb.path.split('.')[-1] == "pdb":
+            view.addModel(pdb_str, 'pdb')
+        elif self.pdb.path.split('.')[-1] == "cif":
+            view.addModel(pdb_str, 'mmcif')
         view.setStyle({"cartoon": {'color': 'spectrum'}})
-        view.zoomTo()
+        view.zoomTo({"chain": self.pdb.chain})
         self.view = view
         self.i = 0
         self.pass_through = ["nt_color", "atom", "title"]
