@@ -1219,7 +1219,7 @@ class JSON(CT):
         self.ss_type = "nsd"
         # Parse file and get sequence, xcoords, ycoords, and list of pairs.
         basepairs, sequence, xcoords, ycoords = [], '', [], []
-        with open("Lys_RS-RF00168.colored.json", 'r') as file:
+        with open(self.filepath, 'r') as file:
             file = json.load(file)
         for nt in file["rnaComplexes"][0]['rnaMolecules'][0]['sequence']:
             if nt["residueName"] not in ["5'", "3'"]:
