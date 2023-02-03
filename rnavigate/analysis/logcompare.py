@@ -18,6 +18,7 @@ class LogCompare():
             name2 (string): name of second sample
             data (str, optional): Datatype to compare. Defaults to "profile".
         """
+        self.region = [1, samples1[0].data["profile"].length]
         self.data = data
         self.groups = {}
         self.load_replicates(*samples1, group=1)
@@ -86,7 +87,7 @@ class LogCompare():
 
         x = np.array(list(range(1, len(prof1)+1)))
 
-        _, axes = plt.subplots(2, 1, figsize=(30, 14), sharex=True)
+        _, axes = plt.subplots(2, 1, figsize=(0.1*len(prof1), 14), sharex=True)
         ax = axes[0]
         ax.step(x, prof1, label=name1, color="C0")
         ax.step(x, prof2, label=name2, color="C1")
@@ -97,7 +98,7 @@ class LogCompare():
         ax.legend(loc='upper right')
         ax.axhline(0, color='black', lw=1, zorder=0)
         ax.set_ylabel('ln(Mod/BG)')
-        Plot.add_sequence(ax=ax, sequence=seq)
+        Plot.add_sequence(self, ax=ax, sequence=seq)
 
         stack1 = stack1+10
         rescale_dms = self.rescale(stack1, stack2)
@@ -121,7 +122,7 @@ class LogCompare():
         ax.set_ylabel(f'{name2}-{name1}')
         ax.errorbar(x-0.5, meandiff, yerr=std_err,
                     fmt='none', color='black', lw=1)
-        Plot.add_sequence(ax=ax, sequence=seq)
+        Plot.add_sequence(self, ax=ax, sequence=seq)
 
         axin1 = ax.inset_axes([0.8, 0.1, 0.15, 0.15])
         Plot.view_colormap(ax=axin1, ticks=[0, 5, 10], values=[-5, 0, 5],
