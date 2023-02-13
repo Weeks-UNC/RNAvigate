@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 class Mol(Plot):
     def __init__(self, num_samples, pdb, width=400, height=400,
-                 background_alpha=1):
+                 background_alpha=1, rotation=None, orientation=None):
         self.pdb = pdb
         self.length = num_samples
         self.rows, self.columns = self.get_rows_columns()
@@ -21,9 +21,14 @@ class Mol(Plot):
             view.addModel(pdb_str, 'mmcif')
         view.setStyle({"cartoon": {'color': 'spectrum'}})
         view.zoomTo({"chain": self.pdb.chain})
+        if rotation is not None:
+            for key in rotation:
+                view.rotate(rotation[key], key)
+        elif orientation is not None:
+            view.setView(orientation)
         self.view = view
         self.i = 0
-        self.pass_through = ["nt_color", "atom", "title"]
+        self.pass_through = ["nt_color", "atom", "title", "get_orientation"]
 
     def get_figsize(self):
         pass
@@ -35,9 +40,11 @@ class Mol(Plot):
         col = i % self.columns
         return (row, col)
 
-    def plot_data(self, interactions, profile, label, nt_color="sequence",
-                  atom="O2'", title=True):
+    def plot_data(self, interactions, profile, label, nt_color="grey",
+                  atom="O2'", title=True, get_orientation=False):
         viewer = self.get_viewer()
+        if get_orientation:
+            self.get_orientation()
         if interactions is not None:
             self.plot_interactions(viewer, interactions, atom)
             _, ax = plt.subplots(1, figsize=(6, 2))
@@ -112,3 +119,17 @@ class Mol(Plot):
               "save, then run plot.save() in a new cell. The resulting image\n"
               "will be saveable as a png file")
         return self.view.png()
+
+    def get_orientation(self):
+        self.view.setClickable(
+            {},
+            'true',
+            '''function(atom,viewer,event,container){
+                viewer.addLabel(viewer.getView().map(function(each_element){return each_element.toFixed(2)}),
+                {
+                    position: {x:0,y:0,z:0},
+                    useScreen: true,
+                    backgroundColor: 'black'
+                });
+            }'''
+        )
