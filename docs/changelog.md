@@ -15,4 +15,5 @@ CHANGES:
 - Fixed bug in logcompare
 - Added support for .cif files
 - Added seq_source to arc and circle plots
+- Added features to retrieve/set orientation of 3D molecule plots
 
