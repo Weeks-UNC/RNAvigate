@@ -113,12 +113,11 @@ class LowSS():
                         ha='center', va='center', fontsize=36)
 
         ax.set_ylim([-305, 915])
-        ax.set_xticks(ticks=[x for x in range(500, stop, 500) if x > start])
-        ax.set_xticks(ticks=[x for x in range(100, stop, 100) if x > start],
+        ax.set_xticks(ticks=[x for x in range(500, stop+1, 500) if x > start])
+        ax.set_xticks(ticks=[x for x in range(100, stop+1, 100) if x > start],
                       minor=True)
         ax.tick_params(axis='x', which='major', labelsize=36)
         adjust_spines(ax, ['bottom'])
-        ax.grid(axis='x')
 
         # set figure size by axis size + current figure margins
         l_ax, r_ax = ax.get_xlim()
@@ -132,6 +131,7 @@ class LowSS():
         figw = w_ax/(r_fig-l_fig)
         figh = h_ax/(t_fig-b_fig)
         ax.figure.set_size_inches(figw, figh)
+        return plot
 
     def windowed_median(self, data):
         pads = [np.nan]*(self.window//2)
