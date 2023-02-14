@@ -420,8 +420,8 @@ class Sample():
             fit_to = self.get_data_list(fit_to)
         data.filter(fit_to, **kwargs)
 
-    def dance_filter(self, filterneg=True, cdfilter=15, sigfilter=23,
-                     ssfilter=True):
+    def dance_filter(self, fit_to=None, filterneg=True, cdfilter=15, sigfilter=23,
+                     ssfilter=True, **kwargs):
         """Applies a standard filter to plot DANCE rings, pairs, and predicted
         structures together.
 
@@ -439,16 +439,18 @@ class Sample():
         """
         kwargs = {}
         if filterneg:
-            kwargs["Sign"] = 0
+            kwargs["positive_only"] = True
         if ssfilter:
             kwargs["ss_only"] = True
-        kwargs["Statistic"] = sigfilter
+        kwargs["Statistic_ge"] = sigfilter
         ctlist = [dance.data["ct"] for dance in self.dance]
         for dance in self.dance:
             dance_ct = dance.data["ct"]
-            dance.data["ringmap"].filter(dance_ct, ct=dance_ct, **kwargs)
+            fit_to = get_sequence(
+                seq_source=fit_to, sample=dance, default='ct')
+            dance.data["ringmap"].filter(fit_to=fit_to, ct=dance_ct, **kwargs)
             dance.data["ringmap"].mask_on_ct(ctlist, min_cd=cdfilter)
-            dance.data["pairmap"].filter(dance_ct, ct=dance_ct,
+            dance.data["pairmap"].filter(fit_to=fit_to, ct=dance_ct,
                                          paired_only=True)
 
 ###############################################################################
@@ -629,13 +631,13 @@ class Sample():
 
 
 def get_sequence(seq_source, sample, default):
-    if seq_source is None and default is not None:
-        seq_source = default
-    else:
+    if seq_source is None and default is None:
         raise ValueError("A seq_source must be provided.")
+    elif seq_source is None:
+        seq_source = default
     if seq_source in sample.data.keys():
         sequence = sample.data[seq_source]
-    elif hasattr(seq_source, sequence):
+    elif hasattr(seq_source, "sequence"):
         sequence = seq_source
     elif all([nt.upper() in "AUCGT" for nt in seq_source]):
         sequence = Data(sequence=seq_source)
