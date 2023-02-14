@@ -28,7 +28,12 @@ class Mol(Plot):
             view.setView(orientation)
         self.view = view
         self.i = 0
-        self.pass_through = ["nt_color", "atom", "title", "get_orientation"]
+        self.pass_through = [
+            "nt_color",
+            "atom",
+            "title",
+            "get_orientation",
+            "colorbar"]
 
     def get_figsize(self):
         pass
@@ -41,14 +46,16 @@ class Mol(Plot):
         return (row, col)
 
     def plot_data(self, interactions, profile, label, nt_color="grey",
-                  atom="O2'", title=True, get_orientation=False):
+                  atom="O2'", title=True, get_orientation=False,
+                  colorbar=True):
         viewer = self.get_viewer()
         if get_orientation:
             self.get_orientation()
         if interactions is not None:
             self.plot_interactions(viewer, interactions, atom)
             _, ax = plt.subplots(1, figsize=(6, 2))
-            self.view_colormap(ax, interactions)
+            if colorbar:
+                self.view_colormap(ax, interactions)
         self.set_colors(viewer, profile, nt_color)
         if title:
             self.view.addLabel(label,
