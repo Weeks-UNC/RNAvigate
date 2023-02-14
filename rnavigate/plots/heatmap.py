@@ -32,11 +32,10 @@ class Heatmap(Plot):
         elif plot_type == "kde":
             self.plot_kde_data(ax, interactions)
         ax.set_title(label)
-        ax.plot([0, self.structure.length], [0, self.structure.length])
         self.i += 1
 
     def get_figsize(self):
-        return (100*self.columns, 100*self.rows)
+        return (10*self.columns, 10*self.rows)
 
     def plot_contour_regions(self, ax, interactions, regions):
         matrix = np.full([interactions.length, interactions.length], 0)
