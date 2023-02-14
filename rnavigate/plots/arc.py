@@ -150,6 +150,12 @@ class AP(Plot):
             for start, end in annotation.spans:
                 if start > end:
                     start, end = end, start
+                if (self.region[0] > end) or (self.region[1] < start):
+                    continue
+                if (self.region[0] > start):
+                    start = self.region[0]
+                if (self.region[1] < end):
+                    end = self.region[1]
                 if mode == "track":
                     ax.plot([start, end], [yvalue]*2,
                             color=color, alpha=0.7, lw=11)
