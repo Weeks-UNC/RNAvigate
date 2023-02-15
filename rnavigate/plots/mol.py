@@ -53,9 +53,8 @@ class Mol(Plot):
             self.get_orientation()
         if interactions is not None:
             self.plot_interactions(viewer, interactions, atom)
-            _, ax = plt.subplots(1, figsize=(6, 2))
             if colorbar:
-                self.view_colormap(ax, interactions)
+                self.view_colormap(interactions=interactions)
         self.set_colors(viewer, profile, nt_color)
         if title:
             self.view.addLabel(label,
