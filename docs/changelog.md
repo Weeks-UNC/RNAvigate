@@ -19,3 +19,6 @@ CHANGES:
 - Added AllPossible interactions object for computing known-truth data
 - Added primary distance filter to interactions objects
 - plot_ss_multisample() can plot different structures in 1 figure
+- data objects can be passed to Sample() arguments
+  - this allows rnav.Sample objects to share a data object
+  - cuts down on computation time and memory usage

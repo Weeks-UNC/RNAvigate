@@ -255,12 +255,22 @@ class Sample():
 
     def set_data(self, name, filepath=None, instantiator=None, seq_source=None,
                  **kwargs):
+        # if given previously instantiated data class, attach and end function
+        if isinstance(filepath, Data):
+            self.data[name] = filepath
+            return
+        # check for default instantiator
         if instantiator is None:
             instantiator = self.inputs[name]["instantiator"]
+        # check for default seq_source
         if seq_source is None:
             seq_source = self.inputs[name]["seq_source"]
+        # get sequence in case provided instead of passed to instantiator
         if seq_source != "self":
-            kwargs.update({"sequence": self.data[seq_source].sequence})
+            sequence = get_sequence(seq_source=seq_source, sample=self)
+            sequence = sequence.sequence
+            kwargs.update({"sequence": sequence})
+        # for lists of files, set_data() for each with a number indicator
         if isinstance(filepath, list):
             for i, path in enumerate(filepath):
                 self.set_data(name=f"{name}_{i+1}",
@@ -268,12 +278,15 @@ class Sample():
                               instantiator=instantiator,
                               seq_source=seq_source,
                               **kwargs)
+        # update inputs
         self.inputs[name] = {
             "filepath": filepath,
             "instantiator": instantiator,
             "seq_source": seq_source,
             "kwargs": kwargs}
+        # instantiate the data class and add to self.data dictionary
         self.data[name] = instantiator(filepath=filepath, **kwargs)
+        # set as default profile if appropriate
         if name in self.default_profiles and "profile" not in self.data:
             self.data["profile"] = self.data[name]
 
@@ -630,7 +643,7 @@ class Sample():
 ###############################################################################
 
 
-def get_sequence(seq_source, sample, default):
+def get_sequence(seq_source, sample, default=None):
     if seq_source is None and default is None:
         raise ValueError("A seq_source must be provided.")
     elif seq_source is None:
