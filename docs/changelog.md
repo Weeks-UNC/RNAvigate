@@ -18,3 +18,4 @@ CHANGES:
 - Added xy-coordinate normalization for secondary structure drawings
 - Added AllPossible interactions object for computing known-truth data
 - Added primary distance filter to interactions objects
+- plot_ss_multisample() can plot different structures in 1 figure

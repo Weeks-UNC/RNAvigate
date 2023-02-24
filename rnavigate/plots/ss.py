@@ -7,7 +7,7 @@ from matplotlib.collections import LineCollection
 
 
 class SS(Plot):
-    def __init__(self, num_samples, structure, **kwargs):
+    def __init__(self, num_samples, structures, **kwargs):
         self.plot_params = {
             "structure_lw": 3,
 
@@ -20,38 +20,44 @@ class SS(Plot):
 
             "marker_s": 10**2,
 
-            "structure_z": 0,
+            "structure_z": 2,
             "basepair_z": 0,
-            "backbone_z": 0,
             "annotations_z": 5,
             "nucleotide_z": 10,
             "data_z": 15,
             "sequence_z": 20,
             "position_z": 25,
         }
-        kw_list = list(kwargs.keys())
-        for kw in kw_list:
+
+        for kw in list(kwargs.keys()):
             if kw in self.plot_params:
                 self.plot_params[kw] = kwargs.pop(kw)
-        self.structure = structure
-        xmin = min(self.structure.xcoordinates)
-        xmax = max(self.structure.xcoordinates)
-        xbuffer = 1
-        ymin = min(self.structure.ycoordinates)
-        ymax = max(self.structure.ycoordinates)
-        ybuffer = 1
+        xmin, xmax, ymin, ymax = 0, 0, 0, 0
+        for ss in structures:
+            if xmin > min(ss.xcoordinates):
+                xmin = min(ss.xcoordinates)
+            if xmax < max(ss.xcoordinates):
+                xmax = max(ss.xcoordinates)
+            if ymin > min(ss.ycoordinates):
+                ymin = min(ss.ycoordinates)
+            if ymax < max(ss.ycoordinates):
+                ymax = max(ss.ycoordinates)
+        self.xmin = xmin
+        self.ymin = ymin
+        self.xmax = xmax
+        self.ymax = ymax
         super().__init__(num_samples, **kwargs)
         for i in range(self.length):
             ax = self.get_ax(i)
             ax.set_aspect("equal")
             ax.axis("off")
-            ax.set(xlim=[xmin-xbuffer, xmax+xbuffer],
-                   ylim=[ymin-3*ybuffer, ymax+ybuffer])
+            ax.set(xlim=[xmin-1, xmax+1],
+                   ylim=[ymin-1, ymax+1])
         self.pass_through = ["colors", "sequence", "apply_color_to",
                              "colorbar", "title", "positions", "bp_style"]
 
-    def plot_data(self, interactions, interactions2, profile, annotations,
-                  label,
+    def plot_data(self, structure, interactions, interactions2, profile,
+                  annotations, label,
                   colors="sequence",
                   sequence=False,
                   apply_color_to="background",
@@ -60,15 +66,15 @@ class SS(Plot):
                   positions=False,
                   bp_style="dotted"):
         ax = self.get_ax()
-        self.plot_sequence(ax=ax, profile=profile, colors=colors,
+        self.plot_sequence(ax=ax, ss=structure, profile=profile, colors=colors,
                            sequence=sequence, apply_color_to=apply_color_to,
                            positions=positions, bp_style=bp_style)
-        self.plot_interactions(
-            ax=ax, interactions=interactions, colorbar=colorbar, cmap_pos=0)
-        self.plot_interactions(
-            ax=ax, interactions=interactions2, colorbar=colorbar, cmap_pos=1)
+        self.plot_interactions(ax=ax, ss=structure, interactions=interactions,
+                               colorbar=colorbar, cmap_pos=0)
+        self.plot_interactions(ax=ax, ss=structure, interactions=interactions2,
+                               colorbar=colorbar, cmap_pos=1)
         for annotation in annotations:
-            self.plot_annotation(ax=ax, annotation=annotation)
+            self.plot_annotation(ax=ax, ss=structure, annotation=annotation)
         if title:
             ax.set_title(label)
         self.i += 1
@@ -76,21 +82,14 @@ class SS(Plot):
             plt.tight_layout()
 
     def get_figsize(self):
-        ss = self.structure
-        xmin = min(ss.xcoordinates)-1
-        xmax = max(ss.xcoordinates)+1
-        ymin = min(ss.ycoordinates)-1
-        ymax = max(ss.ycoordinates)+3
         scale = 0.55
-        width = (xmax-xmin)*scale
-        height = (ymax-ymin)*scale
+        width = (self.xmax-self.xmin)*scale
+        height = (self.ymax-self.ymin)*scale
         return (width*self.columns, height*self.rows)
 
-    def plot_structure(self, ax, struct_color, bp_style):
+    def plot_structure(self, ax, ss, struct_color, bp_style):
         bp_styles = ["conventional", "dotted", "line"]
         assert bp_style in bp_styles, f"bp_style must be one of {bp_styles}"
-
-        ss = self.structure
 
         x = ss.xcoordinates
         y = ss.ycoordinates
@@ -130,19 +129,28 @@ class SS(Plot):
             y = ss.ycoordinates[[p-1 for p in pair]]
             xdist = x[1]-x[0]
             ydist = y[1]-y[0]
+            angle_xy = np.arctan(ydist/xdist)
+            if (xdist < 0):
+                angle_xy += np.pi
+            x_offset = np.cos(angle_xy) / 3
+            y_offset = np.sin(angle_xy) / 3
+            x_caps = [x[0] + x_offset, x[1] - x_offset]
+            y_caps = [y[0] + y_offset, y[1] - y_offset]
             if bp_style == "dotted":
-                x_dots = [x[0] + i * xdist / 6 for i in [2, 3, 4]]
-                y_dots = [y[0] + i * ydist / 6 for i in [2, 3, 4]]
+                x_caps_dist = x_caps[0]-x_caps[1]
+                y_caps_dist = y_caps[0]-y_caps[1]
+                caps_dist = (x_caps_dist**2 + y_caps_dist**2)**0.5
+                segs = int(max([1/3, caps_dist]) * 3) * 2
+                x_dots = [x_caps[0]-x_caps_dist*i/segs for i in range(segs+1)]
+                y_dots = [y_caps[0]-y_caps_dist*i/segs for i in range(segs+1)]
                 ax.scatter(x_dots, y_dots, c="grey", marker='.', s=4,
                            zorder=zorder)
             if bp_style == "line":
-                x_caps = [x[0] + i * xdist / 3 for i in [1, 2]]
-                y_caps = [y[0] + i * ydist / 3 for i in [1, 2]]
                 ax.plot(x_caps, y_caps, color="grey", zorder=zorder)
             if bp_style == "conventional":
                 nts = ''.join([ss.sequence[p-1] for p in pair]).upper()
-                x_caps = [x[0] + i * xdist / 7 for i in [2, 5]]
-                y_caps = [y[0] + i * ydist / 7 for i in [2, 5]]
+                # x_caps = [x[0] + i * xdist / 7 for i in [2, 5]]
+                # y_caps = [y[0] + i * ydist / 7 for i in [2, 5]]
                 if nts in ["UA", "AU", "GU", "UG"]:
                     ax.plot(x_caps, y_caps, color="grey", zorder=zorder,
                             solid_capstyle='butt')
@@ -163,9 +171,8 @@ class SS(Plot):
                     ax.plot(x_caps, y_caps, color="white", zorder=zorder,
                             linewidth=2)
 
-    def plot_sequence(self, ax, profile, colors, sequence, apply_color_to,
-                      positions, bp_style):
-        ss = self.structure
+    def plot_sequence(self, ax, ss, profile, colors, sequence,
+                      apply_color_to, positions, bp_style):
         nuc_z = self.plot_params["nucleotide_z"]
         seq_z = self.plot_params["sequence_z"]
         valid_apply = ["background", "sequence", "structure", None]
@@ -176,22 +183,27 @@ class SS(Plot):
             apply_color_to = "structure"
         if apply_color_to == "structure":
             struct_color = ss.get_colors(colors, profile=profile,
-                                         ct=self.structure)
-            self.plot_structure(ax, struct_color, bp_style=bp_style)
+                                         ct=ss)
+            self.plot_structure(ax=ax, ss=ss, struct_color=struct_color,
+                                bp_style=bp_style)
             ax.scatter(ss.xcoordinates, ss.ycoordinates, marker=".",
                        c=struct_color, zorder=seq_z,
                        s=self.plot_params["marker_s"])
             return
         if apply_color_to == "background":
             bg_color = ss.get_colors(colors, profile=profile,
-                                     ct=self.structure)
-            self.plot_structure(ax, ss.get_colors("grey"), bp_style=bp_style)
+                                     ct=ss)
+            self.plot_structure(ax=ax, ss=ss,
+                                struct_color=ss.get_colors("grey"),
+                                bp_style=bp_style)
         if apply_color_to == "sequence":
             sequence = True
             nt_color = ss.get_colors(colors, profile=profile,
-                                     ct=self.structure)
+                                     ct=ss)
             bg_color = ss.get_colors("white")
-            self.plot_structure(ax, ss.get_colors('grey'), bp_style=bp_style)
+            self.plot_structure(ax=ax, ss=ss,
+                                struct_color=ss.get_colors('grey'),
+                                bp_style=bp_style)
         elif sequence:
             nt_color = ['k'] * len(bg_color)
             for i, color in enumerate(bg_color):
@@ -213,8 +225,7 @@ class SS(Plot):
                 ax.scatter(xcoords, ycoords, marker=marker, s=100,
                            c=nt_color[mask], lw=1, zorder=seq_z)
 
-    def add_lines(self, ax, i, j, color):
-        ss = self.structure
+    def add_lines(self, ax, ss, i, j, color):
         zorder = self.plot_params["data_z"]
         alpha = self.plot_params["data_a"]
         x = [ss.xcoordinates[i-1], ss.xcoordinates[j-1]]
@@ -222,19 +233,19 @@ class SS(Plot):
         ax.plot(x, y, color=color, lw=self.plot_params[
             "data_lw"], zorder=zorder, alpha=alpha)
 
-    def plot_interactions(self, ax, interactions, colorbar, cmap_pos):
+    def plot_interactions(self, ax, ss, interactions, colorbar,
+                          cmap_pos):
         if interactions is None:
             return
         ij_colors = interactions.get_ij_colors()
         for i, j, color in zip(*ij_colors):
-            self.add_lines(ax, i, j, color)
+            self.add_lines(ax=ax, ss=ss, i=i, j=j, color=color)
         if colorbar:
             x, width = [(0, 0.49), (0.51, 0.49)][cmap_pos]
             ax_ins1 = ax.inset_axes([x, 0, width, 0.05])
             self.view_colormap(ax_ins1, interactions)
 
-    def plot_positions(self, ax, text_color, bbox_color, spacing=20):
-        ss = self.structure
+    def plot_positions(self, ax, ss, text_color, bbox_color, spacing=20):
         zorder = self.plot_params["position_z"]
         for i in range(spacing, ss.length, spacing):
             ax.annotate(f"{ss.sequence[i-1]}\n{i}",
@@ -246,7 +257,7 @@ class SS(Plot):
                         bbox=dict(boxstyle="Circle", pad=0.1, ec="none",
                                   fc=bbox_color[i-1]))
 
-    def plot_annotation(self, ax, annotation):
+    def plot_annotation(self, ax, ss, annotation):
         color = annotation.color
         alpha = self.plot_params["annotations_a"]
         size = self.plot_params["annotations_s"]
@@ -254,20 +265,20 @@ class SS(Plot):
         zorder = self.plot_params["annotations_z"]
         if annotation.annotation_type == "spans":
             for start, end in annotation.spans:
-                x = self.structure.xcoordinates[start-1:end]
-                y = self.structure.ycoordinates[start-1:end]
+                x = ss.xcoordinates[start-1:end]
+                y = ss.ycoordinates[start-1:end]
                 ax.plot(x, y, color=color, alpha=alpha, lw=linewidth,
                         zorder=zorder)
         elif annotation.annotation_type == "sites":
             sites = np.array(annotation.sites)-1
-            x = self.structure.xcoordinates[sites]
-            y = self.structure.ycoordinates[sites]
+            x = ss.xcoordinates[sites]
+            y = ss.ycoordinates[sites]
             ax.scatter(x, y, color=color, marker='o', ec="none", alpha=alpha,
                        s=size, zorder=zorder)
         elif annotation.annotation_type == "groups":
             for group in annotation.groups:
-                x = self.structure.xcoordinates[group["sites"]]
-                y = self.structure.ycoordinates[group["sites"]]
+                x = ss.xcoordinates[group["sites"]]
+                y = ss.ycoordinates[group["sites"]]
                 color = group["color"]
                 ax.plot(x, y, color=color, a=alpha,
                         lw=linewidth, zorder=zorder)

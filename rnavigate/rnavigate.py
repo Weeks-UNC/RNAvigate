@@ -708,7 +708,7 @@ def plot_ss_multisample(samples, ss="ss", profile="profile", annotations=[],
                         interactions2=None, interactions2_filter={},
                         labels=None, plot_kwargs={}, prefiltered=False,
                         **kwargs):
-    plot = SS(len(samples), samples[0].data[ss], **plot_kwargs)
+    plot = SS(len(samples), [s.data[ss] for s in samples], **plot_kwargs)
     if labels is None:
         labels = ["label"]*len(samples)
     for sample, label in zip(samples, labels):
@@ -719,7 +719,7 @@ def plot_ss_multisample(samples, ss="ss", profile="profile", annotations=[],
             if interactions2 is not None:
                 sample.filter_interactions(interactions2, ss,
                                            **interactions2_filter)
-        plot.add_sample(sample, interactions=interactions,
+        plot.add_sample(sample, structure=ss, interactions=interactions,
                         interactions2=interactions2, profile=profile,
                         annotations=annotations, label=label, **kwargs)
     return plot
