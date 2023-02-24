@@ -40,7 +40,8 @@ class LowSS():
                     lowss_regions.append(lowss_region)
                     self.in_lowss_region[start:stop] = 1
                     lowss_region = [start, stop]
-        self.lowss_regions = Annotation(span_list=lowss_regions, color="grey",
+        self.lowss_regions = Annotation(annotation_type='spans',
+                                        span_list=lowss_regions, color="grey",
                                         sequence=self.sequence)
         sample.data["lowss"] = self.lowss_regions
         if show:

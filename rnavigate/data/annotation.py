@@ -10,6 +10,8 @@ class Annotation(Data):
                  filepath="",
                  fasta=None,
                  sequence=None,
+                 annotation_type=None,
+                 annotations=None,
                  site_list=None,
                  span_list=None,
                  groups=None,
@@ -19,29 +21,33 @@ class Annotation(Data):
         self.color = color
         self.datatype = datatype
         super().__init__(filepath=fasta, sequence=sequence)
-
-        self.sites = []
-        self.spans = []
-        self.groups = []
-        if site_list is not None:
-            self.annotation_type = "sites"
-            self.sites = site_list
-            self._list = site_list
-        elif span_list is not None:
-            self.annotation_type = "spans"
-            self.spans = span_list
-            self._list = span_list
-        elif groups is not None:
-            self.annotation_type = "groups"
-            self.groups = groups
-            self._list = groups
-        elif primer_list is not None:
-            self.annotation_type = "primers"
-            self.primers = primer_list
-            self._list = primer_list
+        self.annotation_type = annotation_type
+        for anno in [annotations, site_list, span_list, groups, primer_list]:
+            if anno is not None:
+                self._list = anno
 
     def read_sites(self, filepath, sep, read_csv_kw):
         self.data = pd.read_csv(filepath, sep=sep, **read_csv_kw)
+
+    def fit_to(self, fit_to):
+        am = self.get_alignment_map(fit_to=fit_to)
+
+        def recursive_fit_to(indices):
+            new_list = []
+            for idx in indices:
+                if isinstance(idx, list):
+                    new_list.append(recursive_fit_to(idx))
+                else:
+                    new_list.append(am[idx-1]+1)
+            return new_list
+
+        self.fitted = Annotation(
+            name=self.name,
+            color=self.color,
+            sequence=fit_to,
+            annotation_type=self.annotation_type,
+            annotations=recursive_fit_to(self._list)
+        )
 
     def __getitem__(self, i):
         return self._list[i]
@@ -60,6 +66,7 @@ class Motif(Annotation):
                  color="blue"):
         span_list = self.get_spans_from_motif(sequence, motif)
         super().__init__(name=name, fasta=fasta, sequence=sequence,
+                         annotation_type='spans',
                          span_list=span_list, color=color)
 
     def get_spans_from_motif(self, sequence, motif):
@@ -86,6 +93,7 @@ class ORFs(Annotation):
                  color="blue"):
         span_list = self.get_spans_from_orf(sequence)
         super().__init__(name=name, fasta=fasta, sequence=sequence,
+                         annotation_type='spans',
                          span_list=span_list, color=color)
 
     def get_spans_from_orf(self, sequence):

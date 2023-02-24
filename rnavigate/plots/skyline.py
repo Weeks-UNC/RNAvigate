@@ -81,9 +81,15 @@ class Skyline(Plot):
                                      color='C'+str(self.i), alpha=0.25, lw=0)
 
     def plot_annotation(self, ax, annotation, mode="vbar"):
+        annotation = annotation.fitted
         color = annotation.color
-        for span in annotation.spans:
-            ax.axvspan(span[0]-0.5, span[1]+0.5,
-                       fc=color, ec="none", alpha=0.1)
-        for site in annotation.sites:
-            ax.axvline(site, color=color, ls=":")
+        a_type = annotation.annotation_type
+        if a_type in ["primers", "spans"]:
+            for start, end in annotation[:]:
+                if start > end:
+                    start, end = end, start
+                ax.axvspan(start-0.5, end+0.5,
+                           fc=color, ec="none", alpha=0.1)
+        if a_type == "sites":
+            for site in annotation[:]:
+                ax.axvline(site, color=color, ls=":")

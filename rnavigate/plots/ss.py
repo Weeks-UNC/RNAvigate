@@ -258,25 +258,28 @@ class SS(Plot):
                                   fc=bbox_color[i-1]))
 
     def plot_annotation(self, ax, ss, annotation):
+        annotation = annotation.fitted
         color = annotation.color
         alpha = self.plot_params["annotations_a"]
         size = self.plot_params["annotations_s"]
         linewidth = self.plot_params["annotations_lw"]
         zorder = self.plot_params["annotations_z"]
-        if annotation.annotation_type == "spans":
-            for start, end in annotation.spans:
+        if annotation.annotation_type in ["spans", "primers"]:
+            for start, end in annotation[:]:
+                if start > end:
+                    start, end = end, start
                 x = ss.xcoordinates[start-1:end]
                 y = ss.ycoordinates[start-1:end]
                 ax.plot(x, y, color=color, alpha=alpha, lw=linewidth,
                         zorder=zorder)
         elif annotation.annotation_type == "sites":
-            sites = np.array(annotation.sites)-1
+            sites = np.array(annotation[:])-1
             x = ss.xcoordinates[sites]
             y = ss.ycoordinates[sites]
             ax.scatter(x, y, color=color, marker='o', ec="none", alpha=alpha,
                        s=size, zorder=zorder)
         elif annotation.annotation_type == "groups":
-            for group in annotation.groups:
+            for group in annotation[:]:
                 x = ss.xcoordinates[group["sites"]]
                 y = ss.ycoordinates[group["sites"]]
                 color = group["color"]

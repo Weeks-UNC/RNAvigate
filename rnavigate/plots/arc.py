@@ -17,8 +17,8 @@ class AP(Plot):
                              "interactions_panel", "interactions2_panel",
                              "ct_panel", "annotation_mode", "plot_error"]
 
-    def plot_data(self, ct, comp, interactions, interactions2, profile, label,
-                  ax=None, colorbar=True, seqbar=True, title=True,
+    def plot_data(self, seq, ct, comp, interactions, interactions2, profile,
+                  label, ax=None, colorbar=True, seqbar=True, title=True,
                   interactions_panel="bottom", interactions2_panel="bottom",
                   ct_panel="top", annotations=[], annotation_mode="track",
                   plot_error=True):
@@ -44,12 +44,13 @@ class AP(Plot):
                          annotation_gap=annotation_gap)
         self.add_patches(ax=ax, data=interactions2, panel=interactions2_panel,
                          annotation_gap=annotation_gap)
-        self.plot_profile(ax=ax, profile=profile, ct=ct, plot_error=plot_error)
+        self.plot_profile(ax=ax, profile=profile,
+                          seq=seq, plot_error=plot_error)
         for i, annotation in enumerate(annotations):
             self.plot_annotation(ax, annotation=annotation, yvalue=-2-(4*i),
                                  mode=annotation_mode)
         if seqbar:
-            self.add_sequence(ax, ct.sequence, yvalue=1-annotation_gap,
+            self.add_sequence(ax, seq.sequence, yvalue=1-annotation_gap,
                               ytrans="data")
         if title:
             self.add_title(ax, label)
@@ -115,16 +116,16 @@ class AP(Plot):
         height = min(self.nt_length, 602) * 0.1 + 1
         return (width*self.columns, height*self.rows)
 
-    def plot_profile(self, ax, profile, ct, plot_error=True):
+    def plot_profile(self, ax, profile, seq, plot_error=True):
         if profile is None:
             return
         column = profile.default_column
         factor = profile.ap_scale_factor
-        am = profile.get_alignment_map(ct)
-        values = np.full(ct.length, np.nan)
-        colormap = ct.get_colors("profile", profile=profile)
-        nts = np.arange(ct.length)+1
-        yerr = np.full(ct.length, np.nan)
+        am = profile.get_alignment_map(seq)
+        values = np.full(seq.length, np.nan)
+        colormap = seq.get_colors("profile", profile=profile)
+        nts = np.arange(seq.length)+1
+        yerr = np.full(seq.length, np.nan)
         for i1, i2 in enumerate(am):
             if i2 != -1:
                 values[i2] = profile.data.loc[i1, column]
@@ -142,12 +143,13 @@ class AP(Plot):
                    edgecolor=colormap[mn-1:mx], linewidth=0.0)
 
     def plot_annotation(self, ax, annotation, yvalue, mode):
+        annotation = annotation.fitted
         color = annotation.color
         modes = ["track", "vbar"]
         assert mode in modes, f"annotation mode must be one of: {modes}"
         a_type = annotation.annotation_type
         if a_type == "spans" or (a_type == "primers" and mode == "vbar"):
-            for start, end in annotation.spans:
+            for start, end in annotation[:]:
                 if start > end:
                     start, end = end, start
                 if (self.region[0] > end) or (self.region[1] < start):
@@ -163,7 +165,7 @@ class AP(Plot):
                     ax.axvspan(start-0.5, end+0.5,
                                fc=color, ec="none", alpha=0.1)
         elif a_type == "sites":
-            sites = annotation.sites
+            sites = annotation[:]
             if mode == "track":
                 ax.scatter(sites, [yvalue]*len(sites),
                            color=color, marker='*',
@@ -172,7 +174,7 @@ class AP(Plot):
                 for site in sites:
                     ax.axvline(site, color=color, ls=":")
         elif a_type == "groups":
-            for group in annotation.groups:
+            for group in annotation[:]:
                 sites = group["sites"]
                 color = group["color"]
                 span = [min(sites), max(sites)]
@@ -188,7 +190,7 @@ class AP(Plot):
                     for site in sites:
                         ax.axvline(site, color=color, ls=":")
         elif a_type == "primers":
-            for start, end in annotation.primers:
+            for start, end in annotation[:]:
                 if mode == "track":
                     if start < end:
                         xs = [start, end, end-1]

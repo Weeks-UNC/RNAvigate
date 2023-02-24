@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import math
 import numpy as np
 from abc import ABC, abstractmethod
+from ..data import Data
 
 
 class Plot(ABC):
@@ -32,6 +33,8 @@ class Plot(ABC):
             return
         for key in kwargs.keys():
             if key not in self.pass_through:
+                if isinstance(kwargs[key], Data):
+                    continue
                 kwargs[key] = sample.get_data_list(kwargs[key])
         self.plot_data(**kwargs)
 

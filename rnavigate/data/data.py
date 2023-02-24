@@ -52,6 +52,12 @@ class Data():
         self.sequence = sequence.upper().replace("T", "U")
 
     @property
+    def alignments(self):
+        if not hasattr(self, '_alignments'):
+            self._alignments = {}
+        return self._alignments
+
+    @property
     def length(self):
         return len(self.sequence)
 
@@ -68,15 +74,28 @@ class Data():
         cmap = plt.get_cmap(cmap)
         return cmap
 
+    def set_alignment(self, fit_to, seqA, seqB):
+        fit_to = fit_to.upper()
+        self.alignments[fit_to] = {
+            "seqA": seqA,
+            "seqB": seqB,
+        }
+
     def get_alignment_map(self, fit_to, full=False):
         if self.sequence.upper() == fit_to.sequence.upper():
             return np.arange(len(self.sequence))
-        alignment = align.globalxs(self.sequence, fit_to.sequence, -1, -0.1,
-                                   penalize_end_gaps=False)
+        elif fit_to.sequence.upper() not in self.alignments.keys():
+            alignment = align.globalxs(self.sequence, fit_to.sequence,
+                                       -1, -0.1, penalize_end_gaps=False)
+            self.alignments[fit_to.sequence.upper()] = {
+                "seqA": alignment[0].seqA,
+                "seqB": alignment[0].seqB
+            }
+        alignment = self.alignments[fit_to.sequence.upper()]
         # get an index map from this sequence to that.
         alignment_map = []
         i = 0
-        for nt1, nt2 in zip(alignment[0].seqA, alignment[0].seqB):
+        for nt1, nt2 in zip(alignment["seqA"], alignment["seqB"]):
             #  012-34567 index 1
             #  AUC-UGGCU sequence 1
             #  AUCGUG-CU sequence 2

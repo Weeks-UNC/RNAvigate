@@ -56,14 +56,14 @@ class CT(Data):
     def from_dataframe(self, dataframe):
         columns = ["Nucleotide", "Sequence", "Pair"]
         for col in columns:
-            assert col in dataframe.columns(), f"{col} column missing."
+            assert col in dataframe.columns, f"{col} column missing."
         seq = [nt.upper() for nt in dataframe["Sequence"]]
         if "T" in seq:
             print("T nucleotides have been recoded as U")
             seq = ["U" if nt == "T" else nt for nt in seq]
         self.sequence = "".join(seq)
         self.num = dataframe["Nucleotide"].values
-        self.bp = dataframe["Pair"].values
+        self.ct = dataframe["Pair"].values
 
     def read_file(self, structNum=0, filterNC=False, filterSingle=False):
         """Loads CT information from a given ct file. Requires a header!
@@ -939,7 +939,35 @@ class CT(Data):
             w.write(line.format(*cols))
         w.close()
 
-    def get_ij_colors(self, compct=None):
+    def fit_to(self, fit_to):
+        am = self.get_alignment_map(fit_to=fit_to)
+        ct = [0] * fit_to.length
+        for i, j in self.pairList():
+            new_i = am[i-1]+1
+            new_j = am[j-1]+1
+            if (new_i != 0) and (new_j != 0):
+                ct[new_i] = new_j
+                ct[new_j] = new_i
+        data = pd.DataFrame({
+            'Nucleotide': [i+1 for i in range(fit_to.length)],
+            'Sequence': [nt for nt in fit_to.sequence],
+            'Pair': ct
+        })
+        self.fitted = CT(dataframe=data)
+
+    def get_ij_colors(self, compct=None, fitted=True):
+        if fitted and hasattr(self, 'fitted'):
+            ct1 = self.fitted
+            if compct is not None and hasattr(compct, 'fitted'):
+                ct2 = compct.fitted
+            else:
+                ct2 = compct
+        else:
+            ct1 = self
+            ct2 = compct
+        if ct2 is not None:
+            assert ct1.length == ct2.length, "CT objects are not equal lengths"
+
         i_list, j_list, colors = [], [], []
 
         def add_ij_color(i, j, color):
@@ -947,13 +975,13 @@ class CT(Data):
             j_list.append(j)
             colors.append(color)
 
-        if compct is None:
-            ct_pairs = self.pairList()
+        if ct2 is None:
+            ct_pairs = ct1.pairList()
             for i, j in ct_pairs:
                 add_ij_color(i, j, (0.5, 0.5, 0.5, 0.7))
             return (i_list, j_list, colors)
-        ct1 = set(self.pairList())
-        ct2 = set(compct.pairList())
+        ct1 = set(ct1.pairList())
+        ct2 = set(ct2.pairList())
         shared = ct1.intersection(ct2)
         ref = ct1.difference(ct2)
         comp = ct2.difference(ct1)

@@ -214,22 +214,22 @@ class Sample():
                 "filepath": "",
                 "instantiator": Annotation,
                 "seq_source": sites.pop("seq_source", ""),
-                "kwargs": sites},
+                "kwargs": {'annotation_type': 'sites'} | sites},
             "spans": {
                 "filepath": "",
                 "instantiator": Annotation,
                 "seq_source": spans.pop("seq_source", ""),
-                "kwargs": spans},
+                "kwargs": {'annotation_type': 'spans'} | spans},
             "groups": {
                 "filepath": "",
                 "instantiator": Annotation,
                 "seq_source": groups.pop("seq_source", ""),
-                "kwargs": groups},
+                "kwargs": {'annotation_type': 'groups'} | groups},
             "primers": {
                 "filepath": "",
                 "instantiator": Annotation,
                 "seq_source": primers.pop("seq_source", ""),
-                "kwargs": primers},
+                "kwargs": {'annotation_type': 'primers'} | primers},
             "orfs": {
                 "filepath": "",
                 "instantiator": ORFs,
@@ -683,6 +683,8 @@ def plot_skyline_multisample(samples, profile="profile", labels=None,
                    region=region,
                    **plot_kwargs)
     for sample in samples:
+        for annotation in annotations:
+            sample.data[annotation].fit_to(sample.data[profile])
         plot.add_sample(sample, profile=profile, annotations=annotations,
                         label="label", **kwargs)
     return plot
@@ -700,16 +702,22 @@ def plot_arcs_multisample(samples, seq_source=None, ct="ct", comp=None,
     if labels is None:
         labels = ["label"]*len(samples)
     for sample, label in zip(samples, labels):
+        for annotation in annotations:
+            sample.data[annotation].fit_to(seq)
         if not prefiltered:
-            if ct not in ["ss", "ct", "compct"]:
-                sample.filter_interactions(interactions=ct, fit_to=seq)
+            for ct_like in [ct, comp]:
+                if ct_like not in ["ss", "ct", "compct", None]:
+                    sample.filter_interactions(interactions=ct_like,
+                                               fit_to=seq)
+                else:
+                    sample.data[ct_like].fit_to(seq)
             if interactions is not None:
                 sample.filter_interactions(interactions=interactions,
                                            fit_to=seq, **interactions_filter)
             if interactions2 is not None:
                 sample.filter_interactions(interactions=interactions2,
                                            fit_to=seq, **interactions2_filter)
-        plot.add_sample(sample=sample, ct=ct, comp=comp,
+        plot.add_sample(sample=sample, seq=seq, ct=ct, comp=comp,
                         interactions=interactions, interactions2=interactions2,
                         profile=profile, label=label, annotations=annotations,
                         **kwargs)
@@ -725,6 +733,8 @@ def plot_ss_multisample(samples, ss="ss", profile="profile", annotations=[],
     if labels is None:
         labels = ["label"]*len(samples)
     for sample, label in zip(samples, labels):
+        for annotation in annotations:
+            sample.data[annotation].fit_to(sample.data[ss])
         if not prefiltered:
             if interactions is not None:
                 sample.filter_interactions(interactions, ss,
@@ -782,7 +792,15 @@ def plot_circle_multisample(samples, seq_source=None, ct=None, comp=None,
     sequence = get_sequence(seq_source, samples[0], profile)
     plot = Circle(len(samples), sequence)
     for sample in samples:
+        for annotation in annotations:
+            sample.data[annotation].fit_to(sequence)
         if not prefiltered:
+            if ct not in ["ss", "ct", "compct", None]:
+                sample.filter_interactions(interactions=ct, fit_to=sequence)
+            elif ct is not None:
+                sample.data[ct].fit_to(sequence)
+                if comp is not None:
+                    sample.data[comp].fit_to(sequence)
             if interactions is not None:
                 sample.filter_interactions(interactions, sequence,
                                            **interactions_filter)
