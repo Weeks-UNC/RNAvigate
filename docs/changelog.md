@@ -15,3 +15,6 @@ CHANGES:
 - Added support for .cif files
 - Added seq_source to arc and circle plots
 - Added features to retrieve/set orientation of 3D molecule plots
+- Added xy-coordinate normalization for secondary structure drawings
+- Added AllPossible interactions object for computing known-truth data
+- Added primary distance filter to interactions objects
