@@ -108,6 +108,19 @@ class Interactions(Data):
         else:
             self.update_mask(mask)
 
+    def mask_primary_distance(self, min_pd=None, max_pd=None,
+                              return_mask=False):
+        primary_distances = np.absolute(self.data.eval("i_offset - j_offset"))
+        mask = self.data['mask']
+        if min_pd is not None:
+            mask &= primary_distances >= min_pd
+        if max_pd is not None:
+            mask &= primary_distances <= max_pd
+        if return_mask:
+            return mask
+        else:
+            self.update_mask(mask)
+
     def mask_on_ct(self, ct, min_cd=None, max_cd=None, ss_only=False,
                    ds_only=False, paired_only=False, return_mask=False):
         if isinstance(ct, list):
@@ -206,16 +219,22 @@ class Interactions(Data):
         self.data["mask"] = self.data["mask"] & mask
 
     def filter(self, fit_to,
+               prefiltered=False,
                ct=None,  # required if any of next are passed
                min_cd=None, max_cd=None,
                paired_only=False, ss_only=False, ds_only=False,
                profile=None, min_profile=None, max_profile=None,
+               min_pd=None, max_pd=None,
                compliments_only=False, nts=None,
                max_distance=None, min_distance=None,
                exclude_nts=None, isolate_nts=None,
                resolve_conflicts=None,
                **kwargs):
+        if prefiltered:
+            return
         self.set_mask_offset(fit_to)
+        if min_pd is not None or max_pd is not None:
+            self.mask_primary_distance(min_pd=min_pd, max_pd=max_pd)
         if exclude_nts is not None or isolate_nts is not None:
             self.mask_nts(exclude_nts, isolate_nts)
         if max_distance is not None or min_distance is not None:
@@ -550,3 +569,20 @@ class PairProb(Interactions):
     def data_specific_filter(self, **kwargs):
         self.update_mask(self.data["Probability"] >= 0.03)
         return kwargs
+
+
+class AllPossible(Interactions):
+    def __init__(self, filepath, sequence=None, window=1):
+        data = {'i': [], 'j': [], 'data': []}
+        for i in range(1, len(sequence)+1):
+            for j in range(i+1, len(sequence)+1):
+                data['i'].append(i)
+                data['j'].append(j)
+                data['data'].append(1)
+        data = pd.DataFrame(data)
+        super().__init__(datatype="interactions", dataframe=data,
+                         filepath=filepath,
+                         default_metric='data', window=window,
+                         sequence=sequence, fill={'data': 1},
+                         cmaps={'data': 'magenta'},
+                         mins_maxes={'data': [0, 2]})
