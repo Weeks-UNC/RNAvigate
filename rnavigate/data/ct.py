@@ -968,6 +968,25 @@ class CT(Data):
             add_ij_color(i, j, sharedcolor)
         return (i_list, j_list, colors)
 
+    def normalize_coordinates(self):
+        # scale so that the median base pair is 1 unit distance
+        bp_list = self.pairList()
+        bp_distances = []
+        for bp in bp_list:
+            y_dist = self.ycoordinates[bp[0]-1] - self.ycoordinates[bp[1]-1]
+            x_dist = self.xcoordinates[bp[0]-1] - self.xcoordinates[bp[1]-1]
+            bp_distances.append((y_dist**2 + x_dist**2)**0.5)
+        scale_factor = np.median(bp_distances)
+        self.ycoordinates /= scale_factor
+        self.xcoordinates /= scale_factor
+
+        # shift so that center of plot is [0,0]
+        x_center = (max(self.xcoordinates) + min(self.xcoordinates))/2
+        self.xcoordinates -= x_center
+        y_center = (max(self.ycoordinates) + min(self.ycoordinates))/2
+        self.ycoordinates -= y_center
+
+
 ###############################################################################
 # end of CT class
 ###############################################################################
@@ -1007,15 +1026,13 @@ class VARNA(CT):
             i = int(pair.get('part5'))+1
             j = int(pair.get('part3'))+1
             basepairs.append((i, j))
-        xcoords = np.array(xcoords)
-        ycoords = np.array(ycoords)
         # store attributes
-        coord_scale_factor = 1/65
         self.sequence = sequence.upper().replace("T", "U")
         self.num = np.arange(len(self.sequence))
         self.pair2CT(basepairs, **kwargs)
-        self.xcoordinates = xcoords*coord_scale_factor
-        self.ycoordinates = ycoords*coord_scale_factor
+        self.xcoordinates = np.array(xcoords)
+        self.ycoordinates = np.array(ycoords)
+        self.normalize_coordinates()
 
 
 class XRNA(CT):
@@ -1057,16 +1074,14 @@ class XRNA(CT):
             helix_list = [(i_outter+nt, j_outter-nt)
                           for nt in range(length)]
             basepairs.extend(helix_list)
-        # make expected arrays
-        xcoords = np.array(xcoords)
-        ycoords = np.array(ycoords)
         # store attributes
         coord_scale_factor = 1/20
         self.sequence = sequence.upper().replace("T", "U")
         self.num = np.arange(len(self.sequence))
         self.pair2CT(basepairs, **kwargs)
-        self.xcoordinates = xcoords*coord_scale_factor
-        self.ycoordinates = ycoords*coord_scale_factor
+        self.xcoordinates = np.array(xcoords)
+        self.ycoordinates = np.array(ycoords)
+        self.normalize_coordinates()
 
 
 class CTE(CT):
@@ -1092,12 +1107,12 @@ class CTE(CT):
         ct = ct[ct.nuc < ct.pair]
         basepairs = [[int(i), int(j)] for i, j in zip(ct.nuc, ct.pair)]
         # store attributes
-        coord_scale_factor = 1/30.5
         self.sequence = sequence.upper().replace("T", "U")
         self.num = np.arange(len(self.sequence))
         self.pair2CT(basepairs, **kwargs)
-        self.xcoordinates = xcoords*coord_scale_factor
-        self.ycoordinates = ycoords*coord_scale_factor
+        self.xcoordinates = xcoords
+        self.ycoordinates = ycoords
+        self.normalize_coordinates()
 
 
 class NSD(CT):
@@ -1141,15 +1156,13 @@ class NSD(CT):
                         if field.startswith("Pair"):
                             field = field.strip('Pair:"').split(":")
                             basepairs.append([int(nuc) for nuc in field])
-        xcoords = np.array(xcoords)
-        ycoords = np.array(ycoords)
         # store attributes
-        coord_scale_factor = 1/30.5
         self.sequence = sequence.upper().replace("T", "U")
         self.num = np.arange(len(self.sequence))
         self.pair2CT(basepairs)
-        self.xcoordinates = xcoords*coord_scale_factor
-        self.ycoordinates = ycoords*coord_scale_factor
+        self.xcoordinates = np.array(xcoords)
+        self.ycoordinates = np.array(ycoords)
+        self.normalize_coordinates()
 
 
 class DotBracket(CT):
@@ -1233,11 +1246,9 @@ class JSON(CT):
             if [i, j] not in basepairs:
                 basepairs.append([i, j])
 
-        xcoords = np.array(xcoords)
-        ycoords = np.array(ycoords)
         # store attributes
-        coord_scale_factor = 1/12
         self.sequence = sequence.upper().replace("T", "U")
         self.pair2CT(basepairs)
-        self.xcoordinates = xcoords*coord_scale_factor
-        self.ycoordinates = -ycoords*coord_scale_factor
+        self.xcoordinates = np.array(xcoords)
+        self.ycoordinates = np.array(ycoords)
+        self.normalize_coordinates()
