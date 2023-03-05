@@ -834,8 +834,16 @@ def plot_roc_multisample(samples, ct="ct", profile="profile", label="label",
 
 
 def plot_disthist_multisample(samples, structure="pdb", interactions=None,
-                              interactions_filter={},
-                              label="label", same_axis=False, **kwargs):
+                              interactions_filter=None, bg_interactions=None,
+                              bg_interactions_filter=None, label="label",
+                              same_axis=False, plot_kwargs=None, **kwargs):
+    if plot_kwargs is None:
+        plot_kwargs = {}
+    if interactions_filter is None:
+        interactions_filter = {}
+    if bg_interactions_filter is None:
+        bg_interactions_filter = {}
+
     if same_axis:
         plot = DistHist(1)
         ax = plot.axes[0, 0]
@@ -844,7 +852,13 @@ def plot_disthist_multisample(samples, structure="pdb", interactions=None,
         ax = None
     pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
     for sample in samples:
-        sample.filter_interactions(interactions=interactions, fit_to="pdb",
+        sample.filter_interactions(interactions=interactions, fit_to=structure,
                                    **interactions_filter)
+        if bg_interactions is not None:
+            sample.filter_interactions(interactions=bg_interactions,
+                                       fit_to=structure,
+                                       **bg_interactions_filter)
         plot.add_sample(sample, structure=structure, interactions=interactions,
-                        label=label, ax=ax, **pt_kwargs)
+                        bg_interactions=bg_interactions, label=label, ax=ax,
+                        **pt_kwargs)
+    return plot
