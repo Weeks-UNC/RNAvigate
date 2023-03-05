@@ -593,18 +593,8 @@ class Sample():
                             label=label, **pt_kwargs)
         return plot
 
-    def plot_mol_multifilter(self, filters, profile="profile", label="label",
-                             show=True, **kwargs):
-        plot = Mol(len(filters), self.data["pdb"])
-        pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
-        for filter in filters:
-            interactions = filter.pop("interactions")
-            self.filter_interactions(interactions, "pdb", **filter)
-            plot.add_sample(self, interactions=interactions, profile=profile,
-                            label=label, **pt_kwargs)
-        if show:
-            plot.view.show()
-        return plot
+    def plot_mol_multifilter(self, filters, **kwargs):
+        return plot_mol_multisample(samples=[self], filters=filters, **kwargs)
 
     def plot_circle_multifilter(self, filters, ct=None, comp=None,
                                 interactions2=None, profile=None,
@@ -758,25 +748,42 @@ def plot_ss_multisample(samples, ss="ss", profile="profile", annotations=[],
 
 
 def plot_mol_multisample(samples, structure="pdb",
-                         interactions=None, interactions_filter={},
-                         profile="profile", labels=None, show=True,
-                         width=400, height=400, background_alpha=1,
-                         hide_cylinders=False, rotation=None, orientation=None,
-                         prefiltered=False, **kwargs):
-    plot = Mol(len(samples), samples[0].data[structure], width=width,
-               height=height, background_alpha=background_alpha,
-               rotation=rotation, orientation=orientation)
+                         interactions=None, interactions_filter=None,
+                         filters=None, profile="profile", labels=None,
+                         show=True, hide_cylinders=False,
+                         prefiltered=False, plot_kwargs=None, **kwargs):
+    # use mutable defaults
+    if interactions_filter is None:
+        interactions_filter = {}
+    if plot_kwargs is None:
+        plot_kwargs = {}
     if labels is None:
         labels = ["label"]*len(samples)
+    # if filters list given, rows = # samples, columns = # filters
+    if (filters is not None) and (len(samples) > 1):
+        if "rows" not in plot_kwargs.keys():
+            plot_kwargs["rows"] = len(samples)
+        if "cols" not in plot_kwargs.keys():
+            plot_kwargs["cols"] = len(filters)
+    # coerce interactions and interactions_filter into filters format
+    elif filters is None:
+        filters = [{"interactions": interactions} | interactions_filter]
+    num_samples = len(samples) * len(filters)
+    # initialize plot using 1st 3D structure (applies to all samples)
+    plot = Mol(num_samples=num_samples, pdb=samples[0].data[structure],
+               **plot_kwargs)
+    # loop through samples and filters, adding each as a new viewer
     for sample, label in zip(samples, labels):
-        if not prefiltered:
-            if interactions is not None:
-                sample.filter_interactions(interactions, structure,
-                                           **interactions_filter)
-        plot.add_sample(sample, interactions=interactions, profile=profile,
-                        label=label, **kwargs)
+        for filter in filters:
+            if not prefiltered and filter["interactions"] is not None:
+                sample.filter_interactions(fit_to=structure, **filter)
+            plot.add_sample(sample=sample,
+                            interactions=filter["interactions"],
+                            profile=profile, label=label, **kwargs)
+    # hide nucleotide cylinders in all viewers
     if hide_cylinders:
         plot.hide_cylinders()
+    # show viewer grid
     if show:
         plot.view.show()
     return plot
