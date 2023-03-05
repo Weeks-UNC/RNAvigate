@@ -6,10 +6,11 @@ import matplotlib.pyplot as plt
 
 class Mol(Plot):
     def __init__(self, num_samples, pdb, width=400, height=400,
-                 background_alpha=1, rotation=None, orientation=None):
+                 background_alpha=1, rotation=None, orientation=None,
+                 rows=None, cols=None):
         self.pdb = pdb
         self.length = num_samples
-        self.rows, self.columns = self.get_rows_columns()
+        self.rows, self.columns = self.get_rows_columns(rows=rows, cols=cols)
         view = py3Dmol.view(viewergrid=(self.rows, self.columns),
                             width=width*self.columns, height=height*self.rows)
         view.setBackgroundColor('white', background_alpha)
@@ -47,8 +48,9 @@ class Mol(Plot):
 
     def plot_data(self, interactions, profile, label, nt_color="grey",
                   atom="O2'", title=True, get_orientation=False,
-                  colorbar=True):
-        viewer = self.get_viewer()
+                  colorbar=True, viewer=None):
+        if viewer is None:
+            viewer = self.get_viewer()
         if get_orientation:
             self.get_orientation()
         if interactions is not None:
@@ -67,10 +69,8 @@ class Mol(Plot):
 
     def add_lines(self, i, j, color, viewer, atom):
         pdb = self.pdb
-        if i not in pdb.validres or j not in pdb.validres:
+        if not pdb.is_valid_idx(seq_idx=i) or not pdb.is_valid_idx(seq_idx=j):
             return
-        i += self.pdb.offset
-        j += self.pdb.offset
         xi, yi, zi = pdb.get_xyz_coord(i, atom)
         xj, yj, zj = pdb.get_xyz_coord(j, atom)
         cylinder_specs = {"start": {"x": xi, "y": yi, "z": zi},
@@ -94,7 +94,7 @@ class Mol(Plot):
         colors = self.pdb.get_colors(nt_color, profile=profile)
         color_selector = {}
         valid_pdbres = []
-        for i, res in enumerate(self.pdb.validres+self.pdb.offset):
+        for i, res in enumerate(self.pdb.pdb_idx):
             res = int(res)
             valid_pdbres.append(res)
             color = colors[i]

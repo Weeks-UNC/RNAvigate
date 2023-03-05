@@ -25,7 +25,7 @@ class Interactions(Data):
         elif filepath is not None:
             self.read_file(filepath=filepath, sep=sep, read_csv_kw=read_csv_kw)
         self.columns = self.data.columns
-        self._fill_values = {'Distance': 1000}
+        self._fill_values = {'Distance': np.nan}
         self._fill_values.update(fill)
         self._cmaps = {'Distance': 'jet'}
         self._cmaps.update(cmaps)
@@ -55,9 +55,9 @@ class Interactions(Data):
         cmap = plt.get_cmap(cmap)
         cmap = cmap(np.arange(cmap.N))
         cmap[:, -1] = np.full((len(cmap)), 0.6)  # set default alpha to 0.6
-        if self.metric == 'Distance':
-            # set color of max distance and no data distances to gray
-            cmap[-1, :] = np.array([80/255., 80/255., 80/255., 0.2])
+        # if self.metric == 'Distance':
+        # set color of max distance and no data distances to gray
+        # cmap[-1, :] = np.array([80/255., 80/255., 80/255., 0.2])
         cmap = self.modify_cmap(cmap)
         cmap = mp.colors.ListedColormap(cmap)
         self._cmap = cmap
@@ -211,7 +211,8 @@ class Interactions(Data):
         if fit_to.datatype == 'pdb':
             mask = []
             for i, j in zip(self.data["i_offset"], self.data["j_offset"]):
-                mask.append(i in fit_to.validres and j in fit_to.validres)
+                mask.append(fit_to.is_valid_idx(seq_idx=i)
+                            and fit_to.is_valid_idx(seq_idx=j))
             mask = np.array(mask, dtype=bool)
             self.update_mask(mask)
 
@@ -287,7 +288,10 @@ class Interactions(Data):
             for w in range(self.window):
                 i_list.append(i + w)
                 j_list.append(j + self.window - 1 - w)
-                colors.append(cmap(datum))
+                if np.isnan(datum):
+                    colors.append('grey')
+                else:
+                    colors.append(cmap(datum))
         return i_list, j_list, colors
 
     def get_normalized_ij_data(self, min_max):
@@ -295,7 +299,8 @@ class Interactions(Data):
         columns = ["i_offset", "j_offset", metric]
         data = self.data.loc[self.data["mask"], columns].copy()
         ascending = metric not in ['Distance']  # high distance is bad
-        data.sort_values(by=metric, ascending=ascending, inplace=True)
+        data.sort_values(by=metric, ascending=ascending, inplace=True,
+                         na_position='first')
         norm = plt.Normalize(min_max[0], min_max[1], clip=True)
         data[metric] = norm(data[metric])
         return data

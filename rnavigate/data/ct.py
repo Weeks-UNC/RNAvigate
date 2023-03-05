@@ -946,8 +946,8 @@ class CT(Data):
             new_i = am[i-1]+1
             new_j = am[j-1]+1
             if (new_i != 0) and (new_j != 0):
-                ct[new_i] = new_j
-                ct[new_j] = new_i
+                ct[new_i-1] = new_j
+                ct[new_j-1] = new_i
         data = pd.DataFrame({
             'Nucleotide': [i+1 for i in range(fit_to.length)],
             'Sequence': [nt for nt in fit_to.sequence],
