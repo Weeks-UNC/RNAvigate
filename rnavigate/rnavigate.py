@@ -8,7 +8,7 @@ import numpy as np
 from .data import Data, PDB, Log
 from .data import Annotation, Motif, ORFs
 from .data import CT, DotBracket, XRNA, VARNA, NSD, CTE, get_ss_class
-from .data import Interactions, RINGMaP, PAIRMaP, PairProb, SHAPEJuMP
+from .data import Interactions, RINGMaP, PAIRMaP, PairProb, SHAPEJuMP, AllPossible
 from .data import Profile, SHAPEMaP, DanceMaP, RNPMaP
 from .plots import AP, Circle, DistHist, Heatmap, LinReg, Mol
 from .plots import QC, Skyline, SM, SS, ROC
@@ -61,6 +61,7 @@ class Sample():
                  pairmap=None,
                  allcorrs=None,
                  pairprob=None,
+                 allpossible=None,
                  dance_prefix=None,
                  sites=None,
                  spans=None,
@@ -240,6 +241,11 @@ class Sample():
                 "instantiator": Motif,
                 "seq_source": motif.pop("seq_source", ""),
                 "kwargs": motif},
+            "allpossible": {
+                "filepath": "",
+                "instantiator": AllPossible,
+                "seq_source": allpossible,
+                "kwargs": {}},
         }
         self.default_profiles = ["shapemap", "dmsmap", "dancemap", "rnpmap"]
 
