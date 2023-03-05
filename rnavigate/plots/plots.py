@@ -104,7 +104,7 @@ class Plot(ABC):
         # set font style and colors for each nucleotide
         font_prop = mp.font_manager.FontProperties(
             family="monospace", style="normal", weight="bold", size="12")
-        color_dict = {"A": "#f20000", "U": "#f28f00",
+        color_dict = {"A": "#f20000", "U": "#f28f00", "T": "#f28f00",
                       "G": "#00509d", "C": "#00c200"}
         # transform yvalue to a y-axis data value
         if ytrans == "axes":

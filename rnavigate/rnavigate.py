@@ -214,32 +214,32 @@ class Sample():
             "sites": {
                 "filepath": "",
                 "instantiator": Annotation,
-                "seq_source": sites.pop("seq_source", ""),
+                "seq_source": sites.pop("seq_source", None),
                 "kwargs": {'annotation_type': 'sites'} | sites},
             "spans": {
                 "filepath": "",
                 "instantiator": Annotation,
-                "seq_source": spans.pop("seq_source", ""),
+                "seq_source": spans.pop("seq_source", None),
                 "kwargs": {'annotation_type': 'spans'} | spans},
             "groups": {
                 "filepath": "",
                 "instantiator": Annotation,
-                "seq_source": groups.pop("seq_source", ""),
+                "seq_source": groups.pop("seq_source", None),
                 "kwargs": {'annotation_type': 'groups'} | groups},
             "primers": {
                 "filepath": "",
                 "instantiator": Annotation,
-                "seq_source": primers.pop("seq_source", ""),
+                "seq_source": primers.pop("seq_source", None),
                 "kwargs": {'annotation_type': 'primers'} | primers},
             "orfs": {
                 "filepath": "",
                 "instantiator": ORFs,
-                "seq_source": orfs.pop("seq_source", ""),
+                "seq_source": orfs.pop("seq_source", None),
                 "kwargs": orfs},
             "motif": {
                 "filepath": "",
                 "instantiator": Motif,
-                "seq_source": motif.pop("seq_source", ""),
+                "seq_source": motif.pop("seq_source", None),
                 "kwargs": motif},
             "allpossible": {
                 "filepath": "",
@@ -254,8 +254,7 @@ class Sample():
         self.data = {}  # stores profile, interactions, and structure objects
         # load data
         for input, kwargs in self.inputs.items():
-            if kwargs["filepath"] is not None and kwargs["seq_source"] != "":
-                # additional_kwargs = kwargs.pop("kwargs", {})
+            if None not in [kwargs["filepath"], kwargs["seq_source"]]:
                 kwargs.update(kwargs.pop("kwargs", {}))
                 self.set_data(name=input, **kwargs)
 
@@ -264,6 +263,8 @@ class Sample():
         # if given previously instantiated data class, attach and end function
         if isinstance(filepath, Data):
             self.data[name] = filepath
+            if name in self.default_profiles and "profile" not in self.data:
+                self.data["profile"] = self.data[name]
             return
         # check for default instantiator
         if instantiator is None:
@@ -660,6 +661,8 @@ def get_sequence(seq_source, sample, default=None):
         sequence = seq_source
     elif all([nt.upper() in "AUCGT" for nt in seq_source]):
         sequence = Data(sequence=seq_source)
+    else:
+        raise ValueError(f'Cannot find sequence from {seq_source}')
     return sequence
 
 
@@ -715,7 +718,7 @@ def plot_arcs_multisample(samples, seq_source=None, ct="ct", comp=None,
                 if ct_like not in ["ss", "ct", "compct", None]:
                     sample.filter_interactions(interactions=ct_like,
                                                fit_to=seq)
-                else:
+                elif ct_like is not None:
                     sample.data[ct_like].fit_to(seq)
             if interactions is not None:
                 sample.filter_interactions(interactions=interactions,
