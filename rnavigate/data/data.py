@@ -4,6 +4,29 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mpc
 
+_alignments_cache = {}
+
+
+def set_alignment(sequence1, sequence2, alignment1, alignment2):
+    seq12 = {
+        sequence2.upper().replace("T", "U"): {
+            "seqA": alignment1,
+            "seqB": alignment2}}
+    seq21 = {
+        sequence1.upper().replace("T", "U"): {
+            "seqA": alignment2,
+            "seqB": alignment1
+        }
+    }
+    if sequence1 not in _alignments_cache.keys():
+        _alignments_cache[sequence1] = seq12
+    else:
+        _alignments_cache[sequence1].update(seq12)
+    if sequence2 not in _alignments_cache.keys():
+        _alignments_cache[sequence2] = seq21
+    else:
+        _alignments_cache[sequence2].update(seq21)
+
 
 def get_nt_color(nt, colors="new"):
     nt_color = {"old": {"A": "#f20000",  # red
@@ -52,12 +75,6 @@ class Data():
         self.sequence = sequence.upper().replace("T", "U")
 
     @property
-    def alignments(self):
-        if not hasattr(self, '_alignments'):
-            self._alignments = {}
-        return self._alignments
-
-    @property
     def length(self):
         return len(self.sequence)
 
@@ -81,17 +98,26 @@ class Data():
             "seqB": seqB,
         }
 
-    def get_alignment_map(self, fit_to, full=False):
-        if self.sequence.upper() == fit_to.sequence.upper():
+    def get_alignment_map(self, fit_to, full=False, print_sequences=False):
+        seq1 = self.sequence.upper().replace("T", "U")
+        seq2 = fit_to.sequence.upper().replace("T", "U")
+        if seq1 == seq2:
             return np.arange(len(self.sequence))
-        elif fit_to.sequence.upper() not in self.alignments.keys():
-            alignment = align.globalxs(self.sequence, fit_to.sequence,
-                                       -1, -0.1, penalize_end_gaps=False)
-            self.alignments[fit_to.sequence.upper()] = {
-                "seqA": alignment[0].seqA,
-                "seqB": alignment[0].seqB
-            }
-        alignment = self.alignments[fit_to.sequence.upper()]
+        else:
+            try:
+                alignment = _alignments_cache[seq1][seq2]
+            except KeyError:
+                alignment = align.globalxs(self.sequence, fit_to.sequence,
+                                           -1, -0.1, penalize_end_gaps=False)
+                set_alignment(
+                    sequence1=seq1,
+                    sequence2=seq2,
+                    alignment1=alignment[0].seqA,
+                    alignment2=alignment[0].seqB
+                )
+                alignment = _alignments_cache[seq1][seq2]
+        if print_sequences:
+            print(alignment["seqA"], alignment["seqB"], sep="\n")
         # get an index map from this sequence to that.
         alignment_map = []
         i = 0
