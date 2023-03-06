@@ -102,6 +102,8 @@ class Data():
         seq1 = self.sequence.upper().replace("T", "U")
         seq2 = fit_to.sequence.upper().replace("T", "U")
         if seq1 == seq2:
+            if print_sequences:
+                print(seq1, seq2, sep="\n")
             return np.arange(len(self.sequence))
         else:
             try:
