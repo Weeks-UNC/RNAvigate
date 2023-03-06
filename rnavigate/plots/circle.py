@@ -96,14 +96,14 @@ class Circle(Plot):
                        c=nt_color[mask], lw=1, zorder=seq_z)
 
     def plot_positions(self, ax, interval=20):
-        for i in np.arange(0, self.sequence.length+1, interval):
+        for i in np.arange(interval-1, self.sequence.length+1, interval):
             x = self.x[i]
             y = self.y[i]
             theta = self.theta[i] * -180/np.pi
             ax.plot([x, x+5*x/self.diameter], [y, y+5*y/self.diameter], c='k')
             ha = ['left', 'right'][x < 0]
             va = ['top', 'bottom'][y > 0]
-            ax.text(x+7*x/self.diameter, y+7*y/self.diameter, i, ha='center',
+            ax.text(x+7*x/self.diameter, y+7*y/self.diameter, i+1, ha='center',
                     va='center', rotation=theta)
 
     def add_patches(self, ax, data, comp=None):
@@ -124,8 +124,11 @@ class Circle(Plot):
             x_center = (x_i+x_j)/2
             y_center = (y_i+y_j)/2
             # scaling the center point towards zero depending on angle(i,j)
-            # I should test taking the root of the center point
-            f = (1 - ((j - i) / (self.sequence.length + 8))) ** 4
+            if (j - i) > ((self.sequence.length + 8) / 2):
+                diff = self.sequence.length - j + i + 8
+            else:
+                diff = j - i
+            f = (1 - (diff / (self.sequence.length + 8))) ** 4
             verts = [[x_i, y_i], [x_center*f, y_center*f], [x_j, y_j]]
             codes = [Path.MOVETO, Path.CURVE3, Path.CURVE3]
             patches.append(PathPatch(Path(verts, codes), fc="none", ec=color))
