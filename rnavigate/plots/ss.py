@@ -32,27 +32,18 @@ class SS(Plot):
         for kw in list(kwargs.keys()):
             if kw in self.plot_params:
                 self.plot_params[kw] = kwargs.pop(kw)
-        xmin, xmax, ymin, ymax = 0, 0, 0, 0
-        for ss in structures:
-            if xmin > min(ss.xcoordinates):
-                xmin = min(ss.xcoordinates)
-            if xmax < max(ss.xcoordinates):
-                xmax = max(ss.xcoordinates)
-            if ymin > min(ss.ycoordinates):
-                ymin = min(ss.ycoordinates)
-            if ymax < max(ss.ycoordinates):
-                ymax = max(ss.ycoordinates)
-        self.xmin = xmin
-        self.ymin = ymin
-        self.xmax = xmax
-        self.ymax = ymax
+        # ensure that all structures fit within axes limits
+        self.xmin = min([min(ss.xcoordinates) for ss in structures])
+        self.xmax = max([max(ss.xcoordinates) for ss in structures])
+        self.ymin = min([min(ss.ycoordinates) for ss in structures])
+        self.ymax = max([max(ss.ycoordinates) for ss in structures])
         super().__init__(num_samples, **kwargs)
         for i in range(self.length):
             ax = self.get_ax(i)
             ax.set_aspect("equal")
             ax.axis("off")
-            ax.set(xlim=[xmin-1, xmax+1],
-                   ylim=[ymin-1, ymax+1])
+            ax.set(xlim=[self.xmin-1, self.xmax+1],
+                   ylim=[self.ymin-1, self.ymax+1])
         self.pass_through = ["colors", "sequence", "apply_color_to",
                              "colorbar", "title", "positions", "bp_style"]
 
