@@ -129,7 +129,12 @@ class SS(Plot):
             y = ss.ycoordinates[[p-1 for p in pair]]
             xdist = x[1]-x[0]
             ydist = y[1]-y[0]
-            angle_xy = np.arctan(ydist/xdist)
+            if xdist != 0:
+                angle_xy = np.arctan(ydist/xdist)
+            elif ydist > 0:
+                angle_xy = 1/2 * np.pi
+            elif ydist < 0:
+                angle_xy = 3/2 * np.pi
             if (xdist < 0):
                 angle_xy += np.pi
             x_offset = np.cos(angle_xy) / 3
