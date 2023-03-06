@@ -4,6 +4,7 @@ import math
 import numpy as np
 from abc import ABC, abstractmethod
 from ..data import Data
+from ..styles import get_nt_color
 
 
 class Plot(ABC):
@@ -104,8 +105,6 @@ class Plot(ABC):
         # set font style and colors for each nucleotide
         font_prop = mp.font_manager.FontProperties(
             family="monospace", style="normal", weight="bold", size="12")
-        color_dict = {"A": "#f20000", "U": "#f28f00", "T": "#f28f00",
-                      "G": "#00509d", "C": "#00c200"}
         # transform yvalue to a y-axis data value
         if ytrans == "axes":
             trans = ax.get_xaxis_transform()
@@ -113,7 +112,7 @@ class Plot(ABC):
             trans = ax.transData
         sequence = sequence[self.region[0]-1: self.region[1]]
         for i, seq in enumerate(sequence):
-            col = color_dict[seq.upper()]
+            col = get_nt_color(seq, colors="old")
             ax.text(i + self.region[0], yvalue, seq, fontproperties=font_prop,
                     transform=trans, color=col, horizontalalignment="center",
                     verticalalignment="center")

@@ -3,6 +3,7 @@ import Bio.SeqIO
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mpc
+from ..styles import get_nt_color
 
 _alignments_cache = {}
 
@@ -26,19 +27,6 @@ def set_alignment(sequence1, sequence2, alignment1, alignment2):
         _alignments_cache[sequence2] = seq21
     else:
         _alignments_cache[sequence2].update(seq21)
-
-
-def get_nt_color(nt, colors="new"):
-    nt_color = {"old": {"A": "#f20000",  # red
-                        "U": "#f28f00",  # yellow
-                        "G": "#00509d",  # blue
-                        "C": "#00c200"},  # green
-                "new": {"A": "#366ef0",  # blue
-                        "U": "#9bb9ff",  # light blue
-                        "G": "#f04c4c",  # red
-                        "C": "#ffa77c"}  # light red
-                }[colors][nt]
-    return nt_color
 
 
 def get_pairs_sens_PPV(self, ct="ct"):
@@ -152,7 +140,7 @@ class Data():
                    profile=None, ct=None):
         if isinstance(source, str) and (source == "sequence"):
             seq = self.sequence
-            colors = np.array([get_nt_color(nt.upper(), nt_colors)
+            colors = np.array([get_nt_color(nt, nt_colors)
                                for nt in seq])
             return colors
         elif isinstance(source, str) and (source == "position"):
