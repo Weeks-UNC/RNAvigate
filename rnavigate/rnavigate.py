@@ -46,6 +46,7 @@ class Sample():
 
     def __init__(self,
                  sample=None,
+                 inherit=None,
                  pdb=None,
                  ct=None,
                  compct=None,
@@ -251,7 +252,12 @@ class Sample():
 
         self.sample = sample
         self.parent = None
-        self.data = {}  # stores profile, interactions, and structure objects
+        self.data = {}  # stores all data objects
+        # inherit all data objects from another Sample
+        # These data objects are NOT copies: any operation on inherit sample
+        # changes this sample and vice versa. Saves time and memory usage.
+        if isinstance(inherit, Sample):
+            self.data |= Sample.data
         # load data
         for input, kwargs in self.inputs.items():
             if None not in [kwargs["filepath"], kwargs["seq_source"]]:
