@@ -2,8 +2,8 @@ from .plots import Plot
 
 
 class DistHist(Plot):
-    def __init__(self, num_samples):
-        super().__init__(num_samples, sharey=True)
+    def __init__(self, num_samples, **plot_kwargs):
+        super().__init__(num_samples, sharey=True, **plot_kwargs)
         self.axes2 = {}
         base_ax2 = None
         for row in self.axes:

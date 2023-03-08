@@ -867,10 +867,10 @@ def plot_disthist_multisample(samples, structure="pdb", interactions=None,
         bg_interactions_filter = {}
 
     if same_axis:
-        plot = DistHist(1)
+        plot = DistHist(1, **plot_kwargs)
         ax = plot.axes[0, 0]
     else:
-        plot = DistHist(len(samples))
+        plot = DistHist(len(samples), **plot_kwargs)
         ax = None
     pt_kwargs = extract_passthrough_kwargs(plot, kwargs)
     for sample in samples:
