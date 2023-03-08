@@ -22,6 +22,21 @@ def set_defaults():
     mpl.rcParams["svg.fonttype"] = 'none'
 
 
+def get_nt_color(nt, colors="new"):
+    try:
+        return {"old": {"A": "#f20000",  # red
+                        "U": "#f28f00",  # yellow
+                        "G": "#00509d",  # blue
+                        "C": "#00c200"},  # green
+                "new": {"A": "#366ef0",  # blue
+                        "U": "#9bb9ff",  # light blue
+                        "G": "#f04c4c",  # red
+                        "C": "#ffa77c"}  # light red
+                }[colors][nt.upper().replace("T", "U")]
+    except KeyError:
+        return "#aaaaaa"
+
+
 def apply_style(style_dict):
     def decorator(function):
         @wraps(function)
