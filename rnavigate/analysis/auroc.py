@@ -80,15 +80,6 @@ class WindowedAUROC():
         adjust_spines(ax, ['bottom'])
         ax.grid(axis='x')
 
-        # set figure size by axis size + current figure margins
-        l_ax, r_ax = ax.get_xlim()
-        b_ax, t_ax = ax.get_ylim()
-        w_ax = (r_ax - l_ax) / 100
-        h_ax = (t_ax - b_ax) / 100
-        l_fig = ax.figure.subplotpars.left
-        r_fig = ax.figure.subplotpars.right
-        t_fig = ax.figure.subplotpars.top
-        b_fig = ax.figure.subplotpars.bottom
-        figw = w_ax/(r_fig-l_fig)
-        figh = h_ax/(t_fig-b_fig)
-        ax.figure.set_size_inches(figw, figh)
+        # set figure size so that 100 axis units == 1 inch
+        plot.set_figure_size(yscale=1/100, xscale=1/100)
+        return plot

@@ -128,6 +128,39 @@ class Plot(ABC):
     def save(self, filename):
         self.fig.savefig(filename)
 
+    def set_figure_size(self, yscale, xscale):
+        """Sets figure size so that axes sizes always have a consistent
+        axis unit to inches ratio.
+
+        Args:
+            yscale (float): axis unit to inches ratio for y axis
+            xscale (float): axis unit to inches ration for x axis
+        """
+        ax = self.axes[0, 0]
+        rows = self.rows
+        cols = self.columns
+        fig = self.fig
+        # x and y limits of axes
+        left_ax, right_ax = ax.get_xlim()
+        bottom_ax, top_ax = ax.get_ylim()
+        # width and height of axes in inches
+        width_ax = (right_ax - left_ax) * xscale
+        height_ax = (top_ax - bottom_ax) * yscale
+        # gap sizes between axes in inches
+        # w/hspace is fraction of average axis width/height
+        width_gap = fig.subplotpars.wspace * width_ax
+        height_gap = fig.subplotpars.hspace * height_ax
+        # total size of axes with gaps in inches
+        width_ax = width_ax * cols + width_gap * (cols - 1)
+        height_ax = height_ax * cols + height_gap * (rows - 1)
+        # total size of axes as percentage of figure size
+        width_ax_percent = fig.subplotpars.right - fig.subplotpars.left
+        height_ax_percent = fig.subplotpars.top - fig.subplotpars.bottom
+        # total size of figure
+        width_fig = width_ax / width_ax_percent
+        height_fig = height_ax / height_ax_percent
+        fig.set_size_inches(width_fig, height_fig)
+
 
 def adjust_spines(ax, spines):
     for loc, spine in ax.spines.items():
