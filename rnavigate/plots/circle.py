@@ -8,10 +8,10 @@ import numpy as np
 
 class Circle(Plot):
 
-    def __init__(self, num_samples, seq_source):
+    def __init__(self, num_samples, seq_source, **kwargs):
         self.sequence = seq_source
         length = self.sequence.length
-        super().__init__(num_samples)
+        super().__init__(num_samples, **kwargs)
         self.x, self.y = np.zeros(length), np.zeros(length)
         self.diameter = length / pi
         self.theta = np.array([2*pi * (i+4)/(length+8) for i in range(length)])
@@ -39,6 +39,9 @@ class Circle(Plot):
                   annotations, label,
                   colors="sequence", apply_color_to="sequence", colorbar=True,
                   title=True, positions=True):
+        annotations = [annotation.fitted for annotation in annotations]
+        if profile is not None:
+            profile = profile.fitted
         ax = self.get_ax()
         if interactions is not None and colorbar:
             ax_ins1 = ax.inset_axes(
@@ -135,7 +138,6 @@ class Circle(Plot):
         ax.add_collection(PatchCollection(patches, match_original=True))
 
     def plot_annotation(self, ax, annotation):
-        annotation = annotation.fitted
         color = annotation.color
         zorder = self.zorder["annotations"]
         if annotation.annotation_type == "spans":

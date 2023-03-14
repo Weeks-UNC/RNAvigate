@@ -18,6 +18,8 @@ class Skyline(Plot):
 
     def plot_data(self, profile, annotations, label,
                   columns="Reactivity_profile", seqbar=True, errorbars=None):
+        profile = profile.fitted
+        annotations = [annotation.fitted for annotation in annotations]
         self.plot_profile(profile, label, columns, errorbars)
         self.i += 1
         if self.i == self.length:
@@ -81,7 +83,6 @@ class Skyline(Plot):
                                      color='C'+str(self.i), alpha=0.25, lw=0)
 
     def plot_annotation(self, ax, annotation, mode="vbar"):
-        annotation = annotation.fitted
         color = annotation.color
         a_type = annotation.annotation_type
         if a_type in ["primers", "spans"]:

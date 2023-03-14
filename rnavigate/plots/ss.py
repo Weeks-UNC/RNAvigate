@@ -10,21 +10,20 @@ class SS(Plot):
     def __init__(self, num_samples, structures, **kwargs):
         self.plot_params = {
             "structure_lw": 3,
+            "structure_s": 10**2,
 
             "data_lw": 1.5,
             "data_a": None,
+            "data_z": 15,
 
             "annotations_lw": 30,
             "annotations_s": 30**2,
             "annotations_a": 0.4,
 
-            "marker_s": 10**2,
-
-            "structure_z": 2,
             "basepair_z": 0,
+            "structure_z": 2,
             "annotations_z": 5,
             "nucleotide_z": 10,
-            "data_z": 15,
             "sequence_z": 20,
             "position_z": 25,
         }
@@ -56,6 +55,8 @@ class SS(Plot):
                   title=True,
                   positions=False,
                   bp_style="dotted"):
+        profile = profile.fitted
+        annotations = [annotation.fitted for annotation in annotations]
         ax = self.get_ax()
         self.plot_sequence(ax=ax, ss=structure, profile=profile, colors=colors,
                            sequence=sequence, apply_color_to=apply_color_to,
@@ -184,7 +185,7 @@ class SS(Plot):
                                 bp_style=bp_style)
             ax.scatter(ss.xcoordinates, ss.ycoordinates, marker=".",
                        c=struct_color, zorder=seq_z,
-                       s=self.plot_params["marker_s"])
+                       s=self.plot_params["structure_s"])
             return
         if apply_color_to == "background":
             bg_color = ss.get_colors(colors, profile=profile,
