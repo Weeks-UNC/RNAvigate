@@ -34,7 +34,9 @@ class Plot(ABC):
             return
         for key in kwargs.keys():
             if key not in self.pass_through:
-                if isinstance(kwargs[key], Data):
+                if key == "label" and kwargs[key] != "label":
+                    continue
+                elif isinstance(kwargs[key], Data):
                     continue
                 kwargs[key] = sample.get_data_list(kwargs[key])
         self.plot_data(**kwargs)
