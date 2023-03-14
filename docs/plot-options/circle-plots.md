@@ -1,21 +1,23 @@
-Arc plots
-=========
+Circle plots
+============
 
-Arc plots are a flexible plot type for comparing multiple layers of RNA data
-simultaneously. Sequence annotations, per-nucleotide data, inter-nucleotide
-data, and secondary structures can all be displayed on arc plots.
+Circle plots arrange nucleotides 5' to 3' around a circle and are a useful
+visualization for multiple layers of RNA data, especially long RNAs with long
+primary distance interactions. Sequence annotations, per-nucleotide data,
+inter-nucleotide data, and secondary structures can be displayed.
 
-There are two ways to quickly make arc plots:
+There are two ways to quickly make circle plots:
 
 ```python
-plot1 = sample.plot_arcs()
-plot2 = rnavigate.plot_arcs(samples=[sample])
+plot1 = sample.plot_circle()
+plot2 = rnavigate.plot_circle(samples=[sample])
 ```
 
 `sample` here is a hypothetical rnavigate.Sample object containing data. As
 written, these two lines of code do exactly the same thing: create a
-single panel arc plot using the data from `sample`. With the second method, you
-can also create a multi-panel plot by passing multiple samples to the samples argument. e.g.:
+single panel circle plot using the data from `sample`. With the second method,
+you can also create a multi-panel plot by passing multiple samples to the
+samples argument. e.g.:
 
 ```python
 plot3 = rnavigate.plot_arcs(samples=[sample, another_sample])
@@ -28,28 +30,24 @@ values. `plot4` below would produce exactly the same result as `plot1` and
 `plot2`.
 
 ```python
-plot4 = sample.plot_arcs(
+plot4 = sample.plot_circle(
     seq_source=None,
     ct="ct",
     comp=None,
-    ct_panel="top",
     interactions=None,
     interactions_filter={},
-    interactions_panel="bottom",
     filters=None,
     interactions2=None,
     interactions2_filter={},
-    interactions2_panel="bottom",
     profile="profile",
-    plot_error=True,
     annotations=[],
-    annotation_mode="track",
     labels=None,
-    title=True,
-    region="all",
-    colorbar=True,
-    seqbar=True,
     plot_kwargs={"rows": None, "cols": None, "figsize": None},
+    colors="sequence",
+    apply_color_to="sequence",
+    positions=True,
+    title=True,
+    colorbar=True,
 )
 ```
 
@@ -59,10 +57,10 @@ To see these keys, run: `print(sample.data.keys())`.
 
 `seq_source`
 
-* A sequence string, sample.data key, or Data object.
+* A sequence string, `sample.data` key, or Data object.
 * Secondary structures, per-nucleotide and inter-nucleotide data, and sequence
   annotations are mapped to this sequence using either a pairwise sequence
-  alignment, or an alignment previously defined by the user, prior to plotting.
+  alignment or an alignment previously defined by the user, prior to plotting.
 * If `seq_source` is not provided, it is set to the value of the `ct` argument.
 
 `ct` and `comp`
@@ -73,27 +71,17 @@ To see these keys, run: `print(sample.data.keys())`.
 * If `comp` is also provided, basepairs from both structures are drawn as arcs,
   which are colored by whether they appear in `ct`, `comp` or both.
 
-`ct_panel`
-
-* This can be `"top"` or `"bottom"`. It determines whether to plot `ct` arcs
-  above or below the central x-axis.
-
 `interactions` and `interactions2`
 
 * These values are sample.data keys that point to inter-nucleotide data, e.g.:
   `"ringmap"`, `"pairmap"`, `"pairprob"`, `"shapejump"`, etc.
-* These data are mapped to seq_source, filtered using the arguments below, then
-  plotted as arcs.
+* These data are mapped to `seq_source`, filtered , then plotted as arcs.
 
 `interactions_filter` and `interactions2_filter`
 
 * A dictionary of key-value pairs that specifies how `interactions` and
   `interactions2` are filtered and displayed
 * See [interactions guide](../filters.md) for more detail.
-
-`interactions_panel` and `interactions2_panel`
-
-* `"Top"` or `"Bottom"`, where to plot `interactions` and `interactions2` data.
 
 `filters`
 
@@ -106,28 +94,17 @@ To see these keys, run: `print(sample.data.keys())`.
 
 `profile`
 
-* A sample.data key that points to per-nucleotide data.
+* A `sample.data` key that points to per-nucleotide data.
 * The default is "profile" which uses the first valid value in this list:
   ["shapemap", "dmsmap", "dancemap", "rnpmap"]
-* These data are mapped to `seq_source` and plotted as a bar graph along the
-  central axis.
-
-`plot_error`
-
-* `True` or `False`, whether to plot error bars on `profile` data.
+* These data are mapped to `seq_source` and used to color nucleotides.
 
 `annotations`
 
-* A list of sample.data keys that point to sequence annotations.
-* These annotations are mapped to `seq_source`, then plotted along the central
-  x-axis.
+* A list of `sample.data` keys that point to sequence annotations.
+* These annotations are mapped to `seq_source`, then used to highlight
+  nucleotides.
 * See [annotations guide](../annotations.md) for more info.
-
-`annotation_mode`
-
-* Either `"track"` or `"vbar"`.
-* `"track"` uses markers along the x-axis.
-* `"vbar"` uses transparent vertical bars spanning the y-axis.
 
 `labels`
 
@@ -138,25 +115,32 @@ To see these keys, run: `print(sample.data.keys())`.
 
 * `True` or `False`. Display titles using `labels`.
 
-`region`
-
-* A list containing a start and end position (1-indexed, inclusive)
-* e.g. `region=[40, 100]` plots nucleotides 40 through 100.
-* Defaults to plotting the entire sequence from `seq_source`.
-
 `colorbar`
 
 * `True` or `False`. Display the color scale for interactions data.
 
-`seqbar`
-
-* `True` or `False`. Display the sequence along the x-axis.
-
 `plot_kwargs`
 
-* A dictionary of keyword argument pairs passed to `rnavigate.AP()`.
+* A dictionary of keyword argument pairs passed to `rnavigate.Circle()`.
 * These values are automatically determined by the plotting function if not
   provided.
 * `"rows"` and `"cols"` specifies the number of axes rows and columns of the
   matplotlib figure.
 * `"figsize"` specifies the total size of the matplotlib figure in inches.
+
+`colors`
+
+* Can be any valid matplotlib color, a list of colors with length equal
+  to the sequence of `ss`, or one of the following:
+* `"position"` colors by position using a spectrum.
+* `"sequence"` colors by nucleotide.
+    * A: red
+    * U: light red
+    * G: blue
+    * C: light blue
+* `"profile"` colors using `profile` data.
+
+`apply_color_to`
+
+* `"background"` applies `colors` to nucleotide markers.
+* `"sequence"` applies `colors` to nucleotide letters.
