@@ -33,12 +33,10 @@ class Profile(Data):
         super().__init__(filepath=fasta, sequence=sequence,
                          dataframe=self.data)
         # assign colors
-        if colors is not None:
-            self.colors = colors
-        elif "Colors" in self.data.columns:
-            self.colors = self.data["Colors"]
+        if (colors is None) and ("Colors" in self.data.columns):
+            colors = self.data["Colors"]
         else:
-            self.set_profile_colors(start_from="defaults")
+            self.set_color_values(start_from="defaults", colors=colors)
 
     def read_file(self, filepath, sep, read_csv_kw):
         self.data = pd.read_csv(filepath, sep=sep, **read_csv_kw)
@@ -46,38 +44,81 @@ class Profile(Data):
 
     def set_color_defaults(self, column, cmap, norm_method, norm_values):
         self._color_defaults = {"column": column,
-                                "cmap": self.get_cmap(cmap),
+                                "cmap": cmap,
                                 "norm_method": norm_method,
                                 "norm_values": norm_values}
 
-    def set_color_values(self, start_from, **kwargs):
+    def set_color_values(self, start_from="current", column=None, cmap=None,
+                         norm_method=None, norm_values=None, colors=None):
         if start_from == "defaults":
             self.color_values = self._color_defaults
         elif start_from == "current":
             pass
-        for key in kwargs:
-            if key not in self.color_values:
-                print(f"{key} is not a valid color argument.")
-            elif key == "cmap":
-                self.color_values[key] = self.get_cmap(kwargs[key])
-            elif kwargs[key] is not None:
-                self.color_values[key] = kwargs[key]
+        if column is not None:
+            self.color_values["column"] = column
+        if cmap is not None:
+            self.color_values["cmap"] = cmap
+        if norm_method is not None:
+            self.color_values["norm_method"] = norm_method
+        if norm_values is not None:
+            self.color_values["norm_values"] = norm_values
+        if colors is not None:
+            self._colors = colors
+        elif colors is None:
+            self._colors = None
 
-    def set_profile_colors(self, start_from="current", **kwargs):
-        self.set_color_values(start_from=start_from, **kwargs)
+    @property
+    def colors(self):
+        if self._colors is not None:
+            return self._colors
         cv = self.color_values
+        cmap = self.get_cmap(cv["cmap"])
         if cv["norm_method"] == "bins":
             norm = mpc.BoundaryNorm(cv["norm_values"],
-                                    cv["cmap"].N-1, extend="both")
+                                    cmap.N-1, extend="both")
         elif cv["norm_method"] == "min_max":
             norm = plt.Normalize(cv["norm_values"][0], cv["norm_values"][1])
         elif cv["norm_method"] == "0_1":
             norm = plt.Normalize()
-        elif cv["norm_method"] is None:
+        elif cv["norm_method"] == "none":
             def norm(x): return x  # does nothing to values
         values = self.data[cv["column"]].values
         values = norm(values)
-        self.colors = cv["cmap"](values)
+        return cmap(values)
+
+    def fit_to(self, fit_to):
+        """Creates a new Profile, stored as self.fitted, which maps the data
+        indices to a new sequence.
+
+        Args:
+            fit_to (rnavigate.data.Data): A data object containing a sequence.
+        """
+        am = self.get_alignment_map(fit_to=fit_to)
+        mask = (am != -1)
+        fitted_data = pd.DataFrame({
+            "Nucleotide": np.arange(fit_to.length)+1,
+            "Sequence": [nt for nt in fit_to.sequence]
+        })
+        for column in self.data.columns:
+            if column in ["Nucleotide", "Sequence"]:
+                continue
+            fitted_data[column] = np.nan
+            for idx, fit_idx in enumerate(am):
+                if fit_idx == -1:
+                    continue
+                fitted_data.loc[fit_idx, column] = self.data.loc[idx, column]
+        fitted_data = self.data.copy()
+        fitted_colors = np.full((fit_to.length, 4), 0.5)
+        colors = self.colors
+        for idx, fit_idx in enumerate(am):
+            fitted_colors[fit_idx] = colors[idx]
+        self.fitted = Profile(
+            datatype="profile",
+            column=self.default_column,
+            ap_scale_factor=self.ap_scale_factor,
+            dataframe=fitted_data,
+            sequence=fit_to.sequence,
+            colors=fitted_colors)
 
 
 class SHAPEMaP(Profile):
@@ -101,7 +142,6 @@ class SHAPEMaP(Profile):
         if dms:
             self.ap_scale_factor = 10
             self.set_dms_profile()
-            self.set_profile_colors(start_from="defaults")
 
     def set_dms_profile(self):
         """Perform normalization of data based on DMS reactivities (AC seperate
@@ -194,6 +234,7 @@ class RNPMaP(Profile):
                          column="NormedP",
                          color_column="RNPsite",
                          cmap=["silver", "limegreen"],
+                         norm_method="none",
                          **kwargs)
 
 
