@@ -22,11 +22,11 @@ class Mol(Plot):
             view.addModel(pdb_str, 'mmcif')
         view.setStyle({"cartoon": {'color': 'spectrum'}})
         view.zoomTo({"chain": self.pdb.chain})
-        if rotation is not None:
+        if orientation is not None:
+            view.setView(orientation)
+        elif rotation is not None:
             for key in rotation:
                 view.rotate(rotation[key], key)
-        elif orientation is not None:
-            view.setView(orientation)
         self.view = view
         self.i = 0
         self.pass_through = [
@@ -94,10 +94,10 @@ class Mol(Plot):
         colors = self.pdb.get_colors(nt_color, profile=profile)
         color_selector = {}
         valid_pdbres = []
-        for i, res in enumerate(self.pdb.pdb_idx):
+        for res in self.pdb.pdb_idx:
             res = int(res)
             valid_pdbres.append(res)
-            color = colors[i]
+            color = colors[self.pdb.get_seq_idx(res)-1]
             if color in color_selector.keys():
                 color_selector[color].append(res)
             else:
