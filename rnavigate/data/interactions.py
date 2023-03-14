@@ -153,9 +153,9 @@ class Interactions(Data):
                         cd.append(ct.contactDistance(i+iw, j+jw))
                 cd = min(cd)
                 if min_cd is not None:
-                    true_so_far = cd > min_cd
+                    true_so_far = cd >= min_cd
                 if max_cd is not None:
-                    true_so_far = cd < max_cd
+                    true_so_far = cd <= max_cd
             mask.append(true_so_far)
         if return_mask:
             return mask
