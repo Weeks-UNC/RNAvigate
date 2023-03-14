@@ -22,6 +22,9 @@ class AP(Plot):
                   interactions_panel="bottom", interactions2_panel="bottom",
                   ct_panel="top", annotations=[], annotation_mode="track",
                   plot_error=True):
+        annotations = [annotation.fitted for annotation in annotations]
+        if profile is not None:
+            profile = profile.fitted
         ax = self.get_ax(ax)
         if annotation_mode == "track":
             annotation_gap = 2*(2*len(annotations) + seqbar)
@@ -143,7 +146,6 @@ class AP(Plot):
                    edgecolor=colormap[mn-1:mx], linewidth=0.0)
 
     def plot_annotation(self, ax, annotation, yvalue, mode):
-        annotation = annotation.fitted
         color = annotation.color
         modes = ["track", "vbar"]
         assert mode in modes, f"annotation mode must be one of: {modes}"
