@@ -108,19 +108,6 @@ class Interactions(Data):
         else:
             self.update_mask(mask)
 
-    def mask_primary_distance(self, min_pd=None, max_pd=None,
-                              return_mask=False):
-        primary_distances = np.absolute(self.data.eval("i_offset - j_offset"))
-        mask = self.data['mask']
-        if min_pd is not None:
-            mask &= primary_distances >= min_pd
-        if max_pd is not None:
-            mask &= primary_distances <= max_pd
-        if return_mask:
-            return mask
-        else:
-            self.update_mask(mask)
-
     def mask_on_ct(self, ct, min_cd=None, max_cd=None, ss_only=False,
                    ds_only=False, paired_only=False, return_mask=False):
         if isinstance(ct, list):
@@ -192,17 +179,26 @@ class Interactions(Data):
                     mask[index] = False
         self.update_mask(mask)
 
-    def mask_distance(self, max_dist, min_dist):
-        if max_dist is not None:
-            self.update_mask(self.data.eval("(j - i) <= @max_dist"))
+    def mask_distance(self, max_dist, min_dist, return_mask=False):
+        primary_distances = np.absolute(self.data.eval("i - j"))
+        mask = self.data['mask']
         if min_dist is not None:
-            self.update_mask(self.data.eval("(j -i) >= @min_dist"))
+            mask &= primary_distances >= min_dist
+        if max_dist is not None:
+            mask &= primary_distances <= max_dist
+        if return_mask:
+            return mask
+        else:
+            self.update_mask(mask)
 
-    def set_mask_offset(self, fit_to):
+    def set_mask_offset(self, fit_to, prefiltered=False):
         am = self.get_alignment_map(fit_to)
         i = np.array([am[i-1]+1 for i in self.data["i"].values])
         j = np.array([am[j-1]+1 for j in self.data["j"].values])
-        mask = np.ones(len(i), dtype=bool)
+        if prefiltered:
+            mask = self.data["mask"].copy()
+        else:
+            mask = np.ones(len(i), dtype=bool)
         for w in range(self.window):
             mask = mask & ((i+w) != 0) & ((j+w) != 0)
         self.data["mask"] = mask
@@ -225,17 +221,14 @@ class Interactions(Data):
                min_cd=None, max_cd=None,
                paired_only=False, ss_only=False, ds_only=False,
                profile=None, min_profile=None, max_profile=None,
-               min_pd=None, max_pd=None,
                compliments_only=False, nts=None,
                max_distance=None, min_distance=None,
                exclude_nts=None, isolate_nts=None,
                resolve_conflicts=None,
                **kwargs):
+        self.set_mask_offset(fit_to, prefiltered=prefiltered)
         if prefiltered:
             return
-        self.set_mask_offset(fit_to)
-        if min_pd is not None or max_pd is not None:
-            self.mask_primary_distance(min_pd=min_pd, max_pd=max_pd)
         if exclude_nts is not None or isolate_nts is not None:
             self.mask_nts(exclude_nts, isolate_nts)
         if max_distance is not None or min_distance is not None:
