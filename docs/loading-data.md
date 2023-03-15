@@ -70,8 +70,12 @@ my_sample = rnav.Sample(
 )
 ```
 
+---
+
 RNA structure data
 ------------------
+
+---
 
 `inherit`
 
@@ -82,11 +86,15 @@ RNA structure data
 * This saves on memory and computation time if large data sets are to be shared
   between samples.
 
+---
+
 `pdb`
 
 * A dictionary containing a PDB or CIF file, a chain ID, and optionally a fasta
   reference sequence matching the PDB model.
 * e.g., `pdb={"filepath": "my_rna.cif", "chain": "A", "fasta": "my_rna.fasta"}`
+
+---
 
 `ct`, `compct`, and `ss`
 
@@ -99,6 +107,8 @@ RNA structure data
 * The default behavior of RNAvigate functions expects `ss` to contain
   structure drawing coordinates (cte, nsd, varna, xrna, or json files).
 
+---
+
 `fasta`
 
 * A .fasta or .fa file containing a single sequence.
@@ -107,13 +117,19 @@ RNA structure data
   visualization. Some functions allow specifying a custom sequence using an
   optional `seq_source` argument.
 
+---
+
 Per-nucleotide data
 -------------------
+
+---
 
 `log`
 
 * A shapemapper_log.txt file that is output from ShapeMapper2. This file
   includes important quality control metrics for the experiment if the `--per-read-histograms` flag was used with ShapeMapper2.
+
+---
 
 `shapemap` or `dmsmap`
 
@@ -123,48 +139,70 @@ Per-nucleotide data
 * If `dmsmap` is used, the reactivity profile is renormalized according to DMS
   conventions.
 
+---
+
 `dancemap`
 
 * A dictionary containing a DanceMapper _reactivities.txt file and a model
   component number.
 * e.g., `dancemap={"filepath": "my_experiment_reactivities.txt", "component": 0}`
 
+---
+
 `rnpmap`
 
 * An rnpmap.csv file from RNP-MaP
 
+---
+
 Inter-nucleotide data
 ---------------------
+
+---
 
 `ringmap`
 
 * The only default output file of RingMapper. The extension is specified when
   executing RingMapper, typically rings.txt.
 
+---
+
 `shapejump`
 
 * A dictionary containing a data file and a fasta file.
 * e.g. `shapejump={"filepath":"Path/to/data.file", "fasta":"Path/to/fasta.fa"}`
 
+---
+
 `pairmap`
 
 * A pairmap.txt file from PairMapper.
+
+---
 
 `allcorrs`
 
 * An allcorrs.txt file from PairMapper.
 
+---
+
 `pairprob`
 
 * A .dp plain text file from SuperFold or from RNAStructure's ProbabilityPlot.
+
+---
 
 `allpossible`
 
 * A key from `sample.data` to take a sequence from.
 * This will contain a list of every possible pair of nucleotides.
 
+---
+
 Sequence annotations
 --------------------
+
+---
 
 `sites`
 
@@ -179,6 +217,8 @@ Sequence annotations
       "color": "red"}
 ```
 
+---
+
 `spans`
 
 * A dictionary containing:
@@ -192,6 +232,8 @@ Sequence annotations
         "annotations": [[10, 20], [53, 87]],
         "color": "blue"}
 ```
+
+---
 
 `groups`
 
@@ -209,10 +251,14 @@ Sequence annotations
         ]}
 ```
 
+---
+
 `primers`
 
 * `primers` acts just like `spans` above, but the start and end positions are
   directional. i.e. for reverse primers start is greater than end.
+
+---
 
 `orfs`
 
@@ -227,6 +273,8 @@ Sequence annotations
         "seq_source": "shapemap",
         "color": "orange"}
 ```
+
+---
 
 `motif`
 
@@ -256,8 +304,12 @@ Sequence annotations
         "color": "orange"}
 ```
 
+---
+
 Convenient function for DANCE data
 ----------------------------------
+
+---
 
 `dance_prefix`
 
@@ -272,3 +324,5 @@ Convenient function for DANCE data
     * prefix_*n*.ct (if default folding was performed)
 * These data are stored in `my_sample.dance` as a list of `rnav.Sample` objects,
   one for each component of the DANCE model.
+
+---

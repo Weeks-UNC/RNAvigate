@@ -5,6 +5,8 @@ Installation
 - [Manual installation](#manual-installation)
 - [UNC Longleaf installation](#unc-longleaf-installation)
 
+---
+
 Anaconda installation
 ---------------------
 
@@ -35,6 +37,8 @@ python -m ipykernel install --user --name=rnavigate
 
 To test installation, open and run one of the example notebooks.
 
+---
+
 Manual installation
 -------------------
 
@@ -56,6 +60,8 @@ environment:
 
 Download the package from [Github](https://github.com/Weeks-UNC/RNAvigate). Add
 this directory your $PYTHONPATH, and you are good to go.
+
+---
 
 UNC Longleaf installation
 -------------------------
