@@ -517,11 +517,13 @@ class Sample():
         """
         data = self.data[interactions]
         # check for valid interactions data
-        if interactions not in self.data.keys():
+        if interactions is None:
+            return
+        elif interactions not in self.data.keys():
             if not suppress:
                 print(f"{interactions} not found in sample data")
             return
-        if not isinstance(data, Interactions):
+        elif not isinstance(data, Interactions):
             if not suppress:
                 print(f"{Interactions} is not an Interactions datatype")
             return
@@ -707,6 +709,7 @@ class Sample():
         """
         plot = SM(self.data["profile"].length, plots=plots)
         plot.add_sample(self, profile="profile", label="label")
+        plot.set_figure_size()
         return plot
 
     def plot_arcs_multifilter(self, filters, **kwargs):
@@ -844,8 +847,9 @@ def plot_qc_multisample(*args, **kwargs):
     """Deprecation Warning: this function name will be removed in favor of
     rnavigate.plot_qc() starting with version 1.0.0
     """
-    print("Deprecation warning, this function will be removed in favor of"
-          "rnavigate.plot_qc starting with version 1.0.0")
+    print("Deprecation warning, this function will be removed in favor of "
+          "rnavigate.plot_qc starting with version 1.0.0. This function "
+          "simply calls the new function, please start using that one.")
     return plot_qc(*args, **kwargs)
 
 
@@ -853,8 +857,9 @@ def plot_skyline_multisample(*args, **kwargs):
     """Deprecation Warning: this function name will be removed in favor of
     rnavigate.plot_skyline() starting with version 1.0.0
     """
-    print("Deprecation warning, this function will be removed in favor of"
-          "rnavigate.plot_skyline starting with version 1.0.0")
+    print("Deprecation warning, this function will be removed in favor of "
+          "rnavigate.plot_skyline starting with version 1.0.0. This function "
+          "simply calls the new function, please start using that one.")
     return plot_skyline(*args, **kwargs)
 
 
@@ -862,8 +867,9 @@ def plot_arcs_multisample(*args, **kwargs):
     """Deprecation Warning: this function name will be removed in favor of
     rnavigate.plot_arcs() starting with version 1.0.0
     """
-    print("Deprecation warning, this function will be removed in favor of"
-          "rnavigate.plot_arcs starting with version 1.0.0")
+    print("Deprecation warning, this function will be removed in favor of "
+          "rnavigate.plot_arcs starting with version 1.0.0. This function "
+          "simply calls the new function, please start using that one.")
     return plot_arcs(*args, **kwargs)
 
 
@@ -871,8 +877,9 @@ def plot_ss_multisample(*args, **kwargs):
     """Deprecation Warning: this function name will be removed in favor of
     rnavigate.plot_ss() starting with version 1.0.0
     """
-    print("Deprecation warning, this function will be removed in favor of"
-          "rnavigate.plot_ss starting with version 1.0.0")
+    print("Deprecation warning, this function will be removed in favor of "
+          "rnavigate.plot_ss starting with version 1.0.0. This function "
+          "simply calls the new function, please start using that one.")
     return plot_ss(*args, **kwargs)
 
 
@@ -880,8 +887,9 @@ def plot_mol_multisample(*args, **kwargs):
     """Deprecation Warning: this function name will be removed in favor of
     rnavigate.plot_mol() starting with version 1.0.0
     """
-    print("Deprecation warning, this function will be removed in favor of"
-          "rnavigate.plot_mol starting with version 1.0.0")
+    print("Deprecation warning, this function will be removed in favor of "
+          "rnavigate.plot_mol starting with version 1.0.0. This function "
+          "simply calls the new function, please start using that one.")
     return plot_mol(*args, **kwargs)
 
 
@@ -889,8 +897,9 @@ def plot_heatmap_multisample(*args, **kwargs):
     """Deprecation Warning: this function name will be removed in favor of
     rnavigate.plot_heatmap() starting with version 1.0.0
     """
-    print("Deprecation warning, this function will be removed in favor of"
-          "rnavigate.plot_heatmap starting with version 1.0.0")
+    print("Deprecation warning, this function will be removed in favor of "
+          "rnavigate.plot_heatmap starting with version 1.0.0. This function "
+          "simply calls the new function, please start using that one.")
     return plot_heatmap(*args, **kwargs)
 
 
@@ -898,8 +907,9 @@ def plot_circle_multisample(*args, **kwargs):
     """Deprecation Warning: this function name will be removed in favor of
     rnavigate.plot_circle() starting with version 1.0.0
     """
-    print("Deprecation warning, this function will be removed in favor of"
-          "rnavigate.plot_circle starting with version 1.0.0")
+    print("Deprecation warning, this function will be removed in favor of "
+          "rnavigate.plot_circle starting with version 1.0.0. This function "
+          "simply calls the new function, please start using that one.")
     return plot_circle(*args, **kwargs)
 
 
@@ -907,8 +917,9 @@ def plot_linreg_multisample(*args, **kwargs):
     """Deprecation Warning: this function name will be removed in favor of
     rnavigate.plot_linreg() starting with version 1.0.0
     """
-    print("Deprecation warning, this function will be removed in favor of"
-          "rnavigate.plot_linreg starting with version 1.0.0")
+    print("Deprecation warning, this function will be removed in favor of "
+          "rnavigate.plot_linreg starting with version 1.0.0. This function "
+          "simply calls the new function, please start using that one.")
     return plot_linreg(*args, **kwargs)
 
 
@@ -916,8 +927,9 @@ def plot_roc_multisample(*args, **kwargs):
     """Deprecation Warning: this function name will be removed in favor of
     rnavigate.plot_roc() starting with version 1.0.0
     """
-    print("Deprecation warning, this function will be removed in favor of"
-          "rnavigate.plot_roc starting with version 1.0.0")
+    print("Deprecation warning, this function will be removed in favor of "
+          "rnavigate.plot_roc starting with version 1.0.0. This function "
+          "simply calls the new function, please start using that one.")
     return plot_roc(*args, **kwargs)
 
 
@@ -925,8 +937,9 @@ def plot_disthist_multisample(*args, **kwargs):
     """Deprecation Warning: this function name will be removed in favor of
     rnavigate.plot_disthist() starting with version 1.0.0
     """
-    print("Deprecation warning, this function will be removed in favor of"
-          "rnavigate.plot_disthist starting with version 1.0.0")
+    print("Deprecation warning, this function will be removed in favor of "
+          "rnavigate.plot_disthist starting with version 1.0.0. This function "
+          "simply calls the new function, please start using that one.")
     return plot_disthist(*args, **kwargs)
 
 
@@ -956,6 +969,7 @@ def plot_qc(samples, labels=None, plot_kwargs=None, **kwargs):
     for sample, label in zip(samples, labels):
         plot.add_sample(sample=sample, log="log", profile="profile",
                         label=label, **kwargs)
+    plot.set_figure_size()
     return plot
 
 
@@ -1001,6 +1015,7 @@ def plot_skyline(samples, seq_source=None, profile="profile", labels=None,
         fit_data_list(sample, annotations + [profile], sequence)
         plot.add_sample(sample, profile=profile, annotations=annotations,
                         label=label, **kwargs)
+    plot.set_figure_size()
     return plot
 
 
@@ -1101,17 +1116,16 @@ def plot_arcs(samples, seq_source=None, ct="ct", comp=None, interactions=None,
     # loop through samples and filters, adding each as a new axis
     for sample, label in zip(samples, labels):
         fit_data_list(sample, annotations + [ct, comp, profile], seq)
-        if interactions2 is not None:
-            sample.filter_interactions(interactions=interactions2,
-                                       fit_to=seq, **interactions2_filter)
+        sample.filter_interactions(interactions=interactions2,
+                                   fit_to=seq, **interactions2_filter)
         for filt in filters:
-            if filt["interactions"] is not None:
-                sample.filter_interactions(fit_to=seq, **filt)
-        plot.add_sample(sample=sample, seq=seq, ct=ct, comp=comp,
-                        interactions=filt["interactions"],
-                        interactions2=interactions2, profile=profile,
-                        label=label, annotations=annotations,
-                        **kwargs)
+            sample.filter_interactions(fit_to=seq, **filt)
+            plot.add_sample(sample=sample, seq=seq, ct=ct, comp=comp,
+                            interactions=filt["interactions"],
+                            interactions2=interactions2, profile=profile,
+                            label=label, annotations=annotations,
+                            **kwargs)
+    plot.set_figure_size()
     return plot
 
 
@@ -1200,16 +1214,15 @@ def plot_ss(samples, ss="ss", profile="profile", annotations=[],
     # loop through samples and filters, adding each as a new axis
     for sample, label in zip(samples, labels):
         fit_data_list(sample, annotations + [profile], sample.data[ss])
-        if interactions2 is not None:
-            sample.filter_interactions(interactions=interactions2, fit_to=ss,
-                                       **interactions2_filter)
+        sample.filter_interactions(interactions=interactions2, fit_to=ss,
+                                   **interactions2_filter)
         for filt in filters:
-            if filt["interactions"] is not None:
-                sample.filter_interactions(fit_to=ss, **filt)
+            sample.filter_interactions(fit_to=ss, **filt)
             plot.add_sample(sample, structure=ss,
                             interactions=filt["interactions"],
                             interactions2=interactions2, profile=profile,
                             annotations=annotations, label=label, **kwargs)
+    plot.set_figure_size()
     return plot
 
 
@@ -1294,8 +1307,7 @@ def plot_mol(samples, structure="pdb", interactions=None,
     for sample, label in zip(samples, labels):
         fit_data_list(sample, [profile], sample.data[structure])
         for filt in filters:
-            if filt["interactions"] is not None:
-                sample.filter_interactions(fit_to=structure, **filt)
+            sample.filter_interactions(fit_to=structure, **filt)
             plot.add_sample(sample=sample,
                             interactions=filt["interactions"],
                             profile=profile, label=label, **kwargs)
@@ -1382,6 +1394,7 @@ def plot_heatmap(samples, structure=None, interactions=None,
             sample.filter_interactions(structure, **filt)
             plot.add_sample(sample, interactions=filt["interactions"],
                             label=label, **kwargs)
+    plot.set_figure_size()
     return plot
 
 
@@ -1480,18 +1493,17 @@ def plot_circle(samples, seq_source=None, ct=None, comp=None,
     plot = Circle(num_samples=num_samples, seq_source=sequence, **plot_kwargs)
     # loop through samples and filters, adding each as a new axis
     for sample, label in zip(samples, labels):
-        for key in annotations + [ct, comp, profile]:
-            if key is not None:
-                sample.data[key].fit_to(sequence)
-        if interactions2 is not None:
-            sample.filter_interactions(interactions2, sequence,
-                                       **interactions2_filter)
+        fit_data_list(sample=sample, data_list=annotations+[ct, comp, profile],
+                      fit_to=sequence)
+        sample.filter_interactions(interactions=interactions2, fit_to=sequence,
+                                   **interactions2_filter)
         for filt in filters:
             sample.filter_interactions(fit_to=sequence, **filt)
             plot.add_sample(sample, ct=ct, comp=comp,
                             interactions=filt["interactions"],
                             interactions2=interactions2, profile=profile,
                             annotations=annotations, label=label, **kwargs)
+    plot.set_figure_size()
     return plot
 
 
@@ -1529,6 +1541,7 @@ def plot_linreg(samples, ct="ct", profile="profile", labels=None,
     plot = LinReg(len(samples), **plot_kwargs)
     for sample, label in zip(samples, labels):
         plot.add_sample(sample, ct=ct, profile=profile, label=label, **kwargs)
+    plot.set_figure_size()
     return plot
 
 
@@ -1567,6 +1580,7 @@ def plot_roc(samples, ct="ct", profile="profile", labels=None,
     plot = ROC(len(samples), **plot_kwargs)
     for sample, label in zip(samples, labels):
         plot.add_sample(sample, ct=ct, profile=profile, label=label, **kwargs)
+    plot.set_figure_size()
     return plot
 
 
@@ -1651,14 +1665,13 @@ def plot_disthist(samples, structure="pdb", interactions=None,
         ax = None
     # loop through samples and filters, adding each as a new axis
     for sample, label in zip(samples, labels):
-        if bg_interactions is not None:
-            sample.filter_interactions(interactions=bg_interactions,
-                                       fit_to=structure,
-                                       **bg_interactions_filter)
+        sample.filter_interactions(interactions=bg_interactions,
+                                   fit_to=structure, **bg_interactions_filter)
         for filt in filters:
             sample.filter_interactions(fit_to=structure, **filt)
             plot.add_sample(sample, structure=structure,
                             interactions=filt["interactions"],
                             bg_interactions=bg_interactions, label=label,
                             ax=ax, **kwargs)
+    plot.set_figure_size()
     return plot

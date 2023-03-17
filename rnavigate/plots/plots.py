@@ -78,12 +78,13 @@ class Plot(ABC):
         colors = cmap(np.arange(cmap.N))
 
         if ax is None:
-            _, ax = plt.subplots(1, figsize=(6, 2))
+            fig, ax = plt.subplots(1, figsize=(6, 2))
         ax.imshow([colors], extent=[0, 10, 0, 1])
         ax.set_title(title)
         ax.set_xticks(ticks)
         ax.set_xticklabels(values)
         ax.set_yticks([])
+        return (fig, ax)
 
     def get_rows_columns(self, rows=None, cols=None):
         has_rows = isinstance(rows, int)
@@ -130,38 +131,86 @@ class Plot(ABC):
     def save(self, filename):
         self.fig.savefig(filename)
 
-    def set_figure_size(self, yscale, xscale):
-        """Sets figure size so that axes sizes always have a consistent
-        axis unit to inches ratio.
+    def set_figure_size(self, fig=None, ax=None, rows=None, cols=None,
+                        height_ax_rel=None, width_ax_rel=None,
+                        width_ax_in=None, height_ax_in=None,
+                        height_gap_in=None, width_gap_in=None,
+                        top_in=None, bottom_in=None,
+                        left_in=None, right_in=None):
+        """Sets figure size so that axes sizes are always consistent.
 
         Args:
-            yscale (float): axis unit to inches ratio for y axis
-            xscale (float): axis unit to inches ration for x axis
+            height_ax_rel (float, optional): axis unit to inches ratio for the
+                y-axis.
+            width_ax_rel (float, optional): axis unit to inches ration for the
+                x-axis.
+            width_ax_in (float, optional): fixed width of each axis in inches
+            height_ax_in (float, optional): fixed height of each axis in inches
+            width_gap_in (float, optional): fixed width of gaps between each
+                axis in inches
+            height_gap_in (float, optional): fixed height of gaps between each
+                axis in inches
+            top_in (float, optional): fixed height of top margin in inches
+            bottom_in (float, optional): fixed height of bottom margin in inches
+            left_in (float, optional): fixed width of left margin in inches
+            right_in (float, optional): fixed width of right margin in inches
         """
-        ax = self.axes[0, 0]
-        rows = self.rows
-        cols = self.columns
-        fig = self.fig
-        # x and y limits of axes
-        left_ax, right_ax = ax.get_xlim()
-        bottom_ax, top_ax = ax.get_ylim()
-        # width and height of axes in inches
-        width_ax = (right_ax - left_ax) * xscale
-        height_ax = (top_ax - bottom_ax) * yscale
-        # gap sizes between axes in inches
-        # w/hspace is fraction of average axis width/height
-        width_gap = fig.subplotpars.wspace * width_ax
-        height_gap = fig.subplotpars.hspace * height_ax
-        # total size of axes with gaps in inches
-        width_ax = width_ax * cols + width_gap * (cols - 1)
-        height_ax = height_ax * cols + height_gap * (rows - 1)
-        # total size of axes as percentage of figure size
-        width_ax_percent = fig.subplotpars.right - fig.subplotpars.left
-        height_ax_percent = fig.subplotpars.top - fig.subplotpars.bottom
-        # total size of figure
-        width_fig = width_ax / width_ax_percent
-        height_fig = height_ax / height_ax_percent
-        fig.set_size_inches(width_fig, height_fig)
+        if fig is None:
+            fig = self.fig
+        if ax is None:
+            ax = self.axes[0, 0]
+        if rows is None:
+            rows = self.rows
+        if cols is None:
+            cols = self.columns
+
+        if width_ax_in is None:
+            # x limits of axes
+            left_ax, right_ax = ax.get_xlim()
+            # width of axes in inches
+            width_ax_in = (right_ax - left_ax) * width_ax_rel
+        if width_gap_in is None:
+            # get width from relative width * axis width
+            width_gap_in = fig.subplotpars.wspace * width_ax_in
+        else:
+            # set relative width to gap:axis ratio
+            fig.subplots_adjust(wspace=width_gap_in/width_ax_in)
+        # comput subplot width
+        width_subplot_in = width_gap_in * (cols - 1) + width_ax_in * cols
+        if right_in is None:
+            # get right margin size from relative size * subplot size
+            right_in = (1 - fig.subplotpars.right) * width_subplot_in
+        else:
+            # set relative right side position to 1 - margin:subplot ratio
+            fig.subplots_adjust(right=1-(right_in/(right_in+width_subplot_in)))
+        if left_in is None:
+            # get left margin size from relative size * subplot size
+            left_in = fig.subplotpars.left * width_subplot_in
+        else:
+            # set relative left side position to margin:subplot ratio
+            fig.subplots_adjust(left=left_in/(left_in+width_subplot_in))
+        width_fig_in = left_in + width_subplot_in + right_in
+
+        # repeat the process for figure height
+        if height_ax_in is None:
+            bottom_ax, top_ax = ax.get_ylim()
+            height_ax_in = (top_ax - bottom_ax) * height_ax_rel
+        if height_gap_in is None:
+            height_gap_in = fig.subplotpars.hspace * height_ax_in
+        else:
+            fig.subplots_adjust(hspace=height_gap_in/height_ax_in)
+        height_subplot_in = height_gap_in * (rows - 1) + height_ax_in * rows
+        if top_in is None:
+            top_in = (1 - fig.subplotpars.top) * height_subplot_in
+        else:
+            fig.subplots_adjust(top=1-(top_in/(top_in+height_subplot_in)))
+        if bottom_in is None:
+            bottom_in = fig.subplotpars.bottom * height_subplot_in
+        else:
+            fig.subplots_adjust(bottom=bottom_in/(bottom_in+height_subplot_in))
+        height_fig_in = top_in + height_subplot_in + bottom_in
+
+        fig.set_size_inches(width_fig_in, height_fig_in)
 
 
 def adjust_spines(ax, spines):

@@ -7,7 +7,7 @@ from matplotlib.collections import LineCollection
 
 
 class SS(Plot):
-    def __init__(self, num_samples, structures, **kwargs):
+    def __init__(self, num_samples, **kwargs):
         self.plot_params = {
             "structure_lw": 3,
             "structure_s": 10**2,
@@ -31,20 +31,29 @@ class SS(Plot):
         for kw in list(kwargs.keys()):
             if kw in self.plot_params:
                 self.plot_params[kw] = kwargs.pop(kw)
-        # ensure that all structures fit within axes limits
-        self.xmin = min([min(ss.xcoordinates) for ss in structures])
-        self.xmax = max([max(ss.xcoordinates) for ss in structures])
-        self.ymin = min([min(ss.ycoordinates) for ss in structures])
-        self.ymax = max([max(ss.ycoordinates) for ss in structures])
         super().__init__(num_samples, **kwargs)
         for i in range(self.length):
             ax = self.get_ax(i)
-            ax.set_aspect("equal")
             ax.axis("off")
-            ax.set(xlim=[self.xmin-1, self.xmax+1],
-                   ylim=[self.ymin-1, self.ymax+1])
         self.pass_through = ["colors", "sequence", "apply_color_to",
                              "colorbar", "title", "positions", "bp_style"]
+
+    def set_figure_size(self, fig=None, ax=None,
+                        rows=None, cols=None,
+                        height_ax_rel=0.55, width_ax_rel=0.55,
+                        width_ax_in=None, height_ax_in=None,
+                        height_gap_in=1, width_gap_in=0.5,
+                        top_in=1, bottom_in=0.5,
+                        left_in=0.5, right_in=0.5):
+        super().set_figure_size(fig=fig, ax=ax, rows=rows, cols=cols,
+                                height_ax_rel=height_ax_rel,
+                                width_ax_rel=width_ax_rel,
+                                width_ax_in=width_ax_in,
+                                height_ax_in=height_ax_in,
+                                height_gap_in=height_gap_in,
+                                width_gap_in=width_gap_in, top_in=top_in,
+                                bottom_in=bottom_in, left_in=left_in,
+                                right_in=right_in)
 
     def plot_data(self, structure, interactions, interactions2, profile,
                   annotations, label,
@@ -70,14 +79,9 @@ class SS(Plot):
         if title:
             ax.set_title(label)
         self.i += 1
-        if self.i == self.length:
-            plt.tight_layout()
 
     def get_figsize(self):
-        scale = 0.55
-        width = (self.xmax-self.xmin)*scale
-        height = (self.ymax-self.ymin)*scale
-        return (width*self.columns, height*self.rows)
+        return (5*self.columns, 5*self.rows)
 
     def plot_structure(self, ax, ss, struct_color, bp_style):
         bp_styles = ["conventional", "dotted", "line"]

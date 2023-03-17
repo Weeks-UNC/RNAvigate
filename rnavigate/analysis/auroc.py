@@ -135,5 +135,5 @@ class WindowedAUROC():
         ax.grid(axis='x')
 
         # set figure size so that 100 axis units == 1 inch
-        plot.set_figure_size(yscale=1/100, xscale=1/100)
+        plot.set_figure_size(height_ax_rel=1/100, width_ax_rel=1/100)
         return plot
