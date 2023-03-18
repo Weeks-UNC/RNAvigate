@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 class Profile(Data):
     def __init__(self, datatype="profile",
-                 column=None, ap_scale_factor=1,
+                 column=None, err_column=None, ap_scale_factor=1,
                  dataframe=None, sequence=None, fasta=None,
                  filepath=None, sep=None, read_csv_kw=None,
                  cmap=None, norm_method=None, norm_values=None,
@@ -18,6 +18,7 @@ class Profile(Data):
             read_csv_kw = {}
         self.datatype = datatype
         self.default_column = column
+        self.default_err_column = err_column
         self.ap_scale_factor = ap_scale_factor
         self.set_color_defaults(column=color_column, cmap=cmap,
                                 norm_method=norm_method,
@@ -84,46 +85,47 @@ class Profile(Data):
             def norm(x): return x  # does nothing to values
         values = self.data[cv["column"]].values
         values = norm(values)
-        return cmap(values)
+        return np.array([mpc.to_hex(color) for color in cmap(values)])
 
     def fit_to(self, fit_to):
-        """Creates a new Profile, stored as self.fitted, which maps the data
-        indices to a new sequence.
-
-        Args:
-            fit_to (rnavigate.data.Data): A data object containing a sequence.
-        """
         am = self.get_alignment_map(fit_to=fit_to)
-        mask = (am != -1)
-        fitted_data = pd.DataFrame({
-            "Nucleotide": np.arange(fit_to.length)+1,
-            "Sequence": [nt for nt in fit_to.sequence]
-        })
-        for column in self.data.columns:
-            if column in ["Nucleotide", "Sequence"]:
-                continue
-            fitted_data[column] = np.nan
-            for idx, fit_idx in enumerate(am):
-                if fit_idx == -1:
-                    continue
-                fitted_data.loc[fit_idx, column] = self.data.loc[idx, column]
-        fitted_data = self.data.copy()
-        fitted_colors = np.full((fit_to.length, 4), 0.5)
-        colors = self.colors
-        for idx, fit_idx in enumerate(am):
-            fitted_colors[fit_idx] = colors[idx]
-        self.fitted = Profile(
-            datatype="profile",
-            column=self.default_column,
-            ap_scale_factor=self.ap_scale_factor,
-            dataframe=fitted_data,
-            sequence=fit_to.sequence,
-            colors=fitted_colors)
+        self.data["nt_offset"] = [am[nt-1]+1 for nt in self.data["Nucleotide"]]
+        self.data["mask"] = self.data["nt_offset"] != 0
+        self.fit_to_length = fit_to.length
+
+    def get_plotting_dataframe(self, all_columns=False, column=None,
+                               err_column=None):
+        if all_columns:
+            columns = self.data.columns.values
+            columns = np.delete(columns, columns == "Nucleotide")
+            data = self.data.loc[self.data["mask"], columns].copy()
+            data = data.rename(columns={"nt_offset": "Nucleotide"})
+        else:
+            columns = ["nt_offset", "mask"]
+            column_names = ["Nucleotide", "mask"]
+            if column is not None:
+                columns.append(column)
+            else:
+                columns.append(self.default_column)
+            column_names.append("Values")
+            if err_column is not None:
+                columns.append(err_column)
+                column_names.append("Errors")
+            elif self.default_err_column is not None:
+                columns.append(self.default_err_column)
+                column_names.append("Errors")
+            data = self.data.loc[self.data["mask"], columns].copy()
+            data.columns = column_names
+        data["Colors"] = self.colors[self.data["mask"]]
+        plotting_df = pd.DataFrame(
+            {"Nucleotide": np.arange(self.fit_to_length)+1})
+        plotting_df = plotting_df.merge(data, how='outer', on="Nucleotide")
+        return plotting_df
 
 
 class SHAPEMaP(Profile):
     def __init__(self, filepath, dms=False, datatype="shapemap",
-                 read_csv_kw=None, **kwargs):
+                 read_csv_kw=None, err_column="Norm_stderr", **kwargs):
         if filepath.endswith(".map"):
             read_csv_kw = {"names": ["Nucleotide", "Norm_profile",
                                      "Norm_stderr", "Sequence"],
@@ -133,6 +135,7 @@ class SHAPEMaP(Profile):
                          sep="\t",
                          read_csv_kw=read_csv_kw,
                          column="Norm_profile",
+                         err_column=err_column,
                          ap_scale_factor=5,
                          color_column="Norm_profile",
                          cmap=["grey", "black", "orange", "grey", "red"],
@@ -188,10 +191,11 @@ class SHAPEMaP(Profile):
 
 
 class DanceMaP(SHAPEMaP):
-    def __init__(self, filepath, component, datatype="dancemap", **kwargs):
+    def __init__(self, filepath, component, datatype="dancemap",
+                 err_column=None, **kwargs):
         self.component = component
         super().__init__(filepath=filepath, datatype=datatype,
-                         read_csv_kw={}, **kwargs)
+                         read_csv_kw={}, err_column=err_column, **kwargs)
         self.ap_scale_factor = 10
 
     def read_file(self, filepath, sep='\t', read_csv_kw={}):

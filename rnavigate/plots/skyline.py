@@ -35,13 +35,12 @@ class Skyline(Plot):
 
     def plot_data(self, profile, annotations, label,
                   columns="Reactivity_profile", seqbar=True, errorbars=None):
-        profile = profile.fitted
         annotations = [annotation.fitted for annotation in annotations]
         self.plot_profile(profile, label, columns, errorbars)
+        if seqbar and (self.i == 0):
+            self.add_sequence(self.ax, profile.sequence)
         self.i += 1
         if self.i == self.length:
-            if seqbar:
-                self.add_sequence(self.ax, profile.sequence)
             if isinstance(columns, list):
                 ylabel = [column.replace("_", " ") for column in columns]
                 ylabel = ', '.join(ylabel)
@@ -84,17 +83,18 @@ class Skyline(Plot):
                   handlelength=0)
 
     def plot_profile(self, profile, label, columns, errorbars):
+        data = profile.get_plotting_dataframe(all_columns=True)
         if isinstance(columns, list):
             for column in columns:
-                self.ax.plot(profile.data["Nucleotide"], profile.data[column],
+                self.ax.plot(data["Nucleotide"], data[column],
                              label=f"{label}: {column.replace('_', ' ')}",
                              drawstyle="steps-mid")
         elif isinstance(columns, str):
-            x = profile.data["Nucleotide"]
-            profile_values = profile.data[columns]
+            x = data["Nucleotide"]
+            profile_values = data[columns]
             self.ax.plot(x, profile_values, label=label, drawstyle="steps-mid")
             if errorbars is not None:
-                stderr = profile.data[errorbars]
+                stderr = data[errorbars]
                 self.ax.fill_between(x, profile_values-stderr,
                                      profile_values+stderr, step='mid',
                                      color='C'+str(self.i), alpha=0.25, lw=0)

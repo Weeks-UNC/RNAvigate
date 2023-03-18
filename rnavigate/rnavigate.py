@@ -488,7 +488,7 @@ class Sample():
 
     def filter_interactions(self, interactions, fit_to,
                             suppress=False, metric=None, cmap=None,
-                            min_max=None, **kwargs):
+                            min_max=None, prefiltered=False, **kwargs):
         """Aligns sequence to fit_to, sets properties, filters and aligns data.
 
         For example, for plotting interaction data containing structure
@@ -515,15 +515,16 @@ class Sample():
                 these limits will be given the most extreme color values.
             **kwargs: Other arguments are passed to interactions.filter()
         """
-        data = self.data[interactions]
         # check for valid interactions data
-        if interactions is None:
+        if (interactions is None) or prefiltered:
             return
         elif interactions not in self.data.keys():
             if not suppress:
                 print(f"{interactions} not found in sample data")
             return
-        elif not isinstance(data, Interactions):
+
+        data = self.data[interactions]
+        if not isinstance(data, Interactions):
             if not suppress:
                 print(f"{Interactions} is not an Interactions datatype")
             return
@@ -1210,7 +1211,7 @@ def plot_ss(samples, ss="ss", profile="profile", annotations=[],
         filters = [{"interactions": interactions} | interactions_filter]
     # initialize plot using all structure drawings
     num_samples = len(samples) * len(filters)
-    plot = SS(num_samples, [s.data[ss] for s in samples], **plot_kwargs)
+    plot = SS(num_samples=num_samples, **plot_kwargs)
     # loop through samples and filters, adding each as a new axis
     for sample, label in zip(samples, labels):
         fit_data_list(sample, annotations + [profile], sample.data[ss])
@@ -1391,7 +1392,7 @@ def plot_heatmap(samples, structure=None, interactions=None,
     # loop through samples and filters, adding each as a new axis
     for sample, label in zip(samples, labels):
         for filt in filters:
-            sample.filter_interactions(structure, **filt)
+            sample.filter_interactions(fit_to=structure, **filt)
             plot.add_sample(sample, interactions=filt["interactions"],
                             label=label, **kwargs)
     plot.set_figure_size()

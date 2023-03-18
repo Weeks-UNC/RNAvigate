@@ -31,7 +31,7 @@ class SS(Plot):
         for kw in list(kwargs.keys()):
             if kw in self.plot_params:
                 self.plot_params[kw] = kwargs.pop(kw)
-        super().__init__(num_samples, **kwargs)
+        super().__init__(num_samples, sharey=True, sharex=True, **kwargs)
         for i in range(self.length):
             ax = self.get_ax(i)
             ax.axis("off")
@@ -64,7 +64,6 @@ class SS(Plot):
                   title=True,
                   positions=False,
                   bp_style="dotted"):
-        profile = profile.fitted
         annotations = [annotation.fitted for annotation in annotations]
         ax = self.get_ax()
         self.plot_sequence(ax=ax, ss=structure, profile=profile, colors=colors,
@@ -259,7 +258,6 @@ class SS(Plot):
                                   fc=bbox_color[i-1]))
 
     def plot_annotation(self, ax, ss, annotation):
-        annotation = annotation.fitted
         color = annotation.color
         alpha = self.plot_params["annotations_a"]
         size = self.plot_params["annotations_s"]

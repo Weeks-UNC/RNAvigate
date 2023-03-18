@@ -40,8 +40,6 @@ class AP(Plot):
                   ct_panel="top", annotations=[], annotation_mode="track",
                   plot_error=True):
         annotations = [annotation.fitted for annotation in annotations]
-        if profile is not None:
-            profile = profile.fitted
         ax = self.get_ax(ax)
         if annotation_mode == "track":
             annotation_gap = 2*(2*len(annotations) + seqbar)
@@ -139,20 +137,14 @@ class AP(Plot):
     def plot_profile(self, ax, profile, seq, plot_error=True):
         if profile is None:
             return
-        column = profile.default_column
+        data = profile.get_plotting_dataframe()
         factor = profile.ap_scale_factor
-        am = profile.get_alignment_map(seq)
-        values = np.full(seq.length, np.nan)
-        colormap = seq.get_colors("profile", profile=profile)
-        nts = np.arange(seq.length)+1
-        yerr = np.full(seq.length, np.nan)
-        for i1, i2 in enumerate(am):
-            if i2 != -1:
-                values[i2] = profile.data.loc[i1, column]
-                if 'Norm_stderr' in profile.data.columns:
-                    yerr[i2] = profile.data.loc[i1, 'Norm_stderr']
+        values = data["Values"]
+        colormap = data["Colors"]
+        nts = data["Nucleotide"]
         mn, mx = self.region
-        if plot_error:
+        if plot_error and ("Errors" in data.columns):
+            yerr = data["Errors"]
             ax.bar(nts[mn-1:mx], values[mn-1:mx]*factor, align="center",
                    width=1.05, color=colormap[mn-1:mx],
                    edgecolor=colormap[mn-1:mx], linewidth=0.0,

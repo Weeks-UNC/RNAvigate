@@ -57,8 +57,6 @@ class Circle(Plot):
                   colors="sequence", apply_color_to="sequence", colorbar=True,
                   title=True, positions=True):
         annotations = [annotation.fitted for annotation in annotations]
-        if profile is not None:
-            profile = profile.fitted
         ax = self.get_ax()
         if interactions is not None and colorbar:
             ax_ins1 = ax.inset_axes(
