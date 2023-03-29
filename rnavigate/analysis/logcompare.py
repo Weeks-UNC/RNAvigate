@@ -34,7 +34,8 @@ class LogCompare():
             2: same as 1 above, for the second sample
     """
 
-    def __init__(self, samples1, samples2, name1, name2, data="profile"):
+    def __init__(self, samples1, samples2, name1, name2, data="profile",
+                 region="all"):
         """Takes replicates of two samples for comparison. Replicates are
         required. Calculates the log division profile
         (log10(modified/untreated)) and minimizes the median of the absolute
@@ -47,6 +48,10 @@ class LogCompare():
             name2 (string): name of second sample
             data (str, optional): Datatype to compare. Defaults to "profile".
         """
+        if region = "all":
+            self.region = [0, samples1[0].data["profile"].length]
+        else:
+            self.region = region
         self.data = data
         self.groups = {}
         self.load_replicates(*samples1, group=1)
