@@ -48,7 +48,7 @@ class LogCompare():
             name2 (string): name of second sample
             data (str, optional): Datatype to compare. Defaults to "profile".
         """
-        if region = "all":
+        if region == "all":
             self.region = [0, samples1[0].data["profile"].length]
         else:
             self.region = region
