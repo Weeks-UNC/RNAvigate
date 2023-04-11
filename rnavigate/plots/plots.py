@@ -41,50 +41,84 @@ class Plot(ABC):
                 kwargs[key] = sample.get_data_list(kwargs[key])
         self.plot_data(**kwargs)
 
-    @classmethod
-    def view_colormap(self, ax=None, interactions=None, metric=None, ticks=None,
-                      values=None, title=None, cmap=None):
-        if ((interactions is None or interactions.datatype == "ct") and
-                (None in [ticks, values, title, cmap])):
-            ax.remove()
-            return
-        elif interactions == "ct_compare":
+    def get_colorbar_args(self, interactions):
+        # TODO: this should be implemented in ct and interactions objects
+        if interactions == "ct_compare":
             metric = "Pairing"
             ticks = [10/6, 30/6, 50/6]
-            values = ["Shared", "Structure 1", "Structure 2"]
+            values = ["Structure 1", "Shared", "Structure 2"]
             title = "Base-pairing comparison"
-            cmap = mp.colors.ListedColormap([(0.6, 0.6, 0.6, 0.7),
-                                             (0.15, 0.8, 0.6, 0.7),
-                                             (0.6, 0.0, 1.0, 0.7)])
-        elif interactions is not None:
+            cmap = mp.colors.ListedColormap([
+                (0.15, 0.8, 0.6, 0.7),
+                (0.6, 0.6, 0.6, 0.7),
+                (0.6, 0.0, 1.0, 0.7),
+            ])
+        elif (interactions is None) or (interactions.datatype == "ct"):
+            return None
+        else:
             metric = interactions.metric
-        if ticks is None:
             if metric == "Class":
                 ticks = [10/6, 30/6, 50/6]
-            else:
-                ticks = [0, 2, 4, 6, 8, 10]
-        if values is None:
-            if metric == "Class":
                 values = ['Complementary', 'Primary', 'Secondary']
             else:
+                ticks = [0, 2, 4, 6, 8, 10]
                 mn, mx = interactions.min_max
                 values = [f"{mn + ((mx-mn)/5)*i:.1f}" for i in range(6)]
-        if title is None:
             title = f"{interactions.datatype.capitalize()}: {metric.lower()}"
-        if cmap is None:
             cmap = interactions.cmap
+        cbargs = {
+            "ticks": ticks,
+            "values": values,
+            "title": title,
+            "cmap": cmap(np.arange(cmap.N)).tolist()}
+        return cbargs
+
+    def add_colorbar_args(self, interactions):
+        if not hasattr(self, "colorbars"):
+            self.colorbars = []
+        cbargs = self.get_colorbar_args(interactions=interactions)
+        if ((cbargs not in self.colorbars)
+                and (cbargs is not None)
+                and (len(cbargs['cmap']) > 1)):
+            self.colorbars.append(cbargs)
+
+    def plot_colorbars(self):
+        if hasattr(self, "colorbars"):
+            rows = len(self.colorbars)
         else:
-            cmap = plt.get_cmap(cmap)
-        colors = cmap(np.arange(cmap.N))
+            return (None, None)
+        if rows == 0:
+            return (None, None)
+        # TODO: implement as a new plot class that accepts another plot class.
+        fig, axes = plt.subplots(rows, 1, figsize=(8, 2*rows), squeeze=False)
+        for kwargs, ax in zip(self.colorbars, axes[:, 0]):
+            self.view_colormap(ax, **kwargs)
+        return (fig, ax)
+
+    @classmethod
+    def view_colormap(self, ax=None, interactions=None, ticks=None,
+                      values=None, title=None, cmap=None):
+        if interactions is not None:
+            cbargs = self.get_colorbar_args(interactions=interactions)
+        if (None in [ticks, values, title, cmap]) and (cbargs is None):
+            return
+        if ticks is None:
+            ticks = cbargs["ticks"]
+        if values is None:
+            values = cbargs["values"]
+        if title is None:
+            title = cbargs["title"]
+        if cmap is None:
+            cmap = cbargs["cmap"]
 
         if ax is None:
-            fig, ax = plt.subplots(1, figsize=(6, 2))
-        ax.imshow([colors], extent=[0, 10, 0, 1])
+            _, ax = plt.subplots(1, figsize=(6, 2))
+        ax.imshow([cmap], extent=[0, 10, 0, 1])
         ax.set_title(title)
         ax.set_xticks(ticks)
         ax.set_xticklabels(values)
         ax.set_yticks([])
-        return (fig, ax)
+        return ax
 
     def get_rows_columns(self, rows=None, cols=None):
         has_rows = isinstance(rows, int)

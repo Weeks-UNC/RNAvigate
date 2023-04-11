@@ -23,7 +23,7 @@ class Circle(Plot):
             ax.axis('off')
             # ax.set(xlim=(-10.1, 10.1),
             #        ylim=(-10.1, 10.1))
-        self.pass_through = ["colors", "apply_color_to", "sequence", "colorbar",
+        self.pass_through = ["colors", "apply_color_to", "sequence",
                              "title", "positions"]
         self.zorder = {"annotations": 0,
                        "data": 5,
@@ -54,20 +54,10 @@ class Circle(Plot):
 
     def plot_data(self, ct, comp, interactions, interactions2, profile,
                   annotations, label,
-                  colors="sequence", apply_color_to="sequence", colorbar=True,
+                  colors="sequence", apply_color_to="sequence",
                   title=True, positions=True):
         annotations = [annotation.fitted for annotation in annotations]
         ax = self.get_ax()
-        if interactions is not None and colorbar:
-            ax_ins1 = ax.inset_axes(
-                [-5, -0.4, 10, 0.8], transform=ax.transData)
-            self.view_colormap(ax_ins1, interactions)
-        if interactions2 is not None and colorbar:
-            ax_ins2 = ax.inset_axes([10, -100, 100, 8], transform=ax.transData)
-            self.view_colormap(ax_ins2, interactions2)
-        if comp is not None and colorbar:
-            ax_ins3 = ax.inset_axes([10, 80, 100, 8], transform=ax.transData)
-            self.view_colormap(ax_ins3, "ct_compare")
         self.add_patches(ax, ct, comp)
         self.add_patches(ax, interactions)
         self.add_patches(ax, interactions2)
@@ -119,16 +109,16 @@ class Circle(Plot):
             y = self.y[i]
             theta = self.theta[i] * -180/np.pi
             ax.plot([x, x+5*x/self.diameter], [y, y+5*y/self.diameter], c='k')
-            ha = ['left', 'right'][x < 0]
-            va = ['top', 'bottom'][y > 0]
             ax.text(x+7*x/self.diameter, y+7*y/self.diameter, i+1, ha='center',
                     va='center', rotation=theta)
 
     def add_patches(self, ax, data, comp=None):
         if comp is not None:
             ij_colors = data.get_ij_colors(comp)
+            self.add_colorbar_args(interactions="ct_compare")
         elif data is not None:
             ij_colors = data.get_ij_colors()
+            self.add_colorbar_args(interactions=data)
         else:
             return
         patches = []

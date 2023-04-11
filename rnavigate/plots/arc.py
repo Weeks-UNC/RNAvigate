@@ -13,9 +13,10 @@ class AP(Plot):
             self.nt_length = region[1]-region[0]+1
             self.region = region
         super().__init__(num_samples, **kwargs)
-        self.pass_through = ["ax", "colorbar", "seqbar", "title",
+        self.pass_through = ["ax", "seqbar", "title",
                              "interactions_panel", "interactions2_panel",
-                             "ct_panel", "annotation_mode", "plot_error"]
+                             "ct_panel", "annotation_mode", "plot_error",
+                             "profile_scale_factor"]
 
     def set_figure_size(self, fig=None, ax=None,
                         rows=None, cols=None,
@@ -35,10 +36,10 @@ class AP(Plot):
                                 right_in=right_in)
 
     def plot_data(self, seq, ct, comp, interactions, interactions2, profile,
-                  label, ax=None, colorbar=True, seqbar=True, title=True,
+                  label, ax=None, seqbar=True, title=True,
                   interactions_panel="bottom", interactions2_panel="bottom",
                   ct_panel="top", annotations=[], annotation_mode="track",
-                  plot_error=True):
+                  profile_scale_factor=1, plot_error=True):
         annotations = [annotation.fitted for annotation in annotations]
         ax = self.get_ax(ax)
         if annotation_mode == "track":
@@ -46,16 +47,6 @@ class AP(Plot):
         else:
             annotation_gap = 2*seqbar
         self.set_axis(ax=ax, annotation_gap=annotation_gap)
-        if colorbar:
-            ax_ins1 = ax.inset_axes([0.05, 0.2, 0.3, 0.03])
-            self.view_colormap(ax_ins1, interactions)
-            ax_ins2 = ax.inset_axes([0.05, 0.3, 0.3, 0.03])
-            self.view_colormap(ax_ins2, interactions2)
-            ax_ins3 = ax.inset_axes([0.05, 0.8, 0.3, 0.03])
-            if comp is not None:
-                self.view_colormap(ax_ins3, "ct_compare")
-            else:
-                self.view_colormap(ax_ins3, ct)
         self.add_patches(ax=ax, data=ct, panel=ct_panel,
                          annotation_gap=annotation_gap, comp=comp)
         self.add_patches(ax=ax, data=interactions, panel=interactions_panel,
@@ -63,7 +54,8 @@ class AP(Plot):
         self.add_patches(ax=ax, data=interactions2, panel=interactions2_panel,
                          annotation_gap=annotation_gap)
         self.plot_profile(ax=ax, profile=profile,
-                          seq=seq, plot_error=plot_error)
+                          plot_error=plot_error,
+                          profile_scale_factor=profile_scale_factor)
         for i, annotation in enumerate(annotations):
             self.plot_annotation(ax, annotation=annotation, yvalue=-2-(4*i),
                                  mode=annotation_mode)
@@ -101,8 +93,10 @@ class AP(Plot):
     def add_patches(self, ax, data, panel, annotation_gap, comp=None):
         if comp is not None:
             ij_colors = data.get_ij_colors(comp)
+            self.add_colorbar_args(interactions="ct_compare")
         elif data is not None:
             ij_colors = data.get_ij_colors()
+            self.add_colorbar_args(interactions=data)
         else:
             return
         patches = []
@@ -134,11 +128,12 @@ class AP(Plot):
         height = min(self.nt_length, 602) * 0.1 + 1
         return (width*self.columns, height*self.rows)
 
-    def plot_profile(self, ax, profile, seq, plot_error=True):
+    def plot_profile(self, ax, profile, profile_scale_factor=1,
+                     plot_error=True):
         if profile is None:
             return
         data = profile.get_plotting_dataframe()
-        factor = profile.ap_scale_factor
+        factor = profile.ap_scale_factor * profile_scale_factor
         values = data["Values"]
         colormap = data["Colors"]
         nts = data["Nucleotide"]

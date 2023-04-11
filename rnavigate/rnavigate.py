@@ -1003,7 +1003,7 @@ def plot_arcs(samples, seq_source=None, ct="ct", comp=None, interactions=None,
               interactions_filter=None, interactions2=None,
               interactions2_filter=None, filters=None, profile="profile",
               annotations=[], labels=None, region="all", plot_kwargs=None,
-              **kwargs):
+              colorbar=True, **kwargs):
     """Generates a multipanel arc plot displaying combinations of secondary
     structures, per-nucleotide data, inter-nucleotide data, and sequence
     annotations. Each plot may display a unique sample and/or filtering scheme.
@@ -1056,7 +1056,7 @@ def plot_arcs(samples, seq_source=None, ct="ct", comp=None, interactions=None,
             Defaults to [].
         labels (str, optional): Same length as samples list. Labels to
             be used in plot legends. Defaults to default sample name.
-        region (list of int: length 2, optional): start and end position of 
+        region (list of int: length 2, optional): start and end position of
             seq_source to be plotted. 1-indexed, inclusive.
             Defaults to [0, sequence length].
         plot_kwargs (dict, optional): kwargs passed to AP(). See
@@ -1106,13 +1106,15 @@ def plot_arcs(samples, seq_source=None, ct="ct", comp=None, interactions=None,
                             label=label, annotations=annotations,
                             **kwargs)
     plot.set_figure_size()
+    if colorbar:
+        plot.plot_colorbars()
     return plot
 
 
 def plot_ss(samples, ss="ss", profile="profile", annotations=[],
             interactions=None, interactions_filter=None, interactions2=None,
             interactions2_filter=None, filters=None, labels=None,
-            plot_kwargs=None, **kwargs):
+            plot_kwargs=None, colorbar=True, **kwargs):
     """Generates a multipanel secondary structure drawing with optional
     coloring by per-nucleotide data and display of inter-nucleotide data and/or
     sequence annotations. Each plot may display a unique sample and/or
@@ -1203,12 +1205,14 @@ def plot_ss(samples, ss="ss", profile="profile", annotations=[],
                             interactions2=interactions2, profile=profile,
                             annotations=annotations, label=label, **kwargs)
     plot.set_figure_size()
+    if colorbar:
+        plot.plot_colorbars()
     return plot
 
 
 def plot_mol(samples, structure="pdb", interactions=None,
              interactions_filter=None, filters=None, profile="profile",
-             labels=None, show=True, hide_cylinders=False,
+             labels=None, show=True, hide_cylinders=False, colorbar=True,
              custom_function=None, plot_kwargs=None, **kwargs):
     """Generates a multipanel interactive 3D molecular rendering of a PDB
     structure. Nucleotides may be colored by per-nucleotide data or custom
@@ -1300,6 +1304,8 @@ def plot_mol(samples, structure="pdb", interactions=None,
     # show viewer grid
     if show:
         plot.view.show()
+    if colorbar:
+        plot.plot_colorbars()
     return plot
 
 
@@ -1382,7 +1388,7 @@ def plot_circle(samples, seq_source=None, ct=None, comp=None,
                 interactions=None, interactions_filter=None,
                 interactions2=None, interactions2_filter=None, filters=None,
                 annotations=None, profile="profile", labels=None,
-                plot_kwargs=None, **kwargs):
+                colorbar=True, plot_kwargs=None, **kwargs):
     """Generates a multipanel circle plot displaying combinations of secondary
     structures, per-nucleotide data, inter-nucleotide data, and sequence
     annotations. Each plot may display a unique sample and/or filtering scheme.
@@ -1484,6 +1490,8 @@ def plot_circle(samples, seq_source=None, ct=None, comp=None,
                             interactions2=interactions2, profile=profile,
                             annotations=annotations, label=label, **kwargs)
     plot.set_figure_size()
+    if colorbar:
+        plot.plot_colorbars()
     return plot
 
 

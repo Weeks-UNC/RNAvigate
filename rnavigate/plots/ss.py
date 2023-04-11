@@ -36,7 +36,7 @@ class SS(Plot):
             ax = self.get_ax(i)
             ax.axis("off")
         self.pass_through = ["colors", "sequence", "apply_color_to",
-                             "colorbar", "title", "positions", "bp_style"]
+                             "title", "positions", "bp_style"]
 
     def set_figure_size(self, fig=None, ax=None,
                         rows=None, cols=None,
@@ -60,7 +60,6 @@ class SS(Plot):
                   colors="sequence",
                   sequence=False,
                   apply_color_to="background",
-                  colorbar=True,
                   title=True,
                   positions=False,
                   bp_style="dotted"):
@@ -68,11 +67,10 @@ class SS(Plot):
         ax = self.get_ax()
         self.plot_sequence(ax=ax, ss=structure, profile=profile, colors=colors,
                            sequence=sequence, apply_color_to=apply_color_to,
-                           positions=positions, bp_style=bp_style)
-        self.plot_interactions(ax=ax, ss=structure, interactions=interactions,
-                               colorbar=colorbar, cmap_pos=0)
-        self.plot_interactions(ax=ax, ss=structure, interactions=interactions2,
-                               colorbar=colorbar, cmap_pos=1)
+                           positions=positions, bp_style=bp_style,
+                           annotations=annotations)
+        self.plot_interactions(ax=ax, ss=structure, interactions=interactions)
+        self.plot_interactions(ax=ax, ss=structure, interactions=interactions2)
         for annotation in annotations:
             self.plot_annotation(ax=ax, ss=structure, annotation=annotation)
         if title:
@@ -171,7 +169,7 @@ class SS(Plot):
                     ax.plot(x_caps, y_caps, color="white", zorder=zorder,
                             linewidth=2)
 
-    def plot_sequence(self, ax, ss, profile, colors, sequence,
+    def plot_sequence(self, ax, ss, profile, colors, sequence, annotations,
                       apply_color_to, positions, bp_style):
         nuc_z = self.plot_params["nucleotide_z"]
         seq_z = self.plot_params["sequence_z"]
@@ -183,7 +181,7 @@ class SS(Plot):
             apply_color_to = "structure"
         if apply_color_to == "structure":
             struct_color = ss.get_colors(colors, profile=profile,
-                                         ct=ss)
+                                         ct=ss, annotations=annotations)
             self.plot_structure(ax=ax, ss=ss, struct_color=struct_color,
                                 bp_style=bp_style)
             ax.scatter(ss.xcoordinates, ss.ycoordinates, marker=".",
@@ -192,14 +190,14 @@ class SS(Plot):
             return
         if apply_color_to == "background":
             bg_color = ss.get_colors(colors, profile=profile,
-                                     ct=ss)
+                                     ct=ss, annotations=annotations)
             self.plot_structure(ax=ax, ss=ss,
                                 struct_color=ss.get_colors("grey"),
                                 bp_style=bp_style)
         if apply_color_to == "sequence":
             sequence = True
             nt_color = ss.get_colors(colors, profile=profile,
-                                     ct=ss)
+                                     ct=ss, annotations=annotations)
             bg_color = ss.get_colors("white")
             self.plot_structure(ax=ax, ss=ss,
                                 struct_color=ss.get_colors('grey'),
@@ -233,17 +231,13 @@ class SS(Plot):
         ax.plot(x, y, color=color, lw=self.plot_params[
             "data_lw"], zorder=zorder, alpha=alpha)
 
-    def plot_interactions(self, ax, ss, interactions, colorbar,
-                          cmap_pos):
+    def plot_interactions(self, ax, ss, interactions):
         if interactions is None:
             return
         ij_colors = interactions.get_ij_colors()
         for i, j, color in zip(*ij_colors):
             self.add_lines(ax=ax, ss=ss, i=i, j=j, color=color)
-        if colorbar:
-            x, width = [(0, 0.49), (0.51, 0.49)][cmap_pos]
-            ax_ins1 = ax.inset_axes([x, 0, width, 0.05])
-            self.view_colormap(ax_ins1, interactions)
+        self.add_colorbar_args(interactions=interactions)
 
     def plot_positions(self, ax, ss, text_color, bbox_color, spacing=20):
         zorder = self.plot_params["position_z"]

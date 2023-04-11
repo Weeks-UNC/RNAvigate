@@ -88,7 +88,7 @@ class LowSS():
         if show:
             self.plot_LowSS(region=region)
 
-    def plot_LowSS(self, region=None):
+    def plot_LowSS(self, region=None, colorbar=True):
         """Visualize LowSS analysis over the given region.
 
         Args:
@@ -149,7 +149,6 @@ class LowSS():
             interactions2=None,
             profile=None,
             label="label",
-            colorbar=False,
             seqbar=False,
             title=False,
             annotations=[self.lowss_regions],
@@ -183,6 +182,8 @@ class LowSS():
 
         # set figure size so that 100 axis units == 1 inch
         plot.set_figure_size(height_ax_rel=1/100, width_ax_rel=1/100)
+        if colorbar:
+            plot.plot_colorbars()
         return plot
 
     def windowed_median(self, data):

@@ -114,7 +114,7 @@ class WindowedAUROC():
         plot.plot_data(ct=self.sample.data["ct"], comp=None,
                        interactions=None, interactions2=None,
                        profile=self.sample.data["profile"], label="label",
-                       colorbar=False, seqbar=False, title=False,
+                       seqbar=False, title=False,
                        annotations=[], plot_error=False)
 
         # Place Track Labels
