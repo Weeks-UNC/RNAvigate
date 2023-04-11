@@ -79,8 +79,7 @@ class LowSS():
                     lowss_regions.append(lowss_region)
                     self.in_lowss_region[start:stop] = 1
                     lowss_region = [start, stop]
-        self.lowss_regions = Annotation(annotation_type='spans',
-                                        span_list=lowss_regions, color="grey",
+        self.lowss_regions = Annotation(spans=lowss_regions, color="grey",
                                         sequence=self.sequence)
         self.lowss_regions.fit_to(self.lowss_regions)
         # TODO: this could overwrite data already stored in sample

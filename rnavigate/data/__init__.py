@@ -8,7 +8,8 @@ from .annotation import Annotation, Motif, ORFs
 
 __all__ = ["Data", "get_pairs_sens_PPV",
            "CT", "DotBracket", "XRNA", "VARNA", "NSD", "CTE", "get_ss_class",
-           "Interactions", "RINGMaP", "PAIRMaP", "PairProb", "SHAPEJuMP", "AllPossible"
+           "Interactions", "RINGMaP", "PAIRMaP", "PairProb", "SHAPEJuMP",
+           "AllPossible"
            "Log",
            "PDB",
            "Profile", "SHAPEMaP", "DanceMaP", "DeltaProfile", "RNPMaP",

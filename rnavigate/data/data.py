@@ -137,7 +137,7 @@ class Data():
         return np.array(alignment_map)
 
     def get_colors(self, source, nt_colors='new', pos_cmap='rainbow',
-                   profile=None, ct=None):
+                   profile=None, ct=None, annotations=None):
         if isinstance(source, str) and (source == "sequence"):
             seq = self.sequence
             colors = np.array([get_nt_color(nt, nt_colors)
@@ -155,6 +155,13 @@ class Data():
             for i, i2 in enumerate(am):
                 if i2 != -1:
                     colors[i2] = mpc.to_hex(prof_colors[i])
+            return colors
+        elif isinstance(source, str) and (source == "annotations"):
+            colors = np.full(self.length, 'gray', dtype='<U16')
+            for annotation in annotations:
+                am = annotation.get_alignment_map(self)
+                for site, color in zip(*annotation.get_sites_colors()):
+                    colors[am[site - 1]] = color
             return colors
         elif isinstance(source, str) and (source == "structure"):
             # TODO: this should be implemented in CT object for reusability

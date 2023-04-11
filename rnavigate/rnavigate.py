@@ -3,6 +3,7 @@
 # general python packages
 import os.path
 import numpy as np
+import json
 
 # modules in RNAvigate
 from .data import Data, PDB, Log
@@ -46,7 +47,7 @@ def get_color_list(length, default, color_regions):
     Returns:
         list: a list of colors
             e.g. get_color_list(
-                length=10, 
+                length=10,
                 default="grey",
                 color_regions={
                     "red": [[2, 4]],
@@ -90,12 +91,7 @@ class Sample():
                  pairprob=None,
                  allpossible=None,
                  dance_prefix=None,
-                 sites=None,
-                 spans=None,
-                 groups=None,
-                 primers=None,
-                 orfs=None,
-                 motif=None):
+                 annotations=None):
         """Creates a sample object which connects all chemical probing and
         structural data for a single experiment. Contains convenience methods
         to plot, filter, compare and retrieve this data. Every argument is
@@ -182,18 +178,8 @@ class Sample():
         """
         if dancemap is None:
             dancemap = {"filepath": None}
-        if sites is None:
-            sites = {}
-        if spans is None:
-            spans = {}
-        if groups is None:
-            groups = {}
-        if primers is None:
-            primers = {}
-        if orfs is None:
-            orfs = {}
-        if motif is None:
-            motif = {}
+        if annotations is None:
+            annotations = {}
         if shapejump is None:
             shapejump = {"filepath": None}
         if pdb is None:
@@ -285,42 +271,35 @@ class Sample():
                 "instantiator": self.init_dance,
                 "seq_source": "self",
                 "kwargs": {}},
-            "sites": {
-                "filepath": "",
-                "instantiator": Annotation,
-                "seq_source": sites.pop("seq_source", None),
-                "kwargs": {'annotation_type': 'sites'} | sites},
-            "spans": {
-                "filepath": "",
-                "instantiator": Annotation,
-                "seq_source": spans.pop("seq_source", None),
-                "kwargs": {'annotation_type': 'spans'} | spans},
-            "groups": {
-                "filepath": "",
-                "instantiator": Annotation,
-                "seq_source": groups.pop("seq_source", None),
-                "kwargs": {'annotation_type': 'groups'} | groups},
-            "primers": {
-                "filepath": "",
-                "instantiator": Annotation,
-                "seq_source": primers.pop("seq_source", None),
-                "kwargs": {'annotation_type': 'primers'} | primers},
-            "orfs": {
-                "filepath": "",
-                "instantiator": ORFs,
-                "seq_source": orfs.pop("seq_source", None),
-                "kwargs": orfs},
-            "motif": {
-                "filepath": "",
-                "instantiator": Motif,
-                "seq_source": motif.pop("seq_source", None),
-                "kwargs": motif},
             "allpossible": {
                 "filepath": "",
                 "instantiator": AllPossible,
                 "seq_source": allpossible,
                 "kwargs": {}},
         }
+
+        # add annotations to the above inputs
+        if isinstance(annotations, str):
+            with open(annotations) as f:
+                annotations = json.load(f)
+        annotation_seq = annotations.pop("seq_source", None)
+        self.annotations = list(annotations)
+        for name, kwargs in annotations.items():
+            if name in self.inputs:
+                print(f"Choose a different name: '{name}' is already used.")
+                continue
+            if "motif" in kwargs:
+                instantiator = Motif
+            elif "orfs" in kwargs:
+                instantiator = ORFs
+            else:
+                instantiator = Annotation
+            self.inputs[name] = {
+                "filepath": "",
+                "instantiator": instantiator,
+                "seq_source": annotation_seq,
+                "kwargs": kwargs}
+
         self.default_profiles = ["shapemap", "dmsmap", "dancemap", "rnpmap"]
 
         self.sample = sample
@@ -332,10 +311,10 @@ class Sample():
         if hasattr(inherit, "data") and isinstance(inherit.data, dict):
             self.data |= inherit.data
         # load data
-        for input, kwargs in self.inputs.items():
+        for name, kwargs in self.inputs.items():
             if None not in [kwargs["filepath"], kwargs["seq_source"]]:
                 kwargs.update(kwargs.pop("kwargs", {}))
-                self.set_data(name=input, **kwargs)
+                self.set_data(name=name, **kwargs)
 
     def set_data(self, name, filepath=None, instantiator=None, seq_source=None,
                  **kwargs):
@@ -719,7 +698,7 @@ class Sample():
           plot_arcs(samples=[self], filters=filters, **kwargs)
         See plot_arcs for more detail.
         """
-        return plot_ss(samples=[self], filters=filters, **kwargs)
+        return plot_arcs(samples=[self], filters=filters, **kwargs)
 
     def plot_ss_multifilter(self, filters, **kwargs):
         """Makes a multipanel secondary structure drawing. Each panel

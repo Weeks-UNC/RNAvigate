@@ -279,8 +279,8 @@ class SS(Plot):
                        s=size, zorder=zorder)
         elif annotation.annotation_type == "groups":
             for group in annotation[:]:
-                x = ss.xcoordinates[group["sites"]]
-                y = ss.ycoordinates[group["sites"]]
+                x = ss.xcoordinates[[site - 1 for site in group["sites"]]]
+                y = ss.ycoordinates[[site - 1 for site in group["sites"]]]
                 color = group["color"]
                 ax.plot(x, y, color=color, a=alpha,
                         lw=linewidth, zorder=zorder)
