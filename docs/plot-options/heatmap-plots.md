@@ -52,12 +52,16 @@ Some of these arguments accept a key of `sample.data`. These are typically the
 argument names given to the `rnavigate.Sample()` method when data are loaded.
 To see these keys, run: `print(sample.data.keys())`.
 
+---
+
 `structure`
 
 * A sample.data key pointing to either a secondary structure or a 3D structure
   with atomic coordinates.
 * Inter-nucleotide data are mapped to this sequence using either a pairwise
   sequence alignment, or an alignment previously defined by the user.
+
+---
 
 `interactions`
 
@@ -66,11 +70,15 @@ To see these keys, run: `print(sample.data.keys())`.
 * These data are mapped to `structure`, filtered using the arguments below, then
   plotted as a heatmap.
 
+---
+
 `interactions_filter`
 
 * A dictionary of key-value pairs that specifies how `interactions` are
   filtered and displayed.
-* See [interactions guide](../filters.md) for more detail.
+* See [interactions guide](../guides/filters.md) for more detail.
+
+---
 
 `filters`
 
@@ -79,12 +87,16 @@ To see these keys, run: `print(sample.data.keys())`.
   plots. e.g. 3 samples and 2 filtering schemes produces 6 plots.
 * This is an alternative to `interactions` and `interactions_filter`, those
   arguments will be ignored.
-* See [interactions guide](../filters.md) for more detail.
+* See [interactions guide](../guides/filters.md) for more detail.
+
+---
 
 `labels`
 
 * A list of strings, one for each sample, used as titles of each plot.
 * Defaults to using the sample name by retrieving `sample.sample`.
+
+---
 
 `levels`
 
@@ -92,10 +104,14 @@ To see these keys, run: `print(sample.data.keys())`.
 * For secondary structures, this defaults to `[5]` for contact distance, and
   for 3D structures, this defaults to `[20]` for angstroms.
 
+---
+
 `atom`
 
 * A string specifying which atom use to calculate atomic distances.
 * `"DMS"` specifies `"N1"` for A and C, `"N3"` for U and G.
+
+---
 
 `regions`
 
@@ -106,16 +122,22 @@ To see these keys, run: `print(sample.data.keys())`.
 * In this case, the boxes would be drawn from 1-10 on the x-axis to 45-55 on
   the y-axis and from 25-35 on the x-axis to 70-80 on the y-axis.
 
+---
+
 `plot_type`
 
 * `"heatmap"` or `"kde"`, whether to plot inter-nucleotide data values
   (heatmap) or the kernel density estimate (KDE).
+
+---
 
 `interpolation`
 
 * Image interpolation type passed to `matplotlib.pyplot.imshow()` when
   `plot_type="heatmap"`.
 * Usually, `None` is best.
+
+---
 
 `plot_kwargs`
 

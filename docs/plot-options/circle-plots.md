@@ -55,6 +55,8 @@ Many of these arguments accept a key of `sample.data`. These are typically the
 argument names given to the `rnavigate.Sample()` method when data are loaded.
 To see these keys, run: `print(sample.data.keys())`.
 
+---
+
 `seq_source`
 
 * A sequence string, `sample.data` key, or Data object.
@@ -62,6 +64,8 @@ To see these keys, run: `print(sample.data.keys())`.
   annotations are mapped to this sequence using either a pairwise sequence
   alignment or an alignment previously defined by the user, prior to plotting.
 * If `seq_source` is not provided, it is set to the value of the `ct` argument.
+
+---
 
 `ct` and `comp`
 
@@ -71,17 +75,23 @@ To see these keys, run: `print(sample.data.keys())`.
 * If `comp` is also provided, basepairs from both structures are drawn as arcs,
   which are colored by whether they appear in `ct`, `comp` or both.
 
+---
+
 `interactions` and `interactions2`
 
 * These values are sample.data keys that point to inter-nucleotide data, e.g.:
   `"ringmap"`, `"pairmap"`, `"pairprob"`, `"shapejump"`, etc.
 * These data are mapped to `seq_source`, filtered , then plotted as arcs.
 
+---
+
 `interactions_filter` and `interactions2_filter`
 
 * A dictionary of key-value pairs that specifies how `interactions` and
   `interactions2` are filtered and displayed
-* See [interactions guide](../filters.md) for more detail.
+* See [interactions guide](../guides/filters.md) for more detail.
+
+---
 
 `filters`
 
@@ -90,7 +100,9 @@ To see these keys, run: `print(sample.data.keys())`.
   plots. e.g. 3 samples and 2 filtering schemes produces 6 plots.
 * This is an alternative to `interactions` and `interactions_filter`, those
   arguments will be ignored.
-* See [interactions guide](../filters.md) for more detail.
+* See [interactions guide](../guides/filters.md) for more detail.
+
+---
 
 `profile`
 
@@ -99,25 +111,34 @@ To see these keys, run: `print(sample.data.keys())`.
   ["shapemap", "dmsmap", "dancemap", "rnpmap"]
 * These data are mapped to `seq_source` and used to color nucleotides.
 
+---
+
 `annotations`
 
 * A list of `sample.data` keys that point to sequence annotations.
 * These annotations are mapped to `seq_source`, then used to highlight
   nucleotides.
-* See [annotations guide](../annotations.md) for more info.
+
+---
 
 `labels`
 
 * A list of strings, one for each sample.
 * Defaults to using the sample name by retrieving `sample.sample`.
 
+---
+
 `title`
 
 * `True` or `False`. Display titles using `labels`.
 
+---
+
 `colorbar`
 
 * `True` or `False`. Display the color scale for interactions data.
+
+---
 
 `plot_kwargs`
 
@@ -127,6 +148,8 @@ To see these keys, run: `print(sample.data.keys())`.
 * `"rows"` and `"cols"` specifies the number of axes rows and columns of the
   matplotlib figure.
 * `"figsize"` specifies the total size of the matplotlib figure in inches.
+
+---
 
 `colors`
 
@@ -139,6 +162,8 @@ To see these keys, run: `print(sample.data.keys())`.
     * G: blue
     * C: light blue
 * `"profile"` colors using `profile` data.
+
+---
 
 `apply_color_to`
 

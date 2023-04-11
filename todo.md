@@ -10,9 +10,12 @@ Changes checklist
 Top priorities (3 maximum)
 --------------------------
 - completing documentation website and writing doc strings
-- find best way to display colormaps for all plots (probably a 2nd fig)
-  - store colorbar parameters and only create unique colorbars
+  - [ ] plots
+  - [ ] getting started
+  - [ ] analyses
+  - [ ] namespace and getting docstrings
 - test and check everything before the next major update.
+- stand-alone shapemapper style bar graph
 
 Coding To-Do List
 -----------------
@@ -20,8 +23,6 @@ Coding To-Do List
 - RNAvigate conda package
 - clean up namespace: ideally, no redundancy
 - support for undercase nucleotides
-- alignment mapping in data objects instead of at point of use
-- loading in annotations files
 - loading secondary structure files containing more than one structure
 - API changes:
   - ct, compct, ss to basepairs or ss or something
@@ -47,17 +48,9 @@ Coding To-Do List
 Documentation To-Do List
 ------------------------
 
-- Reference page for each plot type
-  - arc plot
-  - circle plot
-  - skyline
-  - qc
-  - heatmap
-  - linreg
-  - sm
-  - disthit
 - guide for custom use cases
   - loading custom profiles, interactions and annotations
+  - sequence alignments
   - plot manipulation with mpl
   - data manipulation with pandas
 - good doc strings

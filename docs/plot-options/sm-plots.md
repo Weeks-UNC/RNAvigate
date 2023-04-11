@@ -16,7 +16,10 @@ plot1 = sample.plot_sm(
 )
 ```
 
-`sample` here is a hypothetical rnavigate.Sample object containing data.
+`sample` here is a hypothetical rnavigate.Sample object containing `"shapemap"`
+data.
+
+---
 
 `plots`
 

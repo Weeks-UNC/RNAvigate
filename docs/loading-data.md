@@ -59,16 +59,15 @@ my_sample = rnav.Sample(
     pairprob=None,
     allpossible=None,
     # This section contains sequence annotations.
-    sites=None,
-    spans=None,
-    groups=None,
-    primers=None,
-    orfs=None,
-    motif=None,
+    annotations=None,
     # dance_prefix loads all data files from a DANCE model.
     dance_prefix=None,
 )
 ```
+
+For loading data that is not included in this list, or for adding multiple data
+sets of the same type see the guide for
+[loading custom data](./guides/loading-custom-data.md).
 
 ---
 
@@ -204,86 +203,56 @@ Sequence annotations
 
 ---
 
-`sites`
+`annotations`
 
-* A dictionary containing:
-  * a sequence source (a key of `my_sample.data`)
-  * a list of positions of interest within the sequence, 1-indexed
-  * a color value to use with visualizations
+* Here is an example with 5 different annotation types:
+
 ```python
-    sites={
-      "seq_source": "shapemap",
-      "annotations": [10, 14, 20],
-      "color": "red"}
+sample = rnav.Sample(
+    fasta="path/to/fasta.fa",
+    annotation={
+        "seq_source": "fasta",
+        "m6A": {
+            "sites": [35, 87, 220],
+            "color": "green"},
+        "exon 2": {
+            "spans": [[211, 300]],
+            "color": "khaki"},
+        "pockets": {
+            "groups": [{
+                "sites": [37, 38, 86, 87, 88],
+                "color": "purple",
+            },{
+                "sites": [102, 103, 105, 202, 217],
+                "color": "pink",
+            }]
+        }
+        "DRACH": {
+            "motif": "DRACH",
+            "color": "red",
+        }
+    }
+)
 ```
 
----
-
-`spans`
-
-* A dictionary containing:
-  * a sequence source (a key of `my_sample.data`)
-  * a list of regions of interest within the sequence, using start and end
-    positions, 1-indexed, inclusive.
-  * a color value to use with visualizations
-```python
-    spans={
-        "seq_source": "shapemap",
-        "annotations": [[10, 20], [53, 87]],
-        "color": "blue"}
-```
-
----
-
-`groups`
-
-* A dictionary containing:
-  * a sequence source (a key of `my_sample.data`)
-  * a list of dictionaries containing:
-    * nucleotide positions within the sequence to be grouped, 1-indexed
-    * a color value to use with visualizations
-```python
-    groups={
-        "seq_source": "shapemap",
-        "annotations": [
-            {"sites": [10, 14, 20], "color": "red"},
-            {"sites": [40, 43, 48, 70], "color": "blue"}
-        ]}
-```
-
----
-
-`primers`
-
-* `primers` acts just like `spans` above, but the start and end positions are
-  directional. i.e. for reverse primers start is greater than end.
-
----
-
-`orfs`
-
-* `orfs` acts just like `spans`, but the regions are automatically identified.
-  Every in-frame start and stop codon is added as a span. Honestly, this is too
-  common an occurance for this to be useful.
-* A dictionary containing:
-  * a sequence source (a key of `my_sample.data`)
-  * a color value to use with visualizations
-```python
-    orfs={
-        "seq_source": "shapemap",
-        "color": "orange"}
-```
-
----
-
-`motif`
-
-* `motif` acts just like `spans`, but the regions are automatically identified.
-  Every match to the given sequence motif is added as a span. Unlike `orfs`,
-  this can be very useful.
-* A dictionary containing:
-  * a sequence source (a key of `my_sample.data`)
-  * a sequence motif to search for using the standard alphabet:
+* `annotations` accepts a dictionary or a json file with the same format.
+* The first key is `"seq_source"` which defines the sequence that the indices
+  apply to. In the example above I used a fasta file, but this value can be any
+  key of sample.data, a data object, or a sequence string.
+* Each additional key becomes a key of sample.data. In this example,
+  `"m6A"`, `"exon 2"`, `"pockets"` and `"DRACH"`. These can be passed to
+  plotting functions, e.g. `annotations=["primers", "m6A", "DRACH"]`
+* Values given to these keys are dictionaries that determine what type of
+  annotation is created and how to display them on plots.
+* The first key in each of these dictionaries is the annotation type. Provided
+  positions are 1-indexed. Regions are inclusive:
+  * `"sites": ` a list of positions of interest
+  * `"spans": ` a list of lists each containing a start and end position
+  * `"primers": ` similar to spans, but can also be reversed (end < start)
+  * `"groups": ` a list of dictionaries that mimic the `"sites"` dictionary as
+    in the example above.
+  * `"motif": ` a sequence motif using standard nucleic acid alphabet. This
+    creates a spans-like annotation for all instances of the sequence motif.
     * A, U, C, G, T matches that nucleotide
     * B = not A
     * D = not C
@@ -296,13 +265,9 @@ Sequence annotations
     * R = purine (A, G)
     * Y = pyrimidine (C, U, T)
     * N = any (A, U, C, G, T)
-  * a color value to use with visualizations
-```python
-    motif={
-        "seq_source": "shapemap",
-        "motif": "DRACH"
-        "color": "orange"}
-```
+  * `"orfs": True` creates a spans-like annotation for all open reading frames
+* The second key in each of these dictionaries is `"color"`which specifies the
+  color used for plotting. Groups are the exception to this, as in the example.
 
 ---
 

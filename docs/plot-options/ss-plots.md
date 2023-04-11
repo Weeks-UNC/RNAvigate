@@ -72,21 +72,29 @@ Some of these arguments accept a key of `sample.data`. These are typically the
 argument names given to the `rnavigate.Sample()` method when data are loaded.
 To see these keys, run: `print(sample.data.keys())`.
 
+---
+
 `ss`
 
 * A `sample.data` key that points to secondary structure drawing data.
 
+---
+
 `interactions` and `interactions2`
 
-* These values are sample.data keys that point to inter-nucleotide data, e.g.:
-  `"ringmap"`, `"pairmap"`, `"pairprob"`, `"shapejump"`, etc.
+* These values are `sample.data` keys that point to inter-nucleotide data,
+  e.g.:`"ringmap"`, `"pairmap"`, `"pairprob"`, `"shapejump"`, etc.
 * These data are mapped to `ss`, filtered, then plotted as lines.
+
+---
 
 `interactions_filter` and `interactions2_filter`
 
 * A dictionary of key-value pairs that specifies how `interactions` and
   `interactions2` are filtered and displayed
-* See [interactions guide](../filters.md) for more detail.
+* See [interactions guide](../guides/filters.md) for more detail.
+
+---
 
 `filters`
 
@@ -95,22 +103,29 @@ To see these keys, run: `print(sample.data.keys())`.
   plots. e.g. 3 samples and 2 filtering schemes produces 6 plots.
 * This is an alternative to `interactions` and `interactions_filter`, those
   arguments will be ignored.
-* See [interactions guide](../filters.md) for more detail.
+* See [interactions guide](../guides/filters.md) for more detail.
+
+---
 
 `labels`
 
 * A list of strings, one for each sample.
 * Defaults to using the sample name by retrieving `sample.sample`.
 
+---
+
 `title`
 
 * `True` or `False`. Display titles using `labels`.
+
+---
 
 `annotations`
 
 * A list of `sample.data` keys that point to sequence annotations.
 * These are mapped to `ss`, then used to highlight nucleotides.
-* See [annotations guide](../annotations.md) for more info.
+
+---
 
 `profile`
 
@@ -119,6 +134,8 @@ To see these keys, run: `print(sample.data.keys())`.
   ["shapemap", "dmsmap", "dancemap", "rnpmap"]
 * These data are mapped to `ss` and used to color nucleotides if
   `colors="profile"`.
+
+---
 
 `colors`
 
@@ -131,6 +148,11 @@ To see these keys, run: `print(sample.data.keys())`.
     * G: blue
     * C: light blue
 * `"profile"` colors using `profile` data.
+* `"structure"` colors using base-pairing status.
+
+![colors](../images/ss_colors.png)
+
+---
 
 `apply_color_to`
 
@@ -138,18 +160,31 @@ To see these keys, run: `print(sample.data.keys())`.
 * `"sequence"` applies `colors` to nucleotide letters.
 * `"structure"` applies `colors` to structure outline.
 
+
+![apply_color_to](../images/ss_applyto.png)
+
+---
+
 `sequence`
 
 * `True` or `False`, whether to display nucleotide letters.
 * Only applies if `apply_color_to="background"`.
 
+![sequence](../images/ss_sequence.png)
+
+---
+
 `colorbar`
 
 * `True` or `False`, whether to display the color scale for interactions data.
 
+---
+
 `positions`
 
 * `True` or `False`, whether to display every 10th nucleotide position.
+
+---
 
 `bp_style`
 
@@ -157,6 +192,10 @@ To see these keys, run: `print(sample.data.keys())`.
 * `"line"` draws a solid line between basepairs
 * `"conventional"` draws single lines for A-U, double for G-C, circles for A-G
   and G-U
+
+![bp_style](../images/ss_bpstyle.png)
+
+---
 
 `plot_kwargs`
 

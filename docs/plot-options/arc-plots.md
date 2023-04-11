@@ -57,6 +57,8 @@ Many of these arguments accept a key of `sample.data`. These are typically the
 argument names given to the `rnavigate.Sample()` method when data are loaded.
 To see these keys, run: `print(sample.data.keys())`.
 
+---
+
 `seq_source`
 
 * A sequence string, sample.data key, or Data object.
@@ -64,6 +66,8 @@ To see these keys, run: `print(sample.data.keys())`.
   annotations are mapped to this sequence using either a pairwise sequence
   alignment, or an alignment previously defined by the user, prior to plotting.
 * If `seq_source` is not provided, it is set to the value of the `ct` argument.
+
+---
 
 `ct` and `comp`
 
@@ -73,10 +77,14 @@ To see these keys, run: `print(sample.data.keys())`.
 * If `comp` is also provided, basepairs from both structures are drawn as arcs,
   which are colored by whether they appear in `ct`, `comp` or both.
 
+---
+
 `ct_panel`
 
 * This can be `"top"` or `"bottom"`. It determines whether to plot `ct` arcs
   above or below the central x-axis.
+
+---
 
 `interactions` and `interactions2`
 
@@ -85,15 +93,21 @@ To see these keys, run: `print(sample.data.keys())`.
 * These data are mapped to seq_source, filtered using the arguments below, then
   plotted as arcs.
 
+---
+
 `interactions_filter` and `interactions2_filter`
 
 * A dictionary of key-value pairs that specifies how `interactions` and
   `interactions2` are filtered and displayed
-* See [interactions guide](../filters.md) for more detail.
+* See [interactions guide](../guides/filters.md) for more detail.
+
+---
 
 `interactions_panel` and `interactions2_panel`
 
 * `"Top"` or `"Bottom"`, where to plot `interactions` and `interactions2` data.
+
+---
 
 `filters`
 
@@ -102,7 +116,9 @@ To see these keys, run: `print(sample.data.keys())`.
   plots. e.g. 3 samples and 2 filtering schemes produces 6 plots.
 * This is an alternative to `interactions` and `interactions_filter`, those
   arguments will be ignored.
-* See [interactions guide](../filters.md) for more detail.
+* See [interactions guide](../guides/filters.md) for more detail.
+
+---
 
 `profile`
 
@@ -112,16 +128,21 @@ To see these keys, run: `print(sample.data.keys())`.
 * These data are mapped to `seq_source` and plotted as a bar graph along the
   central axis.
 
+---
+
 `plot_error`
 
 * `True` or `False`, whether to plot error bars on `profile` data.
+
+---
 
 `annotations`
 
 * A list of sample.data keys that point to sequence annotations.
 * These annotations are mapped to `seq_source`, then plotted along the central
   x-axis.
-* See [annotations guide](../annotations.md) for more info.
+
+---
 
 `annotation_mode`
 
@@ -129,14 +150,20 @@ To see these keys, run: `print(sample.data.keys())`.
 * `"track"` uses markers along the x-axis.
 * `"vbar"` uses transparent vertical bars spanning the y-axis.
 
+---
+
 `labels`
 
 * A list of strings, one for each sample.
 * Defaults to using the sample name by retrieving `sample.sample`.
 
+---
+
 `title`
 
 * `True` or `False`. Display titles using `labels`.
+
+---
 
 `region`
 
@@ -144,13 +171,19 @@ To see these keys, run: `print(sample.data.keys())`.
 * e.g. `region=[40, 100]` plots nucleotides 40 through 100.
 * Defaults to plotting the entire sequence from `seq_source`.
 
+---
+
 `colorbar`
 
 * `True` or `False`. Display the color scale for interactions data.
 
+---
+
 `seqbar`
 
 * `True` or `False`. Display the sequence along the x-axis.
+
+---
 
 `plot_kwargs`
 

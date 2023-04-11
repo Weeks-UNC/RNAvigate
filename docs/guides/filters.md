@@ -38,7 +38,9 @@ filters=[{
   `interactions_filter` example above, but would make a second plot with the
   top 5th percentile of a SHAPE-JuMP data set colored by percentile.
 
-Here is every keyword that can be passed to `interactions_filter` or `filters` and it's default value:
+Here is every keyword that can be passed to `interactions_filter` or `filters`
+and it's default value:
+
 ```python
 interactions_filter = {
   # display arguments
@@ -136,13 +138,13 @@ Filtering on sequence
 
 `"compliments_only"`
 
-* Set to `True` to only keep an interaction if *i* is the reverse compliment of
-  *j*
+* `True` or `False`, whether to require that *i* and *j* are reverse
+  complimentary
 
 `"nts"`
 
-* Set to a string of valid nucleotides, e.g., to exclude interactions in which
-  *i* or *j* contains a G nucleotide `"nts": "AUC"`
+* Set to a string of valid nucleotides, e.g. `"nts": "AUC"` excludes
+  interactions in which *i* or *j* contains a G nucleotide
 
 Filtering by position
 ---------------------
@@ -224,6 +226,8 @@ Filtering on data values
   * `_ne` (not equal to)
 * Interactions data from this column is compared to the given value using the
   given operator. Interactions where that operation is `True` are kept.
+* E.g., `"Statistic_ge":23` requires that the `"Statistic"` column is greater
+  than 23.
 
 Experimental filter
 -------------------

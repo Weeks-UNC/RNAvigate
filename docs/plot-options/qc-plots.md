@@ -53,14 +53,18 @@ plot4 = sample.plot_qc(
 )
 ```
 
+---
+
 `labels`
 
 * A list of strings, one for each sample.
 * Defaults to using the sample name by retrieving `sample.sample`.
 
+---
+
 `plot_kwargs`
 
-* A dictionary of keyword argument pairs passed to `rnavigate.AP()`.
+* A dictionary of keyword argument pairs passed to `rnavigate.QC()`.
 * These values are automatically determined by the plotting function if not
   provided.
 * `"figsize"` specifies the total size of the matplotlib figure in inches.

@@ -50,11 +50,15 @@ plot4 = sample.plot_roc(
 argument names given to the `rnavigate.Sample()` method when data are loaded.
 To see these keys, run: `print(sample.data.keys())`.
 
+---
+
 `ct`
 
 * A sample.data key that points to a secondary structure, e.g.: `"ct"`,
   `"compct"`, `"ss"`, etc.
 * Base-pairing status is taken from this value.
+
+---
 
 `profile`
 
@@ -64,11 +68,14 @@ To see these keys, run: `print(sample.data.keys())`.
 * These data are mapped to `ct` and used to calculat TPR and FPR for the ROC
   curve.
 
+---
+
 `labels`
 
 * A list of strings, one for each sample.
 * Defaults to using the sample name by retrieving `sample.sample`.
 
+---
 
 `plot_kwargs`
 

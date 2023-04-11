@@ -63,9 +63,13 @@ Many of these arguments accept a key of `sample.data`. These are typically the
 argument names given to the `rnavigate.Sample()` method when data files are
 loaded. To see these keys, run: `print(sample.data.keys())`.
 
+---
+
 `structure`
 
 * a `sample.data` key that points to a 3D structure, usually `"pdb"`.
+
+---
 
 `interactions`
 
@@ -74,11 +78,15 @@ loaded. To see these keys, run: `print(sample.data.keys())`.
 * These data are mapped to `structure`, filtered using the arguments below,
   then plotted as cylinders.
 
+---
+
 `interactions_filter`
 
 * A dictionary of key-value pairs that specifies how `interactions` are
   filtered and displayed.
-* See [interactions guide](../filters.md) for more detail.
+* See [interactions guide](../guides/filters.md) for more detail.
+
+---
 
 `filters`
 
@@ -87,7 +95,9 @@ loaded. To see these keys, run: `print(sample.data.keys())`.
   plots. e.g. 3 samples and 2 filtering schemes produces 6 plots.
 * This is an alternative to `interactions` and `interactions_filter`, those
   arguments will be ignored.
-* See [interactions guide](../filters.md) for more detail.
+* See [interactions guide](../guides/filters.md) for more detail.
+
+---
 
 `profile`
 
@@ -96,6 +106,8 @@ loaded. To see these keys, run: `print(sample.data.keys())`.
   ["shapemap", "dmsmap", "dancemap", "rnpmap"]
 * These data are mapped to `structure`, and used to color nucleotides if 
   `nt_color` argument is set to `"profile"`.
+
+---
 
 `nt_color`
 
@@ -109,10 +121,14 @@ loaded. To see these keys, run: `print(sample.data.keys())`.
     * C: light blue
 * `"profile"` colors using `profile` data.
 
+---
+
 `labels`
 
 * A list of strings, one for each sample, used as titles.
 * Defaults to using the sample name by retrieving `sample.sample`.
+
+---
 
 `plot_kwargs`
 
@@ -125,14 +141,20 @@ loaded. To see these keys, run: `print(sample.data.keys())`.
 * `"rotation"` specifies x, y, and z axis rotation in degrees.
 * `"orientation"` specifies an exact orientation of the molecule.
 
+---
+
 `hide_cylinders`
 
 * `True` or `False`, whether to hide cylinders representing nucleotides and
   only show the backbone ribbon.
 
+---
+
 `title`
 
 * `True` or `False`, whether to display titles using `labels`.
+
+---
 
 `get_orientation`
 
@@ -141,19 +163,27 @@ loaded. To see these keys, run: `print(sample.data.keys())`.
   the `"orientation"` key of `plot_kwargs` to set the structure to this
   orientation.
 
+---
+
 `atom`
 
 * A string specifying the atom from which to draw interactions.
 * `"DMS"` will use the DMS reactive `"N1"` (A, C) and `"N3"` (U, G) atoms.
 
+---
+
 `colorbar`
 
 * `True` or `False`. Display the color scale for interactions data.
+
+---
 
 `custom_function`
 
 * a user defined function to be called to alter molecule appearance.
 
+---
+
 `show`
 
-* True or False, whether to show the plot or not.
+* `True` or `False`, whether to show the plot or not.

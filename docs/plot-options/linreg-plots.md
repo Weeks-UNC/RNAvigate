@@ -43,12 +43,16 @@ Some of these arguments accept a key of `sample.data`. These are typically the
 argument names given to the `rnavigate.Sample()` method when data are loaded.
 To see these keys, run: `print(sample.data.keys())`.
 
+---
+
 `ct`
 
 * A sample.data key that points to a secondary structure, e.g.: `"ct"`,
   `"compct"`, `"ss"`, etc.
 * `ct` is used to classify base-pairing status for KDE plots and optionally to
   color points on the regression scatter plot.
+
+---
 
 `profile`
 
@@ -58,14 +62,20 @@ To see these keys, run: `print(sample.data.keys())`.
 * These data are mapped to each other using a sequence alignment and
   per-nucleotide values are plotted as scatter plot.
 
+---
+
 `labels`
 
 * A list of strings, one for each sample.
 * Defaults to using the sample name by retrieving `sample.sample`.
 
+---
+
 `colorby`
 
 * `"structure"` or `"sequence"`, how scatter plot points will be colored.
+
+---
 
 `plot_kwargs`
 

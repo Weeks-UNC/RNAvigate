@@ -52,12 +52,16 @@ Some of these arguments accept a key of `sample.data`. These are typically the
 argument names given to the `rnavigate.Sample()` method when data are loaded.
 To see these keys, run: `print(sample.data.keys())`.
 
+---
+
 `structure`
 
 * A sample.data key that points to a 3D structure with atomic coordinates,
   usually `"pdb"`.
 * Inter-nucleotide data are mapped to this sequence using either a pairwise
   sequence alignment, or an alignment previously defined by the user.
+
+---
 
 `interactions` and `bg_interactions`
 
@@ -67,11 +71,15 @@ To see these keys, run: `print(sample.data.keys())`.
   to calculate distance distributions.
 * `bg_interactions` are used for the background distribution.
 
+---
+
 `interactions_filter` and `bg_interactions_filter`
 
 * A dictionary of key-value pairs that specifies how `interactions` and
   `bg_interactions` are filtered and displayed.
-* See [interactions guide](../filters.md) for more detail.
+* See [interactions guide](../guides/filters.md) for more detail.
+
+---
 
 `filters`
 
@@ -80,16 +88,22 @@ To see these keys, run: `print(sample.data.keys())`.
   plots. e.g. 3 samples and 2 filtering schemes produces 6 plots.
 * This is an alternative to `interactions` and `interactions_filter`, those
   arguments will be ignored.
-* See [interactions guide](../filters.md) for more detail.
+* See [interactions guide](../guides/filters.md) for more detail.
+
+---
 
 `labels`
 
 * A list of strings, one for each sample.
 * Defaults to using the sample name by retrieving `sample.sample`.
 
+---
+
 `same_axis`
 
 * `True` or `False`, whether to plot distributions on the same axis.
+
+---
 
 `atom`
 
@@ -97,6 +111,8 @@ To see these keys, run: `print(sample.data.keys())`.
 * Defaults to `"O2'"`.
 * `"DMS"` will use the `"N1"` for A and C, and `"N3"` for
   U and G.
+
+---
 
 `plot_kwargs`
 

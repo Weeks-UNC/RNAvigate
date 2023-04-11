@@ -45,6 +45,8 @@ Some of these arguments accept a key of `sample.data`. These are typically the
 argument names given to the `rnavigate.Sample()` method when data are loaded.
 To see these keys, run: `print(sample.data.keys())`.
 
+---
+
 `seq_source`
 
 * A sequence string, `sample.data` key, or Data object.
@@ -54,12 +56,16 @@ To see these keys, run: `print(sample.data.keys())`.
 * If `seq_source` is not provided, it is set to the value of `profile` and
   retrieved from the first sample.
 
+---
+
 `profile`
 
 * A `sample.data` key that points to per-nucleotide data.
 * The default is "profile" which uses the first valid value in this list:
   `["shapemap", "dmsmap", "dancemap", "rnpmap"]`
 * These data are mapped to `seq_source` and used to color nucleotides.
+
+---
 
 `columns`
 
@@ -69,31 +75,42 @@ To see these keys, run: `print(sample.data.keys())`.
 * Run `print(sample.data[profile].data.columns)`, replacing `profile` with the
   intended value of `profile` to see valid column names.
 
+---
+
 `errorbars`
 
 * A column name of `sample.data[profile].data`.
 * If given, errors will be plotted based on these values.
+
+---
 
 `annotations`
 
 * A list of `sample.data` keys that point to sequence annotations.
 * These annotations are mapped to `seq_source`, then used to highlight
   nucleotides.
-* See [annotations guide](../annotations.md) for more info.
+
+---
 
 `labels`
 
 * A list of strings, one for each sample.
 * Defaults to using the sample name by retrieving `sample.sample`.
 
+---
+
 `region`
 
 * A list containing a start and end positions, 1-indexed, inclusive.
 * e.g., `region=[40, 100]` will plot nucleotide positions 40 to 100.
 
+---
+
 `seqbar`
 
 * `True` or `False`, whether to display the sequence along the x-axis.
+
+---
 
 `plot_kwargs`
 
