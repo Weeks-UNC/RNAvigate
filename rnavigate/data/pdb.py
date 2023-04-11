@@ -98,12 +98,12 @@ class PDB(Data):
     def get_distance(self, i, j, atom="O2'"):
         if atom in self.distance_matrix.keys():
             return self.distance_matrix[atom][i-1, j-1]
-        if self.is_valid_idx(seq_idx=i) and self.is_valid_idx(seq_idx=j):
+        try:
             xi, yi, zi = self.get_xyz_coord(i, atom)
             xj, yj, zj = self.get_xyz_coord(j, atom)
             distance = ((xi-xj)**2 + (yi-yj)**2 + (zi-zj)**2)**0.5
-        else:
-            distance = 1000
+        except KeyError:
+            distance = np.nan
         return distance
 
     def get_distance_matrix(self, atom="O2'"):
@@ -113,7 +113,10 @@ class PDB(Data):
         y = np.full(self.length, np.nan)
         z = np.full(self.length, np.nan)
         for i in (self.pdb_idx - self.offset):
-            x[i-1], y[i-1], z[i-1] = self.get_xyz_coord(i, atom)
+            try:
+                x[i-1], y[i-1], z[i-1] = self.get_xyz_coord(i, atom)
+            except KeyError:
+                pass
         a = x - x[:, np.newaxis]
         b = y - y[:, np.newaxis]
         c = z - z[:, np.newaxis]
