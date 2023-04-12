@@ -8,13 +8,16 @@ import numpy as np
 
 class Circle(Plot):
 
-    def __init__(self, num_samples, seq_source, **kwargs):
+    def __init__(self, num_samples, seq_source, gap=8, **kwargs):
         self.sequence = seq_source
+        self.gap = gap
         length = self.sequence.length
         super().__init__(num_samples, **kwargs)
         self.x, self.y = np.zeros(length), np.zeros(length)
-        self.diameter = (length + 8) / pi
-        self.theta = np.array([2*pi * (i+4)/(length+8) for i in range(length)])
+        self.diameter = (length + self.gap) / pi
+        theta_between = 2 * pi * 1/(length + self.gap - 1)
+        theta_start = theta_between * self.gap/2
+        self.theta = theta_between * np.arange(length) + theta_start
         self.x = np.sin(self.theta)*self.diameter
         self.y = np.cos(self.theta)*self.diameter
         for i in range(self.length):
@@ -132,11 +135,11 @@ class Circle(Plot):
             x_center = (x_i+x_j)/2
             y_center = (y_i+y_j)/2
             # scaling the center point towards zero depending on angle(i,j)
-            if (j - i) > ((self.sequence.length + 8) / 2):
+            if (j - i) > ((self.sequence.length + self.gap - 1) / 2):
                 diff = self.sequence.length - j + i + 8
             else:
                 diff = j - i
-            f = (1 - (diff / (self.sequence.length + 8))) ** 4
+            f = (1 - (diff / (self.sequence.length + self.gap - 1))) ** 4
             verts = [[x_i, y_i], [x_center*f, y_center*f], [x_j, y_j]]
             codes = [Path.MOVETO, Path.CURVE3, Path.CURVE3]
             patches.append(PathPatch(Path(verts, codes), fc="none", ec=color))
