@@ -87,8 +87,15 @@ class Interactions(Data):
         else:
             print(f"{value} is not a valid metric of {self.datatype}")
             self._metric = self.default_metric
-        self.cmap = self._cmaps[self._metric]
-        self.min_max = self._mins_maxes[self._metric]
+        if self._metric in self._cmaps:
+            self.cmap = self._cmaps[self._metric]
+        else:
+            self.cmap = "gray"
+        if self._metric in self._mins_maxes:
+            self.min_max = self._mins_maxes[self._metric]
+        else:
+            self.min_max = [min(self.data[self.metric]),
+                            max(self.data[self.metric])]
 
     def mask_on_sequence(self, compliment_only, nts, return_mask=False):
         mask = []
@@ -97,7 +104,7 @@ class Interactions(Data):
             keep = []
             for w in range(self.window):
                 i_nt = self.sequence[i+w-1].upper()
-                j_nt = self.sequence[j-w+1].upper()
+                j_nt = self.sequence[j+self.window-w-2].upper()
                 if compliment_only:
                     keep.append(i_nt in comp[j_nt])
                 if nts is not None:
@@ -170,12 +177,12 @@ class Interactions(Data):
 
     def mask_nts(self, exclude, isolate):
         mask = np.full(len(self.data), True)
-        for index, i, j in self.data[["i", "j"]].itertuples():
+        for index, (i, j) in self.data[["i", "j"]].iterrows():
             if exclude is not None:
-                if i in exclude or j in exclude:
+                if (i in exclude) or (j in exclude):
                     mask[index] = False
             if isolate is not None:
-                if i not in isolate and j not in isolate:
+                if (i not in isolate) and (j not in isolate):
                     mask[index] = False
         self.update_mask(mask)
 
@@ -572,7 +579,7 @@ class PairProb(Interactions):
 class AllPossible(Interactions):
     def __init__(self, filepath, sequence=None, window=1):
         data = {'i': [], 'j': [], 'data': []}
-        for i in range(1, len(sequence)+1):
+        for i in range(1, len(sequence)):
             for j in range(i+1, len(sequence)+1):
                 data['i'].append(i)
                 data['j'].append(j)

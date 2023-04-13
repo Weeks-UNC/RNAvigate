@@ -120,6 +120,7 @@ class Profile(Data):
         plotting_df = pd.DataFrame(
             {"Nucleotide": np.arange(self.fit_to_length)+1})
         plotting_df = plotting_df.merge(data, how='outer', on="Nucleotide")
+        plotting_df.fillna({"Colors": mpc.to_hex("grey")}, inplace=True)
         return plotting_df
 
 
