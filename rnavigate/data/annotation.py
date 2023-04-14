@@ -208,7 +208,7 @@ class Motif(Annotation):
         span_list = self.get_spans_from_motif(sequence, motif)
         super().__init__(name=name, fasta=fasta, sequence=sequence,
                          annotation_type='spans',
-                         span_list=span_list, color=color)
+                         spans=span_list, color=color)
 
     def get_spans_from_motif(self, sequence, motif):
         """Returns a list of spans [[start, end], [start, end]] for each
@@ -254,7 +254,7 @@ class ORFs(Annotation):
         span_list = self.get_spans_from_orf(sequence)
         super().__init__(name=name, fasta=fasta, sequence=sequence,
                          annotation_type='spans',
-                         span_list=span_list, color=color)
+                         spans=span_list, color=color)
 
     def get_spans_from_orf(self, sequence):
         spans = []

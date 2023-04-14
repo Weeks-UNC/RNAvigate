@@ -210,7 +210,7 @@ Sequence annotations
 ```python
 sample = rnav.Sample(
     fasta="path/to/fasta.fa",
-    annotation={
+    annotations={
         "seq_source": "fasta",
         "m6A": {
             "sites": [35, 87, 220],
@@ -226,7 +226,7 @@ sample = rnav.Sample(
                 "sites": [102, 103, 105, 202, 217],
                 "color": "pink",
             }]
-        }
+        },
         "DRACH": {
             "motif": "DRACH",
             "color": "red",
