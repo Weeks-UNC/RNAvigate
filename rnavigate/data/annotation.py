@@ -239,7 +239,7 @@ class Motif(Annotation):
         self.fitted = Motif(
             name=self.name,
             color=self.color,
-            sequence=fit_to,
+            sequence=fit_to.sequence,
             motif=self.motif,
         )
 
