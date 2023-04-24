@@ -170,54 +170,48 @@ class Data():
         Returns:
             numpy array: a mapping of old positions to new positions
         """
+        # Normalize sequences
         seq1 = self.sequence.upper().replace("T", "U")
         seq2 = fit_to.sequence.upper().replace("T", "U")
+        seq2_to_final_map = np.where([nt != '.' for nt in seq2])[0]
+        seq2 = seq2.replace('.', '')
+        # Check if sequences match
         if seq1 == seq2:
-            if print_sequences:
-                print(seq1, seq2, sep="\n")
-            return np.arange(len(self.sequence))
+            if return_alignment:
+                return (seq1, seq2, seq1, seq2)
+            else:
+                return seq2_to_final_map
         else:
+            # look in _alignments_cache, if not found, do alignment
             try:
-                alignment = _alignments_cache[seq1][seq2]
+                align1, align2 = _alignments_cache[seq1][seq2].values()
             except KeyError:
-                alignment = align.globalxs(self.sequence, fit_to.sequence,
-                                           -1, -0.1, penalize_end_gaps=False)
+                alignment = align.globalms(seq1, seq2,
+                                           penalize_end_gaps=False,
+                                           **_globalms_params)
                 set_alignment(
                     sequence1=seq1,
                     sequence2=seq2,
                     alignment1=alignment[0].seqA,
                     alignment2=alignment[0].seqB
                 )
-                alignment = _alignments_cache[seq1][seq2]
-        if print_sequences:
-            print(alignment["seqA"], alignment["seqB"], sep="\n")
+                align1, align2 = _alignments_cache[seq1][seq2].values()
+        # skip creating alignment_map if return_alignment
+        if return_alignment:
+            return (seq1, seq2, align1, align2)
         # get an index map from this sequence to that.
-        alignment_map = []
-        i = 0
-        for nt1, nt2 in zip(alignment["seqA"], alignment["seqB"]):
-            #  012-34567 index 1
-            #  AUC-UGGCU sequence 1
-            #  AUCGUG-CU sequence 2
-            #  012345-67 index 2
-            #  012345678 index "full"
-            #  desired: alignmen_map[index 1] == index 2
-            #  012 45-67 not full
-            # desired: alignment_map[index 1] == index "full"
-            #  012 45678 full
-            if nt1 == '-':
-                i += 1
-            elif nt2 == '-':
-                if full:
-                    alignment_map.append(i)
-                    i += 1
-                else:
-                    alignment_map.append(-1)
-            else:
-                alignment_map.append(i)
-                i += 1
+        seq1_to_align = np.where([nt != '-' for nt in align1])[0]
         if full:
-            return alignment_map, i
-        return np.array(alignment_map)
+            i = len(align1)
+            return seq1_to_align, i
+        else:
+            align_mask = np.where([nt != '-' for nt in align2])[0]
+            align_to_seq2 = np.full(len(align2), -1)
+            align_to_seq2[~align_mask] = np.arange(len(seq2))
+            seq1_to_seq2 = align_to_seq2[seq1_to_align]
+            keepers = seq1_to_seq2[seq1_to_seq2 != -1]
+            seq1_to_seq2[seq1_to_seq2 != -1] = seq2_to_final_map[keepers]
+            return seq1_to_seq2
 
     def get_colors(self, source, nt_colors='new', pos_cmap='rainbow',
                    profile=None, ct=None, annotations=None):

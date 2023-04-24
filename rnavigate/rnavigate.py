@@ -1186,6 +1186,116 @@ def plot_arcs(samples, seq_source=None, ct="ct", comp=None, interactions=None,
     return plot
 
 
+def plot_arcs_compare(samples, seq_source=None, ct="ct", comp=None,
+                      interactions=None, interactions_filter=None,
+                      interactions2=None, interactions2_filter=None,
+                      profile="profile", labels=None, region="all",
+                      plot_kwargs=None, colorbar=True, **kwargs):
+    """Generates a single arc plot displaying combinations of secondary
+    structures, per-nucleotide data, inter-nucleotide data, and sequence
+    annotations. The first sample will be on top, the second on the bottom.
+    Center shows how these sequences are being aligned.
+
+    Args:
+        samples (list of rnavigate.Sample): Samples to retreive data from.
+            number of panels will equal the length of this list, unless filters
+            argument below is also used.
+        seq_source (str or data object, optional): a key from sample.data, a
+            sequence string, or a Data object. All data will be mapped to this
+            string using a user-defined or pairwise sequence alignment.
+            Defaults to the value of the ct argument below.
+        ct (str, optional): a key from sample.data to retreive a secondary
+            structure. This will be plotted on the top half of each panel.
+            Defaults to "ct".
+        comp (str, optional): same as ct. basepairs from ct and comp will be
+            plotted on the top half of each panel. Basepairs are colored by
+            which structure contains them (shared, ct only, comp only).
+            Defaults to None.
+        interactions (str, optional): a key from sample.data to retrieve inter-
+            nucleotide data. These data are mapped to seq_source coordinates,
+            filtered using interactions_filter arguments, and displayed on the
+            bottom half of each panel.
+            Defaults to None.
+        interactions_filter (dict, optional): These key-value pairs are passed
+            as keyword arguments to sample.filter_interactions along with
+            interactions=interactions and fit_to=seq_source. See
+            rnavigate.Sample.filter_interactions for more detail.
+            Defaults to {}.
+        interactions2 (str, optional): same as interactions above.
+            Defaults to None.
+        interactions2_filter (dict, optional): same as interactions_filter
+            above but applied to interactions2.
+            Defaults to {}.
+        profile (str, optional): a key from sample.data used to retrieve per-
+            nucleotide data. These data are displayed in center of each panel.
+            Defaults to "profile".
+        labels (str, optional): Same length as samples list. Labels to
+            be used in plot legends. Defaults to default sample name.
+        region (list of int: length 2, optional): start and end position of
+            seq_source to be plotted. 1-indexed, inclusive.
+            Defaults to [0, sequence length].
+        plot_kwargs (dict, optional): kwargs passed to AP(). See
+            rnavigate.plots.AP for more detail.
+            Defaults to {}.
+        **kwargs: additional keyword arguments are passed to AP.plot_data.
+            see rnavigate.plots.AP.plot_data for more detail.
+
+    Returns:
+        rnavigate.plots.AP plot: object containing matplotlib figure and axes
+            with additional plotting and file saving methods
+    """
+    seq1 = get_sequence(seq_source=seq_source, sample=samples[0], default=ct)
+    seq2 = get_sequence(seq_source=seq_source, sample=samples[1], default=ct)
+    _, _, al1, al2 = seq1.get_alignment_map(fit_to=seq2, return_alignment=True)
+    seq1_full = al1.replace('-', '.')
+    seq2_full = al2.replace('-', '.')
+    seq1_full = get_sequence(seq_source=seq1_full,
+                             sample=samples[0], default=ct)
+    seq2_full = get_sequence(seq_source=seq2_full,
+                             sample=samples[0], default=ct)
+    # use mutable defaults
+    if interactions_filter is None:
+        interactions_filter = {}
+    if interactions2_filter is None:
+        interactions2_filter = {}
+    if labels is None:
+        labels = ["label"]*len(samples)
+    if plot_kwargs is None:
+        plot_kwargs = {}
+    if region != "all":
+        al1 = [i for i, nt in seq1_full.sequence if nt != '.']
+        region = [al1[region[0]], al1[region[1]]]
+    # coerce interactions and interactions_filter into filters format
+    filters = [{"interactions": interactions} | interactions_filter]
+    # initialize plot using all structure drawings
+    plot = plots.AP(num_samples=1, nt_length=seq1_full.length, region=region,
+                    **plot_kwargs)
+    # loop through samples and filters, adding each as a new axis
+    for sample, seq, panel in zip(samples, [seq1_full, seq2_full],
+                                  ["top", "bottom"]):
+        fit_data_list(sample, [ct, comp, profile], seq)
+        sample.filter_interactions(interactions=interactions2,
+                                   fit_to=seq, **interactions2_filter)
+        for filt in filters:
+            sample.filter_interactions(fit_to=seq, **filt)
+            plot.add_sample(ax=0, seq=None, sample=sample, annotation_gap=10,
+                            ct=ct, comp=comp, ct_panel=panel,
+                            interactions=filt["interactions"],
+                            interactions_panel=panel,
+                            interactions2=interactions2,
+                            interactions2_panel=panel,
+                            profile=profile, profile_panel=panel, label='',
+                            annotations=[], seqbar=False, **kwargs)
+    plots.alignment.plot_alignment(plot=plot, ax=plot.axes[0, 0], data1=seq1,
+                                   data2=seq2,
+                                   label=labels, center=-5, offset=4,
+                                   spines_positions={"top": 0, "bottom": -10})
+    plot.set_figure_size()
+    if colorbar:
+        plot.plot_colorbars()
+    return plot
+
+
 def plot_ss(samples, ss="ss", profile="profile", annotations=[],
             interactions=None, interactions_filter=None, interactions2=None,
             interactions2_filter=None, filters=None, labels=None,

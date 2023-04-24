@@ -1,5 +1,4 @@
 from .plots import Plot
-import numpy as np
 from matplotlib.patches import Wedge
 from matplotlib.collections import PatchCollection
 
@@ -13,10 +12,10 @@ class AP(Plot):
             self.nt_length = region[1]-region[0]+1
             self.region = region
         super().__init__(num_samples, **kwargs)
-        self.pass_through = ["ax", "seqbar", "title",
+        self.pass_through = ["ax", "seqbar", "title", "profile_panel",
                              "interactions_panel", "interactions2_panel",
                              "ct_panel", "annotation_mode", "plot_error",
-                             "profile_scale_factor"]
+                             "profile_scale_factor", "annotation_gap"]
 
     def set_figure_size(self, fig=None, ax=None,
                         rows=None, cols=None,
@@ -39,12 +38,13 @@ class AP(Plot):
                   label, ax=None, seqbar=True, title=True,
                   interactions_panel="bottom", interactions2_panel="bottom",
                   ct_panel="top", annotations=[], annotation_mode="track",
+                  profile_panel="top", annotation_gap=None,
                   profile_scale_factor=1, plot_error=True):
         annotations = [annotation.fitted for annotation in annotations]
         ax = self.get_ax(ax)
-        if annotation_mode == "track":
+        if annotation_mode == "track" and annotation_gap is None:
             annotation_gap = 2*(2*len(annotations) + seqbar)
-        else:
+        elif annotation_gap is None:
             annotation_gap = 2*seqbar
         self.set_axis(ax=ax, annotation_gap=annotation_gap)
         self.add_patches(ax=ax, data=ct, panel=ct_panel,
@@ -54,6 +54,7 @@ class AP(Plot):
         self.add_patches(ax=ax, data=interactions2, panel=interactions2_panel,
                          annotation_gap=annotation_gap)
         self.plot_profile(ax=ax, profile=profile,
+                          annotation_gap=annotation_gap, panel=profile_panel,
                           plot_error=plot_error,
                           profile_scale_factor=profile_scale_factor)
         for i, annotation in enumerate(annotations):
@@ -128,8 +129,8 @@ class AP(Plot):
         height = min(self.nt_length, 602) * 0.1 + 1
         return (width*self.columns, height*self.rows)
 
-    def plot_profile(self, ax, profile, profile_scale_factor=1,
-                     plot_error=True):
+    def plot_profile(self, ax, profile, annotation_gap, profile_scale_factor=1,
+                     plot_error=True, panel="top"):
         if profile is None:
             return
         data = profile.get_plotting_dataframe()
@@ -138,15 +139,20 @@ class AP(Plot):
         colormap = data["Colors"]
         nts = data["Nucleotide"]
         mn, mx = self.region
+        if panel == "top":
+            bottom = 0
+        elif panel == "bottom":
+            values *= -1
+            bottom = -annotation_gap
         if plot_error and ("Errors" in data.columns):
             yerr = data["Errors"]
             ax.bar(nts[mn-1:mx], values[mn-1:mx]*factor, align="center",
-                   width=1.05, color=colormap[mn-1:mx],
+                   bottom=bottom, width=1, color=colormap[mn-1:mx],
                    edgecolor=colormap[mn-1:mx], linewidth=0.0,
                    yerr=yerr[mn-1:mx], ecolor=(0, 0, 1 / 255.0), capsize=1)
         else:
             ax.bar(nts[mn-1:mx], values[mn-1:mx]*factor, align="center",
-                   width=1.05, color=colormap[mn-1:mx],
+                   width=1, color=colormap[mn-1:mx], bottom=bottom,
                    edgecolor=colormap[mn-1:mx], linewidth=0.0)
 
     def plot_annotation(self, ax, annotation, yvalue, mode):

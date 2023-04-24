@@ -28,6 +28,19 @@ use them:
 
 ---
 
+```python
+rnavigate.plot_alignment(
+    data1=(sample, "data_keyword"),
+    data2=(another_sample, "data_keyword"))
+```
+
+[Alignment plots](plot-options/alignment-plots.md) visualizes how two data
+objects will be aligned in other RNAvigate plots. This can be useful to check
+if automatic alignment is being used and the sequences differ substantially or
+to check if a manual alignment is being properly applied.
+
+---
+
 `sample.plot_qc()` and `rnavigate.plot_qc(samples=[sample])`
 
 [ShapeMapper2 quality control plots](plot-options/qc-plots.md) display useful
@@ -49,7 +62,7 @@ per-nucleotide data sets.
 
 ---
 
-`rnav.plot_profile(samples=[sample])'
+`rnav.plot_profile(samples=[sample])`
 
 [Profile plots](plot-options/profile-plots.md) display per-nucleotide
 reactivity as colored bar graphs similar to ShapeMapper style bar graphs.
@@ -60,6 +73,13 @@ reactivity as colored bar graphs similar to ShapeMapper style bar graphs.
 
 [Arc plots](plot-options/arc-plots.md) flexibly display per-nucleotide and
 inter-nucleotide data, secondary structures, and sequence annotations simultaneously.
+
+---
+
+`rnavigate.plot_arcs_compare(samples=[sample, another_sample])`
+
+[Arc compare plots](plot-options/arc-compare-plots.md) are the same as arc
+plots above, but compare two samples on the same axes.
 
 ---
 
