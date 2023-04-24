@@ -49,6 +49,13 @@ per-nucleotide data sets.
 
 ---
 
+`rnav.plot_profile(samples=[sample])'
+
+[Profile plots](plot-options/profile-plots.md) display per-nucleotide
+reactivity as colored bar graphs similar to ShapeMapper style bar graphs.
+
+---
+
 `sample.plot_arcs()` and `rnavigate.plot_arcs(samples=[sample])`
 
 [Arc plots](plot-options/arc-plots.md) flexibly display per-nucleotide and

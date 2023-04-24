@@ -12,7 +12,7 @@ from .data import CT, DotBracket, XRNA, VARNA, NSD, CTE, get_ss_class
 from .data import Interactions, RINGMaP, PAIRMaP, PairProb, SHAPEJuMP, AllPossible
 from .data import Profile, SHAPEMaP, DanceMaP, RNPMaP
 from .plots import AP, Circle, DistHist, Heatmap, LinReg, Mol
-from .plots import QC, Skyline, SM, SS, ROC
+from . import plots
 from .analysis import LogCompare, LowSS
 
 
@@ -995,6 +995,82 @@ def plot_skyline(samples, seq_source=None, profile="profile", labels=None,
         fit_data_list(sample, annotations + [profile], sequence)
         plot.add_sample(sample, profile=profile, annotations=annotations,
                         label=label, **kwargs)
+    plot.set_figure_size()
+    return plot
+
+
+def plot_profile(samples, seq_source=None, profile="profile", labels=None,
+                 annotations=None, region="all", plot_kwargs=None, **kwargs):
+    """Aligns reactivity profiles by sequence and plots them on seperate axes.
+
+    Args:
+        samples (list of rnavigate.Sample): samples to plot.
+        seq_source (str or data object, optional): a key from sample.data, a
+            sequence string, or a Data object. All data will be mapped to this
+            string using a user-defined or pairwise sequence alignment.
+            Defaults to the value of the profile argument below.
+        profile (str, optional): per-nucleotide data to retrieve from sample.
+            Defaults to "profile".
+        labels (list of str, optional): Same length as samples list. Labels to
+            be used in plot legends. Defaults to default sample name.
+        annotations (list of str, optional): annotations to retrive from
+            sample. Defaults to [].
+        region (list of int: length 2, optional): start and end positions to
+            plot. 1-indexed, inclusive. Defaults to [1, sequence length].
+        plot_kwargs (dict, optional): kwargs dictionary passed to Profile().
+            Defaults to {}.
+        **kwargs: additional keyword arguments are passed to Profile.plot_data.
+            see rnavigate.plots.skyline.Profile.plot_data for more detail.
+
+    Returns:
+        rnavigate.plots.Profile plot: object containing matplotlib figure and
+            axes with additional plotting and file saving methods
+    """
+    if annotations is None:
+        annotations = []
+    if plot_kwargs is None:
+        plot_kwargs = {}
+    if labels is None:
+        labels = ["label"]*len(samples)
+    sequence = get_sequence(seq_source, samples[0], profile)
+    plot = plots.skyline.Profile(num_samples=len(samples),
+                                 nt_length=sequence.length,
+                                 region=region,
+                                 **plot_kwargs)
+    for sample, label in zip(samples, labels):
+        fit_data_list(sample, annotations + [profile], sequence)
+        plot.add_sample(sample, seq=sequence, profile=profile,
+                        annotations=annotations, label=label, **kwargs)
+    plot.set_figure_size()
+    return plot
+
+
+def plot_alignment(data1, data2, labels=None, plot_kwargs=None, **kwargs):
+    """Plots the sequence alignment used to compare two data objects.
+
+    Args:
+        data1 (tuple (rnavigate.Sample, str)): a sample and data class keyword
+        data2 (tuple (rnavigate.Sample, str)): a sample and data class keyword
+        labels (list of str, optional): length 2. Labels used in plots
+            Defaults to default sample name + data class keyword
+        plot_kwargs (dict, optional): kwargs dictionary passed to Alignment().
+            Defaults to {}.
+        **kwargs: additional keyword arguments are passed to Alignment.plot_data.
+            see rnavigate.plots.alignment.Alignment.plot_data for more detail.
+
+    Returns:
+        rnavigate.Alignment plot: object containing matplotlib figure and axes
+            with additional plotting and file saving methods
+    """
+    if plot_kwargs is None:
+        plot_kwargs = {}
+    if labels is None:
+        labels = [f"{s.sample}: {seq}" for s, seq in [data1, data2]]
+    plot = Alignment(num_samples=1, **plot_kwargs)
+    plot.add_sample(sample=None,
+                    data1=data1[0].data[data1[1]],
+                    data2=data2[0].data[data2[1]],
+                    label=labels, **kwargs)
     plot.set_figure_size()
     return plot
 
