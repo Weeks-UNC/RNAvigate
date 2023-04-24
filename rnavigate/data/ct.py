@@ -1201,7 +1201,6 @@ class XRNA(CT):
                           for nt in range(length)]
             basepairs.extend(helix_list)
         # store attributes
-        coord_scale_factor = 1/20
         self.sequence = sequence.upper().replace("T", "U")
         self.num = np.arange(len(self.sequence))
         self.pair2CT(basepairs, **kwargs)

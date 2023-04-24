@@ -1,7 +1,5 @@
 import pandas as pd
 from .data import Data
-from .ct import CT
-from .profile import Profile
 import matplotlib as mp
 import matplotlib.pyplot as plt
 import numpy as np
@@ -29,8 +27,10 @@ class Interactions(Data):
             filepath (str, optional): path to a file containing interactions
                 data. Defaults to None.
             sep (str, optional): passed to pandas read_csv. Defaults to '\t'.
-            read_csv_kw (dict, optional): other options for read_csv. Defaults to {}.
-            window (int, optional): 5' and 3' interactions windows. Defaults to 1.
+            read_csv_kw (dict, optional): other options for read_csv.
+                Defaults to {}.
+            window (int, optional): 5' and 3' interactions windows.
+                Defaults to 1.
             sequence (str, optional): sequence string. Defaults to None.
             fasta (str, optional): path to fasta file. Defaults to None.
             fill (dict, optional): dictionary specifying a fill value (values)
@@ -200,10 +200,12 @@ class Interactions(Data):
 
         Args:
             ct (CT or subclass): a data object containing secondary structure
-                information, or a list of these data objects, filters are applied
-                based on all structures.
-            min_cd (int, optional): minimum allowable contact distance. Defaults to None.
-            max_cd (int, optional): maximum allowable contact distance. Defaults to None.
+                information, or a list of these data objects, filters are
+                applied based on all structures.
+            min_cd (int, optional): minimum allowable contact distance.
+                Defaults to None.
+            max_cd (int, optional): maximum allowable contact distance.
+                Defaults to None.
             ss_only (bool, optional): whether to require i and j to be single-
                 stranded. Defaults to False.
             ds_only (bool, optional): whether to require i and j to be double-

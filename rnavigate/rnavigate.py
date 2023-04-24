@@ -6,14 +6,9 @@ import numpy as np
 import json
 
 # modules in RNAvigate
-from .data import Data, PDB, Log
-from .data import Annotation, Motif, ORFs
-from .data import CT, DotBracket, XRNA, VARNA, NSD, CTE, get_ss_class
-from .data import Interactions, RINGMaP, PAIRMaP, PairProb, SHAPEJuMP, AllPossible
-from .data import Profile, SHAPEMaP, DanceMaP, RNPMaP
-from .plots import AP, Circle, DistHist, Heatmap, LinReg, Mol
+from .data import get_ss_class
 from . import plots
-from .analysis import LogCompare, LowSS
+from . import data
 
 
 def create_code_button():
@@ -147,34 +142,33 @@ class Sample():
                 path and prefix for DanceMapper data, automatically locates
                 data files and stores DANCE components as a list of Sample
                 objects at self.dance
-        Annotations Args:
-            Each of these takes a dictionary with the following keys:
-                "seq_source", which can be either one of the arguments above,
-                    in which case the sequence from that data is retrived, or
-                    a sequence string e.g. "AUGCGUAC"
-                "annotations": a list of locations in the primary sequence
-                    given in "seq_source" the format for these varies and is
-                    described below.
-                "color": a matplotlib color, search matplotlib specifying color
-                    this color will be used to represent the locations on plots
-                    groups include colors in the annotations list and does not
-                    require this.
-            sites (dict, optional): arguments above + "annotations" is a list
-                of 1-indexed locations of sites of interest within sequence
-            spans (dict, optional): arguments above + "annotations" is a list
-                of lists, each inner list specifies a start and end position,
-                1-indexed and inclusive, of spans of interest within sequence
-            groups (dict, optional): "seq_source" above + "annotations" is a
-                 list of dictionaries containing:
-                "sites": same format as sites annotations
-                "color": a matplotlib color
-            primers (dict, optional): similar to spans above, but reverse primer
-                should be in reverse order. e.g. [[1, 20], [300, 280]]
-            orfs (_type_, optional): "seq_source" and "color" above,
-                finds all potential ORFs and acts like a list of spans
-            motif (_type_, optional): "seq_source" and "color" above + "motif"
-                is a string representing a sequence motif of interest using
-                conventional alphabet, e.g. "DRACH"
+            annotations (dict, optional): A dictionary with the following keys:
+                "seq_source": one of the arguments above, in which case the
+                    sequence from that data is retrived, or a sequence string
+                    e.g. "AUGCGUAC"
+                any number of data keyword strings (to access this annotation):
+                    a dictionary defining the annotation positions, type, and
+                    colors used in plotting functions. Must contain "color"
+                    (described below), and an annotations type ("sites",
+                    "spans", "primers", "groups", "motif", "orf")
+                    (described below). All positions are 1-indexed. Start and
+                    end positions are inclusive.
+                    "color": a matplotlib color, search "matplotlib specifying
+                        color". This color will be used to represent the
+                        annotation positions on plots. "groups" includes
+                        "colors" in the annotations list and does not
+                        require this.
+                    "sites": a list of single-nucleotide positions
+                    "spans": a list of lists of start and stop positions
+                    "primers": similar to spans above, but reverse primer
+                        should be in reverse order. e.g. [[1, 20], [300, 280]]
+                    "groups": a list of dictionaries containing "sites" and
+                        "color" as described above
+                    "motif": a string representing a sequence motif of interest
+                        using conventional alphabet, e.g. "DRACH"
+                        This will create span annotations for every motif match
+                    "orfs": True. This will create span annotations for every
+                        possible open reading frame
         """
         if dancemap is None:
             dancemap = {"filepath": None}
@@ -193,57 +187,57 @@ class Sample():
         self.inputs = {
             "fasta": {
                 "filepath": fasta,
-                "instantiator": Data,
+                "instantiator": data.Data,
                 "seq_source": "self",
                 "kwargs": {}},
             "log": {
                 "filepath": log,
-                "instantiator": Log,
+                "instantiator": data.Log,
                 "seq_source": "self",
                 "kwargs": {}},
             "shapemap": {
                 "filepath": shapemap,
-                "instantiator": SHAPEMaP,
+                "instantiator": data.SHAPEMaP,
                 "seq_source": "self",
                 "kwargs": {}},
             "dmsmap": {
                 "filepath": dmsmap,
-                "instantiator": SHAPEMaP,
+                "instantiator": data.SHAPEMaP,
                 "seq_source": "self",
                 "kwargs": {"dms": True}},
             "dancemap": {
                 "filepath": dancemap.pop("filepath"),
-                "instantiator": DanceMaP,
+                "instantiator": data.DanceMaP,
                 "seq_source": "self",
                 "kwargs": dancemap},
             "rnpmap": {
                 "filepath": rnpmap,
-                "instantiator": RNPMaP,
+                "instantiator": data.RNPMaP,
                 "seq_source": "self",
                 "kwargs": {}},
             "ringmap": {
                 "filepath": ringmap,
-                "instantiator": RINGMaP,
+                "instantiator": data.RINGMaP,
                 "seq_source": "profile",
                 "kwargs": {}},
             "pairmap": {
                 "filepath": pairmap,
-                "instantiator": PAIRMaP,
+                "instantiator": data.PAIRMaP,
                 "seq_source": "profile",
                 "kwargs": {}},
             "allcorrs": {
                 "filepath": allcorrs,
-                "instantiator": RINGMaP,
+                "instantiator": data.RINGMaP,
                 "seq_source": "profile",
                 "kwargs": {}},
             "shapejump": {
                 "filepath": shapejump.pop("filepath", None),
-                "instantiator": SHAPEJuMP,
+                "instantiator": data.SHAPEJuMP,
                 "seq_source": "self",
                 "kwargs": shapejump},
             "pairprob": {
                 "filepath": pairprob,
-                "instantiator": PairProb,
+                "instantiator": data.PairProb,
                 "seq_source": "profile",
                 "kwargs": {}},
             "ct": {
@@ -263,7 +257,7 @@ class Sample():
                 "kwargs": {}},
             "pdb": {
                 "filepath": pdb.pop("filepath", None),
-                "instantiator": PDB,
+                "instantiator": data.PDB,
                 "seq_source": "self",
                 "kwargs": pdb},
             "dance_prefix": {
@@ -273,7 +267,7 @@ class Sample():
                 "kwargs": {}},
             "allpossible": {
                 "filepath": "",
-                "instantiator": AllPossible,
+                "instantiator": data.AllPossible,
                 "seq_source": allpossible,
                 "kwargs": {}},
         }
@@ -289,11 +283,11 @@ class Sample():
                 print(f"Choose a different name: '{name}' is already used.")
                 continue
             if "motif" in kwargs:
-                instantiator = Motif
+                instantiator = data.Motif
             elif "orfs" in kwargs:
-                instantiator = ORFs
+                instantiator = data.ORFs
             else:
-                instantiator = Annotation
+                instantiator = data.Annotation
             self.inputs[name] = {
                 "filepath": "",
                 "instantiator": instantiator,
@@ -337,7 +331,7 @@ class Sample():
                 Defaults to None.
         """
         # if given previously instantiated data class, attach and end function
-        if isinstance(filepath, Data):
+        if isinstance(filepath, data.Data):
             self.data[name] = filepath
             if name in self.default_profiles and "profile" not in self.data:
                 self.data["profile"] = self.data[name]
@@ -433,7 +427,7 @@ class Sample():
 
         Args:
             key (str): Descriptor of data type desired. Can be any of the keys
-               of Sample.data or "label"
+               of Sample.data or "label" or a Data object
 
         Returns:
             Data object
@@ -442,6 +436,8 @@ class Sample():
             return self.sample
         elif key is None:
             return None
+        if isinstance(key, data.Data):
+            return key
         try:
             return self.data[key]
         except (KeyError, TypeError):
@@ -502,22 +498,22 @@ class Sample():
                 print(f"{interactions} not found in sample data")
             return
 
-        data = self.data[interactions]
-        if not isinstance(data, Interactions):
+        interactions = self.data[interactions]
+        if not isinstance(interactions, data.Interactions):
             if not suppress:
-                print(f"{Interactions} is not an Interactions datatype")
+                print(f"{interactions} is not an Interactions datatype")
             return
 
         if metric is not None:
             if metric.startswith("Distance"):
                 metric = (metric, self.data["pdb"])
-            data.metric = metric
+            interactions.metric = metric
         else:
-            data.metric = data.default_metric
+            interactions.metric = interactions.default_metric
         if cmap is not None:
-            data.cmap = cmap
+            interactions.cmap = cmap
         if min_max is not None:
-            data.min_max = min_max
+            interactions.min_max = min_max
         for datatype in ["profile", "ct"]:
             if datatype in kwargs.keys():
                 kwargs[datatype] = self.data[kwargs[datatype]]
@@ -525,7 +521,7 @@ class Sample():
                 kwargs[datatype] = self.data[datatype]
         if not hasattr(fit_to, "sequence"):
             fit_to = self.get_data_list(fit_to)
-        data.filter(fit_to, **kwargs)
+        interactions.filter(fit_to, **kwargs)
 
     def dance_filter(self, fit_to=None, filterneg=True, cdfilter=15,
                      sigfilter=23, ssfilter=True, **kwargs):
@@ -687,7 +683,7 @@ class Sample():
         Returns:
             Plot object:
         """
-        plot = SM(self.data["profile"].length, plots=plots)
+        plot = plots.SM(self.data["profile"].length, plots=plots)
         plot.add_sample(self, profile="profile", label="label")
         plot.set_figure_size()
         return plot
@@ -777,8 +773,8 @@ def get_sequence(seq_source, sample=None, default=None):
         sequence = sample.data[seq_source]
     elif hasattr(seq_source, "sequence"):
         sequence = seq_source
-    elif all([nt.upper() in "AUCGT" for nt in seq_source]):
-        sequence = Data(sequence=seq_source)
+    elif all([nt.upper() in "AUCGT." for nt in seq_source]):
+        sequence = data.Data(sequence=seq_source)
     else:
         raise ValueError(f'Cannot find sequence from {seq_source}')
     return sequence
@@ -793,9 +789,11 @@ def fit_data_list(sample, data_list, fit_to):
         data_list (list): list of sample.data keys or None
         fit_to (rnavigate.Data): Data object with a sequence to fit to
     """
-    for data in data_list:
-        if data is not None:
-            sample.data[data].fit_to(fit_to)
+    for data_obj in data_list:
+        if data_obj in sample.data.keys():
+            sample.data[data_obj].fit_to(fit_to)
+        elif isinstance(data_obj, data.Data):
+            data_obj.fit_to(fit_to)
 
 
 ###############################################################################
@@ -938,14 +936,14 @@ def plot_qc(samples, labels=None, plot_kwargs=None, **kwargs):
         **kwargs: passed to QC.plot_data
 
     Returns:
-        rnavigate.QC plot: object containing matplotlib figure and axes with
-            additional plotting and file saving methods
+        rnavigate.plots.QC plot: object containing matplotlib figure and axes
+            with additional plotting and file saving methods
     """
     if labels is None:
         labels = ["label"]*len(samples)
     if plot_kwargs is None:
         plot_kwargs = {}
-    plot = QC(num_samples=len(samples), **plot_kwargs)
+    plot = plots.QC(num_samples=len(samples), **plot_kwargs)
     for sample, label in zip(samples, labels):
         plot.add_sample(sample=sample, log="log", profile="profile",
                         label=label, **kwargs)
@@ -974,11 +972,11 @@ def plot_skyline(samples, seq_source=None, profile="profile", labels=None,
         plot_kwargs (dict, optional): kwargs dictionary passed to Skyline().
             Defaults to {}.
         **kwargs: additional keyword arguments are passed to Skyline.plot_data.
-            see rnavigate.plots.skyline.Skyline.plot_data for more detail.
+            see rnavigate.plots.Skyline.plot_data for more detail.
 
     Returns:
-        rnavigate.Skyline plot: object containing matplotlib figure and axes
-            with additional plotting and file saving methods
+        rnavigate.plots.Skyline plot: object containing matplotlib figure and
+            axes with additional plotting and file saving methods
     """
     if annotations is None:
         annotations = []
@@ -987,10 +985,10 @@ def plot_skyline(samples, seq_source=None, profile="profile", labels=None,
     if labels is None:
         labels = ["label"]*len(samples)
     sequence = get_sequence(seq_source, samples[0], profile)
-    plot = Skyline(num_samples=len(samples),
-                   nt_length=sequence.length,
-                   region=region,
-                   **plot_kwargs)
+    plot = plots.Skyline(num_samples=len(samples),
+                         nt_length=sequence.length,
+                         region=region,
+                         **plot_kwargs)
     for sample, label in zip(samples, labels):
         fit_data_list(sample, annotations + [profile], sequence)
         plot.add_sample(sample, profile=profile, annotations=annotations,
@@ -1055,18 +1053,19 @@ def plot_alignment(data1, data2, labels=None, plot_kwargs=None, **kwargs):
             Defaults to default sample name + data class keyword
         plot_kwargs (dict, optional): kwargs dictionary passed to Alignment().
             Defaults to {}.
-        **kwargs: additional keyword arguments are passed to Alignment.plot_data.
-            see rnavigate.plots.alignment.Alignment.plot_data for more detail.
+        **kwargs: additional keyword arguments are passed to
+            Alignment.plot_data. see rnavigate.plots.Alignment.plot_data for
+            more detail.
 
     Returns:
-        rnavigate.Alignment plot: object containing matplotlib figure and axes
-            with additional plotting and file saving methods
+        rnavigate.plots.Alignment plot: object containing matplotlib figure and
+            axes with additional plotting and file saving methods
     """
     if plot_kwargs is None:
         plot_kwargs = {}
     if labels is None:
         labels = [f"{s.sample}: {seq}" for s, seq in [data1, data2]]
-    plot = Alignment(num_samples=1, **plot_kwargs)
+    plot = plots.Alignment(num_samples=1, **plot_kwargs)
     plot.add_sample(sample=None,
                     data1=data1[0].data[data1[1]],
                     data2=data2[0].data[data2[1]],
@@ -1136,14 +1135,14 @@ def plot_arcs(samples, seq_source=None, ct="ct", comp=None, interactions=None,
             seq_source to be plotted. 1-indexed, inclusive.
             Defaults to [0, sequence length].
         plot_kwargs (dict, optional): kwargs passed to AP(). See
-            rnavigate.plots.arc.AP for more detail.
+            rnavigate.plots.AP for more detail.
             Defaults to {}.
         **kwargs: additional keyword arguments are passed to AP.plot_data.
-            see rnavigate.plots.arc.AP.plot_data for more detail.
+            see rnavigate.plots.AP.plot_data for more detail.
 
     Returns:
-        rnavigate.AP plot: object containing matplotlib figure and axes with
-            additional plotting and file saving methods
+        rnavigate.plots.AP plot: object containing matplotlib figure and axes
+            with additional plotting and file saving methods
     """
     # use mutable defaults
     if interactions_filter is None:
@@ -1167,8 +1166,8 @@ def plot_arcs(samples, seq_source=None, ct="ct", comp=None, interactions=None,
     # initialize plot using all structure drawings
     num_samples = len(samples) * len(filters)
     seq = get_sequence(seq_source=seq_source, sample=samples[0], default=ct)
-    plot = AP(num_samples=num_samples, nt_length=seq.length, region=region,
-              **plot_kwargs)
+    plot = plots.AP(num_samples=num_samples, nt_length=seq.length,
+                    region=region, **plot_kwargs)
     # loop through samples and filters, adding each as a new axis
     for sample, label in zip(samples, labels):
         fit_data_list(sample, annotations + [ct, comp, profile], seq)
@@ -1238,14 +1237,14 @@ def plot_ss(samples, ss="ss", profile="profile", annotations=[],
         labels (str, optional): Same length as samples list. Labels to
             be used in plot legends. Defaults to default sample name.
         plot_kwargs (dict, optional): kwargs passed to SS(). See
-            rnavigate.plots.ss.SS for more detail.
+            rnavigate.plots.SS for more detail.
             Defaults to {}.
         **kwargs: additional keyword arguments are passed to SS.plot_data.
-            see rnavigate.plots.ss.SS.plot_data for more detail.
+            see rnavigate.plots.SS.plot_data for more detail.
 
     Returns:
-        rnavigate.SS plot: object containing matplotlib figure and axes with additional
-        plotting and file saving methods
+        rnavigate.plots.SS plot: object containing matplotlib figure and axes
+            with additional plotting and file saving methods
     """
     # use mutable defaults
     if interactions_filter is None:
@@ -1268,7 +1267,7 @@ def plot_ss(samples, ss="ss", profile="profile", annotations=[],
         filters = [{"interactions": interactions} | interactions_filter]
     # initialize plot using all structure drawings
     num_samples = len(samples) * len(filters)
-    plot = SS(num_samples=num_samples, **plot_kwargs)
+    plot = plots.SS(num_samples=num_samples, **plot_kwargs)
     # loop through samples and filters, adding each as a new axis
     for sample, label in zip(samples, labels):
         fit_data_list(sample, annotations + [profile], sample.data[ss])
@@ -1333,14 +1332,14 @@ def plot_mol(samples, structure="pdb", interactions=None,
             only the backbone as a ribbon.
             Defaults to False.
         plot_kwargs (dict, optional): kwargs passed to Mol(). See
-            rnavigate.plots.mol.Mol for more detail.
+            rnavigate.plots.Mol for more detail.
             Defaults to {}.
         **kwargs: additional keyword arguments are passed to Mol.plot_data.
-            see rnavigate.plots.mol.Mol.plot_data for more detail.
+            see rnavigate.plots.Mol.plot_data for more detail.
 
     Returns:
-        rnavigate.Mol plot: object containing py3dmol viewer with additional
-            plotting and file saving methods
+        rnavigate.plots.Mol plot: object containing py3dmol viewer with
+            additional plotting and file saving methods
     """
     # use mutable defaults
     if interactions_filter is None:
@@ -1361,8 +1360,8 @@ def plot_mol(samples, structure="pdb", interactions=None,
         filters = [{"interactions": interactions} | interactions_filter]
     num_samples = len(samples) * len(filters)
     # initialize plot using 1st 3D structure (applies to all samples)
-    plot = Mol(num_samples=num_samples, pdb=samples[0].data[structure],
-               **plot_kwargs)
+    plot = plots.Mol(num_samples=num_samples, pdb=samples[0].data[structure],
+                     **plot_kwargs)
     # loop through samples and filters, adding each as a new viewer
     for sample, label in zip(samples, labels):
         fit_data_list(sample, [profile], sample.data[structure])
@@ -1421,14 +1420,14 @@ def plot_heatmap(samples, structure=None, interactions=None,
         labels (str, optional): Same length as samples list. Labels to
             be used in plot legends. Defaults to default sample name.
         plot_kwargs (dict, optional): kwargs passed to Heatmap(). See
-            rnavigate.plots.heatmap.Heatmap for more detail.
+            rnavigate.plots.Heatmap for more detail.
             Defaults to {}.
         **kwargs: additional keyword arguments are passed to Heatmap.plot_data.
-            see rnavigate.plots.heatmap.Heatmap.plot_data for more detail.
+            see rnavigate.plots.Heatmap.plot_data for more detail.
 
     Returns:
-        rnavigate.Heatmap plot: object containing matplotlib figure and axes
-            with additional plotting and file saving methods
+        rnavigate.plots.Heatmap plot: object containing matplotlib figure and
+            axes with additional plotting and file saving methods
     """
     # use mutable defaults
     if interactions_filter is None:
@@ -1449,7 +1448,8 @@ def plot_heatmap(samples, structure=None, interactions=None,
         filters = [{"interactions": interactions} | interactions_filter]
     # initialize plot using 1st 3D structure (applies to all samples)
     num_samples = len(samples) * len(filters)
-    plot = Heatmap(num_samples, samples[0].data[structure], **plot_kwargs)
+    plot = plots.Heatmap(
+        num_samples, samples[0].data[structure], **plot_kwargs)
     # loop through samples and filters, adding each as a new axis
     for sample, label in zip(samples, labels):
         for filt in filters:
@@ -1519,14 +1519,14 @@ def plot_circle(samples, seq_source=None, ct=None, comp=None,
             be used as titles.
             Defaults to default sample name.
         plot_kwargs (dict, optional): kwargs passed to Circle(). See
-            rnavigate.plots.circle.Circle for more detail.
+            rnavigate.plots.Circle for more detail.
             Defaults to {}.
         **kwargs: additional keyword arguments are passed to Circle.plot_data.
-            see rnavigate.plots.circle.Circle.plot_data for more detail.
+            see rnavigate.plots.Circle.plot_data for more detail.
 
     Returns:
-        rnavigate.Circle: object containing matplotlib figure and axes with
-            additional plotting and file saving methods
+        rnavigate.plots.Circle: object containing matplotlib figure and axes
+            with additional plotting and file saving methods
     """
     # use mutable defaults
     if interactions_filter is None:
@@ -1552,7 +1552,8 @@ def plot_circle(samples, seq_source=None, ct=None, comp=None,
     # initialize plot
     sequence = get_sequence(seq_source, samples[0], profile)
     num_samples = len(samples) * len(filters)
-    plot = Circle(num_samples=num_samples, seq_source=sequence, **plot_kwargs)
+    plot = plots.Circle(num_samples=num_samples,
+                        seq_source=sequence, **plot_kwargs)
     # loop through samples and filters, adding each as a new axis
     for sample, label in zip(samples, labels):
         fit_data_list(sample=sample, data_list=annotations+[ct, comp, profile],
@@ -1589,20 +1590,20 @@ def plot_linreg(samples, ct="ct", profile="profile", labels=None,
             be used in titles.
             Defaults to default sample name.
         plot_kwargs (dict, optional): kwargs passed to LinReg(). See
-            rnavigate.plots.linreg.LinReg for more detail.
+            rnavigate.plots.LinReg for more detail.
             Defaults to {}.
         **kwargs: additional keyword arguments are passed to LinReg.plot_data.
-            see rnavigate.plots.linreg.LinReg.plot_data for more detail.
+            see rnavigate.plots.LinReg.plot_data for more detail.
 
     Returns:
-        rnavigate.LinReg: object containing matplotlib figure and axes with
-            additional plotting and file saving methods
+        rnavigate.plots.LinReg: object containing matplotlib figure and axes
+            with additional plotting and file saving methods
     """
     if labels is None:
         labels = ["label"] * len(samples)
     if plot_kwargs is None:
         plot_kwargs = {}
-    plot = LinReg(len(samples), **plot_kwargs)
+    plot = plots.LinReg(len(samples), **plot_kwargs)
     for sample, label in zip(samples, labels):
         plot.add_sample(sample, ct=ct, profile=profile, label=label, **kwargs)
     plot.set_figure_size()
@@ -1628,20 +1629,20 @@ def plot_roc(samples, ct="ct", profile="profile", labels=None,
             be used in legends.
             Defaults to default sample name.
         plot_kwargs (dict, optional): kwargs passed to ROC(). See
-            rnavigate.plots.roc.ROC for more detail.
+            rnavigate.plots.ROC for more detail.
             Defaults to {}.
         **kwargs: additional keyword arguments are passed to ROC.plot_data.
-            see rnavigate.plots.roc.ROC.plot_data for more detail.
+            see rnavigate.plots.ROC.plot_data for more detail.
 
     Returns:
-        rnavigate.ROC: object containing matplotlib figure and axes with
+        rnavigate.plots.ROC: object containing matplotlib figure and axes with
             additional plotting and file saving methods
     """
     if labels is None:
         labels = ["label"] * len(samples)
     if plot_kwargs is None:
         plot_kwargs = {}
-    plot = ROC(len(samples), **plot_kwargs)
+    plot = plots.ROC(len(samples), **plot_kwargs)
     for sample, label in zip(samples, labels):
         plot.add_sample(sample, ct=ct, profile=profile, label=label, **kwargs)
     plot.set_figure_size()
@@ -1690,14 +1691,14 @@ def plot_disthist(samples, structure="pdb", interactions=None,
             be used as titles.
             Defaults to default sample name.
         plot_kwargs (dict, optional): kwargs passed to DistHist(). See
-            rnavigate.plots.disthist.DistHist for more detail.
+            rnavigate.plots.DistHist for more detail.
             Defaults to {}.
-        **kwargs: additional keyword arguments are passed to Circle.plot_data.
-            see rnavigate.plots.disthist.DistHist.plot_data for more detail.
+        **kwargs: additional keyword arguments are passed to DistHist.plot_data
+            see rnavigate.plots.DistHist.plot_data for more detail.
 
     Returns:
-        rnavigate.DistHist: object containing matplotlib figure and axes with
-            additional plotting and file saving methods
+        rnavigate.plots.DistHist: object containing matplotlib figure and axes
+            with additional plotting and file saving methods
     """
     # use mutable defaults
     if interactions_filter is None:
@@ -1722,10 +1723,10 @@ def plot_disthist(samples, structure="pdb", interactions=None,
     # initialize plot
     num_samples = len(samples) * len(filters)
     if same_axis:
-        plot = DistHist(num_samples=1, **plot_kwargs)
+        plot = plots.DistHist(num_samples=1, **plot_kwargs)
         ax = plot.axes[0, 0]
     else:
-        plot = DistHist(num_samples=num_samples, **plot_kwargs)
+        plot = plots.DistHist(num_samples=num_samples, **plot_kwargs)
         ax = None
     # loop through samples and filters, adding each as a new axis
     for sample, label in zip(samples, labels):

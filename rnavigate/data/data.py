@@ -140,7 +140,8 @@ class Data():
         """
         if mpc.is_color_like(cmap):
             cmap = mpc.ListedColormap([cmap])
-        elif isinstance(cmap, list) and all(mpc.is_color_like(c) for c in cmap):
+        elif (isinstance(cmap, list)
+              and all(mpc.is_color_like(c) for c in cmap)):
             cmap = mpc.ListedColormap(cmap)
         else:
             assert cmap in plt.colormaps(), ("cmap must be one of: valid mpl "
