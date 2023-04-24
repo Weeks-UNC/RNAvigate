@@ -1,22 +1,44 @@
 import re
 from .data import Data
-import pandas as pd
 
 
 def is_list_of_ints(my_list, length=None):
+    """Checks if the list is a 1-D list of integers. If length is provided,
+    also checks that the list has this length. For confirming that annotations
+    lists have the correct format.
+
+    Args:
+        my_list (list): a list to check for formatting
+        length (int, optional): if provided, checks that len(list)==length.
+            Defaults to None.
+
+    Returns:
+        bool: whether my_list matches the format (or is an empty list)
+    """
     if isinstance(my_list, list):
         if length is not None and (len(my_list) != length):
             return False
         for elem in my_list:
             if not isinstance(elem, int):
                 return False
-        pass
+        return True
     else:
         return False
-    return True
 
 
 def is_list_of_lists_of_ints(my_list, length=None):
+    """Checks if inputted list is a 2-D list of lists of integers. If length is
+    provided, checks if inner-most lists have the given length. For confirming
+    that annotations lists have the correct format.
+
+    Args:
+        my_list (list): a list to check for formatting
+        length (int, optional): if provided, checks that each inner list has
+            this length. Defaults to None.
+
+    Returns:
+        bool: whether my_list matches the format (or is an empty list)
+    """
     if isinstance(my_list, list):
         return all(is_list_of_ints(elem, length) for elem in my_list)
     else:
@@ -53,9 +75,6 @@ class Annotation(Data):
                 Defaults to None.
             sequence (str, optional): Nucleotide sequence.
                 Defaults to None.
-            annotation_type (str, optional): "groups", "sites", "spans", or
-                "primers". Must match the type used below.
-                Defaults to None.
             sites (list of int, optional): 1-indexed location of sites of
                 interest within sequence or fasta.
                 Defaults to None.
@@ -72,6 +91,10 @@ class Annotation(Data):
                 Defaults to None.
             annotations (list, optional): catchall for the above list formats.
                 List will be treated according to annotation_type argument.
+                Defaults to None.
+            annotation_type (str, optional): "groups", "sites", "spans", or
+                "primers". Must match the type used above. Required for
+                annotations argument to be correctly parsed.
                 Defaults to None.
             color (matplotlib color-like, optional): Color to be used for
                 displaying this annotation on plots.
@@ -97,39 +120,43 @@ class Annotation(Data):
             raise ValueError("annotation requires annotation_type")
 
         if sites is not None:
-            if is_list_of_ints(sites):
-                self.annotation_type = "sites"
-                self._list = sites
-            else:
+            if not is_list_of_ints(sites):
                 raise ValueError(f"sites must be a list of integers:\n{sites}")
+            self.annotation_type = "sites"
+            self._list = sites
         if spans is not None:
-            if is_list_of_lists_of_ints(spans, length=2):
-                self.annotation_type = "spans"
-                self._list = spans
-            else:
+            if not is_list_of_lists_of_ints(spans, length=2):
                 raise ValueError("spans format is must be a list of lists "
                                  f"containing 2 integers:\n{spans}")
+            self.annotation_type = "spans"
+            self._list = spans
         if primers is not None:
-            if is_list_of_lists_of_ints(primers, length=2):
-                self.annotation_type = "primers"
-                self._list = primers
-            else:
+            if not is_list_of_lists_of_ints(primers, length=2):
                 raise ValueError("primers format is must be a list of lists "
                                  f"containing 2 integers:\n{primers}")
+            self.annotation_type = "primers"
+            self._list = primers
         if groups is not None:
-            if is_list_of_lists_of_ints(groups):
-                self.annotation_type = "groups"
-                self._list = groups
-            else:
-                raise ValueError("groups format is must be a list of lists "
-                                 f"containing integers:\n{groups}")
+            for group in groups:
+                if not set(group.keys()) == set(["sites", "colors"]):
+                    raise ValueError("Groups must have 'sites' and 'colors'")
+                if not is_list_of_ints(group["sites"]):
+                    raise ValueError("'sites' must be a list of lists")
+            self.annotation_type = "groups"
+            self._list = groups
 
-    def fit_to(self, fit_to):
+    def fit_to(self, fit_to, store=True):
         """Creates a new Annotation, stored as self.fitted, which maps the
-        indices to a new sequence.
+        indices to a new sequence. For sites and groups, deleted nucleotides
+        will be dropped. For spans and primers, a deletion/insertion within a
+        region will shrink/expand the annotated region, respectively. If either
+        end of a region is deleted, that region is dropped. For different
+        behavior, create a new annotation for the target sequence.
 
         Args:
             fit_to (rnavigate.data.Data): A data object containing a sequence.
+            store (bool, optional): whether to store result as self.fitted, if
+                False, returns the value instead.
         """
         am = self.get_alignment_map(fit_to=fit_to)
 
@@ -140,19 +167,41 @@ class Annotation(Data):
             for idx in indices:
                 if isinstance(idx, list):
                     new_list.append(recursive_fit_to(idx))
-                else:
-                    new_list.append(int(am[idx-1]+1))
+                elif isinstance(idx, int):
+                    new_idx = int(am[idx-1]+1)
+                    if new_idx != 0:
+                        new_list.append(int(am[idx-1]+1))
             return new_list
 
-        self.fitted = Annotation(
+        if self.annotation_type == "groups":
+            new_list = [{"sites": recursive_fit_to(d["sites"]),
+                        "color": d["color"]} for d in self._list]
+        else:
+            new_list = recursive_fit_to(self._list)
+        if self.annotation_type in ["spans", "primers"]:
+            new_list = [x for x in new_list if len(x) == 2]
+
+        fitted = Annotation(
             name=self.name,
             color=self.color,
             sequence=fit_to,
             annotation_type=self.annotation_type,
-            annotations=recursive_fit_to(self._list)
-        )
+            annotations=new_list)
+        if store:
+            self.fitted = fitted
+        else:
+            return fitted
 
-    def get_sites_colors(self):
+    def get_sites_colors(self, fit_to=None):
+        """Returns a list of nucleotide positions and colors based on these
+        sequence annotations. If a fit_to data object is provided, annotations
+        are first fitted using self.fit_to()
+
+        Returns:
+            tuple: a list of nucleotide positions and a list of colors
+        """
+        if fit_to is not None:
+            return self.fit_to(fit_to, store=False).get_sites_colors()
         sites = []
         colors = []
         if self.annotation_type in ["spans", "primers"]:
@@ -235,13 +284,25 @@ class Motif(Annotation):
             spans.append([start+1, end])
         return spans
 
-    def fit_to(self, fit_to):
-        self.fitted = Motif(
+    def fit_to(self, fit_to, store=True):
+        """Creates a new annotation, stored as self.fitted. Fit_to sequence is
+        searched for motif matches
+
+        Args:
+            fit_to (Data object): data containing new sequence to be fitted
+            store (bool, optional): If True, new annotations are stored as
+                self.fitted. Else, new annotations are returned.
+                Defaults to True."""
+        fitted = Motif(
             name=self.name,
             color=self.color,
             sequence=fit_to.sequence,
             motif=self.motif,
         )
+        if store:
+            self.fitted = fitted
+        else:
+            return fitted
 
 
 class ORFs(Annotation):
