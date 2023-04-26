@@ -18,6 +18,23 @@ class Heatmap(Plot):
         self.pass_through = ["levels", "regions", "interpolation", "atom",
                              "plot_type"]
 
+    def set_figure_size(self, fig=None, ax=None,
+                        rows=None, cols=None,
+                        height_ax_rel=None, width_ax_rel=None,
+                        width_ax_in=10, height_ax_in=10,
+                        height_gap_in=1, width_gap_in=0.5,
+                        top_in=1, bottom_in=0.5,
+                        left_in=0.5, right_in=0.5):
+        super().set_figure_size(fig=fig, ax=ax, rows=rows, cols=cols,
+                                height_ax_rel=height_ax_rel,
+                                width_ax_rel=width_ax_rel,
+                                width_ax_in=width_ax_in,
+                                height_ax_in=height_ax_in,
+                                height_gap_in=height_gap_in,
+                                width_gap_in=width_gap_in, top_in=top_in,
+                                bottom_in=bottom_in, left_in=left_in,
+                                right_in=right_in)
+
     def plot_data(self, interactions, label, levels=None, regions=None,
                   interpolation='none', atom="O2'", plot_type="heatmap"):
         ax = self.get_ax()
@@ -64,21 +81,20 @@ class Heatmap(Plot):
 
     def plot_heatmap_data(self, ax, interactions, interpolation):
         structure = self.structure
-        data = interactions.data.copy()
+        data = interactions.data.loc[interactions.data["mask"]].copy()
         metric = interactions.metric
-        columns = ["i", "j", metric]
+        columns = ["i_offset", "j_offset", metric]
         if interactions.datatype == "rings":
             data = data[columns+["Sign"]]
             data[metric] = data[metric]*data["Sign"]
         data = data[columns]
-        am = interactions.get_alignment_map(structure)
         length = structure.length
         data_im = np.full([length, length], interactions.fill)
         window = interactions.window
-        for _, i, j, value in data.itertuples():
-            i = am[i-1]
-            j = am[j-1]
-            data_im[j:j+window, i:i+window] = value
+        for _, row in data.iterrows():
+            i = int(row["i_offset"]-1)
+            j = int(row["j_offset"]-1)
+            data_im[j:j+window, i:i+window] = row[metric]
         min_max = interactions.min_max
         if metric == "Percentile":
             min_max = [0, 1]

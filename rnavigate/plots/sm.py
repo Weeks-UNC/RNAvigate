@@ -6,12 +6,37 @@ from ..styles import rx_color, bg_color, dc_color, apply_style, sm
 
 class SM(Plot):
     def __init__(self, nt_length, region=None,
-                 plots=["profile", "rates", "depth"]):
+                 panels=["profile", "rates", "depth"]):
         if region is None:
             self.nt_length = nt_length
             self.region = [1, nt_length]
-        super().__init__(len(plots), len(plots), cols=1)
-        self.plots = plots
+        super().__init__(len(panels), len(panels), cols=1)
+        self.panels = panels
+
+    @property
+    def axis_dimensions(self):
+        return {
+            "yscale": None,
+            "xscale": 0.1,
+            "width_ax": None,
+            "height_ax": 6}
+
+    def set_figure_size(self, fig=None, ax=None,
+                        rows=None, cols=None,
+                        height_ax_rel=None, width_ax_rel=0.1,
+                        width_ax_in=None, height_ax_in=6,
+                        height_gap_in=1, width_gap_in=0.5,
+                        top_in=1, bottom_in=0.5,
+                        left_in=0.5, right_in=0.5):
+        super().set_figure_size(fig=fig, ax=ax, rows=rows, cols=cols,
+                                height_ax_rel=height_ax_rel,
+                                width_ax_rel=width_ax_rel,
+                                width_ax_in=width_ax_in,
+                                height_ax_in=height_ax_in,
+                                height_gap_in=height_gap_in,
+                                width_gap_in=width_gap_in, top_in=top_in,
+                                bottom_in=bottom_in, left_in=left_in,
+                                right_in=right_in)
 
     def get_figsize(self):
         left_inches = 0.9
@@ -26,7 +51,7 @@ class SM(Plot):
         """Creates a figure with the three classic Shapemapper plots.
         """
         self.fig.suptitle(label, fontsize=30)
-        for i, plot in enumerate(self.plots):
+        for i, plot in enumerate(self.panels):
             ax = self.get_ax(i)
             plot_func = {"profile": self.plot_sm_profile,
                          "rates": self.plot_sm_rates,

@@ -1,5 +1,4 @@
 from .plots import Plot
-import numpy as np
 from matplotlib.patches import Wedge
 from matplotlib.collections import PatchCollection
 
@@ -13,42 +12,56 @@ class AP(Plot):
             self.nt_length = region[1]-region[0]+1
             self.region = region
         super().__init__(num_samples, **kwargs)
-        self.pass_through = ["ax", "colorbar", "seqbar", "title",
+        self.pass_through = ["ax", "seqbar", "title", "profile_panel",
                              "interactions_panel", "interactions2_panel",
-                             "ct_panel", "annotation_mode"]
+                             "ct_panel", "annotation_mode", "plot_error",
+                             "profile_scale_factor", "annotation_gap"]
 
-    def plot_data(self, ct, comp, interactions, interactions2, profile, label,
-                  ax=None, colorbar=True, seqbar=True, title=True,
+    def set_figure_size(self, fig=None, ax=None,
+                        rows=None, cols=None,
+                        height_ax_rel=0.1, width_ax_rel=0.1,
+                        width_ax_in=None, height_ax_in=None,
+                        height_gap_in=1, width_gap_in=0.5,
+                        top_in=1, bottom_in=0.5,
+                        left_in=0.5, right_in=0.5):
+        super().set_figure_size(fig=fig, ax=ax, rows=rows, cols=cols,
+                                height_ax_rel=height_ax_rel,
+                                width_ax_rel=width_ax_rel,
+                                width_ax_in=width_ax_in,
+                                height_ax_in=height_ax_in,
+                                height_gap_in=height_gap_in,
+                                width_gap_in=width_gap_in, top_in=top_in,
+                                bottom_in=bottom_in, left_in=left_in,
+                                right_in=right_in)
+
+    def plot_data(self, seq, ct, comp, interactions, interactions2, profile,
+                  label, ax=None, seqbar=True, title=True,
                   interactions_panel="bottom", interactions2_panel="bottom",
-                  ct_panel="top", annotations=[], annotation_mode="track"):
+                  ct_panel="top", annotations=[], annotation_mode="track",
+                  profile_panel="top", annotation_gap=None,
+                  profile_scale_factor=1, plot_error=True):
+        annotations = [annotation.fitted for annotation in annotations]
         ax = self.get_ax(ax)
-        if annotation_mode == "track":
+        if annotation_mode == "track" and annotation_gap is None:
             annotation_gap = 2*(2*len(annotations) + seqbar)
-        else:
+        elif annotation_gap is None:
             annotation_gap = 2*seqbar
         self.set_axis(ax=ax, annotation_gap=annotation_gap)
-        if colorbar:
-            ax_ins1 = ax.inset_axes([0.05, 0.2, 0.3, 0.03])
-            self.view_colormap(ax_ins1, interactions)
-            ax_ins2 = ax.inset_axes([0.05, 0.3, 0.3, 0.03])
-            self.view_colormap(ax_ins2, interactions2)
-            ax_ins3 = ax.inset_axes([0.05, 0.8, 0.3, 0.03])
-            if comp is not None:
-                self.view_colormap(ax_ins3, "ct_compare")
-            else:
-                self.view_colormap(ax_ins3, ct)
         self.add_patches(ax=ax, data=ct, panel=ct_panel,
                          annotation_gap=annotation_gap, comp=comp)
         self.add_patches(ax=ax, data=interactions, panel=interactions_panel,
                          annotation_gap=annotation_gap)
         self.add_patches(ax=ax, data=interactions2, panel=interactions2_panel,
                          annotation_gap=annotation_gap)
-        self.plot_profile(ax=ax, profile=profile, ct=ct)
+        self.plot_profile(ax=ax, profile=profile,
+                          annotation_gap=annotation_gap, panel=profile_panel,
+                          plot_error=plot_error,
+                          profile_scale_factor=profile_scale_factor)
         for i, annotation in enumerate(annotations):
             self.plot_annotation(ax, annotation=annotation, yvalue=-2-(4*i),
                                  mode=annotation_mode)
         if seqbar:
-            self.add_sequence(ax, ct.sequence, yvalue=1-annotation_gap,
+            self.add_sequence(ax, seq.sequence, yvalue=1-annotation_gap,
                               ytrans="data")
         if title:
             self.add_title(ax, label)
@@ -81,8 +94,10 @@ class AP(Plot):
     def add_patches(self, ax, data, panel, annotation_gap, comp=None):
         if comp is not None:
             ij_colors = data.get_ij_colors(comp)
+            self.add_colorbar_args(interactions="ct_compare")
         elif data is not None:
             ij_colors = data.get_ij_colors()
+            self.add_colorbar_args(interactions=data)
         else:
             return
         patches = []
@@ -114,26 +129,31 @@ class AP(Plot):
         height = min(self.nt_length, 602) * 0.1 + 1
         return (width*self.columns, height*self.rows)
 
-    def plot_profile(self, ax, profile, ct):
+    def plot_profile(self, ax, profile, annotation_gap, profile_scale_factor=1,
+                     plot_error=True, panel="top"):
         if profile is None:
             return
-        column = profile.default_column
-        factor = profile.ap_scale_factor
-        am = profile.get_alignment_map(ct)
-        values = np.full(ct.length, np.nan)
-        colormap = ct.get_colors("profile", profile=profile)
-        nts = np.arange(ct.length)+1
-        yerr = np.full(ct.length, np.nan)
-        for i1, i2 in enumerate(am):
-            if i2 != -1:
-                values[i2] = profile.data.loc[i1, column]
-                if 'Norm_stderr' in profile.data.columns:
-                    yerr[i2] = profile.data.loc[i1, 'Norm_stderr']
+        data = profile.get_plotting_dataframe()
+        factor = profile.ap_scale_factor * profile_scale_factor
+        values = data["Values"]
+        colormap = data["Colors"]
+        nts = data["Nucleotide"]
         mn, mx = self.region
-        ax.bar(nts[mn-1:mx], values[mn-1:mx]*factor, align="center",
-               width=1.05, color=colormap[mn-1:mx],
-               edgecolor=colormap[mn-1:mx], linewidth=0.0,
-               yerr=yerr[mn-1:mx], ecolor=(0, 0, 1 / 255.0), capsize=1)
+        if panel == "top":
+            bottom = 0
+        elif panel == "bottom":
+            values *= -1
+            bottom = -annotation_gap
+        if plot_error and ("Errors" in data.columns):
+            yerr = data["Errors"]
+            ax.bar(nts[mn-1:mx], values[mn-1:mx]*factor, align="center",
+                   bottom=bottom, width=1, color=colormap[mn-1:mx],
+                   edgecolor=colormap[mn-1:mx], linewidth=0.0,
+                   yerr=yerr[mn-1:mx], ecolor=(0, 0, 1 / 255.0), capsize=1)
+        else:
+            ax.bar(nts[mn-1:mx], values[mn-1:mx]*factor, align="center",
+                   width=1, color=colormap[mn-1:mx], bottom=bottom,
+                   edgecolor=colormap[mn-1:mx], linewidth=0.0)
 
     def plot_annotation(self, ax, annotation, yvalue, mode):
         color = annotation.color
@@ -141,9 +161,15 @@ class AP(Plot):
         assert mode in modes, f"annotation mode must be one of: {modes}"
         a_type = annotation.annotation_type
         if a_type == "spans" or (a_type == "primers" and mode == "vbar"):
-            for start, end in annotation.spans:
+            for start, end in annotation[:]:
                 if start > end:
                     start, end = end, start
+                if (self.region[0] > end) or (self.region[1] < start):
+                    continue
+                if (self.region[0] > start):
+                    start = self.region[0]
+                if (self.region[1] < end):
+                    end = self.region[1]
                 if mode == "track":
                     ax.plot([start, end], [yvalue]*2,
                             color=color, alpha=0.7, lw=11)
@@ -151,7 +177,7 @@ class AP(Plot):
                     ax.axvspan(start-0.5, end+0.5,
                                fc=color, ec="none", alpha=0.1)
         elif a_type == "sites":
-            sites = annotation.sites
+            sites = annotation[:]
             if mode == "track":
                 ax.scatter(sites, [yvalue]*len(sites),
                            color=color, marker='*',
@@ -160,7 +186,7 @@ class AP(Plot):
                 for site in sites:
                     ax.axvline(site, color=color, ls=":")
         elif a_type == "groups":
-            for group in annotation.groups:
+            for group in annotation[:]:
                 sites = group["sites"]
                 color = group["color"]
                 span = [min(sites), max(sites)]
@@ -176,7 +202,7 @@ class AP(Plot):
                     for site in sites:
                         ax.axvline(site, color=color, ls=":")
         elif a_type == "primers":
-            for start, end in annotation.primers:
+            for start, end in annotation[:]:
                 if mode == "track":
                     if start < end:
                         xs = [start, end, end-1]

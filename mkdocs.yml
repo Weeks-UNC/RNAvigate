@@ -3,24 +3,36 @@ site_url: https://rnavigate.readthedocs.io
 nav:
 - Home: index.md
 - Getting started:
-  - 'Installation': 'installation.md'
+  - 'Installation': 'installing-rnavigate.md'
   - 'Loading data': 'loading-data.md'
-  - 'Basic plotting': 'examples/one_sample.ipynb'
+  - 'Visualizing data': 'visualizing-data.md'
+  - 'Basic examples': 'examples/one_sample.ipynb'
 - Plotting options:
+  - 'Alignment plots': 'plot-options/alignment-plots.md'
+  - 'Skyline plots': 'plot-options/skyline-plots.md'
+  - 'Profile plots': 'plot-options/profile-plots.md'
   - 'Arc plots': 'plot-options/arc-plots.md'
-  - 'Secondary structure plots': 'plot-options/ss-plots.md'
-  - '3D plots': 'plot-options/mol-plots.md'
-- Interactions filters:
-  - 'Interactions reference': 'filters.md'
-  - 'Interactions examples': 'examples/filtering.ipynb'
-- Annotations:
-  - 'Annotation reference': 'annotations.md'
-  - 'Annotation examples': 'examples/annotations.ipynb'
-- RNA 2022 Poster:
-  - 'Poster': 'rna2022.md'
-  - 'Time-resolved probing': 'poster/RNaseP/RNaseP.ipynb'
-  - 'DANCE-MaP': 'poster/addRS/AddWT.ipynb'
-  - 'Low SHAPE/Shannon entropy': 'poster/denv2/DENV2.ipynb'
+  - 'Arc compare plots': 'plot-options/arc-compare-plots.md'
+  - 'Circle plots': 'plot-options/circle-plots.md'
+  - 'Secondary structures': 'plot-options/ss-plots.md'
+  - 'Interactive 3D plots': 'plot-options/mol-plots.md'
+  - 'Shapemapper2 QC plots': 'plot-options/qc-plots.md'
+  - 'Shapemapper2 Profiles': 'plot-options/sm-plots.md'
+  - 'Distance distributions': 'plot-options/disthist-plots.md'
+  - 'Heatmap and Contours': 'plot-options/heatmap-plots.md'
+  - 'Linear regressions': 'plot-options/linreg-plots.md'
+  - 'Receiver operator characteristic': 'plot-options/roc-plots.md'
+- Analysis options:
+  - 'Area under ROC curve': 'analysis-options/auroc.md'
+  - 'DeltaSHAPE': 'analysis-options/deltashape.md'
+  - 'Log profile comparison': 'analysis-options/logcompare.md'
+  - 'Low SHAPE, low Shannon entropy': 'analysis-options/lowss.md'
+- Guides:
+  - 'Interactions filtering': 'guides/filters.md'
+  - 'Loading custom data': 'guides/loading-custom-data.md'
+- Glossary: glossary.md
+- Publications: publications.md
+- Change log: changelog.md
 
 plugins:
   - mkdocs-jupyter

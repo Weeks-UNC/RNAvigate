@@ -18,6 +18,15 @@ import json
 
 
 def get_ss_class(filepath, **kwargs):
+    """Given a secondary structure file, returns a CT object from the data
+    contained in the file.
+
+    Args:
+        filepath (str): path to a secondary structure file
+
+    Returns:
+        CT or CT subclass: CT object created from file
+    """
     if filepath is None:
         return None
     extension = filepath.split('.')[-1]
@@ -35,18 +44,38 @@ def get_ss_class(filepath, **kwargs):
 
 
 class CT(Data):
+    """Base class for secondary structures.
 
-    def __init__(self, datatype="ct", dataframe=None, filepath=None, **kwargs):
+    Args:
+        Data (class): Parent class
+
+    Attributes:
+        filepath (str): path to parsed CT file
+        sequence (str): sequence string
+        num (numpy.array): nucleotide positions
+        ct (numpy.array): paired nucleotide for each nucleotide position
+        header (str): header information from CT file
+        mask (list): list of 0's and 1's for each nucleotide position
+        xcoordinates (numpy array): x-coordinate of each nucleotide
+        ycoordinates (numpy array): y-coordinate of each nucleotide
+    """
+
+    def __init__(self, dataframe=None, filepath=None, **kwargs):
+        """Creates a CT object from a given file or dataframe.
+
+        Args:
+            dataframe (pandas DataFrame, optional): DataFrame containing
+                columns ["Nucleotide", "Sequence", "Pair"]. "Pair" column must
+                be redundant. Defaults to None.
+            filepath (str, optional): path to a ct file. Defaults to None.
         """
-        if givin an input file .ct construct the ct object automatically
-        """
-        self.datatype = datatype
+        self.datatype = "ct"
         if dataframe is not None:
             self.from_dataframe(dataframe)
             self.filepath = "dataframe"
         elif filepath is not None:
             self.filepath = filepath
-            self.read_file()
+            self.read_file(**kwargs)
 
     def __str__(self):
         """overide the default print statement for the object"""
@@ -54,16 +83,25 @@ class CT(Data):
         return a
 
     def from_dataframe(self, dataframe):
+        """Sets num, sequence, and ct attributes given a pandas DataFrame
+        containing these values.
+
+        Args:
+            dataframe (pandas DataFrame): DataFrame containing
+                columns ["Nucleotide", "Sequence", "Pair"]. "Pair" column must
+                be redundant.
+        """
+        # TODO: fix non-redundant ct, check for consistency
         columns = ["Nucleotide", "Sequence", "Pair"]
         for col in columns:
-            assert col in dataframe.columns(), f"{col} column missing."
+            assert col in dataframe.columns, f"{col} column missing."
         seq = [nt.upper() for nt in dataframe["Sequence"]]
         if "T" in seq:
             print("T nucleotides have been recoded as U")
             seq = ["U" if nt == "T" else nt for nt in seq]
         self.sequence = "".join(seq)
         self.num = dataframe["Nucleotide"].values
-        self.bp = dataframe["Pair"].values
+        self.ct = dataframe["Pair"].values
 
     def read_file(self, structNum=0, filterNC=False, filterSingle=False):
         """Loads CT information from a given ct file. Requires a header!
@@ -144,6 +182,10 @@ class CT(Data):
             self.filterSingleton()
 
     def get_dbn(self):
+        """
+        Returns dotbracket notation string representing CT object. Currently
+        does not support pseudoknots.
+        """
         for pair in self.pairList():
             # check for pseudoknots
             for pair2 in self.pairList():
@@ -162,7 +204,8 @@ class CT(Data):
 
     def filterNC(self):
         """
-        Filter out non-canonical basepairs from the ct datastructure
+        Removes non-canonical basepairs from the ct datastructure. Warning,
+        this deletes information.
         """
 
         for i, nt in enumerate(self.ct):
@@ -181,7 +224,8 @@ class CT(Data):
 
     def filterSingleton(self):
         """
-        Filter out singleton basepairs from the ct datastructure
+        Removes singleton basepairs from the ct datastructure. Warning, this
+        deletes information.
         """
 
         for i, nt in enumerate(self.ct):
@@ -205,8 +249,11 @@ class CT(Data):
 
     def writeCT(self, fOUT, writemask=False):
         """
-        writes a ct file from the ct object
-        writemask = True will write out any masking info
+        Writes a ct file from the ct object.
+
+        Args:
+            writemask (bool, optional)= True will write out any masking info
+                Defaults to False.
         """
 
         try:
@@ -235,9 +282,7 @@ class CT(Data):
         w.close()
 
     def copy(self):
-        """
-        returns a deep copy of the ct object
-        """
+        """Returns a deep copy of the ct object."""
         out = CT()
         out.filepath = self.filepath[:]
         out.num = self.num[:]
@@ -247,8 +292,8 @@ class CT(Data):
 
     def pairList(self):
         """
-        # returns a list of base pairs i<j as a array of tuples:
-        [(19,50),(20,49)....]
+        Returns a non-redundant list of base pairs i < j as a array of tuples.
+        e.g., [(19,50),(20,49)....]
         """
         out = []
         for nt in range(len(self.ct)):
@@ -260,7 +305,7 @@ class CT(Data):
         """Returns a list of residues that are paired.
 
         Args:
-            paired (bool, optional): It False, returns single-stranded list.
+            paired (bool, optional): If False, returns unpaired residues.
                 Defaults to True.
         """
 
@@ -271,12 +316,10 @@ class CT(Data):
 
         return out
 
-    def junctionResidues(self, incGU=False):
-        """Returns a list of residues at junctions.
-
-        Args:
-            incGU (bool, optional): If True, includes GU pairs.
-                Defaults to False.
+    def junctionResidues(self):
+        """
+        Returns a list of residues at junctions (paired, but adjacent to
+        an unpaired residue or the end of a chain)
         """
 
         jun = []
@@ -297,8 +340,12 @@ class CT(Data):
         return jun
 
     def addPairs(self, pairs):
-        """Add base pairs to current ct file
-        pairs should be a list of pairs (1-indexed)
+        """
+        Add base pairs to current ct file.
+
+        Args:
+            pairs (list): 1-indexed list of paired residues.
+                e.g. [(1, 20), (2, 19)]
         """
 
         for i, j in pairs:
@@ -313,14 +360,21 @@ class CT(Data):
 
     def pair2CT(self, pairs, seq=None, name=None, skipConflicting=True,
                 filterNC=False, filterSingle=False):
-        """
-        constructs a ct object from a list of base pairs and a sequence
+        """Reconstructs this CT object from a list of base pairs and a sequence.
 
-        pairs are an array of bp tuples ( i < j )
-           i.e. [(4,26),(5,25),...]
-        length is implied from the given sequence
+        Args:
+            pairs (list): 1-indexed list of pairs. e.g. [(1, 20), (2, 19)]
+            seq (str, optional): sequence string. e.g., "AUCGUGUCAUGCUA"
+                Defaults to None.
+            name (str, optional): name stored as self.filepath.
+                Defaults to None.
+            skipConflicting (bool, optional): whether to skip conflicting pairs
+                Defaults to True.
+            filterNC (bool, optional): whether to remove non-canonical pairs.
+                Defaults to False.
+            filterSingle (bool, optional): whether to remove singlet pairs.
+                Defaults to False.
         """
-
         # See if sequence has been defined
         if seq is None:
             assert hasattr(self, "sequence"), "Sequence is not defined"
@@ -362,6 +416,15 @@ class CT(Data):
             self.filterSingleton()
 
     def getNTslice(self, start=None, end=None):
+        """Returns a slicing object from start to end (1-indexed, inclusive)
+
+        Args:
+            start (int, optional): start position. Defaults to None.
+            end (int, optional): end position. Defaults to None.
+
+        Returns:
+            slice: slicing object for the region from start to end
+        """
         offset = self.num[0]
 
         try:
@@ -379,12 +442,18 @@ class CT(Data):
         return sel
 
     def maskCT(self, start, end, nocross=True, inverse=False):
-        """return a copy of the original CT file, but with the specified region
-        masked out (ie base pairs set to 0)
-        if inverse = True, do the inverse -- ie return a CT with base pairs
-        only involving the specified region
-        """
+        """Returns a deep copy of CT object, with pairs between start and end
+        set to unpaired, (or the inverse).
 
+        Args:
+            start (int): start position
+            end (int): end position
+            nocross (bool, optional): _description_. Defaults to True.
+            inverse (bool, optional): invert the behavior. Defaults to False.
+
+        Returns:
+            CT: new CT object with pairs removed
+        """
         # in case numbering differs from indexing, go by indexes
         out = self.copy()
         out.filepath += '_mask_'+str(start)+'_'+str(end)
@@ -420,6 +489,13 @@ class CT(Data):
     def cutCT(self, start, end):
         """Returns a new ct file containing only base pairs within the
         specified region
+
+        Args:
+            start (int): start position
+            end (int): end position
+
+        Returns:
+            CT: a new CT object cut from current CT object
         """
 
         sel = self.getNTslice(start, end)
@@ -445,10 +521,7 @@ class CT(Data):
         return out
 
     def stripCT(self):
-        """
-        returns an array the length of the ct object
-        in a non-redundant form - e.g. only gives pairs i<j
-        """
+        """Returns the ct attribute in non-redundant form - only pairs i<j"""
         pairs = self.pairList()
         halfPlexCT = np.zeros_like(self.ct)
         for i, j in pairs:
@@ -456,9 +529,7 @@ class CT(Data):
         return halfPlexCT
 
     def ctToArcList(self):
-        """
-        returns a 2D array containing arc list elements
-        """
+        """Returns a 2D array containing arc list elements"""
 
         pairs = self.stripCT()
 
@@ -939,7 +1010,60 @@ class CT(Data):
             w.write(line.format(*cols))
         w.close()
 
-    def get_ij_colors(self, compct=None):
+    def fit_to(self, fit_to, store=True):
+        """Provided a Data or subclass object with a sequence attribute. CT
+        is aligned to new sequence and base pairs are repositioned. Base pairs
+        are kept regardless of reverse complimentarity. Results in a new CT
+        object stored as self.fitted.
+
+        Args:
+            fit_to (Data or subclass): Data object with a sequence attribute.
+        """
+        am = self.get_alignment_map(fit_to=fit_to)
+        ct = [0] * fit_to.length
+        for i, j in self.pairList():
+            new_i = am[i-1]+1
+            new_j = am[j-1]+1
+            if (new_i != 0) and (new_j != 0):
+                ct[new_i-1] = new_j
+                ct[new_j-1] = new_i
+        data = pd.DataFrame({
+            'Nucleotide': [i+1 for i in range(fit_to.length)],
+            'Sequence': [nt for nt in fit_to.sequence],
+            'Pair': ct
+        })
+        if store:
+            self.fitted = CT(dataframe=data)
+        else:
+            return CT(dataframe=data)
+
+    def get_ij_colors(self, compct=None, fitted=True):
+        """Gets i, j, and colors lists for plotting base pairs. i and j are the
+        5' and 3' ends of each pair, and colors is the color to use for each
+        pair (all grey for CT). If compct is provided, i and j are the union of
+        pairs in self and compct, and colors represents whether the pair came
+        from self, compct, or both.
+
+        Args:
+            compct (CT, optional): CT to compare to. Defaults to None.
+            fitted (bool, optional): Whether to use CT.fitted for comparison.
+                Defaults to True.
+
+        Returns:
+            list, list, list: 5' and 3' ends of each pair, color for each pair
+        """
+        if fitted and hasattr(self, 'fitted'):
+            ct1 = self.fitted
+            if compct is not None:
+                ct2 = compct.fit_to(fit_to=ct1, store=False)
+            else:
+                ct2 = None
+        else:
+            ct1 = self
+            ct2 = compct
+        if ct2 is not None and ct1.length != ct2.length:
+            raise ValueError("CT objects are not equal lengths")
+
         i_list, j_list, colors = [], [], []
 
         def add_ij_color(i, j, color):
@@ -947,13 +1071,13 @@ class CT(Data):
             j_list.append(j)
             colors.append(color)
 
-        if compct is None:
-            ct_pairs = self.pairList()
+        if ct2 is None:
+            ct_pairs = ct1.pairList()
             for i, j in ct_pairs:
                 add_ij_color(i, j, (0.5, 0.5, 0.5, 0.7))
             return (i_list, j_list, colors)
-        ct1 = set(self.pairList())
-        ct2 = set(compct.pairList())
+        ct1 = set(ct1.pairList())
+        ct2 = set(ct2.pairList())
         shared = ct1.intersection(ct2)
         ref = ct1.difference(ct2)
         comp = ct2.difference(ct1)
@@ -968,17 +1092,37 @@ class CT(Data):
             add_ij_color(i, j, sharedcolor)
         return (i_list, j_list, colors)
 
+    def normalize_coordinates(self):
+        """Normalizes (x, y) coordinates of each nucleotide such that the
+        structure is centered on (0, 0) and the median base-pair distance is 1.
+        """
+        # scale so that the median base pair is 1 unit distance
+        bp_list = self.pairList()
+        bp_distances = []
+        for bp in bp_list:
+            y_dist = self.ycoordinates[bp[0]-1] - self.ycoordinates[bp[1]-1]
+            x_dist = self.xcoordinates[bp[0]-1] - self.xcoordinates[bp[1]-1]
+            bp_distances.append((y_dist**2 + x_dist**2)**0.5)
+        scale_factor = np.median(bp_distances)
+        self.ycoordinates /= scale_factor
+        self.xcoordinates /= scale_factor
+
+        # shift so that center of plot is [0,0]
+        x_center = (max(self.xcoordinates) + min(self.xcoordinates))/2
+        self.xcoordinates -= x_center
+        y_center = (max(self.ycoordinates) + min(self.ycoordinates))/2
+        self.ycoordinates -= y_center
+
+
 ###############################################################################
 # end of CT class
 ###############################################################################
 
 
 class VARNA(CT):
-    def __init__(self, filepath, datatype="ct", **kwargs):
-        """
-        if givin an input file .varna construct the ct object automatically
-        """
-        super().__init__(filepath=filepath, datatype=datatype, **kwargs)
+    def __init__(self, filepath, **kwargs):
+        """Given an input file .varna, construct the ct object"""
+        super().__init__(filepath=filepath, **kwargs)
 
     def read_file(self, **kwargs):
         """Generates CT object data from an ss file, including nucleotide x and
@@ -1007,20 +1151,19 @@ class VARNA(CT):
             i = int(pair.get('part5'))+1
             j = int(pair.get('part3'))+1
             basepairs.append((i, j))
-        xcoords = np.array(xcoords)
-        ycoords = np.array(ycoords)
         # store attributes
-        coord_scale_factor = 1/65
         self.sequence = sequence.upper().replace("T", "U")
         self.num = np.arange(len(self.sequence))
         self.pair2CT(basepairs, **kwargs)
-        self.xcoordinates = xcoords*coord_scale_factor
-        self.ycoordinates = ycoords*coord_scale_factor
+        self.xcoordinates = np.array(xcoords)
+        self.ycoordinates = np.array(ycoords)
+        self.normalize_coordinates()
 
 
 class XRNA(CT):
-    def __init__(self, datatype="ct", dataframe=None, filepath=None, **kwargs):
-        super().__init__(datatype, dataframe, filepath, **kwargs)
+    def __init__(self, dataframe=None, filepath=None, **kwargs):
+        """Given an input file .xrna, construct the ct object"""
+        super().__init__(dataframe, filepath, **kwargs)
 
     def read_file(self, **kwargs):
         """Generates CT object data from an ss file, including nucleotide x and
@@ -1057,21 +1200,19 @@ class XRNA(CT):
             helix_list = [(i_outter+nt, j_outter-nt)
                           for nt in range(length)]
             basepairs.extend(helix_list)
-        # make expected arrays
-        xcoords = np.array(xcoords)
-        ycoords = np.array(ycoords)
         # store attributes
-        coord_scale_factor = 1/20
         self.sequence = sequence.upper().replace("T", "U")
         self.num = np.arange(len(self.sequence))
         self.pair2CT(basepairs, **kwargs)
-        self.xcoordinates = xcoords*coord_scale_factor
-        self.ycoordinates = ycoords*coord_scale_factor
+        self.xcoordinates = np.array(xcoords)
+        self.ycoordinates = np.array(ycoords)
+        self.normalize_coordinates()
 
 
 class CTE(CT):
-    def __init__(self, datatype="ct", dataframe=None, filepath=None, **kwargs):
-        super().__init__(datatype, dataframe, filepath, **kwargs)
+    def __init__(self, dataframe=None, filepath=None, **kwargs):
+        """Given an input file .cte, construct the ct object"""
+        super().__init__(dataframe, filepath, **kwargs)
 
     def read_file(self, **kwargs):
         """Generates CT object data from an ss file, including nucleotide x and
@@ -1092,17 +1233,18 @@ class CTE(CT):
         ct = ct[ct.nuc < ct.pair]
         basepairs = [[int(i), int(j)] for i, j in zip(ct.nuc, ct.pair)]
         # store attributes
-        coord_scale_factor = 1/30.5
         self.sequence = sequence.upper().replace("T", "U")
         self.num = np.arange(len(self.sequence))
         self.pair2CT(basepairs, **kwargs)
-        self.xcoordinates = xcoords*coord_scale_factor
-        self.ycoordinates = ycoords*coord_scale_factor
+        self.xcoordinates = xcoords
+        self.ycoordinates = ycoords
+        self.normalize_coordinates()
 
 
 class NSD(CT):
-    def __init__(self, datatype="ct", dataframe=None, filepath=None, **kwargs):
-        super().__init__(datatype, dataframe, filepath, **kwargs)
+    def __init__(self, dataframe=None, filepath=None, **kwargs):
+        """Given an input file .nsd, construct the ct object"""
+        super().__init__(dataframe, filepath, **kwargs)
 
     def read_file(self):
         """Generates CT object data from an ss file, including nucleotide x and
@@ -1141,20 +1283,19 @@ class NSD(CT):
                         if field.startswith("Pair"):
                             field = field.strip('Pair:"').split(":")
                             basepairs.append([int(nuc) for nuc in field])
-        xcoords = np.array(xcoords)
-        ycoords = np.array(ycoords)
         # store attributes
-        coord_scale_factor = 1/30.5
         self.sequence = sequence.upper().replace("T", "U")
         self.num = np.arange(len(self.sequence))
         self.pair2CT(basepairs)
-        self.xcoordinates = xcoords*coord_scale_factor
-        self.ycoordinates = ycoords*coord_scale_factor
+        self.xcoordinates = np.array(xcoords)
+        self.ycoordinates = np.array(ycoords)
+        self.normalize_coordinates()
 
 
 class DotBracket(CT):
-    def __init__(self, datatype="ct", dataframe=None, filepath=None, **kwargs):
-        super().__init__(datatype, dataframe, filepath, **kwargs)
+    def __init__(self, dataframe=None, filepath=None, **kwargs):
+        """Given an input file .dbn .db .dot, etc., construct the ct object"""
+        super().__init__(dataframe, filepath, **kwargs)
 
     def read_file(self, filterNC=False, filterSingle=False):
         """Generates CT object from a dot-bracket notation file. Lines
@@ -1205,8 +1346,9 @@ class DotBracket(CT):
 
 
 class JSON(CT):
-    def __init__(self, datatype="ct", dataframe=None, filepath=None, **kwargs):
-        super().__init__(datatype, dataframe, filepath, **kwargs)
+    def __init__(self, dataframe=None, filepath=None, **kwargs):
+        """Given an input file .json (R2DT), construct the ct object"""
+        super().__init__(dataframe, filepath, **kwargs)
 
     def read_file(self):
         """Generates CT object data from an ss file, including nucleotide x and
@@ -1233,11 +1375,9 @@ class JSON(CT):
             if [i, j] not in basepairs:
                 basepairs.append([i, j])
 
-        xcoords = np.array(xcoords)
-        ycoords = np.array(ycoords)
         # store attributes
-        coord_scale_factor = 1/12
         self.sequence = sequence.upper().replace("T", "U")
         self.pair2CT(basepairs)
-        self.xcoordinates = xcoords*coord_scale_factor
-        self.ycoordinates = -ycoords*coord_scale_factor
+        self.xcoordinates = np.array(xcoords)
+        self.ycoordinates = np.array(ycoords)
+        self.normalize_coordinates()

@@ -1,10 +1,12 @@
 Loading data
 ============
 
-RNAvigate is built around the `Sample` object, which defines the datasets
-that are associated with a particular experimental sample. The first step to
-quickly performing vizualization and analysis is to create a `Sample` object.
-Here is the basic call signiture:
+RNAvigate is built around the `Sample` object, which is used to define the
+data files that are associated with a particular experimental sample or a
+particular RNA. Creating a `Sample` and providing data files will load each of
+your data files and store the data as Python objects. The Data objects allow
+access to all of the visualization and analysis tools RNAvigate has to offer.
+Here is how to create a sample:
 
 ```python
 import rnavigate as rnav
@@ -14,39 +16,269 @@ my_sample = rnav.Sample(
     datatype="Path/to/my/data.file")
 ```
 
-Here `sample="My Sample Name"` defines the label that will be used in legends
-and figure titles when plotting data from `my_sample`. It should succinctly
-describe the experiment. e.g. "RNaseP DMS-MaP"
+`import rnavigate as rnav` imports the RNAvigate module and gives you access to
+all of its functionality using the alias `rnav`.
 
-The following are all of the datatypes that can be loaded into `my_sample`.
+`my_sample` is the python variable that your sample is stored to.
+
+`rnav.Sample()` calls the `Sample` initialization method, creating a new sample.
+
+`sample="My Sample Name"` is always the first argument-value pair, it defines
+the label that will be used in legends and figure titles when plotting data
+from `my_sample`. It should succinctly describe the experiment and/or the RNA.
+e.g., "RNaseP DMS-MaP".
+
+`datatype="Path/to/my/data.file"` loads a data file and adds it to
+`my_sample.data`, a Python dictionary. You can access this data using
+`my_sample.data["datatype"]`. However, `datatype` is just a placeholder, not a
+valid argument. Below are all of the valid arguments and their default values.
+Further below are explainations of the values that can be used with each
+argument. As support for new data types are added, this list will grow.
+
+```python
+my_sample = rnav.Sample(
+    sample=None,
+    # This is a comment. This section contains general RNA structure data
+    inherit=None,
+    pdb=None,
+    ct=None,
+    compct=None,
+    ss=None,
+    fasta=None,
+    # This section contains per-nucleotide experimental measurements.
+    log=None,
+    shapemap=None,
+    dmsmap=None,
+    dancemap=None,
+    rnpmap=None,
+    # This section contains inter-nucleotide experimental measurements or data.
+    ringmap=None,
+    shapejump=None,
+    pairmap=None,
+    allcorrs=None,
+    pairprob=None,
+    allpossible=None,
+    # This section contains sequence annotations.
+    annotations=None,
+    # dance_prefix loads all data files from a DANCE model.
+    dance_prefix=None,
+)
+```
+
+For loading data that is not included in this list, or for adding multiple data
+sets of the same type see the guide for
+[loading custom data](./guides/loading-custom-data.md).
+
+---
+
+RNA structure data
+------------------
+
+---
+
+`inherit`
+
+* Another `rnav.Sample` object.
+* The new sample will inherit all of the data associated with the given sample.
+* These data objects are shared, so any operation on one sample will affect the
+  other.
+* This saves on memory and computation time if large data sets are to be shared
+  between samples.
+
+---
+
+`pdb`
+
+* A dictionary containing a PDB or CIF file, a chain ID, and optionally a fasta
+  reference sequence matching the PDB model.
+* e.g., `pdb={"filepath": "my_rna.cif", "chain": "A", "fasta": "my_rna.fasta"}`
+
+---
+
+`ct`, `compct`, and `ss`
+
+* A .ct (connection table), .dbn (dot-bracket) file containing secondary
+  structure base-pairing information.
+* A .cte or .nsd file from StructureEditor
+* A .varna file from VARNA
+* A .xrna file from XRNA
+* A .json file from R2DT
+* The default behavior of RNAvigate functions expects `ss` to contain
+  structure drawing coordinates (cte, nsd, varna, xrna, or json files).
+
+---
+
+`fasta`
+
+* A .fasta or .fa file containing a single sequence.
+* Not usually necessary, but can be useful if you want to map your data onto a
+  different sequence. All data are mapped to a common sequence prior to
+  visualization. Some functions allow specifying a custom sequence using an
+  optional `seq_source` argument.
+
+---
+
+Per-nucleotide data
+-------------------
+
+---
 
 `log`
 
 * A shapemapper_log.txt file that is output from ShapeMapper2. This file
-  includes important quality control metrics for the experiment if the `--per-read-histograms` was used.
+  includes important quality control metrics for the experiment if the `--per-read-histograms` flag was used with ShapeMapper2.
+
+---
 
 `shapemap` or `dmsmap`
 
 * A profile.txt file which is the main data output from ShapeMapper2. It
-  includes all of the most important information for a SHAPE or DMS-MaP experiment.
-* If `dmsmap` is used, the reactivity profile is renormalized according to DMS conventions.
+  includes all of the most important information for a SHAPE or DMS-MaP
+  experiment.
+* If `dmsmap` is used, the reactivity profile is renormalized according to DMS
+  conventions.
+
+---
+
+`dancemap`
+
+* A dictionary containing a DanceMapper _reactivities.txt file and a model
+  component number.
+* e.g., `dancemap={"filepath": "my_experiment_reactivities.txt", "component": 0}`
+
+---
+
+`rnpmap`
+
+* An rnpmap.csv file from RNP-MaP
+
+---
+
+Inter-nucleotide data
+---------------------
+
+---
 
 `ringmap`
 
 * The only default output file of RingMapper. The extension is specified when
   executing RingMapper, typically rings.txt.
 
+---
+
+`shapejump`
+
+* A dictionary containing a data file and a fasta file.
+* e.g. `shapejump={"filepath":"Path/to/data.file", "fasta":"Path/to/fasta.fa"}`
+
+---
+
 `pairmap`
 
 * A pairmap.txt file from PairMapper.
+
+---
 
 `allcorrs`
 
 * An allcorrs.txt file from PairMapper.
 
+---
+
+`pairprob`
+
+* A .dp plain text file from SuperFold or from RNAStructure's ProbabilityPlot.
+
+---
+
+`allpossible`
+
+* A key from `sample.data` to take a sequence from.
+* This will contain a list of every possible pair of nucleotides.
+
+---
+
+Sequence annotations
+--------------------
+
+---
+
+`annotations`
+
+* Here is an example with 5 different annotation types:
+
+```python
+sample = rnav.Sample(
+    fasta="path/to/fasta.fa",
+    annotations={
+        "seq_source": "fasta",
+        "m6A": {
+            "sites": [35, 87, 220],
+            "color": "green"},
+        "exon 2": {
+            "spans": [[211, 300]],
+            "color": "khaki"},
+        "pockets": {
+            "groups": [{
+                "sites": [37, 38, 86, 87, 88],
+                "color": "purple",
+            },{
+                "sites": [102, 103, 105, 202, 217],
+                "color": "pink",
+            }]
+        },
+        "DRACH": {
+            "motif": "DRACH",
+            "color": "red",
+        }
+    }
+)
+```
+
+* `annotations` accepts a dictionary or a json file with the same format.
+* The first key is `"seq_source"` which defines the sequence that the indices
+  apply to. In the example above I used a fasta file, but this value can be any
+  key of sample.data, a data object, or a sequence string.
+* Each additional key becomes a key of sample.data. In this example,
+  `"m6A"`, `"exon 2"`, `"pockets"` and `"DRACH"`. These can be passed to
+  plotting functions, e.g. `annotations=["primers", "m6A", "DRACH"]`
+* Values given to these keys are dictionaries that determine what type of
+  annotation is created and how to display them on plots.
+* The first key in each of these dictionaries is the annotation type. Provided
+  positions are 1-indexed. Regions are inclusive:
+  * `"sites": ` a list of positions of interest
+  * `"spans": ` a list of lists each containing a start and end position
+  * `"primers": ` similar to spans, but can also be reversed (end < start)
+  * `"groups": ` a list of dictionaries that mimic the `"sites"` dictionary as
+    in the example above.
+  * `"motif": ` a sequence motif using standard nucleic acid alphabet. This
+    creates a spans-like annotation for all instances of the sequence motif.
+    * A, U, C, G, T matches that nucleotide
+    * B = not A
+    * D = not C
+    * H = not G
+    * V = not U or T
+    * W = weak (A, U, T)
+    * S = strong (C, G)
+    * M = amino (A, C)
+    * K = ketone (G, U, T)
+    * R = purine (A, G)
+    * Y = pyrimidine (C, U, T)
+    * N = any (A, U, C, G, T)
+  * `"orfs": True` creates a spans-like annotation for all open reading frames
+* The second key in each of these dictionaries is `"color"`which specifies the
+  color used for plotting. Groups are the exception to this, as in the example.
+
+---
+
+Convenient function for DANCE data
+----------------------------------
+
+---
+
 `dance_prefix`
 
-* The file prefix provided to DanceMapper. MaP.Sample will locate each of the
+* The file prefix provided to DanceMapper. RNAvigate will locate each of the
   following for each component *n* of the model if it exists:
     * prefix_reactivities.txt, prefix_*n*\_rings.txt, prefix_*n*_pairmap.txt,
       prefix_allcorrs.txt
@@ -55,40 +287,7 @@ The following are all of the datatypes that can be loaded into `my_sample`.
     * prefix_*n*.f.ct (if `--pk` was used)
     * prefix_*n*.dp (if `--probs` was used)
     * prefix_*n*.ct (if default folding was performed)
+* These data are stored in `my_sample.dance` as a list of `rnav.Sample` objects,
+  one for each component of the DANCE model.
 
-`rnpmap`
-
-* An rnpmap.csv file from RNP-MaP
-
-`shapejump`
-
-* Instead of a file path, this argument requires a python dictionary containing
-  a data file and a fasta file.
-* e.g. `shapejump={"filepath":"Path/to/data.file", "fasta":"Path/to/fasta.fa"}`
-
-`pairprob`
-
-* A .dp file from SuperFold or from ProbabilityPlot.
-
-`ct` and `compct`
-
-  * A .ct (connection table) or .dbn (dot-bracket) containing base-pairing info.
-
-`ss`
-
-* A .cte or .nsd file from StructureEditor
-* A .varna file from VARNA
-* A .xrna file from XRNA
-
-`pdb`
-
-* Instead of a file path, this argument requires a python dictionary containing
-  a pdb file and the chain ID of the molecule of interest.
-* e.g. `pdb={"filepath":"Path/to/My_RNA.pdb", "chain": "A"}`
-* In addition to `filepath` and `chain`, the dictionary may contain the path to
-  a fasta file, and the offset. This is only needed if that information is
-  missing from the PDB header.
-* Offsets are a weird feature of PDBs. Most of the time there is no offset.
-  e.g., residue_id 10 in the atom entries normally corresponds to the 10th
-  nucleotide in the sequence. If it corresponds to the 1st nucleotide, the offset
-  would be 9.
+---
