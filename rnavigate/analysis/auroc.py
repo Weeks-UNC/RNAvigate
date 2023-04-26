@@ -21,14 +21,17 @@ class WindowedAUROC():
 
     Attributes:
         sample: an rnavigate.Sample to retrieve profile and secondary structure
-        sequence: the sequence string of sample.data["ct"]
+        ct: sample.data[ct]
+        profile: sample.data[profile]
+        sequence: the sequence string of sample.data[ct]
         window: the size of the windows
         nt_length: the length of sequence string
         auroc: the auroc numpy array, length = nt_length, padded with np.nan
         median_auroc: the median of the auroc array
     """
 
-    def __init__(self, sample, pad=40, region=None, show=True):
+    def __init__(self, sample, pad=40, region=None, profile="profile", ct="ct",
+                 show=True):
         """Compute the AUROC for all windows. AUROC is a measure of how well a
         reactivity profile predicts paired vs. unpaired nucleotide status.
 
@@ -43,26 +46,27 @@ class WindowedAUROC():
                 Defaults to True.
         """
         # ensure sample contains profile and ct data
-        # TODO: allow non-profile profiles and non-ct secondary structures
-        for data in ["profile", "ct"]:
+        for data in [profile, ct]:
             assert data in sample.data.keys(), f"Sample missing {data} data"
 
         # store basic information
         self.sample = sample
-        self.sequence = self.sample.data["ct"].sequence
+        self.ct = sample.data[ct]
+        self.profile = sample.data[profile]
+        self.sequence = self.ct.sequence
         self.window = pad * 2 + 1
-        self.nt_length = sample.data["ct"].length
+        self.nt_length = self.ct.length
 
         # get Norm_profile array and ct array
-        profile = sample.data["profile"].data["Norm_profile"].values
-        ct = sample.data["ct"].ct
+        profile = self.profile.data["Norm_profile"].values
+        paired_nts = self.ct.ct
 
         # for each possible window: compute auroc and populate array
         self.auroc = np.full(len(profile), np.nan)
         for i in range(pad, len(profile)-pad):
             # get profile and ct values within window
             win_profile = profile[i-pad:i+pad+1]
-            win_ct = ct[i-pad:i+pad+1]
+            win_ct = paired_nts[i-pad:i+pad+1]
             # ignore positions where profile is nan
             valid = ~np.isnan(win_profile)
             # y: classification (paired or unpaired)
@@ -111,11 +115,17 @@ class WindowedAUROC():
         clip_spines(auc_ax, ["left"])
 
         # add ct and reactivity profile track
-        plot.plot_data(ct=self.sample.data["ct"], comp=None,
-                       interactions=None, interactions2=None,
-                       profile=self.sample.data["profile"], label="label",
-                       seqbar=False, title=False,
-                       annotations=[], plot_error=False)
+        plot.plot_data(
+            ct=self.ct,
+            comp=None,
+            interactions=None,
+            interactions2=None,
+            profile=self.profile,
+            label="label",
+            seqbar=False,
+            title=False,
+            annotations=[],
+            plot_error=False)
 
         # Place Track Labels
         ax.set_title(f"{self.sample.sample}\n{start} - {stop}", loc='left',
