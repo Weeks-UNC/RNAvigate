@@ -12,7 +12,7 @@ arguments and their default values.
 
 ```python
 plot1 = sample.plot_sm(
-    plots=["profile", "rates", "depth"]
+    panels=["profile", "rates", "depth"]
 )
 ```
 
@@ -21,7 +21,7 @@ data.
 
 ---
 
-`plots`
+`panels`
 
 * A list containing any of these values:
   * `"profile"`: display the Normalized SHAPE reactivities panel

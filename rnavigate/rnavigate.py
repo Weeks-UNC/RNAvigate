@@ -671,19 +671,19 @@ class Sample():
             return plot
         return plot_arcs([self], **kwargs)
 
-    def plot_shapemapper(self, plots=["profile", "rates", "depth"]):
+    def plot_shapemapper(self, panels=["profile", "rates", "depth"]):
         """Makes a standard ShapeMapper2 profile plot with 3 panels: Normalized
         Reactivities, modified and untreated mutation rates, and modified and
         untreated read depths.
 
         Args:
-            plots (list, optional): Which of the three panels to include.
+            panels (list, optional): Which of the three panels to include.
                 Defaults to ["profile", "rates", "depth"].
 
         Returns:
             Plot object:
         """
-        plot = plots.SM(self.data["profile"].length, plots=plots)
+        plot = plots.SM(self.data["profile"].length, panels=panels)
         plot.add_sample(self, profile="profile", label="label")
         plot.set_figure_size()
         return plot

@@ -211,10 +211,10 @@ class Data():
         # extra steps to get to sequence 2 positions
         else:
             # positions that are removed when plotting on sequence 2
-            align_mask = np.where([nt != '-' for nt in align2])[0]
+            align_mask = np.array([nt != '-' for nt in align2])
             # an index map from the full alignment to position in sequence 2
             align_to_seq2 = np.full(len(align2), -1)
-            align_to_seq2[~align_mask] = np.arange(len(seq2))
+            align_to_seq2[align_mask] = np.arange(len(seq2))
             # an index map from sequence 1 to sequence 2 positions
             seq1_to_seq2 = align_to_seq2[seq1_to_align]
             # an index map to the original sequence 2 if it contained periods

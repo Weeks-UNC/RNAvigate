@@ -83,8 +83,11 @@ class Profile(Data):
         elif cv["norm_method"] == "none":
             def norm(x): return x  # does nothing to values
         values = self.data[cv["column"]].values
-        values = norm(values)
-        return np.array([mpc.to_hex(color) for color in cmap(values)])
+        colors = np.full(len(values), "#888888")
+        mask = ~np.isnan(values)
+        values = norm(values[mask])
+        colors[mask] = np.array([mpc.to_hex(color) for color in cmap(values)])
+        return colors
 
     def fit_to(self, fit_to):
         am = self.get_alignment_map(fit_to=fit_to)
