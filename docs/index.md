@@ -10,13 +10,39 @@ and exploration within Jupyter Notebooks or python scripts. RNAvigate is
 designed to be simple to install and use with minimal knowledge of python or
 command line tools.
 
+Check out our [publication](publications.md).
+
 Getting started
 ---------------
 
-Start exploring your own RNA data sets in three easy steps:
-* [Installing RNAvigate](installing-rnavigate.md)
-* [Loading data files](loading-data.md)
-* [Visualizing data](visualizing-data.md)
+To start exploring your own RNA data sets, follow these three easy steps:
+1. [Installing RNAvigate](installing-rnavigate.md)
+2. [Loading data files](loading-data.md)
+3. [Visualizing data](visualizing-data.md)
+
+Brief overview
+--------------
+
+Once you know the data class keywords and plotting functions available,
+RNAvigate is very easy to use:
+1. open a Jupyter notebook and import RNAvigate
+```python
+import rnavigate as rnav
+```
+2. Create samples by providing data file inputs with data class keywords
+```python
+sample_name = rnav.Sample(
+    data_class_keyword="input_file.txt"
+)
+```
+3. Create visualizations by providing plotting functions with sample names and
+   data class keywords.
+```python
+rnav.plotting_function(
+    samples=[sample_name]
+    plotting_keyword="data_class_keyword"
+)
+```
 
 Feature requests, bug reporting, and collaborating
 --------------------------------------------------

@@ -39,28 +39,30 @@ sample.set_data(
 
 * This is an `rnav.data.Data` class or subclass to be called to instantiate
   (create) the new data object. One of the following (or your own class):
-  * `rnav.data.Data`
-  * `rnav.data.Profile`
-  * `rnav.data.SHAPEMaP`
-  * `rnav.data.DanceMaP`
-  * `rnav.data.DeltaProfile`
-  * `rnav.data.RNPMaP`
-  * `rnav.data.CT`
-  * `rnav.data.DotBracket`
-  * `rnav.data.XRNA`
-  * `rnav.data.VARNA`
-  * `rnav.data.NSD`
-  * `rnav.data.CTE`
-  * `rnav.data.Interactions`
-  * `rnav.data.RINGMaP`
-  * `rnav.data.PAIRMaP`
-  * `rnav.data.PairProb`
-  * `rnav.data.SHAPEJuMP`
-  * `rnav.data.Log`
-  * `rnav.data.PDB`
-  * `rnav.data.Annotation`
-  * `rnav.data.Motif`
-  * `rnav.data.ORFs`
+  * `rnav.data.Data`: base classs to handle sequences for all subclasses
+    * `rnav.data.Log`: Shapemapper2 log files
+    * `rnav.data.Profile`: base class for per-nucleotide data
+      * `rnav.data.SHAPEMaP`: Shapemapper2 profile.txt
+      * `rnav.data.DanceMaP`: DanceMapper component from reactivities.txt
+      * `rnav.data.RNPMaP`: RNPMapper data
+      * `rnav.data.DeltaProfile`: differences between profiles
+    * `rnav.data.Annotations`: base class for sequence annotations
+      * `rnav.data.Motif`: regions matching a sequence motif
+      * `rnav.data.ORFs`: regions of open-reading frames
+    * `rnav.data.Interactions`: base class for inter-nucleotide data
+      * `rnav.data.RINGMaP`: RingMapper rings.txt or PairMapper allcorrs.txt
+      * `rnav.data.PAIRMaP`: PairMapper pairmap.txt
+      * `rnav.data.SHAPEJuMP`: ShapeJumper output file
+      * `rnav.data.PairProb`: pairing probabilities file
+      * `rnav.data.AllPossible`: all possible nucleotide pairs in a sequence
+    * `rnav.data.CT`: base class for secondary structures and drawings
+      * `rnav.data.DotBracket`: secondary structure in .db format
+      * `rnav.data.XRNA`: drawing in XRNA format
+      * `rnav.data.VARNA`: drawing in VARNA format
+      * `rnav.data.R2DT`: drawing in R2DT json format
+      * `rnav.data.NSD`: drawing in StructureEditor NSD format
+      * `rnav.data.CTE`: drawing in StructureEditor CTE format
+    * `rnav.data.PDB`: 3D atomic coordinates in RCSD PDB or CIF format
 * use `help(rnav.data.Data)` to get info for the Data class, or any other class
 
 `seq_source`

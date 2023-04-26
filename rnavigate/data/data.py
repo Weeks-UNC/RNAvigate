@@ -173,6 +173,9 @@ class Data():
         # Normalize sequences
         seq1 = self.sequence.upper().replace("T", "U")
         seq2 = fit_to.sequence.upper().replace("T", "U")
+        # if periods are included, remove them from seq2 so that predefined
+        # alignment is correctly used. seq2 to final map will get us to the
+        # position in seq 2 including the periods.
         seq2_to_final_map = np.where([nt != '.' for nt in seq2])[0]
         seq2 = seq2.replace('.', '')
         # Check if sequences match
@@ -182,7 +185,7 @@ class Data():
             else:
                 return seq2_to_final_map
         else:
-            # look in _alignments_cache, if not found, do alignment
+            # look in _alignments_cache, if not found, do a pairwise alignment
             try:
                 align1, align2 = _alignments_cache[seq1][seq2].values()
             except KeyError:
@@ -199,16 +202,22 @@ class Data():
         # skip creating alignment_map if return_alignment
         if return_alignment:
             return (seq1, seq2, align1, align2)
-        # get an index map from this sequence to that.
+        # get an index map from sequence 1 to the full alignment
         seq1_to_align = np.where([nt != '-' for nt in align1])[0]
+        # if we want a map to a position in the full alignment, this is it.
         if full:
             i = len(align1)
             return seq1_to_align, i
+        # extra steps to get to sequence 2 positions
         else:
+            # positions that are removed when plotting on sequence 2
             align_mask = np.where([nt != '-' for nt in align2])[0]
+            # an index map from the full alignment to position in sequence 2
             align_to_seq2 = np.full(len(align2), -1)
             align_to_seq2[~align_mask] = np.arange(len(seq2))
+            # an index map from sequence 1 to sequence 2 positions
             seq1_to_seq2 = align_to_seq2[seq1_to_align]
+            # an index map to the original sequence 2 if it contained periods
             keepers = seq1_to_seq2[seq1_to_seq2 != -1]
             seq1_to_seq2[seq1_to_seq2 != -1] = seq2_to_final_map[keepers]
             return seq1_to_seq2

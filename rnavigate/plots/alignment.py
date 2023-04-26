@@ -21,7 +21,7 @@ class Alignment(Plot):
         ax.set(xlim=(0.5, len(al1)+0.5),
                ylim=(-1, 1),
                yticks=[0-offset, 0+offset],
-               yticklabels=label
+               yticklabels=label[::-1]
                )
         for spine in ['top', 'bottom', 'left', 'right']:
             ax.spines[spine].set_color(None)

@@ -4,9 +4,20 @@ Plan for RNAvigate
 Changes workflow
 ----------------
 - make changes to the code
-- change the docstring (as well as higher-order functions)
-- add to documentation
+- update the docstring (as well as higher-order functions)
+- update the documentation
+- add changes to the change log
 - push all these changes together
+
+Top priorities (3 maximum)
+--------------------------
+
+- completing documentation website and writing doc strings
+  - [ ] plots
+  - [ ] getting started
+  - [ ] analyses
+  - [ ] namespace and getting docstrings
+- test and check everything before the next major update.
 
 Documentation To-Do List
 ------------------------
@@ -46,19 +57,10 @@ Documentation To-Do List
     - [ ] sm
     - [ ] ss
 
-Top priorities (3 maximum)
---------------------------
-- completing documentation website and writing doc strings
-  - [ ] plots
-  - [ ] getting started
-  - [ ] analyses
-  - [ ] namespace and getting docstrings
-- test and check everything before the next major update.
-- check that all functions that compare objects fit them first
-
 Coding To-Do List
 -----------------
 
+- check that all functions that compare objects align or check similarity
 - unify the scalar -> rgba functionality for all Data objects
 - analyses are a sub-class of Sample?
 - RNAvigate conda package
