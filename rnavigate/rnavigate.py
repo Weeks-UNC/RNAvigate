@@ -560,116 +560,8 @@ class Sample():
 
 ###############################################################################
 # sample plotting functions
-#     plot_qc
-#     plot_ss
-#     plot_mol
-#     plot_heatmap
-#     plot_circle
-#     plot_disthist
-#     plot_skyline
-#     plot_arcs
 #     plot_shapemapper
-#     plot_arcs_multifilter
-#     plot_ss_multifilter
-#     plot_mol_multifilter
-#     plot_circle_multifilter
-#     plot_disthist_multifilter
 ###############################################################################
-
-    def plot_qc(self, **kwargs):
-        """Makes a QC plot.
-        Equivalent to plot_qc(samples=[self], **kwargs)
-        See rnavigate.plot_qc for more detail.
-        """
-        return plot_qc([self], **kwargs)
-
-    def plot_ss(self, dance=False, **kwargs):
-        """Makes a secondary structure drawing.
-        Equivalent to plot_ss(samples=[self], **kwargs)
-        See plot_ss for more detail.
-        """
-        if dance:
-            self.dance_filter()
-            if "interactions_filter" in kwargs:
-                kwargs["interactions"] = {"prefiltered": True}
-            if "interactions2_filter" in kwargs:
-                kwargs["interactions2"] = {"prefiltered": True}
-            plot = plot_ss(self.dance, **kwargs)
-            for i, dance in enumerate(self.dance):
-                ax = plot.get_ax(i)
-                ax.set_title(
-                    f"DANCE component: {i}, Percent: {self.dance_percents[i]}")
-            return plot
-        return plot_ss([self], **kwargs)
-
-    def plot_mol(self, dance=False, **kwargs):
-        """Makes an interactive 3D molecular rendering.
-        Equivalent to plot_mol(samples=[self]).
-        See plot_mol for more detail.
-        """
-        if dance:
-            self.dance_filter()
-            if "interactions_filter" in kwargs:
-                kwargs["interactions_filter"] = {"prefiltered": True}
-            if "interactions2_filter" in kwargs:
-                kwargs["interactions2_filter"] = {"prefiltered": True}
-            plot = plot_mol(self.dance, **kwargs)
-            for i, dance in enumerate(self.dance):
-                ax = plot.get_ax(i)
-                ax.set_title(
-                    f"DANCE component: {i}, Percent: {self.dance_percents[i]}")
-            return plot
-        return plot_mol([self], **kwargs)
-
-    def plot_heatmap(self, **kwargs):
-        """Makes a density heatmap of interactions and/or distance contour of
-        structure.
-        Equivalent to plot_heatmap(samples=[self], **kwargs).
-        See plot_heatmap for more detail.
-        """
-        return plot_heatmap([self], **kwargs)
-
-    def plot_circle(self, **kwargs):
-        """Makes a circle plot.
-        Equivalent to plot_circle(samples=[self], **kwargs).
-        See plot_circle for more detail.
-        """
-        return plot_circle([self], **kwargs)
-
-    def plot_disthist(self, **kwargs):
-        """Makes a distance histogram of interactions data.
-        Equivalent to plot_disthist(samples=[self], **kwargs).
-        See plot_disthist for more detail.
-        """
-        return plot_disthist([self], **kwargs)
-
-    def plot_skyline(self, dance=False, **kwargs):
-        """Makes a skyline profile plot of per-nucleotide data.
-        Equivalent to plot_skyline(samples=[self], **kwargs).
-        See plot_skyline for more detail.
-        """
-        if dance:
-            plot = plot_skyline(self.dance, **kwargs)
-            plot.axes[0, 0].legend(title="Comp: Percent")
-            plot.axes[0, 0].set_title(f"{self.sample}: DANCE Reactivities")
-            return plot
-        plot = plot_skyline([self], **kwargs)
-        return plot
-
-    def plot_arcs(self, dance=False, **kwargs):
-        """Makes an arc plot.
-        Equivalent to plot_arcs(samples=[self], **kwargs).
-        See plot_arcs for more detail.
-        """
-        if dance:
-            self.dance_filter()
-            if "interactions" in kwargs:
-                kwargs["interactions_filter"] = {"prefiltered": True}
-            if "interactions2" in kwargs:
-                kwargs["interactions2_filter"] = {"prefiltered": True}
-            plot = plot_arcs(samples=self.dance, **kwargs)
-            return plot
-        return plot_arcs([self], **kwargs)
 
     def plot_shapemapper(self, panels=["profile", "rates", "depth"]):
         """Makes a standard ShapeMapper2 profile plot with 3 panels: Normalized
@@ -687,56 +579,6 @@ class Sample():
         plot.add_sample(self, profile="profile", label="label")
         plot.set_figure_size()
         return plot
-
-    def plot_arcs_multifilter(self, filters, **kwargs):
-        """Makes a multipanel arc plot. Each panel shows data as defined by
-        filters. Equivalent to calling:
-          plot_arcs(samples=[self], filters=filters, **kwargs)
-        See plot_arcs for more detail.
-        """
-        return plot_arcs(samples=[self], filters=filters, **kwargs)
-
-    def plot_ss_multifilter(self, filters, **kwargs):
-        """Makes a multipanel secondary structure drawing. Each panel
-        shows data as defined by filters. Equivalent to calling:
-          plot_ss(samples=[self], filters=filters, **kwargs)
-        See plot_ss for more detail.
-        """
-        return plot_ss(samples=[self], filters=filters, **kwargs)
-
-    def plot_mol_multifilter(self, filters, **kwargs):
-        """Makes a multipanel interactive 3D molecular rendering. Each panel
-        shows data as defined by filters. Equivalent to calling:
-          plot_mol(samples=[self], filters=filters, **kwargs)
-        See plot_mol for more detail.
-        """
-        return plot_mol(samples=[self], filters=filters, **kwargs)
-
-    def plot_heatmap_multifilter(self, filters, **kwargs):
-        """Makes a multipanel 2D heatmap of interactions data and contour plot
-        of structure distances. Each panel shows data as defined by filters.
-        Equivalent to calling:
-          plot_heatmap(samples=[self], filters=filters, **kwargs)
-        See plot_heatmap for more detail.
-        """
-        return plot_heatmap(samples=[self], filters=filters, **kwargs)
-
-    def plot_circle_multifilter(self, filters, **kwargs):
-        """Makes a multipanel circle plot. Each panel shows data as defined
-        by filters. Equivalent to calling:
-          plot_heatmap(samples=[self], filters=filters, **kwargs)
-        See plot_heatmap for more detail.
-        """
-        return plot_circle(samples=[self], filters=filters, **kwargs)
-
-    def plot_disthist_multifilter(self, filters, **kwargs):
-        """Makes a multipanel distance distribution histogram. Each panel shows
-        data as defined by filters. Equivalent to calling:
-          plot_disthist(samples=[self], filters=filters, **kwargs)
-        See plot_disthist for more detail.
-        """
-        return plot_disthist(samples=[self], filters=filters, **kwargs)
-
 
 ###############################################################################
 # accessory functions
@@ -1263,7 +1105,7 @@ def plot_arcs_compare(samples, seq_source=None, ct="ct", comp=None,
     if plot_kwargs is None:
         plot_kwargs = {}
     if region != "all":
-        al1 = [i for i, nt in seq1_full.sequence if nt != '.']
+        al1 = [i for i, nt in enumerate(seq1_full.sequence) if nt != '.']
         region = [al1[region[0]], al1[region[1]]]
     # coerce interactions and interactions_filter into filters format
     filters = [{"interactions": interactions} | interactions_filter]

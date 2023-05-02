@@ -29,7 +29,7 @@ def get_ss_class(filepath, **kwargs):
     """
     if filepath is None:
         return None
-    extension = filepath.split('.')[-1]
+    extension = filepath.split('.')[-1].lower()
     instantiator = {
         "varna": VARNA,
         "xrna": XRNA,
