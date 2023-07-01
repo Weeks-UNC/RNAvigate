@@ -1,44 +1,38 @@
 import Bio.PDB
-from .data import Data
+from rnavigate import data
 import numpy as np
 
 
-class PDB(Data):
-
-    def __init__(self, filepath, chain=None, datatype="pdb", offset=None, fasta=None):
-        self.datatype = datatype
-        get_offset = offset is None
-        get_seq = fasta is None
-        self.sequence = ""
-        if chain is None:
-            self.chain = " "
-        else:
-            self.chain = chain
-        if get_offset or get_seq:
-            self.get_sequence_offset(filepath, get_seq, get_offset)
-        if not get_offset:
-            self.offset = offset
-        if not get_seq:
-            super().__init__(filepath=fasta)
-        self.read_pdb(filepath)
-        self.path = filepath
+class PDB(data.Sequence):
+    def __init__(self, input_data, chain, sequence=None):
+        self.chain = chain
+        if sequence is None:
+            sequence = self.get_sequence(input_data)
+        super().__init__(input_data=sequence)
+        self.read_pdb(input_data)
+        self.path = input_data
         self.distance_matrix = {}
 
-    def get_sequence_offset(self, pdb, get_seq=True, get_offset=True):
+    def get_sequence(self, pdb):
+        seqres = []
         with open(pdb) as file:
             for line in file.readlines():
                 line = [field.strip() for field in line.split()]
-                if line[0] == "DBREF" and line[2] == self.chain and get_offset:
-                    self.offset = int(line[3])-1
-                if line[0] == "SEQRES" and line[2] == self.chain and get_seq:
-                    for nt in line[4:]:
-                        valid = nt[0].upper() in 'GUACT'
-                        if valid and (len(nt) == 3) and nt.endswith("TP"):
-                            self.sequence += nt[0]
-                        elif valid and (len(nt) == 1):
-                            self.sequence += nt[0]
-                        else:
-                            raise ValueError('invalid nt in SEQRES: ' + nt)
+                if line[0] == "SEQRES" and line[2] == self.chain:
+                    seqres.extend(line[4:])
+        return self.get_sequence_from_seqres(seqres)
+
+    def get_sequence_from_seqres(self, seqres):
+        sequence = []
+        for nt in seqres:
+            valid = nt[0].upper() in "GUACT"
+            if valid and (len(nt) == 3) and nt.endswith("TP"):
+                sequence.append(nt[0])
+            elif valid and (len(nt) == 1):
+                sequence.append(nt[0])
+            else:
+                raise ValueError("invalid nt in SEQRES: " + nt)
+        return ''.join(sequence)
 
     def read_pdb(self, pdb):
         if pdb.split('.')[-1] == "pdb":
