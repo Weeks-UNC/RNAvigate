@@ -9,13 +9,11 @@ class Alignment(Plot):
     def get_figsize(self):
         return (50, 1.2)
 
-    def plot_data(self, data1, data2, label):
+    def plot_data(self, alignment, label):
         ax = self.get_ax()
-        _, _, al1, _ = data1.get_alignment_map(
-            fit_to=data2,
-            return_alignment=True)
+        al1 = alignment.alignment1
         self.region = (1, len(al1))
-        plot_alignment(self, ax, data1, data2, label,
+        plot_alignment(self, ax, alignment, label,
                        spines_positions={"top": 1, "bottom": -1})
         offset = 0.78
         ax.set(xlim=(0.5, len(al1)+0.5),
@@ -44,14 +42,15 @@ class Alignment(Plot):
                                 right_in=right_in)
 
 
-def plot_alignment(plot, ax, data1, data2, label, center=-0.04, offset=0.78,
+def plot_alignment(plot, ax, alignment, label, center=-0.04, offset=0.78,
                    spines_positions=None):
     if spines_positions is None:
         spines_positions = {"top": center+offset*1.1,
                             "bootom": center-offset*1.1}
-    seq1, seq2, al1, al2 = data1.get_alignment_map(
-        fit_to=data2,
-        return_alignment=True)
+    seq1 = alignment.sequence1
+    seq2 = alignment.sequence2
+    al1 = alignment.alignment1
+    al2 = alignment.alignment2
     al1 = al1.replace(".", "-")
     plot.add_sequence(ax, sequence=al1, yvalue=center+offset, ytrans="data")
     plot.add_sequence(ax, sequence=al2, yvalue=center-offset, ytrans="data")

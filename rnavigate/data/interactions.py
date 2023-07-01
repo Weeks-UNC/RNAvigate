@@ -1,37 +1,32 @@
+from operator import ge, le, gt, lt, eq, ne
+from os.path import isfile
+from rnavigate import data
 import pandas as pd
-from .data import Data
-import matplotlib as mp
+import matplotlib.colors as mpc
 import matplotlib.pyplot as plt
 import numpy as np
-from operator import ge, le, gt, lt, eq, ne
 import seaborn as sns
 
 
-class Interactions(Data):
-    def __init__(self, datatype="interactions", dataframe=None,
-                 default_metric=None,
-                 filepath=None, sep='\t', read_csv_kw={}, window=1,
-                 sequence=None, fasta=None,
-                 fill={}, cmaps={}, mins_maxes={}):
+class Interactions(data.Data):
+    def __init__(self, input_data, sequence, metric, metric_defaults,
+                 read_table_kw=None, window=1):
         """Given a dataframe or a data file, construct the interactions object
 
         Args:
-            datatype (str, optional): becomes self.datatype, indicates the
-                datatype. Defaults to "interactions".
-            dataframe (pandas DataFrame, optional): a dataframe containing
-                interactions data. Must have at least "i" and "j" columns
-                indicating the 5' and 3' ends of the interactions. Defaults to
-                None.
+            input_data (str | pandas.DataFrame):
+                path to a file or dataframe containing interactions data.
+                Must have at least "i" and "j" columns indicating the 5' and 3'
+                ends of the interactions.
+            sequence (str | pandas.DataFrame):
+                sequence string, fasta file, or a pandas dataframe containing
+                a "Sequence" column.
             default_metric (str, optional): column name to use as the default
                 metric. Defaults to None.
-            filepath (str, optional): path to a file containing interactions
-                data. Defaults to None.
-            sep (str, optional): passed to pandas read_csv. Defaults to '\t'.
-            read_csv_kw (dict, optional): other options for read_csv.
+            read_table_kw (dict, optional): other options for read_table.
                 Defaults to {}.
             window (int, optional): 5' and 3' interactions windows.
                 Defaults to 1.
-            sequence (str, optional): sequence string. Defaults to None.
             fasta (str, optional): path to fasta file. Defaults to None.
             fill (dict, optional): dictionary specifying a fill value (values)
                 to use with a metric (keys). Defaults to {}.
@@ -41,129 +36,16 @@ class Interactions(Data):
                 as a list of floats (values) to use with given metric (keys).
                 Defaults to {}.
         """
-        super().__init__(sequence=sequence, filepath=fasta)
+        super().__init__(
+            input_data=input_data,
+            sequence=sequence,
+            metric=metric,
+            metric_defaults=metric_defaults,
+            read_table_kw=read_table_kw)
         self.window = window
-        self.datatype = datatype
-        self.filepath = filepath
-        if dataframe is not None:
-            self.data = dataframe
-        elif filepath is not None:
-            self.read_file(filepath=filepath, sep=sep, read_csv_kw=read_csv_kw)
-        self.columns = self.data.columns
-        self._fill_values = {'Distance': np.nan}
-        self._fill_values.update(fill)
-        self._cmaps = {'Distance': 'jet'}
-        self._cmaps.update(cmaps)
-        self._mins_maxes = {'Distance': [10, 80]}
-        self._mins_maxes.update(mins_maxes)
-        self.default_metric = default_metric
-        self.metric = self.default_metric
 
-    def read_file(self, filepath, sep, read_csv_kw):
-        """Convert data file to pandas dataframe and store as self.data
-
-        Args:
-            filepath (str): path to data file containing interactions
-            sep (str): field separator character
-            read_csv_kw (dict): kwargs dictionary passed to pd.read_csv
-        """
-        self.data = pd.read_csv(filepath, sep=sep, **read_csv_kw)
-
-    @property
-    def fill(self):
-        """retreive fill value for currently set metric
-
-        Returns:
-            number-like: value used to fill in missing values
-        """
-        return self._fill_values[self.metric]
-
-    @property
-    def cmap(self):
-        """Get the currect colormap
-
-        Returns:
-            matplotlib colormap: colormap for mapping data to colors
-        """
-        return self._cmap
-
-    @cmap.setter
-    def cmap(self, cmap):
-        """Sets the colormap to be used for mapping data to colors
-
-        Args:
-            cmap (str | list): a valid matplotlib color-like, list of colors,
-            colormap name or colormap object
-        """
-        if mp.colors.is_color_like(cmap):
-            cmap = mp.colors.ListedColormap([cmap])
-        elif (isinstance(cmap, list) and
-              all(mp.colors.is_color_like(c) for c in cmap)):
-            cmap = mp.colors.ListedColormap(cmap)
-        cmap = plt.get_cmap(cmap)
-        cmap = cmap(np.arange(cmap.N))
-        cmap[:, -1] = np.full((len(cmap)), 0.6)  # set default alpha to 0.6
-        cmap = self.modify_cmap(cmap)
-        cmap = mp.colors.ListedColormap(cmap)
-        self._cmap = cmap
-
-    def modify_cmap(self, cmap):
-        """Subclass specific function to modify cmaps
-
-        Args:
-            cmap (matplotlib colormap): colormap to be modified
-
-        Returns:
-            matplotlib colormap: modified colormap
-        """
-        return cmap
-
-    @property
-    def metric(self):
-        """Retreive the currently set metric
-
-        Returns:
-            str: column name of self.data
-        """
-        return self._metric
-
-    @metric.setter
-    def metric(self, value):
-        """Sets the metric, cmap, and min_max values. If metric is "Distance"
-        or "Distance_atom", Distances are calculated.
-
-        Args:
-            value (str | tuple): valid column name of self.data. If "Distance",
-                must be provided as a tuple along with the PDB object to
-                compute distances
-        """
-        if value in self.data.keys():
-            self._metric = value
-        elif isinstance(value, tuple):
-            value, pdb = value
-            if value.startswith("Distance_"):
-                value, atom = value.split("_")
-                self.set_3d_distances(pdb, atom)
-                self._metric = value
-            elif value == "Distance":
-                self.set_3d_distances(pdb, "O2'")
-                self._metric = value
-        elif value is None:
-            self._metric = self.default_metric
-        else:
-            print(f"{value} is not a valid metric of {self.datatype}")
-            self._metric = self.default_metric
-        if self._metric in self._cmaps:
-            self.cmap = self._cmaps[self._metric]
-        else:
-            self.cmap = "gray"
-        if self._metric in self._mins_maxes:
-            self.min_max = self._mins_maxes[self._metric]
-        else:
-            self.min_max = [min(self.data[self.metric]),
-                            max(self.data[self.metric])]
-
-    def mask_on_sequence(self, compliment_only, nts, return_mask=False):
+    def mask_on_sequence(self, compliment_only=None, nts=None,
+                         return_mask=False):
         """Mask interactions based on sequence content
 
         Args:
@@ -178,12 +60,12 @@ class Interactions(Data):
             numpy array: the mask array (only if return_mask==True)
         """
         mask = []
-        comp = {'A': 'U', 'U': 'AG', 'G': 'CU', 'C': 'G'}
+        comp = {"A": "UT", "U": "AG", "T": "AG", "G": "CU", "C": "G"}
         for _, i, j in self.data[["i", "j"]].itertuples():
             keep = []
             for w in range(self.window):
-                i_nt = self.sequence[i+w-1].upper()
-                j_nt = self.sequence[j+self.window-w-2].upper()
+                i_nt = self.sequence[i + w - 1].upper()
+                j_nt = self.sequence[j + self.window - w - 2].upper()
                 if compliment_only:
                     keep.append(i_nt in comp[j_nt])
                 if nts is not None:
@@ -223,29 +105,28 @@ class Interactions(Data):
                 self.mask_on_ct(each, min_cd, max_cd, ss_only, ds_only,
                                 paired_only)
                 return
-        assert ct.datatype == "ct", "CT filtering requires a ct object."
-        am = self.get_alignment_map(ct)
+        mapping = data.SequenceAlignment(self, ct).mapping
         mask = []
         i_j_keep = ["i", "j", "mask"]
         for _, i, j, keep in self.data[i_j_keep].itertuples():
-            i = am[i-1]+1
-            j = am[j-1]+1
+            i = mapping[i - 1] + 1
+            j = mapping[j - 1] + 1
             true_so_far = keep
             if paired_only and true_so_far:
                 for w in range(self.window):
-                    true_so_far = ct.ct[i+w-1] == j+self.window-w-1
+                    true_so_far = ct.ct[i + w - 1] == j + self.window - w - 1
                     if not true_so_far:
                         break
             if ss_only and true_so_far:
                 # TODO: which windows are ss vs. ds? At least 2 per window.
-                true_so_far = (ct.ct[i-1] == 0) and (ct.ct[j-1] == 0)
+                true_so_far = (ct.ct[i - 1] == 0) and (ct.ct[j - 1] == 0)
             if ds_only and true_so_far:
-                true_so_far = (ct.ct[i-1] != 0) and (ct.ct[j-1] != 0)
+                true_so_far = (ct.ct[i - 1] != 0) and (ct.ct[j - 1] != 0)
             if (min_cd is not None or max_cd is not None) and true_so_far:
                 cd = []
                 for iw in range(self.window):
                     for jw in range(self.window):
-                        cd.append(ct.contactDistance(i+iw, j+jw))
+                        cd.append(ct.contactDistance(i + iw, j + jw))
                 cd = min(cd)
                 if min_cd is not None:
                     true_so_far = cd >= min_cd
@@ -257,8 +138,9 @@ class Interactions(Data):
         else:
             self.update_mask(mask)
 
-    def mask_on_profile(self, profile, min_profile=None, max_profile=None,
-                        return_mask=False):
+    def mask_on_profile(
+            self, profile, min_profile=None, max_profile=None,
+            return_mask=False):
         """Masks interactions based on per-nucleotide information. Positions
         that are not mapped to profile or are np.nan values in profile are not
         masked.
@@ -276,16 +158,16 @@ class Interactions(Data):
         Returns:
             numpy array: the mask array (only if return_mask==True)
         """
-        alignment_map = self.get_alignment_map(profile)
+        mapping = data.SequenceAlignment(self, profile).mapping
         norm_prof = profile.data["Norm_profile"]
         mask = np.full(len(self.data), True)
         for idx, i, j in self.data[["i", "j"]].itertuples():
-            index_i = alignment_map[i-1]
-            index_j = alignment_map[j-1]
+            index_i = mapping[i - 1]
+            index_j = mapping[j - 1]
             keep_ij = True
             if (index_i != -1) and (index_j != -1):
-                prof_i = np.nanmedian(norm_prof[index_i:index_i+self.window])
-                prof_j = np.nanmedian(norm_prof[index_j:index_j+self.window])
+                prof_i = np.nanmedian(norm_prof[index_i:index_i + self.window])
+                prof_j = np.nanmedian(norm_prof[index_j:index_j + self.window])
                 if min_profile is not None:
                     keep_ij &= (prof_i >= min_profile) | np.isnan(prof_i)
                     keep_ij &= (prof_j >= min_profile) | np.isnan(prof_j)
@@ -298,7 +180,8 @@ class Interactions(Data):
         else:
             self.update_mask(mask)
 
-    def mask_on_position(self, exclude, isolate, return_mask=False):
+    def mask_on_position(
+            self, exclude=None, isolate=None, return_mask=False):
         """Masks interactions based on position in sequence
 
         Args:
@@ -325,7 +208,8 @@ class Interactions(Data):
         else:
             self.update_mask(mask)
 
-    def mask_on_distance(self, max_dist, min_dist, return_mask=False):
+    def mask_on_distance(
+            self, max_dist=None, min_dist=None, return_mask=False):
         """Mask interactions based on their primary sequence distance (j-i).
 
         Args:
@@ -338,7 +222,7 @@ class Interactions(Data):
             numpy array: the mask array (only if return_mask==True)
         """
         primary_distances = np.absolute(self.data.eval("i - j"))
-        mask = self.data['mask']
+        mask = self.data["mask"]
         if min_dist is not None:
             mask &= primary_distances >= min_dist
         if max_dist is not None:
@@ -368,9 +252,13 @@ class Interactions(Data):
                 self.update_mask(self.data[key] > kwargs[key])
             elif "_" in key:
                 key2, comparison = key.rsplit("_", 1)
-                operators = {"ge": ge, "le": le,
-                             "gt": gt, "lt": lt,
-                             "eq": eq, "ne": ne}
+                operators = {
+                    "ge": ge,
+                    "le": le,
+                    "gt": gt,
+                    "lt": lt,
+                    "eq": eq,
+                    "ne": ne}
                 if key2 in self.data.keys() and comparison in operators.keys():
                     operator = operators[comparison]
                     self.update_mask(operator(self.data[key2], kwargs[key]))
@@ -379,36 +267,24 @@ class Interactions(Data):
             else:
                 print(f"{key}={kwargs[key]} is not a valid filter.")
 
-    def set_mask_offset(self, fit_to, prefiltered=False):
-        """Define new i and j positions that map to the provided fit_to
-        sequence. Interactions in which i or j does not map are masked. If
-        fit_to object is a PDB and i and j are not in the structure, they are
-        masked.
+    def reset_mask(self):
+        """Resets the mask to all True (removes previous filters)"""
+        self.data['mask'] = np.ones(len(self.data), dtype=bool)
 
-        Args:
-            fit_to (Data or subclass): a data object containing a sequence
-            prefiltered (bool, optional): if True, original mask values are
-                kept. Defaults to False.
+    def get_aligned_data(self, alignment):
+        """Get a new copy of the data with i and j mapped to new positions
+        using an alignment. Interactions in which i or j does not map are
+        dropped.
         """
-        am = self.get_alignment_map(fit_to)
-        i = np.array([am[i-1]+1 for i in self.data["i"].values])
-        j = np.array([am[j-1]+1 for j in self.data["j"].values])
-        if prefiltered:
-            mask = self.data["mask"].copy()
-        else:
-            mask = np.ones(len(i), dtype=bool)
-        for w in range(self.window):
-            mask = mask & ((i+w) != 0) & ((j+w) != 0)
-        self.data["mask"] = mask
-        self.data['i_offset'] = i
-        self.data['j_offset'] = j
-        if fit_to.datatype == 'pdb':
-            mask = []
-            for i, j in zip(self.data["i_offset"], self.data["j_offset"]):
-                mask.append(fit_to.is_valid_idx(seq_idx=i)
-                            and fit_to.is_valid_idx(seq_idx=j))
-            mask = np.array(mask, dtype=bool)
-            self.update_mask(mask)
+        new_data = alignment.map_dataframe(
+            dataframe = self.data[self.data['mask']],
+            position_columns=['i', 'j'])
+        return self.__class__(
+            input_data=new_data,
+            sequence=alignment.target,
+            metric=self._metric,
+            metric_defaults=self.metric_defaults,
+            window=self.window)
 
     def update_mask(self, mask):
         """Given a new masking array, the mask is updated
@@ -418,21 +294,23 @@ class Interactions(Data):
         """
         self.data["mask"] = self.data["mask"] & mask
 
-    def filter(self, fit_to,
-               prefiltered=False,
-               ct=None,  # required if any of next are passed
-               min_cd=None, max_cd=None,
-               paired_only=False, ss_only=False, ds_only=False,
-               profile=None, min_profile=None, max_profile=None,
-               compliments_only=False, nts=None,
-               max_distance=None, min_distance=None,
-               exclude_nts=None, isolate_nts=None,
-               resolve_conflicts=None,
-               **kwargs):
+    def filter(
+            self, prefiltered=False,
+            # mask on ct
+            ct=None, min_cd=None, max_cd=None, paired_only=False,
+            ss_only=False, ds_only=False,
+            # mask on profile
+            profile=None, min_profile=None, max_profile=None,
+            # mask on sequence
+            compliments_only=False, nts=None,
+            # mask on position
+            max_distance=None, min_distance=None, exclude_nts=None,
+            isolate_nts=None,
+            # others
+            resolve_conflicts=None, **kwargs):
         """Convenience function that applies the above filters simultaneously.
 
         Args:
-            fit_to (Data or subclass): passed to self.set_mask_update()
             prefiltered (bool, optional): passed to self.set_mask_update().
                 Defaults to False.
             ct (CT or subclass, optional): passed to self.mask_on_ct().
@@ -474,14 +352,13 @@ class Interactions(Data):
         def filters_are_on(*filters):
             return any(f not in [None, False] for f in filters)
 
-        self.set_mask_offset(fit_to, prefiltered=prefiltered)
-        # TODO: decide what prefiltered does exactly...
         if prefiltered:
             return
+        self.reset_mask()
         if filters_are_on(exclude_nts, isolate_nts):
             self.mask_on_position(exclude_nts, isolate_nts)
         if filters_are_on(max_distance, min_distance):
-            self.mask_distance(max_dist=max_distance, min_dist=min_distance)
+            self.mask_on_distance(max_dist=max_distance, min_dist=min_distance)
         if filters_are_on(min_profile, max_profile):
             self.mask_on_profile(profile, min_profile, max_profile)
         if filters_are_on(min_cd, max_cd, ss_only, ds_only, paired_only):
@@ -502,61 +379,43 @@ class Interactions(Data):
         """
         return kwargs
 
-    def get_ij_colors(self, min_max=None, cmap=None):
-        """"Gets i, j, and colors lists for plotting interactions. i and j are
+    def get_ij_colors(self):
+        """Gets i, j, and colors lists for plotting interactions. i and j are
         the 5' and 3' ends of each interaction, and colors is the color to use
         for each interaction. Values of self.data[self.metric] are normalized
         to 0 to 1, which correspond to self.min_max values. These are then
         mapped to a color using self.cmap.
 
-        Args:
-            min_max (list of float, optional): overrides self.min_max.
-                Defaults to None.
-            cmap (str, optional): a colormap name which overrides self.cmap.
-                Defaults to True.
-
         Returns:
             list, list, list: 5' and 3' ends of each pair, color for each pair
         """
-        if cmap is None:
-            cmap = self.cmap
-        else:
-            cmap = plt.get_cmap(cmap)
-        if min_max is None:
-            min_max = self.min_max
-        data = self.get_normalized_ij_data(min_max=min_max)
+        if len(self.data) == 0:
+            return [], [], []
+
+        dataframe = self.get_sorted_data()
         i_list, j_list, colors = [], [], []
-        if len(data) == 0:
-            return i_list, j_list, colors
-        for _, i, j, datum in data.itertuples():
+        for _, i, j, datum in dataframe[['i','j', self.metric]].itertuples():
             for w in range(self.window):
                 i_list.append(i + w)
                 j_list.append(j + self.window - 1 - w)
-                if np.isnan(datum):
-                    colors.append('grey')
-                else:
-                    colors.append(cmap(datum))
+                colors.append(datum)
+        colors = self.cmap.values_to_hexcolors(colors, 0.6)
         return i_list, j_list, colors
 
-    def get_normalized_ij_data(self, min_max):
-        """Retreives values in self.data[self.metric] that are not masked,
-        normalized between 0 and 1, which correspond to min_max values.
-
-        Args:
-            min_max (list of float): min and max used to normalize values
+    def get_sorted_data(self):
+        """Returns a sorted copy of interactions data.
 
         Returns:
-            numpy array: filtered and normalized interactions values
+            pandas.DataFrame: i, j, and metric values, sorted
         """
-        metric = self.metric
-        columns = ["i_offset", "j_offset", metric]
-        data = self.data.loc[self.data["mask"], columns].copy()
-        ascending = metric not in ['Distance']  # high distance is bad
-        data.sort_values(by=metric, ascending=ascending, inplace=True,
-                         na_position='first')
-        norm = plt.Normalize(min_max[0], min_max[1], clip=True)
-        data[metric] = norm(data[metric])
-        return data
+        ascending = self.metric not in ["Distance"]  # high distance is bad
+        dataframe = self.data[['i', 'j', self.metric]].copy()
+        dataframe.sort_values(
+            by=self.metric,
+            ascending=ascending,
+            inplace=True,
+            na_position="first")
+        return dataframe
 
     def print_new_file(self, outfile=None):
         """Prints a new file containing repositioned and filtered interactions
@@ -568,14 +427,13 @@ class Interactions(Data):
         """
         data = self.data.copy()
         data = data[data["mask"]]
-        data["i"] = data["i_offset"]
-        data["j"] = data["j_offset"]
         if "Sign" in data.columns:
             data.rename({"Sign": "+/-"}, inplace=True)
-        csv = data.to_csv(columns=self.columns, sep='\t', index=False,
-                          line_terminator='\n')
+        csv = data.to_csv(
+            columns=self.columns, sep="\t", index=False, line_terminator="\n"
+        )
         if outfile is not None:
-            with open(outfile, 'w') as out:
+            with open(outfile, "w") as out:
                 out.write(self.header)
                 out.write(csv)
         else:
@@ -589,7 +447,7 @@ class Interactions(Data):
             pdb (PDB): a data object containing atomic coordinates
             atom (str): an atom id
         """
-        alignment_map = self.get_alignment_map(pdb)
+        mapping = data.SequenceAlignment(self, pdb).mapping
         distance_matrix = pdb.get_distance_matrix(atom=atom)
         i = self.data["i"].values
         j = self.data["j"].values
@@ -597,9 +455,9 @@ class Interactions(Data):
         pairs = self.window**2
         for iw in range(self.window):
             for jw in range(self.window):
-                io = alignment_map[i+iw-1]
-                jo = alignment_map[j+jw-1]
-                distances += distance_matrix[io, jo]/pairs
+                io = mapping[i + iw - 1]
+                jo = mapping[j + jw - 1]
+                distances += distance_matrix[io, jo] / pairs
         self.data["Distance"] = distances
 
     def resolve_conflicts(self, metric=None):
@@ -608,8 +466,10 @@ class Interactions(Data):
         broken into components to speed up the identification of the MWIS. Then
         the mask is updated to only include the MWIS.
         """
+
         def get_components(graph):
             """Using DFS, returns a list of component subgraphs of graph."""
+
             def dfs(key, value, component):
                 """Depth first seach to identify a component."""
                 visited[key] = True
@@ -629,7 +489,7 @@ class Interactions(Data):
         def graphSets(graph, node_weights):
             """Finds the Maximal Weighted Independent Set of a graph."""
             # Base Case - Given Graph has no nodes
-            if(len(graph) == 0):
+            if len(graph) == 0:
                 return []
             # Select a vertex from the graph
             current_vertex = list(graph.keys())[0]
@@ -640,13 +500,13 @@ class Interactions(Data):
             case_1 = graphSets(new_graph, node_weights)
             # Case 2 - including current Vertex, and excluding neighbors
             for neighbor in graph[current_vertex]:
-                if(neighbor in new_graph):
+                if neighbor in new_graph:
                     del new_graph[neighbor]
             case_2 = [current_vertex] + graphSets(new_graph, node_weights)
             # Our final result is the one which has highest weight, return it
             weight_1 = sum(node_weights[node] for node in case_1)
             weight_2 = sum(node_weights[node] for node in case_2)
-            if(weight_1 > weight_2):
+            if weight_1 > weight_2:
                 return case_1
             return case_2
 
@@ -668,11 +528,15 @@ class Interactions(Data):
                 graph[v1] = []
             node_weights[v1] = g  # recording the node weight
             # conflicts = indices of all overlapping, but not parallel corrs
-            conflicts = np.where(((abs(data["i"] - i) < window) |
-                                  (abs(data["j"] - i) < window) |
-                                  (abs(data["i"] - j) < window) |
-                                  (abs(data["j"] - j) < window)) &
-                                 ((data["j"] - j) != (i - data["i"])))[0]
+            conflicts = np.where(
+                (
+                    (abs(data["i"] - i) < window)
+                    | (abs(data["j"] - i) < window)
+                    | (abs(data["i"] - j) < window)
+                    | (abs(data["j"] - j) < window)
+                )
+                & ((data["j"] - j) != (i - data["i"]))
+            )[0]
             # adding conflicts to graph dictionary
             for conflict in conflicts:
                 v2 = indices[conflict]
@@ -694,82 +558,107 @@ class Interactions(Data):
 
 
 class SHAPEJuMP(Interactions):
-    def __init__(self, filepath, datatype="shapejump", fasta=None,
-                 sequence=None):
-        """Constructs an Interactions object from SHAPEJuMP data
+    def __init__(self, input_data, sequence=None, metric='Metric',
+                 metric_defaults=None, read_table_kw=None, window=1):
+        """Constructs an Interactions object from SHAPEJuMP data"""
+        if metric_defaults is None:
+            metric_defaults = {}
+        metric_defaults = {
+            'Percentile': {
+                'metric_column': 'Percentile',
+                'error_column': None,
+                'color_column': None,
+                'cmap': 'YlGnBu',
+                'normalization': 'min_max',
+                'values': [0.98, 1.0],
+                'labels': None},
+            'Metric': {
+                'metric_column': 'Metric',
+                'error_column': None,
+                'color_column': None,
+                'cmap': 'YlGnBu',
+                'normalization': 'min_max',
+                'values': [0, 0.001],
+                'labels': None},
+        } | metric_defaults
+        super().__init__(
+            input_data=input_data,
+            sequence=sequence,
+            metric=metric,
+            metric_defaults=metric_defaults,
+            read_table_kw=read_table_kw,
+            window=window)
 
-        Args:
-            filepath (str): path to ShapeJumper deletions file
-            datatype (str, optional): stored as self.datatype. Defaults to
-                "shapejump".
-            fasta (str, optional): path to fasta file. Defaults to None.
-            sequence (str, optional): a sequence string. Defaults to None.
-        """
-        default_metric = 'Percentile'
-        fill = {'Metric': 0.0, 'Percentile': 0.0}
-        cmaps = {'Metric': 'YlGnBu', 'Percentile': 'YlGnBu'}
-        mins_maxes = {'Percentile': [0.98, 1.0], "Metric": [0, 0.001]}
-        super().__init__(filepath=filepath, datatype=datatype,
-                         default_metric=default_metric, fasta=fasta,
-                         sequence=sequence, fill=fill, cmaps=cmaps,
-                         mins_maxes=mins_maxes)
-
-    def read_file(self, filepath, sep=None, read_csv_kw=None):
+    def read_file(self, input_data, read_table_kw=None):
         """Parses a deletions.txt file and stores data as a dataframe at
         self.data, sets self.window=1, and calculates a "Percentile" column.
 
         Args:
-            filepath (str): path to deletions.txt file
-            sep (str, optional): passed to pandas.read_csv(). Defaults to None.
-            read_csv_kw (dict, optional): kwargs passed to pandas.read_csv().
+            input_data (str): path to deletions.txt file
+            read_table_kw (dict, optional): kwargs passed to pandas.read_table().
                 Defaults to None.
         """
-        column_names = ['Gene', 'i', 'j', 'Metric']
-        data = pd.read_csv(filepath, sep='\t', names=column_names, header=0)
-        data["Percentile"] = data['Metric'].rank(method='max', pct=True)
+        column_names = ["Gene", "i", "j", "Metric"]
+        data = pd.read_table(input_data, names=column_names, header=0,
+                           **read_table_kw)
+        data["Percentile"] = data["Metric"].rank(method="max", pct=True)
         self.data = data
         self.window = 1
 
 
 class RINGMaP(Interactions):
-    def __init__(self, filepath, datatype="ringmap", sequence=None):
-        """Constructs an Interactions object from RING-MaP data
+    def __init__(self, input_data, sequence=None, metric='Statistic',
+                 metric_defaults=None, read_table_kw=None, window=1):
+        if metric_defaults is None:
+            metric_defaults = {}
+        metric_defaults = {
+            'Statistic': {
+                'metric_column': 'Statistic',
+                'error_column': None,
+                'color_column': None,
+                'cmap': 'bwr',
+                'normalization': 'min_max',
+                'values': [-100, 100],
+                'labels': None},
+            'Zij': {
+                'metric_column': 'Zij',
+                'error_column': None,
+                'color_column': None,
+                'cmap': 'bwr',
+                'normalization': 'min_max',
+                'values': [-8, 8],
+                'labels': None}
+        } | metric_defaults
+        super().__init__(
+            input_data=input_data,
+            sequence=sequence,
+            metric=metric,
+            metric_defaults=metric_defaults,
+            read_table_kw=read_table_kw,
+            window=window)
 
-        Args:
-            filepath (str): path to RingMapper correlations file
-            datatype (str, optional): stored as self.datatype. Defaults to
-                "ringmap".
-            fasta (str, optional): path to fasta file. Defaults to None.
-            sequence (str, optional): a sequence string. Defaults to None.
-        """
-        default_metric = 'Statistic'
-        fill = {'Statistic': 0.0, 'Zij': 0.0}
-        cmaps = {'Statistic': 'bwr', 'Zij': 'bwr'}
-        mins_maxes = {"Statistic": [-100, 100], 'Zij': [-8, 8]}
-        super().__init__(filepath=filepath, datatype=datatype,
-                         default_metric=default_metric, sequence=sequence,
-                         fill=fill, cmaps=cmaps, mins_maxes=mins_maxes)
-
-    def read_file(self, filepath, sep=None, read_csv_kw=None):
+    def read_file(self, filepath, read_table_kw=None):
         """Parses a correlations file and stores data as a dataframe at
         self.data, sets self.window=1, and renames "+/-" column to "Sign".
 
         Args:
-            filepath (str): path to a correlations file
-            sep (str, optional): passed to pandas.read_csv(). Defaults to None.
-            read_csv_kw (dict, optional): kwargs passed to pandas.read_csv().
+            filepath (str):
+                path to a RingMapper correlations file
+            read_table_kw (dict, optional):
+                kwargs passed to pandas.read_table().
                 Defaults to None.
         """
-        with open(filepath, 'r') as file:
+        with open(filepath, "r") as file:
             self.header = file.readline()
-        split_header = self.header.split('\t')
-        window = split_header[1].split('=')[1]
+        split_header = self.header.split("\t")
+        window = split_header[1].split("=")[1]
         self.window = int(window)
-        self.data = pd.read_csv(filepath, sep='\t', header=1)
-        self.data.rename(columns={"+/-": "Sign"}, inplace=True)
+        dataframe = pd.read_table(filepath, header=1, **read_table_kw)
+        dataframe.rename(columns={"+/-": "Sign"}, inplace=True)
+        return dataframe
 
-    def data_specific_filter(self, positive_only=False, negative_only=False,
-                             **kwargs):
+    def data_specific_filter(
+            self, positive_only=False, negative_only=False, **kwargs):
         """Adds filters for "Sign" column to parent filter() function
 
         Args:
@@ -787,7 +676,7 @@ class RINGMaP(Interactions):
             self.update_mask(self.data["Sign"] == -1)
         return kwargs
 
-    def get_normalized_ij_data(self, min_max):
+    def get_sorted_data(self):
         """Overwrites parent get_normalized_ij_data. Uses these values instead:
             self.data[self.metric] * self.data["Sign"]
         Except when self.metric is "Distance".
@@ -798,71 +687,57 @@ class RINGMaP(Interactions):
         Returns:
             numpy array: normalized values for color mapping
         """
-        if self.metric == 'Distance':
-            return super().get_normalized_ij_data(min_max)
-        if min_max is None:
-            min_max = self.min_max
-        metric = self.metric
-        columns = ["i_offset", "j_offset", metric]
-        data = self.data.loc[self.data["mask"], columns+['Sign']].copy()
-        data[metric] = data[metric]*data["Sign"]
-        data.sort_values(by=metric, ascending=True, inplace=True)
-        norm = plt.Normalize(min_max[0], min_max[1], clip=True)
-        data[metric] = norm(data[metric])
-        return data[columns]
+        if self.metric == "Distance":
+            return super().get_sorted_data()
+        columns = ['i', 'j', self.metric]
+        dataframe = self.data[columns+["Sign"]].copy()
+        dataframe.eval(f"{self.metric} = {self.metric} * Sign", inplace=True)
+        dataframe.sort_values(by=self.metric, ascending=True, inplace=True)
+        return dataframe[columns]
 
 
-class PAIRMaP(Interactions):
-    def __init__(self, filepath, datatype="pairmap", sequence=None):
-        """Constructs an Interactions object from PAIR-MaP data
+class PAIRMaP(RINGMaP):
+    def __init__(self, input_data, sequence=None, metric='Class',
+                 metric_defaults=None, read_table_kw=None, window=1):
+        if metric_defaults is None:
+            metric_defaults = {}
+        metric_defaults = {
+            'Class': {
+                'metric_column': 'Class',
+                'error_column': None,
+                'color_column': None,
+                'cmap': mpc.ListedColormap([
+                    [0.3, 0.3, 0.3, 0.2],
+                    [0.0, 0.0, 0.95, 0.6],
+                    [0.12, 0.76, 1.0, 0.6]]),
+                'normalization': 'none',
+                'values': None,
+                'labels': None}
+        } | metric_defaults
+        super().__init__(
+            input_data=input_data,
+            sequence=sequence,
+            metric=metric,
+            metric_defaults=metric_defaults,
+            read_table_kw=read_table_kw,
+            window=window)
 
-        Args:
-            filepath (str): path to PAIR-MaP pairmap.txt file
-            datatype (str, optional): stored as self.datatype. Defaults to
-                "ringmap".
-            fasta (str, optional): path to fasta file. Defaults to None.
-            sequence (str, optional): a sequence string. Defaults to None.
-        """
-        default_metric = 'Class'
-        fill = {'Class': -1, 'Statistic': 0.0, 'Zij': 0.0}
-        cmaps = {'Class': mp.colors.ListedColormap([[0.3, 0.3, 0.3, 0.2],
-                                                    [0.0, 0.0, 0.95, 0.6],
-                                                    [0.12, 0.76, 1.0, 0.6]]),
-                 'Statistic': 'bwr', 'Zij': 'bwr'}
-        mins_maxes = {"Statistic": [-100, 100],
-                      'Zij': [-8, 8], "Class": [0, 2]}
-        super().__init__(filepath=filepath, datatype=datatype,
-                         default_metric=default_metric, sequence=sequence,
-                         fill=fill, cmaps=cmaps, mins_maxes=mins_maxes)
-
-    def read_file(self, filepath, sep=None, read_csv_kw=None):
+    def read_file(self, filepath, read_table_kw=None):
         """Parses a pairmap.txt file and stores data as a dataframe at
         self.data, sets self.window (usually 3, from header).
 
         Args:
             filepath (str): path to a PAIR-MaP pairmap.txt file
-            sep (str, optional): passed to pandas.read_csv(). Defaults to None.
-            read_csv_kw (dict, optional): kwargs passed to pandas.read_csv().
+            read_table_kw (dict, optional): kwargs passed to pandas.read_table().
                 Defaults to None.
         """
-        with open(filepath, 'r') as file:
+        with open(filepath, "r") as file:
             self.header = file.readline()
-        self.window = int(self.header.split('\t')[1].split('=')[1])
-        self.data = pd.read_csv(filepath, sep='\t', header=1)
-        self.data.rename(columns={"Sig.": "Statistic"}, inplace=True)
-
-    def modify_cmap(self, cmap):
-        """Changes the alpha value of cmap for non-primary and -secondary PAIRs
-
-        Args:
-            cmap (mpl colormap): colormap from Interactions.cmap setter
-
-        Returns:
-            mpl colormap: modified colormap
-        """
-        if self.metric == 'Class':
-            cmap[0, -1] = 0.2  # alpha of non 1ary and 2ary pairs to 0.2
-        return cmap
+        self.window = int(self.header.split("\t")[1].split("=")[1])
+        dataframe = pd.read_table(filepath, header=1)
+        dataframe.rename(columns={"Sig.": "Statistic"}, inplace=True)
+        dataframe['Sign'] = 1
+        return dataframe
 
     def data_specific_filter(self, all_pairs=False, **kwargs):
         """Used by Interactions.filter(). By default, non-primary and
@@ -879,7 +754,7 @@ class PAIRMaP(Interactions):
             self.update_mask(self.data["Class"] != 0)
         return kwargs
 
-    def get_normalized_ij_data(self, min_max):
+    def get_sorted_data(self):
         """Same as parent function, unless metric is set to "Class", in which
         case ij pairs are returned in a different order.
 
@@ -891,57 +766,65 @@ class PAIRMaP(Interactions):
             pandas DataFrame: Dataframe providing i, j, and normalized data
                 values for plotting
         """
-        if self.metric != 'Class':
-            return super().get_normalized_ij_data(min_max)
-        if min_max is None:
-            min_max = self.min_max
+        if self.metric != "Class":
+            return super().get_sorted_data()
         metric = self.metric
         columns = ["i_offset", "j_offset", metric]
-        data = self.data.loc[self.data["mask"], columns].copy()
+        dataframe = self.data[columns].copy()
         # Class data have a weird order
-        data = pd.concat([data[data[metric] == 0],
-                          data[data[metric] == 2],
-                          data[data[metric] == 1]])
-        return data
+        dataframe = pd.concat(
+            [dataframe[dataframe[metric] == 0],
+             dataframe[dataframe[metric] == 2],
+             dataframe[dataframe[metric] == 1]])
+        return dataframe
 
 
-class PairProb(Interactions):
-    def __init__(self, filepath, datatype="pairprob", sequence=None):
+class PairingProbability(Interactions):
+    def __init__(self, input_data, sequence=None, metric='Probability',
+                 metric_defaults=None, read_table_kw=None, window=1):
         """Constructs Interactions data from a pairing probability text file
         containing i, j, and -log10(P) values. Can be obtained using partition
         and ProbabilityPlot functions from RNAStructure (Matthews Lab).
 
         Args:
-            filepath (str): path to pairing probability text file
-            datatype (str, optional): "pairprob". Defaults to "pairprob".
+            input_data (str): path to pairing probability text file
             sequence (str, optional): Sequence string. Defaults to None.
         """
-        default_metric = 'Probability'
-        fill = {'Probability': 0}
-        cmaps = {'Probability': sns.cubehelix_palette(10, 0.7, 0.9, 1.5, 2.5,
-                                                      1, 0.4, False, True)}
-        mins_maxes = {'Probability': [0, 1]}
-        super().__init__(filepath=filepath, datatype=datatype,
-                         default_metric=default_metric, sequence=sequence,
-                         fill=fill, cmaps=cmaps, mins_maxes=mins_maxes)
+        if metric_defaults is None:
+            metric_defaults = {}
+        metric_defaults = {
+            'Probability': {
+                'metric_column': 'Probability',
+                'error_column': None,
+                'color_column': None,
+                'cmap': sns.cubehelix_palette(
+                    10, 0.7, 0.9, 1.5, 2.5, 1, 0.4, False, True),
+                'normalization': 'none',
+                'values': None,
+                'labels': None}
+        } | metric_defaults
+        super().__init__(
+            input_data=input_data,
+            sequence=sequence,
+            metric=metric,
+            metric_defaults=metric_defaults,
+            read_table_kw=read_table_kw,
+            window=window)
 
-    def read_file(self, filepath, sep=None, read_csv_kw=None):
+    def read_file(self, filepath, read_table_kw=None):
         """Parses a pairing probability text file to create a DataFrame
         containing i, j, -log10(P) and Probability (0-1).
 
         Args:
             filepath (str): path to pairing probability text file
-            sep (None, optional): ignored. Defaults to None.
-            read_csv_kw (None, optional): ignored. Defaults to None.
+            read_table_kw (None, optional): ignored. Defaults to None.
         """
-        with open(filepath, 'r') as file:
+        with open(filepath, "r") as file:
             self.header = file.readline()
-        lengths_match = int(self.header.strip()) == self.length
-        assert lengths_match, "DP and sequence are different lengths"
         self.window = 1
-        data = pd.read_table(filepath, header=1, names=['i', 'j', 'log10p'])
-        data["Probability"] = 10 ** (-data["log10p"])
-        self.data = data
+        dataframe = pd.read_table(filepath, header=1, names=["i", "j", "log10p"])
+        dataframe["Probability"] = 10 ** (-dataframe["log10p"])
+        return dataframe
 
     def set_entropy(self, printOut=False, toFile=None):
         """Calculates per-nucleotide Shannon entropy and stores as self.entropy
@@ -951,10 +834,10 @@ class PairProb(Interactions):
                 Defaults to False.
             toFile (str, optional): file to write result to. Defaults to None.
         """
-        self.data.eval('nlogn = log10p * 10 ** ( - log10p )', inplace=True)
+        self.data.eval("nlogn = log10p * 10 ** ( - log10p )", inplace=True)
         entropy = np.zeros(self.length)
         for i in range(self.length):
-            mask = (self.data["i"] == i+1) | (self.data["j"] == i+1)
+            mask = (self.data["i"] == i + 1) | (self.data["j"] == i + 1)
             entropy[i] = self.data.loc[mask, "nlogn"].sum()
         # catch rounding errors:
         entropy[np.where(entropy < 0)] = 0
@@ -978,26 +861,31 @@ class PairProb(Interactions):
 
 
 class AllPossible(Interactions):
-    def __init__(self, filepath, sequence=None, window=1):
-        """Constructs Interactions data from a sequence. One interaction will
-        be made for every possible pair of nucleotides.
-
-        Args:
-            filepath (None): Ignored.
-            sequence (str, optional): Sequence string. Defaults to None.
-            window (int, optional): Window size of each interaction.
-                Defaults to 1.
-        """
-        data = {'i': [], 'j': [], 'data': []}
+    def __init__(self, sequence, metric='Probability',
+                 metric_defaults=None, read_table_kw=None, window=1):
+        if metric_defaults is None:
+            metric_defaults = {}
+        metric_defaults = {
+            'data': {
+                'metric_column': 'data',
+                'error_column': None,
+                'color_column': None,
+                'cmap': 'magenta',
+                'normalization': 'none',
+                'values': None,
+                'labels': None}
+        } | metric_defaults
+        dataframe = {"i": [], "j": [], "data": []}
         for i in range(1, len(sequence)):
-            for j in range(i+1, len(sequence)+1):
-                data['i'].append(i)
-                data['j'].append(j)
-                data['data'].append(1)
-        data = pd.DataFrame(data)
-        super().__init__(datatype="interactions", dataframe=data,
-                         filepath=filepath,
-                         default_metric='data', window=window,
-                         sequence=sequence, fill={'data': 1},
-                         cmaps={'data': 'magenta'},
-                         mins_maxes={'data': [0, 2]})
+            for j in range(i + 1, len(sequence) + 1):
+                dataframe["i"].append(i)
+                dataframe["j"].append(j)
+                dataframe["data"].append(0)
+        dataframe = pd.DataFrame(dataframe)
+        super().__init__(
+            input_data=dataframe,
+            sequence=sequence,
+            metric=metric,
+            metric_defaults=metric_defaults,
+            read_table_kw=read_table_kw,
+            window=window)

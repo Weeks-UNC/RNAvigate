@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 ###############################################################################
-#  CT object code comes from RNAtools2.py and Superfold
+#  SecondaryStructure code comes from CT object in RNAtools2.py and Superfold
 #      Main contributors:
 #           Gregg Rice
 #           Anthony Mustoe
@@ -10,47 +10,22 @@
 ###############################################################################
 
 import sys
+from os.path import isfile
 import numpy as np
 import xml.etree.ElementTree as xmlet
-from .data import Data
+from rnavigate import data
 import pandas as pd
 import json
 
 
-def get_ss_class(filepath, **kwargs):
-    """Given a secondary structure file, returns a CT object from the data
-    contained in the file.
-
-    Args:
-        filepath (str): path to a secondary structure file
-
-    Returns:
-        CT or CT subclass: CT object created from file
-    """
-    if filepath is None:
-        return None
-    extension = filepath.split('.')[-1].lower()
-    instantiator = {
-        "varna": VARNA,
-        "xrna": XRNA,
-        "nsd": NSD,
-        "cte": CTE,
-        "ct": CT,
-        "dbn": DotBracket,
-        "bracket": DotBracket,
-        "json": JSON,
-    }[extension]
-    return instantiator(filepath=filepath, **kwargs)
-
-
-class CT(Data):
+class SecondaryStructure(data.Sequence):
     """Base class for secondary structures.
 
     Args:
         Data (class): Parent class
 
     Attributes:
-        filepath (str): path to parsed CT file
+        input_data (str | pandas.DataFrame): structure file or dataframe
         sequence (str): sequence string
         num (numpy.array): nucleotide positions
         ct (numpy.array): paired nucleotide for each nucleotide position
@@ -60,59 +35,79 @@ class CT(Data):
         ycoordinates (numpy array): y-coordinate of each nucleotide
     """
 
-    def __init__(self, dataframe=None, filepath=None, **kwargs):
-        """Creates a CT object from a given file or dataframe.
+    def __init__(self, input_data, **kwargs):
+        """Creates a SecondaryStructure object from a given file or dataframe.
 
         Args:
-            dataframe (pandas DataFrame, optional): DataFrame containing
-                columns ["Nucleotide", "Sequence", "Pair"]. "Pair" column must
-                be redundant. Defaults to None.
-            filepath (str, optional): path to a ct file. Defaults to None.
+            input_data (str | pandas.DataFrame):
+                A dataframe or filepath containing a secondary structure
+                DataFrame should contain these columns:
+                    ["Nucleotide", "Sequence", "Pair"]
+                "Pair" column must be redundant.
+                Filepath parsing is determined by file extension:
+                    varna, xrna, nsd, cte, ct, dbn, bracket, json (R2DT), forna
         """
-        self.datatype = "ct"
-        if dataframe is not None:
-            self.from_dataframe(dataframe)
+        if isinstance(input_data, pd.DataFrame):
+            self.data = input_data
             self.filepath = "dataframe"
-        elif filepath is not None:
-            self.filepath = filepath
-            self.read_file(**kwargs)
+        elif isfile(input_data):
+            extension = input_data.split('.')[-1].lower()
+            read_file = {
+                "varna": self.read_varna,
+                "xrna": self.read_xrna,
+                "nsd": self.read_nsd,
+                "cte": self.read_cte,
+                "ct": self.read_ct,
+                "dbn": self.read_dotbracket,
+                "bracket": self.read_dotbracket,
+                "json": self.read_r2dt,
+                "forna": self.read_forna
+            }[extension]
+            self.filepath = input_data
+            self.data = read_file(**kwargs)
+        super().__init__(self.data)
+
+    # properties to provide backwards compatibility
+
+    @property
+    def num(self):
+        return self.data['Nucleotide'].values
+
+    @property
+    def ct(self):
+        return self.data["Pair"].values
+
+    @property
+    def ycoordinates(self):
+        return self.data["Y_coordinate"].values
+    
+    @ycoordinates.setter
+    def ycoordinates(self, values):
+        self.data["Y_coordinate"] = values
+
+    @property
+    def xcoordinates(self):
+        return self.data["X_coordinate"].values
+
+    @xcoordinates.setter
+    def xcoordinates(self, values):
+        self.data["X_coordinate"] = values
 
     def __str__(self):
-        """overide the default print statement for the object"""
-        a = '{ Name= %s, len(CT)= %s }' % (self.filepath, str(len(self.ct)))
+        """print the filepath and length of the RNA"""
+        a = f'Name = {self.filepath}, length = {len(self.ct)}'
         return a
 
-    def from_dataframe(self, dataframe):
-        """Sets num, sequence, and ct attributes given a pandas DataFrame
-        containing these values.
+    # Loading Data
 
-        Args:
-            dataframe (pandas DataFrame): DataFrame containing
-                columns ["Nucleotide", "Sequence", "Pair"]. "Pair" column must
-                be redundant.
-        """
-        # TODO: fix non-redundant ct, check for consistency
-        columns = ["Nucleotide", "Sequence", "Pair"]
-        for col in columns:
-            assert col in dataframe.columns, f"{col} column missing."
-        seq = [nt.upper() for nt in dataframe["Sequence"]]
-        if "T" in seq:
-            print("T nucleotides have been recoded as U")
-            seq = ["U" if nt == "T" else nt for nt in seq]
-        self.sequence = "".join(seq)
-        self.num = dataframe["Nucleotide"].values
-        self.ct = dataframe["Pair"].values
+    def read_ct(self, structNum=0):
+        """Loads secondary structure information from a given ct file.
 
-    def read_file(self, structNum=0, filterNC=False, filterSingle=False):
-        """Loads CT information from a given ct file. Requires a header!
+        Requires a properly formatted header!
 
         Args:
             structNum (int, optional): If ct file contains multiple structures,
                 uses the given structure. Defaults to 0.
-            filterNC (bool, optional): If True, will filter out non-canonical
-                base pairs. Defaults to False.
-            filterSingle (bool, optional): If True, will filter out any
-                singleton base pairs. Defaults to False.
         """
         fIN = self.filepath
         num, seq, bp, mask = [], '', [], []
@@ -156,11 +151,6 @@ class CT(Data):
         if len(num) == 0:
             sys.exit("Structure %d was not found in the ct file" % structNum)
 
-        if 'T' in seq:
-            print("Note: T nucleotides have been recoded as U")
-            seq = seq.replace('T', 'U')
-            seq = seq.replace('t', 'u')
-
         # check consistency!
         for i in range(len(bp)):
             if bp[i] != 0:
@@ -171,35 +161,389 @@ class CT(Data):
                           f"{p1[0]}-{p1[1]} vs. {p2[0]}-{p2[1]}")
 
         self.header = header
-        self.num = num
-        self.sequence = seq
-        self.ct = np.array(bp)
-        self.mask = mask
+        return pd.DataFrame({
+            'Nucleotide': num,
+            'Sequence': list(seq),
+            "Pair": bp,
+            "Mask": mask})
 
-        if filterNC:
-            self.filterNC()
-        if filterSingle:
-            self.filterSingleton()
+    def read_varna(self):
+        """Generates SecondaryStructure object data from a VARNA file,
+        including nucleotide x and y coordinates.
+        """
+        # Parse file and get sequence, xcoords, ycoords, and list of pairs.
+        tree = xmlet.parse(self.filepath)
+        root = tree.getroot()
+        # extract sequence, y and x coordinates
+        sequence, xcoords, ycoords = "", [], []
+        for nt in root.findall('./RNA/bases/nt'):
+            base = nt.find('base').text
+            sequence += base
+            for i in nt:
+                if i.get('r') == 'pos':
+                    xcoords.append(float(i.get('x')))
+                    ycoords.append(float(i.get('y')))
+        # extract pairing information
+        basepairs = []
+        for pair in root.findall('./RNA/BPs/bp'):
+            i = int(pair.get('part5'))+1
+            j = int(pair.get('part3'))+1
+            basepairs.append((i, j))
+        # store attributes
+        pairs = [0] * len(sequence)
+        for i, j in basepairs:
+            pairs[i-1] = j
+            pairs[j-1] = i
+        return pd.DataFrame({
+            'Nucleotide': np.arange(len(sequence)),
+            'Sequence': list(sequence),
+            'Pair': pairs,
+            'X_coordinate': xcoords,
+            'Y_coordinate': ycoords})
+
+    def read_xrna(self):
+        """Generates SecondaryStructure object data from an XRNA file,
+        including nucleotide x and y coordinates.
+        """
+        # Parse file and get sequence, xcoords, ycoords, and list of pairs.
+        tree = xmlet.parse(self.filepath)
+        root = tree.getroot()
+        # extract sequence, x and y coordinates
+        nucList = root.findall('./Complex/RNAMolecule/')
+        nucLists = []
+        for i in nucList:
+            if i.tag == 'NucListData':
+                nucLists.append(i)
+        sequence, xcoords, ycoords = '', [], []
+        for nt in nucLists[0].text.split('\n'):
+            if nt == '':
+                continue
+            line = nt.split()
+            sequence += line[0]
+            xcoords.append(float(line[1]))
+            ycoords.append(float(line[2]))
+        # extract pairing information
+        basepairs = []
+        for helix in root.findall('./Complex/RNAMolecule/BasePairs'):
+            i_outter = int(helix.get('nucID'))
+            j_outter = int(helix.get('bpNucID'))
+            length = int(helix.get('length'))
+            helix_list = [(i_outter+nt, j_outter-nt)
+                          for nt in range(length)]
+            basepairs.extend(helix_list)
+        # store attributes
+        pairs = [0] * len(sequence)
+        for i, j in basepairs:
+            pairs[i-1] = j
+            pairs[j-1] = i
+        return pd.DataFrame({
+            'Nucleotide': np.arange(len(sequence)),
+            'Sequence': list(sequence),
+            'Pair': pairs,
+            'X_coordinate': xcoords,
+            'Y_coordinate': ycoords})
+
+    def read_cte(self):
+        """Generates SecondaryStructure object data from an ss file, including
+        nucleotide x and y coordinates.
+        """
+        # Parse file and get sequence, xcoords, ycoords, and list of pairs.
+        return pd.read_table(
+            self.filepath,
+            sep=r'\s+',
+            usecols=[0, 1, 4, 8, 10],
+            names=[
+                'Nucleotide',
+                'Sequence',
+                'Pair',
+                'X_coordinate',
+                'Y_coordinate'],
+            header=0)
+
+    def read_nsd(self):
+        """Generates SecondaryStructure object data from an NSD file
+        (format for RNAStructure StructureEditor), including nucleotide x and
+        y coordinates.
+        """
+        # Parse file and get sequence, xcoords, ycoords, and list of pairs.
+        basepairs, sequence, xcoords, ycoords = [], '', [], []
+        with open(self.filepath, 'r') as file:
+            item = ""
+            for line in file.readlines():
+                line = line.strip().split(' ')
+                if "Strand:[" in line:
+                    item = "strand"
+                    continue
+                elif "]" in line:
+                    item = ""
+                elif "Pairs:[" in line:
+                    item = "pairs"
+                    continue
+                if item == "strand":
+                    nt = {}
+                    for field in line:
+                        if ':' in field:
+                            key, value = field.split(':')
+                            nt[key] = value
+                    sequence += nt["Base"]
+                    xcoords.append(float(nt["X"]))
+                    ycoords.append(-float(nt["Y"]))
+                elif item == "pairs":
+                    for field in line:
+                        if field.startswith("Pair"):
+                            field = field.strip('Pair:"').split(":")
+                            basepairs.append([int(nuc) for nuc in field])
+        # store attributes
+        pairs = [0] * len(sequence)
+        for i, j in basepairs:
+            pairs[i-1] = j
+            pairs[j-1] = i
+        return pd.DataFrame({
+            'Nucleotide': np.arange(len(sequence)),
+            'Sequence': list(sequence),
+            'Pair': pairs,
+            'X_coordinate': xcoords,
+            'Y_coordinate': ycoords})
+
+    def read_dotbracket(self):
+        """Generates SecondaryStructure object data from a dot-bracket notation
+        file, including nucleotide x and y coordinates.
+        """
+        header, seq, bp_str, = "", "", ""
+        with open(self.filepath) as f:
+            for line in f:
+                if line[0] in ">#":
+                    header += line
+                    continue
+                if all(nt.upper() in "GUACT" for nt in line.strip()):
+                    seq += line.strip()
+                elif all(s in ".][)(}{><" for s in line.strip()):
+                    bp_str += line.strip()
+        assert len(bp_str) == len(seq), "db: seq and bp strings are mismatched"
+        num = list(range(1, len(seq)+1))
+        bp = [0 for _ in num]
+        opens = {"[": [], "{": [], "(": [], "<": []}
+        sym_pair = {"]": "[", "}": "{", ")": "(", ">": "<"}
+        alphabet = 'abcdefghijklmnopqrstuvwxyz'
+        sym_pair |= {c: c.upper() for c in alphabet}
+        for i, sym in enumerate(bp_str):
+            if sym == ".":
+                continue
+            elif sym in "[{(<" + alphabet.upper():
+                opens[sym].append(i)
+            elif sym in "]})>" + alphabet:
+                j = opens[sym_pair[sym]].pop()
+                bp[i] = j + 1
+                bp[j] = i + 1
+        # store attributes
+        return pd.DataFrame({
+            'Nucleotide': np.arange(len(seq)),
+            'Sequence': list(seq),
+            'Pair': bp})
+
+    def read_r2dt(self):
+        """Generates SecondaryStructure object data from an R2DT JSON file,
+        including nucleotide x and y coordinates.
+        """
+        # Parse file and get sequence, xcoords, ycoords, and list of pairs.
+        basepairs, sequence, xcoords, ycoords = [], '', [], []
+        with open(self.filepath, 'r') as file:
+            file = json.load(file)
+        for nt in file["rnaComplexes"][0]['rnaMolecules'][0]['sequence']:
+            if nt["residueName"] not in ["5'", "3'"]:
+                sequence += nt["residueName"]
+                xcoords.append(nt["x"])
+                ycoords.append(nt["y"])
+        sequence = sequence.replace("5'", "").replace("3'", "")
+        for bp in file["rnaComplexes"][0]['rnaMolecules'][0]['basePairs']:
+            i = bp["residueIndex1"]
+            j = bp["residueIndex2"]
+            if [i, j] not in basepairs:
+                basepairs.append([i, j])
+        # store attributes
+        pairs = [0] * len(sequence)
+        for i, j in basepairs:
+            pairs[i-1] = j
+            pairs[j-1] = i
+        return pd.DataFrame({
+            'Nucleotide': np.arange(len(sequence)),
+            'Sequence': list(sequence),
+            'Pair': pairs,
+            'X_coordinate': xcoords,
+            'Y_coordinate': ycoords})
+
+    def read_forna(self):
+        """Generates SecondaryStructure object data from a FORNA JSON file,
+        including nucleotide x and y coordinates.
+        """
+        # Parse file and get sequence, xcoords, ycoords, and list of pairs.
+        basepairs, sequence, xcoords, ycoords = [], [], [], []
+        with open(self.filepath, 'r') as file:
+            file = json.load(file)
+        rna_key = list(file["rnas"].keys())[0]
+        rna = file["rnas"][rna_key]
+        rna_length = rna["rnaLength"]
+
+        for nt in rna["nodes"][:rna_length]:
+            sequence.append(nt["name"])
+            xcoords.append(nt["x"])
+            ycoords.append(nt["y"])
+        for pair in rna["pseudoknotPairs"]:
+            basepairs.append(pair)
+        for i, j in enumerate(rna["pairtable"][-rna_length:]):
+            if (j != 0) and ([j, i+1] not in basepairs):
+                basepairs.append([i+1, j])
+        # store attributes
+        pairs = [0] * len(sequence)
+        for i, j in basepairs:
+            pairs[i-1] = j
+            pairs[j-1] = i
+        return pd.DataFrame({
+            'Nucleotide': np.arange(len(sequence)),
+            'Sequence': list(sequence),
+            'Pair': pairs,
+            'X_coordinate': xcoords,
+            'Y_coordinate': ycoords})
+
+    # writing files
+
+    def writeSTO(self, outfile, name='seq'):
+        """"write structure file out into Stockholm (STO) file format
+        for use for infernal searches"""
+
+        with open(outfile, 'w') as out:
+
+            out.write('# STOCKHOLM 1.0\n\n')
+
+            namelen = max(len(name), 12)
+
+            out.write('{0} '.format(name.ljust(namelen)))
+            for nt in self.sequence:
+                out.write(nt)
+            out.write('\n')
+
+            out.write('{0} '.format('#=GC SS_cons'.ljust(namelen)))
+
+            for nt, pair in enumerate(self.ct):
+                if pair == 0:
+                    out.write('.')
+                elif pair > nt:
+                    out.write('(')
+                else:
+                    out.write(')')
+
+            out.write('\n//\n')
+
+    def writeRNAstructureSeq(self, writename):
+        with open(writename, 'w') as out:
+            out.write(';\nSequence from {0}\n'.format(self.filepath))
+            out.write('{0}1'.format(''.join(self.sequence)))
+
+    def write_cte(self, outputPath):
+        """writes the current structure out to CTE format for Structure Editor.
+
+        Args:
+            outputPath (string): path to output cte file to be created
+        """
+        # set scaling factors based on data source.
+        xscale = {'xrna': 1.525*20, 'varna': 0.469*65,
+                  'nsd': 30.5, 'cte': 30.5}[self.ss_type]
+        yscale = {'xrna': -1.525*20, 'varna': 0.469*65,
+                  'nsd': 30.5, 'cte': 30.5}[self.ss_type]
+        w = open(outputPath, 'w')
+        w.write('{0:6d} {1}\n'.format(self.length, self.filepath))
+        line = ('{0:5d} {1} {2:5d} {3:5d} {4:5d} {0:5d} ' +
+                ';! X: {5:1f} Y: {6:1f}\n')
+        for i in range(self.length):
+            xcoord = round(xscale*self.xcoordinates[i])
+            ycoord = round(yscale*self.ycoordinates[i])
+            num, seq, cti = self.num[i], self.sequence[i], self.ct[i]
+            # no nums after self.length, resets to zero
+            nextnum = (num+1) % (self.length+1)
+            cols = [num, seq, num-1, nextnum, cti, xcoord, ycoord]
+            w.write(line.format(*cols))
+        w.close()
 
     def get_dbn(self):
+        """Returns a dotbracket notation representation of the secondary
+        structure.
+
+        Pseudoknot levels:
+            1: ()
+            2: []
+            3: {}
+            4: <>
+            5: Aa
+            6: Bb
+            7: Cc
+            etc...
         """
-        Returns dotbracket notation string representing CT object. Currently
-        does not support pseudoknots.
+        dbn = ['.'] * self.length
+        pair_list = self.pairList()
+        pair_levels = np.zeros(len(pair_list), dtype=int)
+        levels = ['()', '[]', '{}', '<>']
+
+        # check for pseudoknots
+        level = 0
+        while level in pair_levels:
+            print(level)
+            indexes = np.where(pair_levels == level)[0]
+            for i in indexes:
+                for j in indexes[indexes > i]:
+                    left1, right1 = pair_list[i]
+                    left2, right2 = pair_list[j]
+                    if pair_levels[i] != pair_levels[j]:
+                        continue
+                    elif (left1 < left2 < right1) and (right1 < right2):
+                        pair_levels[j] += 1
+            level += 1
+
+        for pair, level in zip(pair_list, pair_levels):
+            dbn[pair[0]-1] = levels[level][0]
+            dbn[pair[1]-1] = levels[level][1]
+        dbn = ''.join(dbn)
+        return dbn
+
+    def get_human_readable_dbn(self):
+        """Returns dotbracket notation string representing SecondaryStructure
+        object. This is an experimental format designed to be more human
+        readable, i.e. no counting of brackets required.
+
+
+        1)  Letters, instead of brackets, are used to denote nested base pairs.
+        2)  Each helix is assigned a letter, which is incremented one letter
+            alphabetically from the nearest enclosing stem.
+        3)  Non-nested helices (pseudoknots) are assigned canonical brackets.
+
+        From this canonical dbn string:
+            how many bases are in the base stem?
+            how many nested helices are there?
+            ((((....(((.[[..)))))(((...(((..]].))))))))
+        Same question, new format:
+            AABB....CCC.[[..cccbbBBB...CCC..]].cccbbbaa
+
+        Pseudoknot levels:
+            1: Aa, Bb, Cc, etc.
+            2: [], 3: {}, 4: <>
         """
-        for pair in self.pairList():
-            # check for pseudoknots
-            for pair2 in self.pairList():
-                if (pair[0] < pair2[0] < pair[1]) and (pair[1] < pair2[1]):
-                    print("get_dbn doesn't support PKs, returning empty dbn")
-                    return '.' * self.length
-        dbn = ''
-        for i, pair in enumerate(self.ct):
-            if pair == 0:
-                dbn += '.'
-            elif pair > (i+1):
-                dbn += '('
-            elif pair < (i+1):
-                dbn += ')'
+        dbn = list(self.get_dbn())
+        alphabet = 'abcdefghijklmnopqrstuvwxyz'
+        closed = {n: 0 for n in alphabet}
+        helices = self.extractHelices(
+            splitHelixByBulge=False, keep_singles=True)
+        for pairs in helices.values():
+            left_most, right_most = pairs[0]
+            if dbn[left_most-1] not in '()':
+                continue
+            for n in alphabet:
+                if left_most > closed[n]:
+                    letter = n
+                    closed[n] = right_most
+                    break
+            for left, right in pairs:
+                dbn[left-1] = letter.capitalize()
+                dbn[right-1] = letter
+        dbn = ''.join(dbn)
         return dbn
 
     def filterNC(self):
@@ -268,10 +612,9 @@ class CT(Data):
 
         w = open(fOUT, 'w')
         w.write('{0:6d} {1}\n'.format(len(self.num), self.filepath))
-        for i in range(len(self.num)):
-            nt = self.num[i]
+        for i, nt in enumerate(self.num):
             prev = nt-1
-            next = nt+1 % (len(self.ct)+1)  # last nt goes back to zero
+            next = nt+1 % (self.length + 1)  # last nt goes back to zero
             seq = self.sequence[i]
             ct = self.ct[i]
             if mask and self.mask[i]:
@@ -283,7 +626,7 @@ class CT(Data):
 
     def copy(self):
         """Returns a deep copy of the ct object."""
-        out = CT()
+        out = SecondaryStructure()
         out.filepath = self.filepath[:]
         out.num = self.num[:]
         out.sequence = self.sequence[:]
@@ -296,9 +639,9 @@ class CT(Data):
         e.g., [(19,50),(20,49)....]
         """
         out = []
-        for nt in range(len(self.ct)):
-            if self.ct[nt] != 0 and self.ct[nt] > self.num[nt]:
-                out.append((self.num[nt], self.ct[nt]))
+        for left, right in zip(self.num, self.ct):
+            if right != 0 and right > left:
+                out.append((left, right))
         return out
 
     def pairedResidueList(self, paired=True):
@@ -360,7 +703,8 @@ class CT(Data):
 
     def pair2CT(self, pairs, seq=None, name=None, skipConflicting=True,
                 filterNC=False, filterSingle=False):
-        """Reconstructs this CT object from a list of base pairs and a sequence.
+        """Reconstructs this SecondaryStructure object from a list of base
+        pairs and a sequence.
 
         Args:
             pairs (list): 1-indexed list of pairs. e.g. [(1, 20), (2, 19)]
@@ -442,8 +786,8 @@ class CT(Data):
         return sel
 
     def maskCT(self, start, end, nocross=True, inverse=False):
-        """Returns a deep copy of CT object, with pairs between start and end
-        set to unpaired, (or the inverse).
+        """Returns a deep copy of SecondaryStructure object, with pairs between
+        start and end set to unpaired, (or the inverse).
 
         Args:
             start (int): start position
@@ -452,7 +796,7 @@ class CT(Data):
             inverse (bool, optional): invert the behavior. Defaults to False.
 
         Returns:
-            CT: new CT object with pairs removed
+            SecondaryStructure: new SecondaryStructure with pairs removed
         """
         # in case numbering differs from indexing, go by indexes
         out = self.copy()
@@ -495,7 +839,7 @@ class CT(Data):
             end (int): end position
 
         Returns:
-            CT: a new CT object cut from current CT object
+            SecondaryStructure: a new SecondaryStructure cut from self
         """
 
         sel = self.getNTslice(start, end)
@@ -503,7 +847,7 @@ class CT(Data):
         offset = self.num[0]
         numnts = end-start+1
 
-        out = CT()
+        out = SecondaryStructure()
         out.sequence = self.sequence[sel]
         out.num = list(range(1, numnts+1))
         out.filepath = self.filepath + '_cut_'+str(start)+'_'+str(end)
@@ -542,15 +886,15 @@ class CT(Data):
         return outarr
 
     def get_distance_matrix(self, recalculate=False):
-        """Based on Tom's contactDistance function above, but instead returns
+        """Based on Tom's contactDistance function below, but instead returns
         the all pairs shortest paths matrix, and stores it as an attribute. If
         the attribute has already been set, it returns the attribute. This is
         faster than calling contactDistance pairwise to fill the matrix.
 
         Args:
             recalculate (bool, optional): Set to true to recalculate the matrix
-                even if the attribute is set. In case changes to the ct have
-                been made.
+                even if the attribute is set. In case changes to the structure
+                have been made.
         """
         if hasattr(self, "distance_matrix") and not recalculate:
             return self.distance_matrix
@@ -599,12 +943,12 @@ class CT(Data):
         return self.distance_matrix.copy()
 
     def contactDistance(self, i, j):
-        """
-        Caclulates the contact distance between pairs i,j in
-        the RNA using the RNAtools CT Object. This is different
-        than the old contact distance function because it utilizes a breadth
-        first search to determine the distance. While BFS may take longer
-        than contact distance, it will always find the shortest distance.
+        """Contact distance is the shortest distance in a secondary structure
+        (graph) between two nucleotides (nodes), where jumping across a
+        base-pair or to an adjacent nucleotide counts as 1 distance
+        (edge length = 1). This function utilizes a breadth first search (BFS)
+        to determine the distance. BFS may take a long time on long RNAs (human
+        LSU took 10 min on my laptop), but it always finds the shortest path.
 
         Added by Tom Christy
         """
@@ -681,15 +1025,22 @@ class CT(Data):
         # return the contactDistance from the search
         return contactDistance
 
-    def extractHelices(self, fillPairs=True, splitHelixByBulge=True):
-        """Returns a list of helices in a given CT file and the nucleotides
-        making up the list as a dict object. e.g. {0:[(1,50),(2,49),(3,48)}
+    def extractHelices(self, fillPairs=True, splitHelixByBulge=True,
+                       keep_singles=False):
+        """Returns a dictionary of helices from the secondary structure.
+        Keys are equivalent to list indices. Values are lists of paired
+        nucleotides (1-indexed) in that helix. e.g. {0:[(1,50),(2,49),(3,48)}
 
-        defaults to filling 1,1 and 2,2 mismatches
-
-        Since April 20, 2018 an option has been added to no longer split
-        helices by single nucleotide bulges. Prior to this option bulges on the
-        5' of the helix split the helix but those on the 3' end did not.
+        Args:
+            fillPairs (bool, optional):
+                Whether 1-1 and 2-2 bulges are replaced with base pairs.
+                Defaults to True.
+            splitHelixByBulge (bool, optional):
+                Whether to split helices on bulges.
+                Defaults to True.
+            keep_singles (bool, optional):
+                Whether to return helices that contain only 1 base-pair.
+                Defaults to False.
         """
         # first step is to find all the helices
         rna = self.copy()
@@ -744,7 +1095,7 @@ class CT(Data):
                             break
 
                 # remove single bp helices
-                if len(tempPairs) <= 1:
+                if len(tempPairs) <= 1 and not keep_singles:
                     continue
                 helices[heNum] = tempPairs
                 heNum += 1
@@ -771,11 +1122,9 @@ class CT(Data):
 
     def extractPK(self, fillPairs=True):
         """
-        returns the pk1 and pk2 pairs from a CT file. Ignores single base
-        pairs. PK1 is defined as the helix crossing the most other bps.
-        if there is a tie, the most 5' helix is called pk1
-
-        Code from original RNAtools was updated to more robustly assign pk1/pk2
+        Returns the pk1 and pk2 pairs from the secondary structure. Ignores
+        single base pairs. PK1 is defined as the helix crossing the most other
+        bps. if there is a tie, the most 5' helix is called pk1
 
         returns pk1 and pk2 as a list of base pairs e.g [(1,10),(2,9)...
         """
@@ -845,19 +1194,19 @@ class CT(Data):
     def padCT(self, referenceCT, giveAlignment=False):
         """Aligns the target CT to the reference CT and pads the referece
         CT file with 000s in order to input into CircleCompare"""
-        out = CT()
+        out = SecondaryStructure()
         out.sequence = referenceCT.seq
         out.num = referenceCT.num
 
         # align target to reference
         seed = 200
-        if len(self.seq) <= seed:
-            seed = len(self.seq) - 1
+        if len(self.sequence) <= seed:
+            seed = len(self.sequence) - 1
         pos = 0
         maxScore = 0
         # print len(referenceCT.seq)
-        for i in range(len(referenceCT.seq)-seed):
-            a, b = referenceCT.seq[i:i+seed], self.seq[:seed]
+        for i in range(len(referenceCT.sequence)-seed):
+            a, b = referenceCT.sequence[i:i+seed], self.sequence[:seed]
             s = 0
             # s = # of identical nts across the alignment
             for k, l in zip(a, b):
@@ -873,11 +1222,11 @@ class CT(Data):
 
         # create the renumbered ct to fit within the reference
         ct = []
-        for i in range(len(referenceCT.seq)):
+        for i in range(len(referenceCT.sequence)):
             # if the target falls within the range of the reference ct
             #     then change the numbers
             # else pad the files with 000's
-            if i >= pos and i < pos+len(self.seq):
+            if i >= pos and i < pos+len(self.sequence):
                 val = self.ct[i-pos]
                 if val > 0:
                     val += pos
@@ -894,10 +1243,11 @@ class CT(Data):
             return out
 
     def computePPVSens(self, compCT, exact=True, mask=False):
-        """Compute the PPV and sensitivity between self and another CT.
+        """Compute the PPV and sensitivity between self and another
+        SecondaryStructure object.
 
         Args:
-            compCT (CT object): The CT to compare to.
+            compCT (SecondaryStructure): The SecondaryStructure to compare to.
             exact (bool, optional): True requires BPs to be exactly correct.
                                     False allows +/-1 bp slippage.
                                     Defaults to True.
@@ -953,116 +1303,39 @@ class CT(Data):
 
         return sens, ppv, (sharedpairs, totc, totr)
 
-    def writeSTO(self, outfile, name='seq'):
-        """"write structure file out into Stockholm (STO) file format
-        for use for infernal searches"""
-
-        with open(outfile, 'w') as out:
-
-            out.write('# STOCKHOLM 1.0\n\n')
-
-            namelen = max(len(name), 12)
-
-            out.write('{0} '.format(name.ljust(namelen)))
-            for nt in self.sequence:
-                out.write(nt)
-            out.write('\n')
-
-            out.write('{0} '.format('#=GC SS_cons'.ljust(namelen)))
-
-            for nt, pair in enumerate(self.ct):
-                if pair == 0:
-                    out.write('.')
-                elif pair > nt:
-                    out.write('(')
-                else:
-                    out.write(')')
-
-            out.write('\n//\n')
-
-    def writeRNAstructureSeq(self, writename):
-        with open(writename, 'w') as out:
-            out.write(';\nSequence from {0}\n'.format(self.filepath))
-            out.write('{0}1'.format(''.join(self.sequence)))
-
-    def write_cte(self, outputPath):
-        """writes the current structure out to CTE format for Structure Editor.
+    def get_aligned_data(self, alignment):
+        """Returns a new SecondaryStructure matching the alignment target.
 
         Args:
-            outputPath (string): path to output cte file to be created
+            alignment (data.Alignment): an alignment object used to map values
         """
-        # set scaling factors based on data source.
-        xscale = {'xrna': 1.525*20, 'varna': 0.469*65,
-                  'nsd': 30.5, 'cte': 30.5}[self.ss_type]
-        yscale = {'xrna': -1.525*20, 'varna': 0.469*65,
-                  'nsd': 30.5, 'cte': 30.5}[self.ss_type]
-        w = open(outputPath, 'w')
-        w.write('{0:6d} {1}\n'.format(self.length, self.filepath))
-        line = ('{0:5d} {1} {2:5d} {3:5d} {4:5d} {0:5d} ' +
-                ';! X: {5:1f} Y: {6:1f}\n')
-        for i in range(self.length):
-            xcoord = round(xscale*self.xcoordinates[i])
-            ycoord = round(yscale*self.ycoordinates[i])
-            num, seq, cti = self.num[i], self.sequence[i], self.ct[i]
-            # no nums after self.length, resets to zero
-            nextnum = (num+1) % (self.length+1)
-            cols = [num, seq, num-1, nextnum, cti, xcoord, ycoord]
-            w.write(line.format(*cols))
-        w.close()
+        df = alignment.map_dataframe(
+            self.data,
+            position_columns=["Nucleotide"])
+        df["Pair"] = alignment.map_positions(df["Pair"].values)
+        df["Sequence"] = list(alignment.target)
+        return SecondaryStructure(input_data=df)
 
-    def fit_to(self, fit_to, store=True):
-        """Provided a Data or subclass object with a sequence attribute. CT
-        is aligned to new sequence and base pairs are repositioned. Base pairs
-        are kept regardless of reverse complimentarity. Results in a new CT
-        object stored as self.fitted.
-
-        Args:
-            fit_to (Data or subclass): Data object with a sequence attribute.
-        """
-        am = self.get_alignment_map(fit_to=fit_to)
-        ct = [0] * fit_to.length
-        for i, j in self.pairList():
-            new_i = am[i-1]+1
-            new_j = am[j-1]+1
-            if (new_i != 0) and (new_j != 0):
-                ct[new_i-1] = new_j
-                ct[new_j-1] = new_i
-        data = pd.DataFrame({
-            'Nucleotide': [i+1 for i in range(fit_to.length)],
-            'Sequence': [nt for nt in fit_to.sequence],
-            'Pair': ct
-        })
-        if store:
-            self.fitted = CT(dataframe=data)
-        else:
-            return CT(dataframe=data)
-
-    def get_ij_colors(self, compct=None, fitted=True):
+    def get_ij_colors(self, compct=None):
         """Gets i, j, and colors lists for plotting base pairs. i and j are the
         5' and 3' ends of each pair, and colors is the color to use for each
-        pair (all grey for CT). If compct is provided, i and j are the union of
-        pairs in self and compct, and colors represents whether the pair came
-        from self, compct, or both.
+        pair (all grey for SecondaryStructure). If compct is provided, i and j
+        are the union of pairs in self and compct, and colors represents
+        whether the pair came from self, compct, or both.
 
         Args:
-            compct (CT, optional): CT to compare to. Defaults to None.
-            fitted (bool, optional): Whether to use CT.fitted for comparison.
-                Defaults to True.
+            compct (SecondaryStructure, optional):
+                SecondaryStructure to compare to.
+                Defaults to None.
 
         Returns:
             list, list, list: 5' and 3' ends of each pair, color for each pair
         """
-        if fitted and hasattr(self, 'fitted'):
-            ct1 = self.fitted
-            if compct is not None:
-                ct2 = compct.fit_to(fit_to=ct1, store=False)
-            else:
-                ct2 = None
-        else:
-            ct1 = self
-            ct2 = compct
-        if ct2 is not None and ct1.length != ct2.length:
-            raise ValueError("CT objects are not equal lengths")
+        if compct is not None:
+            alignment = data.SequenceAlignment(compct, self)
+            compct = compct.get_aligned_data(alignment)
+        ct1 = self
+        ct2 = compct
 
         i_list, j_list, colors = [], [], []
 
@@ -1115,269 +1388,5 @@ class CT(Data):
 
 
 ###############################################################################
-# end of CT class
+# end of SecondaryStructure class
 ###############################################################################
-
-
-class VARNA(CT):
-    def __init__(self, filepath, **kwargs):
-        """Given an input file .varna, construct the ct object"""
-        super().__init__(filepath=filepath, **kwargs)
-
-    def read_file(self, **kwargs):
-        """Generates CT object data from an ss file, including nucleotide x and
-        y coordinates.
-
-        Args:
-            ss (file path): path to xrna, varna, nsd, or cte file
-        """
-        # get and check file extension, then read
-        self.ss_type = "varna"
-        # Parse file and get sequence, xcoords, ycoords, and list of pairs.
-        tree = xmlet.parse(self.filepath)
-        root = tree.getroot()
-        # extract sequence, y and x coordinates
-        sequence, xcoords, ycoords = "", [], []
-        for nt in root.findall('./RNA/bases/nt'):
-            base = nt.find('base').text
-            sequence += base
-            for i in nt:
-                if i.get('r') == 'pos':
-                    xcoords.append(float(i.get('x')))
-                    ycoords.append(float(i.get('y')))
-        # extract pairing information
-        basepairs = []
-        for pair in root.findall('./RNA/BPs/bp'):
-            i = int(pair.get('part5'))+1
-            j = int(pair.get('part3'))+1
-            basepairs.append((i, j))
-        # store attributes
-        self.sequence = sequence.upper().replace("T", "U")
-        self.num = np.arange(len(self.sequence))
-        self.pair2CT(basepairs, **kwargs)
-        self.xcoordinates = np.array(xcoords)
-        self.ycoordinates = np.array(ycoords)
-        self.normalize_coordinates()
-
-
-class XRNA(CT):
-    def __init__(self, dataframe=None, filepath=None, **kwargs):
-        """Given an input file .xrna, construct the ct object"""
-        super().__init__(dataframe, filepath, **kwargs)
-
-    def read_file(self, **kwargs):
-        """Generates CT object data from an ss file, including nucleotide x and
-        y coordinates.
-
-        Args:
-            ss (file path): path to xrna, varna, nsd, or cte file
-        """
-        # get and check file extension, then read
-        self.ss_type = "xrna"
-        # Parse file and get sequence, xcoords, ycoords, and list of pairs.
-        tree = xmlet.parse(self.filepath)
-        root = tree.getroot()
-        # extract sequence, x and y coordinates
-        nucList = root.findall('./Complex/RNAMolecule/')
-        nucLists = []
-        for i in nucList:
-            if i.tag == 'NucListData':
-                nucLists.append(i)
-        sequence, xcoords, ycoords = '', [], []
-        for nt in nucLists[0].text.split('\n'):
-            if nt == '':
-                continue
-            line = nt.split()
-            sequence += line[0]
-            xcoords.append(float(line[1]))
-            ycoords.append(float(line[2]))
-        # extract pairing information
-        basepairs = []
-        for helix in root.findall('./Complex/RNAMolecule/BasePairs'):
-            i_outter = int(helix.get('nucID'))
-            j_outter = int(helix.get('bpNucID'))
-            length = int(helix.get('length'))
-            helix_list = [(i_outter+nt, j_outter-nt)
-                          for nt in range(length)]
-            basepairs.extend(helix_list)
-        # store attributes
-        self.sequence = sequence.upper().replace("T", "U")
-        self.num = np.arange(len(self.sequence))
-        self.pair2CT(basepairs, **kwargs)
-        self.xcoordinates = np.array(xcoords)
-        self.ycoordinates = np.array(ycoords)
-        self.normalize_coordinates()
-
-
-class CTE(CT):
-    def __init__(self, dataframe=None, filepath=None, **kwargs):
-        """Given an input file .cte, construct the ct object"""
-        super().__init__(dataframe, filepath, **kwargs)
-
-    def read_file(self, **kwargs):
-        """Generates CT object data from an ss file, including nucleotide x and
-        y coordinates.
-
-        Args:
-            ss (file path): path to xrna, varna, nsd, or cte file
-        """
-        # get and check file extension, then read
-        self.ss_type = "cte"
-        # Parse file and get sequence, xcoords, ycoords, and list of pairs.
-        names = ['nuc', 'seq', 'pair', 'xcoords', 'ycoords']
-        ct = pd.read_csv(self.filepath, sep=r'\s+', usecols=[0, 1, 4, 8, 10],
-                         names=names, header=0)
-        sequence = ''.join(list(ct['seq']))
-        xcoords = np.array([float(x) for x in ct.xcoords])
-        ycoords = np.array([-float(y) for y in ct.ycoords])
-        ct = ct[ct.nuc < ct.pair]
-        basepairs = [[int(i), int(j)] for i, j in zip(ct.nuc, ct.pair)]
-        # store attributes
-        self.sequence = sequence.upper().replace("T", "U")
-        self.num = np.arange(len(self.sequence))
-        self.pair2CT(basepairs, **kwargs)
-        self.xcoordinates = xcoords
-        self.ycoordinates = ycoords
-        self.normalize_coordinates()
-
-
-class NSD(CT):
-    def __init__(self, dataframe=None, filepath=None, **kwargs):
-        """Given an input file .nsd, construct the ct object"""
-        super().__init__(dataframe, filepath, **kwargs)
-
-    def read_file(self):
-        """Generates CT object data from an ss file, including nucleotide x and
-        y coordinates.
-
-        Args:
-            ss (file path): path to xrna, varna, nsd, or cte file
-        """
-        # get and check file extension, then read
-        self.ss_type = "nsd"
-        # Parse file and get sequence, xcoords, ycoords, and list of pairs.
-        basepairs, sequence, xcoords, ycoords = [], '', [], []
-        with open(self.filepath, 'r') as file:
-            item = ""
-            for line in file.readlines():
-                line = line.strip().split(' ')
-                if "Strand:[" in line:
-                    item = "strand"
-                    continue
-                elif "]" in line:
-                    item = ""
-                elif "Pairs:[" in line:
-                    item = "pairs"
-                    continue
-                if item == "strand":
-                    nt = {}
-                    for field in line:
-                        if ':' in field:
-                            key, value = field.split(':')
-                            nt[key] = value
-                    sequence += nt["Base"]
-                    xcoords.append(float(nt["X"]))
-                    ycoords.append(-float(nt["Y"]))
-                elif item == "pairs":
-                    for field in line:
-                        if field.startswith("Pair"):
-                            field = field.strip('Pair:"').split(":")
-                            basepairs.append([int(nuc) for nuc in field])
-        # store attributes
-        self.sequence = sequence.upper().replace("T", "U")
-        self.num = np.arange(len(self.sequence))
-        self.pair2CT(basepairs)
-        self.xcoordinates = np.array(xcoords)
-        self.ycoordinates = np.array(ycoords)
-        self.normalize_coordinates()
-
-
-class DotBracket(CT):
-    def __init__(self, dataframe=None, filepath=None, **kwargs):
-        """Given an input file .dbn .db .dot, etc., construct the ct object"""
-        super().__init__(dataframe, filepath, **kwargs)
-
-    def read_file(self, filterNC=False, filterSingle=False):
-        """Generates CT object from a dot-bracket notation file. Lines
-        starting with ">" or "#" are ignored. First non-ignored line is the
-        sequence and the second is the structure.
-
-        Args:
-            filterNC (bool, optional): If True, will filter out non-canonical
-                base pairs. Defaults to False.
-            filterSingle (bool, optional): If True, will filter out any
-                singleton base pairs. Defaults to False.
-        """
-        header, seq, bp_str, = "", "", ""
-        with open(self.filepath) as f:
-            for line in f:
-                if line[0] in ">#":
-                    header += line
-                    continue
-                if all(nt.upper() in "GUACT" for nt in line.strip()):
-                    seq += line.strip()
-                elif all(s in ".][)(}{><" for s in line.strip()):
-                    bp_str += line.strip()
-        assert len(bp_str) == len(seq), "db: seq and bp strings are mismatched"
-        num = list(range(1, len(seq)+1))
-        bp = [0 for _ in num]
-        opens = {"[": [], "{": [], "(": [], "<": []}
-        sym_pair = {"]": "[", "}": "{", ")": "(", ">": "<"}
-        for i, sym in enumerate(bp_str):
-            if sym == ".":
-                continue
-            elif sym in "[{(<":
-                opens[sym].append(i)
-            elif sym in "]})>":
-                j = opens[sym_pair[sym]].pop()
-                bp[i] = j + 1
-                bp[j] = i + 1
-
-        self.header = header
-        self.num = num
-        self.sequence = seq
-        self.ct = bp
-        self.mask = [0 for _ in seq]
-
-        if filterNC:
-            self.filterNC()
-        if filterSingle:
-            self.filterSingleton()
-
-
-class JSON(CT):
-    def __init__(self, dataframe=None, filepath=None, **kwargs):
-        """Given an input file .json (R2DT), construct the ct object"""
-        super().__init__(dataframe, filepath, **kwargs)
-
-    def read_file(self):
-        """Generates CT object data from an ss file, including nucleotide x and
-        y coordinates.
-
-        Args:
-            ss (file path): path to xrna, varna, nsd, or cte file
-        """
-        # get and check file extension, then read
-        self.ss_type = "nsd"
-        # Parse file and get sequence, xcoords, ycoords, and list of pairs.
-        basepairs, sequence, xcoords, ycoords = [], '', [], []
-        with open(self.filepath, 'r') as file:
-            file = json.load(file)
-        for nt in file["rnaComplexes"][0]['rnaMolecules'][0]['sequence']:
-            if nt["residueName"] not in ["5'", "3'"]:
-                sequence += nt["residueName"]
-                xcoords.append(nt["x"])
-                ycoords.append(nt["y"])
-        sequence = sequence.replace("5'", "").replace("3'", "")
-        for bp in file["rnaComplexes"][0]['rnaMolecules'][0]['basePairs']:
-            i = bp["residueIndex1"]
-            j = bp["residueIndex2"]
-            if [i, j] not in basepairs:
-                basepairs.append([i, j])
-
-        # store attributes
-        self.sequence = sequence.upper().replace("T", "U")
-        self.pair2CT(basepairs)
-        self.xcoordinates = np.array(xcoords)
-        self.ycoordinates = np.array(ycoords)
-        self.normalize_coordinates()

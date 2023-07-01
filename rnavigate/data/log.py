@@ -2,9 +2,8 @@ import pandas as pd
 
 
 class Log():
-    def __init__(self, filepath, datatype="log"):
-        self.datatype = datatype
-        self.read_log(filepath)
+    def __init__(self, input_data):
+        self.read_log(input_data)
 
     def read_log(self, log):
         with open(log, 'r') as f:

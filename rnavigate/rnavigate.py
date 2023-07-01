@@ -1,371 +1,254 @@
 #!/usr/bin/env python
 
-# general python packages
+# external python packages
 import os.path
-import numpy as np
-import json
 
 # modules in RNAvigate
-from .data import get_ss_class
-from . import plots
-from . import data
+from rnavigate import plots
+from rnavigate import data
 
 
-def create_code_button():
-    """Not functioning. Meant to create a button for HTML exported notebooks
-    which toggles hiding or showing code cells for prettier reports."""
-    # TODO: Figure out why this doesn't work or find a new solution.
-    from IPython.display import display, HTML
-    display(HTML('''<script>
-                 code_show=true;
-                 function code_toggle() {
-                 if (code_show) {$('div.input').hide();}
-                 else {$('div.input').show();}
-                 code_show = !code_show
-                 }
-                 $( document ).ready(code_toggle);
-                 </script>
-                 <form action="javascript:code_toggle()">
-                 <input type="submit" value="Hide/show raw code.">
-                 </form>'''))
+_required = object()
+data_keyword_defaults = {
+    "fasta": {
+        "data_class": data.Sequence},
+    "log": {
+        "data_class": data.Log},
+    "shapemap": {
+        "data_class": data.SHAPEMaP},
+    "dmsmap": {
+        "data_class": data.SHAPEMaP,
+        "dms": True},
+    "dancemap": {
+        "data_class": data.DanceMaP,
+        "component": _required},
+    "rnpmap": {
+        "data_class": data.RNPMaP},
+    "ringmap": {
+        "data_class": data.RINGMaP,
+        "seq_source": "profile"},
+    "pairmap": {
+        "data_class": data.PAIRMaP,
+        "seq_source": "profile"},
+    "allcorrs": {
+        "data_class": data.RINGMaP,
+        "seq_source": "profile"},
+    "shapejump": {
+        "data_class": data.SHAPEJuMP},
+    "pairprob": {
+        "data_class": data.PairingProbability,
+        "seq_source": "profile"},
+    "ss": {
+        "data_class": data.SecondaryStructure},
+    "pdb": {
+        "data_class": data.PDB,
+        "chain": _required},
+    "allpossible": {
+        "data_class": data.AllPossible,
+        "seq_source": _required},
+    "motif": {
+        "data_class": data.Motif,
+        "seq_source": _required,
+        "color": _required},
+    "orfs": {
+        "data_class": data.ORFs,
+        "seq_source": _required,
+        "color": _required},
+    "spans": {
+        "data_class": data.Annotation,
+        "seq_source": _required,
+        "color": _required},
+    "sites": {
+        "data_class": data.Annotation,
+        "seq_source": _required,
+        "color": _required},
+    "groups": {
+        "data_class": data.Annotation,
+        "seq_source": _required},
+    "primers": {
+        "data_class": data.Annotation,
+        "seq_source": _required,
+        "color": _required},
+}
 
-
-def get_color_list(length, default, color_regions):
-    """Creates a list of colors for use with colors arguments
+def create_data(sample=None, **data_keyword):
+    """Convenience function for creating data class objects. This function is
+    used to parse **data_keywords passed to rnavigate.Sample, but can also be
+    used on it's own using the same syntax.
 
     Args:
-        length (int): length of sequence color list will be used on.
-        default (matplotlib color): default color
-        color_regions (dict): dictionary: keys are matplot lib colors and
-            values are lists of 1-indexed pairs of start and end positions.
+        sample (rnavigate.Sample, optional):
+            Used only if 'seq_source' is provided.
+                {'seq_source': 'keyword'}
+                    is replaced with:
+                {'sequence': sample.data['keyword'].sequence}
+            Defaults to None.
+        **data_keyword:
+            There must one and only one additional argument provided.
+            This argument is used to create the data object, it's syntax is
+            flexible, see the example below.
 
-    Returns:
-        list: a list of colors
-            e.g. get_color_list(
-                length=10,
-                default="grey",
-                color_regions={
-                    "red": [[2, 4]],
-                    "black": [[5, 6], [8, 10]]
-                }
-            )
-            returns:
-                ["grey", "red", "red", "red", "black",
-                 "black", "grey", "black", "black", "black"]
+    Usage:
+        In this example I will create a data object from a fasta file using
+        three different syntaxes, starting with the most verbose:
+
+            get_data(arbitrary_name={
+                        'data_class':'fasta',
+                        'input_data': 'my_sequence.fa'})
+
+        This can be simplified by using the value of 'data_class' to replace
+        the key 'input_data':
+
+            get_data(arbitrary_name={
+                        'fasta': 'my_sequence.fa'})
+
+        Above, an arbitrary_name is used. This allows Data to be assigned to
+        arbitrary data keywords of the given Sample. This name can be replaced
+        by our data class:
+
+            get_data(fasta='my_sequence.fa')
+
+        In all three cases, the result returned is equivalent to:
+
+            rnavigate.data.Sequence(input_data="my_sequence.fa")
     """
-    # TODO: somehow implement this using annotations?
-    c_list = np.full(length, default, dtype='<U16')
-    for color, regions in color_regions.items():
-        for r in regions:
-            c_list[r[0]-1: r[1]] = color
-    return list(c_list)
+    # Parse data_keyword for name and inputs
+
+    if len(data_keyword) > 1:
+        raise ValueError('Only one data_keyword can be provided')
+    else:
+        name = list(data_keyword.keys())[0]
+        inputs = data_keyword[name]
+
+    # if given existing data object return
+    if isinstance(inputs, data.Data):
+        return inputs
+
+    # convert case 1 or 2 into case 3:
+    # 1) name='A', inputs='B'
+    # 2) inputs={'A': 'B'}
+    # 3) inputs={'data_keyword': 'A', 'input_data': 'B'}
+    if not isinstance(inputs, dict):
+        if name in data_keyword_defaults:
+            inputs = {
+                'data_keyword': name,
+                'input_data': inputs}
+    elif all([name in data_keyword_defaults,
+            name not in inputs,
+            'data_keyword' not in inputs]):
+        inputs['data_keyword'] = name
+    else:
+        for kw in list(inputs.keys()):
+            if kw in data_keyword_defaults:
+                inputs['data_keyword'] = kw
+                inputs['input_data'] = inputs.pop(kw)
+    if inputs['data_keyword'] == 'allpossible':
+        inputs['seq_source'] = inputs.pop('input_data')
+
+    # 'filepath' or 'dataframe' may be used in place of 'input_data'
+    for alt_input_data in ['filepath', 'dataframe']:
+        if alt_input_data in inputs:
+            inputs['input_data'] = inputs.pop(alt_input_data)
+    if 'fasta' in inputs:
+        inputs['sequence'] = inputs.pop('fasta')
+
+    # retrieve defaults for given data_class
+    data_class = inputs.pop('data_keyword')
+    try:
+        inputs = data_keyword_defaults[data_class] | inputs
+        data_class = inputs.pop('data_class')
+    except KeyError as exc:
+        print(f"{data_class} is not a valid data keyword.")
+        raise exc
+
+    # get sequence from another object if appropriate
+    if (("seq_source" in inputs)
+            and ("sequence" not in inputs)
+            and ("fasta" not in inputs)):
+        inputs["sequence"] = get_sequence(inputs.pop("seq_source"), sample)
+    inputs.pop("seq_source", None)
+
+    # check if any required arguments are not provided
+    required_arguments = []
+    for kw, arg in inputs.items():
+        if arg is _required:
+            required_arguments.append(kw)
+    if len(required_arguments) > 0:
+        raise ValueError(
+            f"Required arguments for {data_class} were not provided:\n"
+            ", ".join(required_arguments))
+
+    # instantiate and return the data class
+    try:
+        return data_class(**inputs)
+    except BaseException as e:
+        print(data_class, inputs)
+        raise e
 
 
-class Sample():
+class Sample:
     """
-    The main RNAvigate object, representing an RNA probing experiment.
+    The main RNAvigate object, representing an RNA structure with experimental
+    and/or computational data.
     """
 
     def __init__(self,
                  sample=None,
                  inherit=None,
-                 pdb=None,
-                 ct=None,
-                 compct=None,
-                 ss=None,
-                 fasta=None,
-                 log=None,
-                 shapemap=None,
-                 dmsmap=None,
-                 dancemap=None,
-                 rnpmap=None,
-                 ringmap=None,
-                 shapejump=None,
-                 pairmap=None,
-                 allcorrs=None,
-                 pairprob=None,
-                 allpossible=None,
                  dance_prefix=None,
-                 annotations=None):
+                 **data_keywords):
         """Creates a sample object which connects all chemical probing and
         structural data for a single experiment. Contains convenience methods
         to plot, filter, compare and retrieve this data. Every argument is
         optional and defaults to None.
 
         Args:
-            sample (str, optional): Label to be used in plot legends.
-            inherit (Sample, optional): inherit all data from this Sample,
-                Does NOT make copies: operations on inherit change self and
-                vice versa. Saves time on expensive operations and memory on
-                large data structures.
-            pdb (dict, optional): dictionary containing the following:
-                "filepath": "path/to/file", can be .cif or .pdb
-                "chain": "A", corresponding to the chain ID within PDB/CIF file
-                "fasta": "path/to/file.fa", required if CIF provided, or if
-                    PDB file lacks the REFSEQ entry in the header.
-            ct (str, optional): path/to/file containing a secondary structure
-                .ct, .cte, .nsd, .varna, .xrna, or .json (R2DT)
-            compct (str, optional): same as ct above
-            ss (str, optional): same as ct above, but should contain drawing
-                coordinates.
-            fasta (str, optional): path/to/file containing a single sequence
-                in fasta format, can be used as a seq_source for various
-                arguments below
-            log (str, optional): path/to/file containing shapemapper log info
-                typical suffix is _shapemapper_log.txt.
-            shapemap (str, optional): path/to/file containing shapemapper2
-                reactivities, typically the _reactivities.txt file
-            dmsmap (str, optional): path/to/file, same as above, but when data
-                is parsed, the Norm_profile column is recomputed based on DMS
-                conventions
-            dancemap (dict, optional): a dictionary containing the following:
-                "filepath": "path/to/reactivities.txt" output from dancemapper
-                "component": int, the dancemapper component to load
-            rnpmap (str, optional): path/to/file, RNPMapper output file
-            ringmap (str, optional): path/to/file, RingMapper output file,
-                typically _rings.txt
-            shapejump (dict, optional): a dictionary containing:
-                "filepath": "path/to/file", a ShapeJumper data file
-                and one of the following:
-                "fasta": "path/to/file", a fasta containing a single sequence
-                "sequence": "AUCGCUGA...", a sequence string.
-            pairmap (str, optional): "path/to/file"
-                PairMapper _pairmap.txt file
-            allcorrs (str, optional): "path/to/file"
-                PairMapper _allcorrs.txt file
-            pairprob (str, optional): "path/to/file"
-                ProbabilityPlot text file
-            allpossible (str, optional): str can be one of the following:
-                data argument used above, retrieves sequence from that data
-                a sequence string e.g. "AUCGUCAUGAUGCA"
+            sample (str, optional):
+                Label to be used in plot legends.
+            inherit (Sample, optional):
+                inherit all data from this Sample. Does NOT make copies:
+                operations on inherit change self and vice versa. Saves time on
+                expensive operations and memory on large data structures.
             dance_prefix (str, optional): "path/to/file_prefix"
                 path and prefix for DanceMapper data, automatically locates
                 data files and stores DANCE components as a list of Sample
                 objects at self.dance
-            annotations (dict, optional): A dictionary with the following keys:
-                "seq_source": one of the arguments above, in which case the
-                    sequence from that data is retrived, or a sequence string
-                    e.g. "AUGCGUAC"
-                any number of data keyword strings (to access this annotation):
-                    a dictionary defining the annotation positions, type, and
-                    colors used in plotting functions. Must contain "color"
-                    (described below), and an annotations type ("sites",
-                    "spans", "primers", "groups", "motif", "orf")
-                    (described below). All positions are 1-indexed. Start and
-                    end positions are inclusive.
-                    "color": a matplotlib color, search "matplotlib specifying
-                        color". This color will be used to represent the
-                        annotation positions on plots. "groups" includes
-                        "colors" in the annotations list and does not
-                        require this.
-                    "sites": a list of single-nucleotide positions
-                    "spans": a list of lists of start and stop positions
-                    "primers": similar to spans above, but reverse primer
-                        should be in reverse order. e.g. [[1, 20], [300, 280]]
-                    "groups": a list of dictionaries containing "sites" and
-                        "color" as described above
-                    "motif": a string representing a sequence motif of interest
-                        using conventional alphabet, e.g. "DRACH"
-                        This will create span annotations for every motif match
-                    "orfs": True. This will create span annotations for every
-                        possible open reading frame
+            **data_keywords:
         """
-        if dancemap is None:
-            dancemap = {"filepath": None}
-        if annotations is None:
-            annotations = {}
-        if shapejump is None:
-            shapejump = {"filepath": None}
-        if pdb is None:
-            pdb = {"filepath": None}
-
-        # for each input
-        # [0] filepath
-        # [1] instantiation class
-        # [2] sequence source
-        # [3] kwargs
-        self.inputs = {
-            "fasta": {
-                "filepath": fasta,
-                "instantiator": data.Data,
-                "seq_source": "self",
-                "kwargs": {}},
-            "log": {
-                "filepath": log,
-                "instantiator": data.Log,
-                "seq_source": "self",
-                "kwargs": {}},
-            "shapemap": {
-                "filepath": shapemap,
-                "instantiator": data.SHAPEMaP,
-                "seq_source": "self",
-                "kwargs": {}},
-            "dmsmap": {
-                "filepath": dmsmap,
-                "instantiator": data.SHAPEMaP,
-                "seq_source": "self",
-                "kwargs": {"dms": True}},
-            "dancemap": {
-                "filepath": dancemap.pop("filepath"),
-                "instantiator": data.DanceMaP,
-                "seq_source": "self",
-                "kwargs": dancemap},
-            "rnpmap": {
-                "filepath": rnpmap,
-                "instantiator": data.RNPMaP,
-                "seq_source": "self",
-                "kwargs": {}},
-            "ringmap": {
-                "filepath": ringmap,
-                "instantiator": data.RINGMaP,
-                "seq_source": "profile",
-                "kwargs": {}},
-            "pairmap": {
-                "filepath": pairmap,
-                "instantiator": data.PAIRMaP,
-                "seq_source": "profile",
-                "kwargs": {}},
-            "allcorrs": {
-                "filepath": allcorrs,
-                "instantiator": data.RINGMaP,
-                "seq_source": "profile",
-                "kwargs": {}},
-            "shapejump": {
-                "filepath": shapejump.pop("filepath", None),
-                "instantiator": data.SHAPEJuMP,
-                "seq_source": "self",
-                "kwargs": shapejump},
-            "pairprob": {
-                "filepath": pairprob,
-                "instantiator": data.PairProb,
-                "seq_source": "profile",
-                "kwargs": {}},
-            "ct": {
-                "filepath": ct,
-                "instantiator": get_ss_class,
-                "seq_source": "self",
-                "kwargs": {}},
-            "compct": {
-                "filepath": compct,
-                "instantiator": get_ss_class,
-                "seq_source": "self",
-                "kwargs": {}},
-            "ss": {
-                "filepath": ss,
-                "instantiator": get_ss_class,
-                "seq_source": "self",
-                "kwargs": {}},
-            "pdb": {
-                "filepath": pdb.pop("filepath", None),
-                "instantiator": data.PDB,
-                "seq_source": "self",
-                "kwargs": pdb},
-            "dance_prefix": {
-                "filepath": dance_prefix,
-                "instantiator": self.init_dance,
-                "seq_source": "self",
-                "kwargs": {}},
-            "allpossible": {
-                "filepath": "",
-                "instantiator": data.AllPossible,
-                "seq_source": allpossible,
-                "kwargs": {}},
-        }
-
-        # add annotations to the above inputs
-        if isinstance(annotations, str):
-            with open(annotations) as f:
-                annotations = json.load(f)
-        annotation_seq = annotations.pop("seq_source", None)
-        self.annotations = list(annotations)
-        for name, kwargs in annotations.items():
-            if name in self.inputs:
-                print(f"Choose a different name: '{name}' is already used.")
-                continue
-            if "motif" in kwargs:
-                instantiator = data.Motif
-            elif "orfs" in kwargs:
-                instantiator = data.ORFs
-            else:
-                instantiator = data.Annotation
-            self.inputs[name] = {
-                "filepath": "",
-                "instantiator": instantiator,
-                "seq_source": annotation_seq,
-                "kwargs": kwargs}
-
-        self.default_profiles = ["shapemap", "dmsmap", "dancemap", "rnpmap"]
-
         self.sample = sample
         self.parent = None
-        self.data = {}  # stores all data objects
-        # inherit all data objects from another Sample
-        # These data objects are NOT copies: any operation on inherit sample
-        # changes this sample and vice versa. Saves time and memory usage.
+        self.data = {}
+        self.inputs = {}
+
+        # inherit all data from another Sample
         if hasattr(inherit, "data") and isinstance(inherit.data, dict):
             self.data |= inherit.data
-        # load data
-        for name, kwargs in self.inputs.items():
-            if None not in [kwargs["filepath"], kwargs["seq_source"]]:
-                kwargs.update(kwargs.pop("kwargs", {}))
-                self.set_data(name=name, **kwargs)
+            self.inputs |= inherit.inputs
 
-    def set_data(self, name, filepath=None, instantiator=None, seq_source=None,
-                 **kwargs):
-        """Convenience function to add data to Sample after initialization.
-        Also, sets data to default profile if appropriate and none exists yet.
-        Otherwise, equivalent to:
-            self.data[name] = instatiator(filepath=filepath,
-                sequence=self.get_sequence(seq_source), **kwargs)
-        ...or if filename is an existing Data subclass object:
-            self.data[name] = filename
+        # get data and store inputs for all data_keywords
+        for data_keyword, kwargs in data_keywords.items():
+            self.set_data(data_keyword, kwargs=kwargs)
 
-        Args:
-            name (str): name of data
-            filepath (str, optional): "path/to/file"
-                Defaults to None.
-            instantiator (instantiator of rnavigate.Data, optional):
-                Data class instantiator used to create data object.
-                Defaults to None.
-            seq_source (str, optional): a key of self.data or a sequence string
-                Defaults to None.
-        """
-        # if given previously instantiated data class, attach and end function
-        if isinstance(filepath, data.Data):
-            self.data[name] = filepath
-            if name in self.default_profiles and "profile" not in self.data:
-                self.data["profile"] = self.data[name]
-            return
-        # check for default instantiator
-        if instantiator is None:
-            instantiator = self.inputs[name]["instantiator"]
-        # check for default seq_source
-        if seq_source is None:
-            seq_source = self.inputs[name]["seq_source"]
-        # get sequence in case provided instead of passed to instantiator
-        if seq_source != "self":
-            sequence = get_sequence(seq_source=seq_source, sample=self)
-            sequence = sequence.sequence
-            kwargs.update({"sequence": sequence})
-        # for lists of files, set_data() for each with a number indicator
-        if isinstance(filepath, list):
-            for i, path in enumerate(filepath):
-                self.set_data(name=f"{name}_{i+1}",
-                              filepath=path,
-                              instantiator=instantiator,
-                              seq_source=seq_source,
-                              **kwargs)
-        # update inputs
-        self.inputs[name] = {
-            "filepath": filepath,
-            "instantiator": instantiator,
-            "seq_source": seq_source,
-            "kwargs": kwargs}
-        # instantiate the data class and add to self.data dictionary
-        self.data[name] = instantiator(filepath=filepath, **kwargs)
-        # set as default profile if appropriate
-        if name in self.default_profiles and "profile" not in self.data:
-            self.data["profile"] = self.data[name]
+        # for all DANCE-MaP data
+        if dance_prefix is not None:
+            self.init_dance(dance_prefix)
+
+    def set_data(self, data_keyword, kwargs, overwrite_keyword=False):
+        if (data_keyword in self.inputs) and not overwrite_keyword:
+            raise ValueError(
+                f"'{data_keyword}' is already a data keyword. "
+                "Choose a different one.")
+        try:
+            self.data[data_keyword] = create_data(
+                sample=self, **{data_keyword: kwargs})
+            self.inputs[data_keyword] = kwargs
+        except:
+            print(kwargs)
+            raise
+        default_profiles = ["shapemap", "dmsmap", "dancemap", "rnpmap"]
+        if (data_keyword in default_profiles) and ("profile" not in self.data):
+            self.data["profile"] = self.data[data_keyword]
+
 
     def init_dance(self, filepath):
         """Initializes a list of Sample objects which each represent a
@@ -395,18 +278,18 @@ class Sample():
                              "component": i},
                 "ringmap": f"{filepath}-{i}-rings.txt",
                 "pairmap": f"{filepath}-{i}-pairmap.txt",
-                "ct": [f"{filepath}-{i}.f.ct",  # if using --pk
+                "ss": [f"{filepath}-{i}.f.ct",  # if using --pk
                        f"{filepath}-{i}.ct"],  # if regular fold used
                 "pairprob": f"{filepath}-{i}.dp"
             }
             for key in ["ringmap", "pairmap", "pairprob"]:
                 if not os.path.isfile(kwargs[key]):
                     kwargs.pop(key)
-            for ct in kwargs["ct"]:
+            for ct in kwargs["ss"]:
                 if os.path.isfile(ct):
-                    kwargs["ct"] = ct
-            if isinstance(kwargs["ct"], list):
-                kwargs.pop("ct")
+                    kwargs["ss"] = ct
+            if isinstance(kwargs["ss"], list):
+                kwargs.pop("ss")
             sample = Sample(**kwargs)
             sample.parent = self
             self.dance.append(sample)
@@ -461,7 +344,7 @@ class Sample():
         else:
             return self.get_data(keys)
 
-    def filter_interactions(self, interactions, fit_to,
+    def filter_interactions(self, interactions,
                             suppress=False, metric=None, cmap=None,
                             min_max=None, prefiltered=False, **kwargs):
         """Aligns sequence to fit_to, sets properties, filters and aligns data.
@@ -519,9 +402,7 @@ class Sample():
                 kwargs[datatype] = self.data[kwargs[datatype]]
             elif datatype in self.data.keys():
                 kwargs[datatype] = self.data[datatype]
-        if not hasattr(fit_to, "sequence"):
-            fit_to = self.get_data_list(fit_to)
-        interactions.filter(fit_to, **kwargs)
+        interactions.filter(**kwargs)
 
     def dance_filter(self, fit_to=None, filterneg=True, cdfilter=15,
                      sigfilter=23, ssfilter=True, **kwargs):
@@ -611,18 +492,18 @@ def get_sequence(seq_source, sample=None, default=None):
         raise ValueError("A seq_source must be provided.")
     elif seq_source is None:
         seq_source = default
-    if seq_source in sample.data.keys():
-        sequence = sample.data[seq_source]
-    elif hasattr(seq_source, "sequence"):
+    if hasattr(seq_source, "sequence"):
         sequence = seq_source
+    elif seq_source in sample.data.keys():
+        sequence = sample.data[seq_source]
     elif all([nt.upper() in "AUCGT." for nt in seq_source]):
         sequence = data.Data(sequence=seq_source)
     else:
-        raise ValueError(f'Cannot find sequence from {seq_source}')
+        raise ValueError(f"Cannot find sequence from {seq_source}")
     return sequence
 
 
-def fit_data_list(sample, data_list, fit_to):
+def fit_data(data_list, fit_to, second_alignment=None):
     """Given a sample and list of sample.data keys, Data objects are mapped to
     fit_to
 
@@ -631,11 +512,17 @@ def fit_data_list(sample, data_list, fit_to):
         data_list (list): list of sample.data keys or None
         fit_to (rnavigate.Data): Data object with a sequence to fit to
     """
-    for data_obj in data_list:
-        if data_obj in sample.data.keys():
-            sample.data[data_obj].fit_to(fit_to)
-        elif isinstance(data_obj, data.Data):
-            data_obj.fit_to(fit_to)
+    if isinstance(data_list, dict):
+        return {k: fit_data(v, fit_to) for k, v in data_list.items()}
+    elif isinstance(data_list, list):
+        return [fit_data(v) for v in data_list]
+    elif data_list is None:
+        return None
+    elif isinstance(data_list, data.Sequence):
+        alignment = data.SequenceAlignment(data_list, fit_to)
+        if second_alignment is not None:
+            alignment = data.AlignmentChain([alignment, second_alignment])
+        return data_list.get_aligned_data(alignment)
 
 
 ###############################################################################
@@ -919,7 +806,7 @@ def plot_alignment(data1, data2, labels=None, plot_kwargs=None, **kwargs):
 def plot_arcs(samples, seq_source=None, ct="ct", comp=None, interactions=None,
               interactions_filter=None, interactions2=None,
               interactions2_filter=None, filters=None, profile="profile",
-              annotations=[], labels=None, region="all", plot_kwargs=None,
+              annotations=None, labels=None, region="all", plot_kwargs=None,
               colorbar=True, **kwargs):
     """Generates a multipanel arc plot displaying combinations of secondary
     structures, per-nucleotide data, inter-nucleotide data, and sequence
@@ -987,6 +874,8 @@ def plot_arcs(samples, seq_source=None, ct="ct", comp=None, interactions=None,
             with additional plotting and file saving methods
     """
     # use mutable defaults
+    if annotations is None:
+        annotations = []
     if interactions_filter is None:
         interactions_filter = {}
     if interactions2_filter is None:
@@ -1012,16 +901,23 @@ def plot_arcs(samples, seq_source=None, ct="ct", comp=None, interactions=None,
                     region=region, **plot_kwargs)
     # loop through samples and filters, adding each as a new axis
     for sample, label in zip(samples, labels):
-        fit_data_list(sample, annotations + [ct, comp, profile], seq)
-        sample.filter_interactions(interactions=interactions2,
-                                   fit_to=seq, **interactions2_filter)
+        sample.filter_interactions(interactions2, **interactions2_filter)
+        data_dict = {
+            'annotations': sample.get_data_list(annotations),
+            'ct': sample.get_data(ct),
+            'comp': sample.get_data(comp),
+            'profile': sample.get_data(profile),
+            'interactions2': sample.get_data(interactions2),
+        }
+        data_dict = fit_data(data_dict, seq)
+        data_dict['label'] = sample.get_data(label)
+        data_dict['seq'] = seq
         for filt in filters:
-            sample.filter_interactions(fit_to=seq, **filt)
-            plot.add_sample(sample=sample, seq=seq, ct=ct, comp=comp,
-                            interactions=filt["interactions"],
-                            interactions2=interactions2, profile=profile,
-                            label=label, annotations=annotations,
-                            **kwargs)
+            sample.filter_interactions(**filt)
+            interactions = sample.get_data(filt.pop('interactions'))
+            interactions = fit_data(interactions, seq)
+            data_dict['interactions'] = interactions
+            plot.plot_data(**data_dict, **kwargs)
     plot.set_figure_size()
     if colorbar:
         plot.plot_colorbars()
@@ -1088,7 +984,8 @@ def plot_arcs_compare(samples, seq_source=None, ct="ct", comp=None,
     """
     seq1 = get_sequence(seq_source=seq_source, sample=samples[0], default=ct)
     seq2 = get_sequence(seq_source=seq_source, sample=samples[1], default=ct)
-    _, _, al1, al2 = seq1.get_alignment_map(fit_to=seq2, return_alignment=True)
+    alignment = data.SequenceAlignment(seq1, seq2)
+    _, _, al1, al2 = alignment.get_alignment(return_alignment=True)
     seq1_full = al1.replace('-', '.')
     seq2_full = al2.replace('-', '.')
     seq1_full = get_sequence(seq_source=seq1_full,
