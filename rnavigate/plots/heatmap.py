@@ -76,51 +76,24 @@ class Heatmap(plots.Plot):
             levels = [20]
         cmap = LinearSegmentedColormap.from_list('contours', ['black', 'gray'])
         x_y = list(range(1, structure.length+1))
-        ax.contour(x_y, x_y, distances, levels=levels, cmap=cmap,
-                   linewidths=1)
+        ax.contour(x_y, x_y, distances, levels=levels, cmap=cmap, linewidths=1)
 
     def plot_heatmap_data(self, ax, interactions, interpolation):
-        structure = self.structure
-        data = interactions.data.loc[interactions.data["mask"]].copy()
+        data = interactions.get_sorted_data()
         metric = interactions.metric
-        columns = ["i_offset", "j_offset", metric]
-        if isinstance(interactions, data.RINGMaP):
-            data = data[columns+["Sign"]]
-            data[metric] = data[metric]*data["Sign"]
-        data = data[columns]
-        length = structure.length
-        data_im = np.full([length, length], interactions.fill)
+        data_im = np.full([interactions.length]*2, np.nan)
         window = interactions.window
         for _, row in data.iterrows():
-            i = int(row["i_offset"]-1)
-            j = int(row["j_offset"]-1)
+            i = int(row["i"]-1)
+            j = int(row["j"]-1)
             data_im[j:j+window, i:i+window] = row[metric]
-        min_max = interactions.min_max
-        if metric == "Percentile":
-            min_max = [0, 1]
-            cmap = plt.get_cmap("jet")
-            cmap = cmap(np.linspace(0, 1, 256))
-            cmap[:, -1] = 0.6
-        elif metric == "Class":
-            data_im = data_im + 1
-            min_max = [0, 3]
-            cmap = interactions.cmap
-            cmap = cmap(np.arange(cmap.N))
-            no_data = np.array([1, 1, 1, 0])
-            cmap = np.vstack((no_data, cmap))
-        else:
-            cmap = interactions.cmap
-            cmap = cmap(np.arange(cmap.N))
-        if not isinstance(interactions, data.RINGMaP):
-            cmap[0, :] = [1, 1, 1, 0]
-        cmap = ListedColormap(cmap)
-        ax.imshow(data_im, cmap=cmap, vmin=min_max[0], vmax=min_max[1],
-                  interpolation=interpolation)
+        ax.imshow(data_im, cmap=interactions.cmap.cmap,
+                  norm=interactions.cmap.norm, interpolation=interpolation)
 
     def plot_kde_data(self, ax, interactions, **kwargs):
-        data = interactions.data.loc[interactions.data["mask"]]
-        sns.kdeplot(ax=ax, data=data, x="i_offset", y="j_offset",
-                    fill=True, levels=5, bw_adjust=0.2, cmap=interactions.cmap,
-                    common_norm=True, ** kwargs)
+        data = interactions.get_sorted_data()
+        sns.kdeplot(ax=ax, data=data, x="i", y="j", fill=True, levels=5,
+                    bw_adjust=0.2, cmap=interactions.cmap.cmap, common_norm=True,
+                    **kwargs)
         ax.set(xlabel="Position (i)",
                ylabel="Position (j)")

@@ -1,7 +1,8 @@
-from .plots import Plot, adjust_spines
+from rnavigate import plots
+import seaborn as sns
 
 
-class Skyline(Plot):
+class Skyline(plots.Plot):
     def __init__(self, num_samples, nt_length, region="all", **kwargs):
         if region == "all":
             self.nt_length = nt_length
@@ -37,10 +38,9 @@ class Skyline(Plot):
         return self.ax
 
     def plot_data(self, profile, annotations, label,
-                  columns="Reactivity_profile", seqbar=True, errorbars=None):
+                  columns="Reactivity_profile", seqbar=True, plot_error=False):
         ax = self.get_ax()
-        annotations = [annotation.fitted for annotation in annotations]
-        self.plot_profile(ax, profile, label, columns, errorbars)
+        self.plot_profile(ax, profile, label, columns, plot_error)
         if seqbar and (self.i == 0):
             self.add_sequence(ax, profile.sequence)
         self.i += 1
@@ -75,7 +75,7 @@ class Skyline(Plot):
         ax.spines['left'].set_visible(False)
         ax.grid(axis='y', visible=True)
         ax.tick_params(axis='y', length=0, grid_alpha=0.4)
-        adjust_spines(ax, ["left", "bottom"])
+        sns.despine(ax=ax, bottom=True, left=True)
 
     def set_labels(self, ax, axis_title="Raw Reactivity Profile",
                    legend_title="Samples", xlabel="Nucleotide Position",
@@ -86,8 +86,8 @@ class Skyline(Plot):
         ax.legend(title=legend_title, labelcolor="linecolor", frameon=False,
                   handlelength=0)
 
-    def plot_profile(self, ax, profile, label, columns, errorbars):
-        data = profile.get_plotting_dataframe(all_columns=True)
+    def plot_profile(self, ax, profile, label, columns, plot_error):
+        data = profile.data
         if isinstance(columns, list):
             for column in columns:
                 ax.plot(data["Nucleotide"], data[column],
@@ -95,10 +95,11 @@ class Skyline(Plot):
                         drawstyle="steps-mid")
         elif isinstance(columns, str):
             x = data["Nucleotide"]
+            profile.metric = columns
             profile_values = data[columns]
             ax.plot(x, profile_values, label=label, drawstyle="steps-mid")
-            if errorbars is not None:
-                stderr = data[errorbars]
+            if plot_error and profile.error_column is not None:
+                stderr = data[profile.error_column]
                 ax.fill_between(x, profile_values-stderr,
                                 profile_values+stderr, step='mid',
                                 color='C'+str(self.i), alpha=0.25, lw=0)
@@ -107,13 +108,13 @@ class Skyline(Plot):
         color = annotation.color
         a_type = annotation.annotation_type
         if a_type in ["primers", "spans"]:
-            for start, end in annotation[:]:
+            for start, end in annotation:
                 if start > end:
                     start, end = end, start
                 ax.axvspan(start-0.5, end+0.5,
                            fc=color, ec="none", alpha=0.1)
         if a_type == "sites":
-            for site in annotation[:]:
+            for site in annotation:
                 ax.axvline(site, color=color, ls=":")
 
 
@@ -136,13 +137,12 @@ class Profile(Skyline):
         ax.set_ylabel(ylabel)
 
     def plot_data(self, seq, profile, annotations, label, plot_errors=True,
-                  column=None, seqbar=True, error_column=None):
+                  column=None, seqbar=True):
         ax = self.get_ax()
-        if column is None:
-            column = profile.default_column
-        annotations = [annotation.fitted for annotation in annotations]
-        self.plot_profile(ax=ax, profile=profile, column=column,
-                          error_column=error_column, plot_errors=plot_errors)
+        if column is not None:
+            profile.metric = column
+        column = profile.metric
+        self.plot_profile(ax=ax, profile=profile, plot_errors=plot_errors)
         if seqbar:
             self.add_sequence(ax, seq.sequence)
         self.i += 1
@@ -152,9 +152,8 @@ class Profile(Skyline):
             self.plot_annotation(ax=ax, annotation=annotation)
         self.set_axis(ax)
 
-    def plot_profile(self, ax, profile, column, error_column, plot_errors):
-        data = profile.get_plotting_dataframe(column=column,
-                                              err_column=error_column)
+    def plot_profile(self, ax, profile, plot_errors):
+        data = profile.get_plotting_dataframe()
         values = data["Values"]
         colormap = data["Colors"]
         nts = data["Nucleotide"]

@@ -79,12 +79,11 @@ class LowSS():
                     lowss_regions.append(lowss_region)
                     self.in_lowss_region[start:stop] = 1
                     lowss_region = [start, stop]
-        self.lowss_regions = Annotation(spans=lowss_regions, color="grey",
-                                        sequence=self.sequence)
-        self.lowss_regions.fit_to(self.lowss_regions)
+        self.lowss_regions = Annotation(
+            input_data=lowss_regions, annotation_type="spans", color="grey",
+            sequence=self.sequence)
         # TODO: this could overwrite data already stored in sample
         sample.data["lowss"] = self.lowss_regions
-
         if show:
             self.plot_LowSS(region=region)
 

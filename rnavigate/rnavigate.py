@@ -26,18 +26,19 @@ data_keyword_defaults = {
         "data_class": data.RNPMaP},
     "ringmap": {
         "data_class": data.RINGMaP,
-        "seq_source": "profile"},
+        "sequence": "profile"},
     "pairmap": {
         "data_class": data.PAIRMaP,
-        "seq_source": "profile"},
+        "sequence": "profile"},
     "allcorrs": {
         "data_class": data.RINGMaP,
-        "seq_source": "profile"},
+        "sequence": "profile"},
     "shapejump": {
-        "data_class": data.SHAPEJuMP},
+        "data_class": data.SHAPEJuMP,
+        "sequence": _required},
     "pairprob": {
         "data_class": data.PairingProbability,
-        "seq_source": "profile"},
+        "sequence": "profile"},
     "ss": {
         "data_class": data.SecondaryStructure},
     "pdb": {
@@ -45,29 +46,30 @@ data_keyword_defaults = {
         "chain": _required},
     "allpossible": {
         "data_class": data.AllPossible,
-        "seq_source": _required},
+        "sequence": _required},
     "motif": {
         "data_class": data.Motif,
-        "seq_source": _required,
+        "sequence": _required,
         "color": _required},
     "orfs": {
         "data_class": data.ORFs,
-        "seq_source": _required,
+        "sequence": _required,
         "color": _required},
     "spans": {
         "data_class": data.Annotation,
-        "seq_source": _required,
+        "sequence": _required,
         "color": _required},
     "sites": {
         "data_class": data.Annotation,
-        "seq_source": _required,
+        "sequence": _required,
         "color": _required},
     "groups": {
         "data_class": data.Annotation,
-        "seq_source": _required},
+        "sequence": _required,
+        "color": _required},
     "primers": {
         "data_class": data.Annotation,
-        "seq_source": _required,
+        "sequence": _required,
         "color": _required},
 }
 
@@ -78,10 +80,10 @@ def create_data(sample=None, **data_keyword):
 
     Args:
         sample (rnavigate.Sample, optional):
-            Used only if 'seq_source' is provided.
-                {'seq_source': 'keyword'}
+            Requried only if 'sequence' is provided as a data keyword.
+                {'sequence': 'data_keyword'}
                     is replaced with:
-                {'sequence': sample.data['keyword'].sequence}
+                {'sequence': sample.data['data_keyword'].sequence}
             Defaults to None.
         **data_keyword:
             There must one and only one additional argument provided.
@@ -134,8 +136,8 @@ def create_data(sample=None, **data_keyword):
                 'data_keyword': name,
                 'input_data': inputs}
     elif all([name in data_keyword_defaults,
-            name not in inputs,
-            'data_keyword' not in inputs]):
+              name not in inputs,
+              'data_keyword' not in inputs]):
         inputs['data_keyword'] = name
     else:
         for kw in list(inputs.keys()):
@@ -143,7 +145,9 @@ def create_data(sample=None, **data_keyword):
                 inputs['data_keyword'] = kw
                 inputs['input_data'] = inputs.pop(kw)
     if inputs['data_keyword'] == 'allpossible':
-        inputs['seq_source'] = inputs.pop('input_data')
+        inputs['sequence'] = inputs.pop('input_data')
+    elif inputs['data_keyword'] in ['sites', 'spans', 'primers', 'groups']:
+        inputs['annotation_type'] = inputs['data_keyword']
 
     # 'filepath' or 'dataframe' may be used in place of 'input_data'
     for alt_input_data in ['filepath', 'dataframe']:
@@ -151,6 +155,8 @@ def create_data(sample=None, **data_keyword):
             inputs['input_data'] = inputs.pop(alt_input_data)
     if 'fasta' in inputs:
         inputs['sequence'] = inputs.pop('fasta')
+    elif 'seq_source' in inputs:
+        inputs['sequence'] = inputs.pop('seq_source')
 
     # retrieve defaults for given data_class
     data_class = inputs.pop('data_keyword')
@@ -162,11 +168,8 @@ def create_data(sample=None, **data_keyword):
         raise exc
 
     # get sequence from another object if appropriate
-    if (("seq_source" in inputs)
-            and ("sequence" not in inputs)
-            and ("fasta" not in inputs)):
-        inputs["sequence"] = get_sequence(inputs.pop("seq_source"), sample)
-    inputs.pop("seq_source", None)
+    if 'sequence' in inputs:
+        inputs["sequence"] = get_sequence(inputs["sequence"], sample)
 
     # check if any required arguments are not provided
     required_arguments = []
@@ -302,51 +305,31 @@ class Sample:
 #     filter_dance
 ###############################################################################
 
-    def get_data(self, key):
-        """Internal function that returns a data object associated with key.
-        Prevents an error and prints a message if data object not found. It
-        will also search the parent of a DANCE model component for structure
-        information.
-
-        Args:
-            key (str): Descriptor of data type desired. Can be any of the keys
-               of Sample.data or "label" or a Data object
-
-        Returns:
-            Data object
-        """
-        if key == "label":
+    def get_data(self, data_keyword):
+        # handle special cases
+        if isinstance(data_keyword, dict):
+            return {k: self.get_data(v) for k, v in data_keyword.items()}
+        elif isinstance(data_keyword, list):
+            return [self.get_data(v) for v in data_keyword]
+        elif isinstance(data_keyword, data.Sequence):
+            return data_keyword
+        elif data_keyword == "label":
             return self.sample
-        elif key is None:
+        elif data_keyword is None:
             return None
-        if isinstance(key, data.Data):
-            return key
+        # if keyword is in sample.data, retreive Sequence object
         try:
-            return self.data[key]
+            return self.data[data_keyword]
         except (KeyError, TypeError):
             try:
-                return self.parent.data[key]
+                return self.parent.data[data_keyword]
             except (KeyError, AttributeError):
-                print(f"{key} data not found in {self.sample}")
+                print(f"{data_keyword} data not found in {self.sample}")
                 return None
 
-    def get_data_list(self, keys):
-        """Calls Sample.get_data() on a list of keys, also accepts "ctcompare",
-        which is equivalent to ["ct", "compct"]
-
-        Returns:
-            list of data objects
-        """
-        if isinstance(keys, list):
-            return [self.get_data_list(key) for key in keys]
-        elif keys == "ctcompare":
-            return self.get_data_list(["ct", "compct"])
-        else:
-            return self.get_data(keys)
-
-    def filter_interactions(self, interactions,
-                            suppress=False, metric=None, cmap=None,
-                            min_max=None, prefiltered=False, **kwargs):
+    def filter_interactions(self, interactions, suppress=False, metric=None,
+                            cmap=None, normalization=None, values=None,
+                            prefiltered=False, **kwargs):
         """Aligns sequence to fit_to, sets properties, filters and aligns data.
 
         For example, for plotting interaction data containing structure
@@ -387,16 +370,18 @@ class Sample:
                 print(f"{interactions} is not an Interactions datatype")
             return
 
-        if metric is not None:
-            if metric.startswith("Distance"):
-                metric = (metric, self.data["pdb"])
-            interactions.metric = metric
+        if metric is not None and metric.startswith("Distance"):
+            metric = (metric, self.data["pdb"])
         else:
-            interactions.metric = interactions.default_metric
+            metric = interactions.default_metric
+        metric = {'metric_column': metric}
         if cmap is not None:
-            interactions.cmap = cmap
-        if min_max is not None:
-            interactions.min_max = min_max
+            metric['cmap'] = cmap
+        if normalization is not None:
+            metric['normalization'] = normalization
+        if values is not None:
+            metric['values'] = values
+        interactions.metric = metric
         for datatype in ["profile", "ct"]:
             if datatype in kwargs.keys():
                 kwargs[datatype] = self.data[kwargs[datatype]]
@@ -433,7 +418,7 @@ class Sample:
         for dance in self.dance:
             dance_ct = dance.data["ct"]
             fit_to = get_sequence(
-                seq_source=fit_to, sample=dance, default='ct')
+                sequence=fit_to, sample=dance, default='ct')
             dance.data["ringmap"].filter(fit_to=fit_to, ct=dance_ct, **kwargs)
             dance.data["ringmap"].mask_on_ct(ctlist, min_cd=cdfilter)
             dance.data["pairmap"].filter(fit_to=fit_to, ct=dance_ct,
@@ -464,42 +449,44 @@ class Sample:
 ###############################################################################
 # accessory functions
 #   get_sequence
-#   fit_data_list
+#   fit_data
 ###############################################################################
 
 
-def get_sequence(seq_source, sample=None, default=None):
+def get_sequence(sequence, sample=None, default=None):
     """Flexible function that returns a Data object containing a sequence.
 
     Args:
-        seq_source (any): Can be a sequence string, a key in sample.data, or a
+        sequence (any): Can be a sequence string, a key in sample.data, or a
             Data object with a sequence
         sample (Sample, optional): sample to get retrieve data from.
             Defaults to None.
-        default (any, optional): same format as seq_source above. default to
-            this if seq_source is None.
+        default (any, optional): same format as sequence above. default to
+            this if sequence is None.
             Defaults to None.
 
     Raises:
-        ValueError: If seq_source and default are both None
+        ValueError: If sequence and default are both None
         ValueError: If Data object could not be retreived based on inputs
 
     Returns:
         Data object or subclass: contains a sequence and can be used in factory
             methods
     """
-    if seq_source is None and default is None:
-        raise ValueError("A seq_source must be provided.")
-    elif seq_source is None:
-        seq_source = default
-    if hasattr(seq_source, "sequence"):
-        sequence = seq_source
-    elif seq_source in sample.data.keys():
-        sequence = sample.data[seq_source]
-    elif all([nt.upper() in "AUCGT." for nt in seq_source]):
-        sequence = data.Data(sequence=seq_source)
+    if sequence is None and default is None:
+        raise ValueError("A sequence must be provided.")
+    elif sequence is None:
+        sequence = default
+    if isinstance(sequence, data.Sequence):
+        pass
+    elif isinstance(sequence, str) and os.path.isfile(sequence):
+        sequence = data.Sequence(sequence)
+    elif isinstance(sequence, str) and sequence in sample.data.keys():
+        sequence = sample.data[sequence]
+    elif isinstance(sequence, str) and all([nt.upper() in "AUCGT." for nt in sequence]):
+        sequence = data.Sequence(sequence=sequence)
     else:
-        raise ValueError(f"Cannot find sequence from {seq_source}")
+        raise ValueError(f"Cannot find sequence from {sequence}")
     return sequence
 
 
@@ -515,28 +502,20 @@ def fit_data(data_list, fit_to, second_alignment=None):
     if isinstance(data_list, dict):
         return {k: fit_data(v, fit_to) for k, v in data_list.items()}
     elif isinstance(data_list, list):
-        return [fit_data(v) for v in data_list]
+        return [fit_data(v, fit_to) for v in data_list]
     elif data_list is None:
         return None
     elif isinstance(data_list, data.Sequence):
+        if isinstance(data_list, data.PDB):
+            return data_list
         alignment = data.SequenceAlignment(data_list, fit_to)
         if second_alignment is not None:
-            alignment = data.AlignmentChain([alignment, second_alignment])
+            alignment = data.AlignmentChain(alignment, second_alignment)
         return data_list.get_aligned_data(alignment)
 
 
 ###############################################################################
 # Plotting functions that accept a list of samples
-#   plot_qc_multisample
-#   plot_skyline_multisample
-#   plot_arcs_multisample
-#   plot_ss_multisample
-#   plot_mol_multisample
-#   plot_heatmap_multisample
-#   plot_circle_multisample
-#   plot_linreg_multisample
-#   plot_roc_multisample
-#   plot_disthist_multisample
 #   plot_qc
 #   plot_skyline
 #   plot_arcs
@@ -548,106 +527,6 @@ def fit_data(data_list, fit_to, second_alignment=None):
 #   plot_roc
 #   plot_disthist
 ###############################################################################
-
-
-def plot_qc_multisample(*args, **kwargs):
-    """Deprecation Warning: this function name will be removed in favor of
-    rnavigate.plot_qc() starting with version 1.0.0
-    """
-    print("Deprecation warning, this function will be removed in favor of "
-          "rnavigate.plot_qc starting with version 1.0.0. This function "
-          "simply calls the new function, please start using that one.")
-    return plot_qc(*args, **kwargs)
-
-
-def plot_skyline_multisample(*args, **kwargs):
-    """Deprecation Warning: this function name will be removed in favor of
-    rnavigate.plot_skyline() starting with version 1.0.0
-    """
-    print("Deprecation warning, this function will be removed in favor of "
-          "rnavigate.plot_skyline starting with version 1.0.0. This function "
-          "simply calls the new function, please start using that one.")
-    return plot_skyline(*args, **kwargs)
-
-
-def plot_arcs_multisample(*args, **kwargs):
-    """Deprecation Warning: this function name will be removed in favor of
-    rnavigate.plot_arcs() starting with version 1.0.0
-    """
-    print("Deprecation warning, this function will be removed in favor of "
-          "rnavigate.plot_arcs starting with version 1.0.0. This function "
-          "simply calls the new function, please start using that one.")
-    return plot_arcs(*args, **kwargs)
-
-
-def plot_ss_multisample(*args, **kwargs):
-    """Deprecation Warning: this function name will be removed in favor of
-    rnavigate.plot_ss() starting with version 1.0.0
-    """
-    print("Deprecation warning, this function will be removed in favor of "
-          "rnavigate.plot_ss starting with version 1.0.0. This function "
-          "simply calls the new function, please start using that one.")
-    return plot_ss(*args, **kwargs)
-
-
-def plot_mol_multisample(*args, **kwargs):
-    """Deprecation Warning: this function name will be removed in favor of
-    rnavigate.plot_mol() starting with version 1.0.0
-    """
-    print("Deprecation warning, this function will be removed in favor of "
-          "rnavigate.plot_mol starting with version 1.0.0. This function "
-          "simply calls the new function, please start using that one.")
-    return plot_mol(*args, **kwargs)
-
-
-def plot_heatmap_multisample(*args, **kwargs):
-    """Deprecation Warning: this function name will be removed in favor of
-    rnavigate.plot_heatmap() starting with version 1.0.0
-    """
-    print("Deprecation warning, this function will be removed in favor of "
-          "rnavigate.plot_heatmap starting with version 1.0.0. This function "
-          "simply calls the new function, please start using that one.")
-    return plot_heatmap(*args, **kwargs)
-
-
-def plot_circle_multisample(*args, **kwargs):
-    """Deprecation Warning: this function name will be removed in favor of
-    rnavigate.plot_circle() starting with version 1.0.0
-    """
-    print("Deprecation warning, this function will be removed in favor of "
-          "rnavigate.plot_circle starting with version 1.0.0. This function "
-          "simply calls the new function, please start using that one.")
-    return plot_circle(*args, **kwargs)
-
-
-def plot_linreg_multisample(*args, **kwargs):
-    """Deprecation Warning: this function name will be removed in favor of
-    rnavigate.plot_linreg() starting with version 1.0.0
-    """
-    print("Deprecation warning, this function will be removed in favor of "
-          "rnavigate.plot_linreg starting with version 1.0.0. This function "
-          "simply calls the new function, please start using that one.")
-    return plot_linreg(*args, **kwargs)
-
-
-def plot_roc_multisample(*args, **kwargs):
-    """Deprecation Warning: this function name will be removed in favor of
-    rnavigate.plot_roc() starting with version 1.0.0
-    """
-    print("Deprecation warning, this function will be removed in favor of "
-          "rnavigate.plot_roc starting with version 1.0.0. This function "
-          "simply calls the new function, please start using that one.")
-    return plot_roc(*args, **kwargs)
-
-
-def plot_disthist_multisample(*args, **kwargs):
-    """Deprecation Warning: this function name will be removed in favor of
-    rnavigate.plot_disthist() starting with version 1.0.0
-    """
-    print("Deprecation warning, this function will be removed in favor of "
-          "rnavigate.plot_disthist starting with version 1.0.0. This function "
-          "simply calls the new function, please start using that one.")
-    return plot_disthist(*args, **kwargs)
 
 
 def plot_qc(samples, labels=None, plot_kwargs=None, **kwargs):
@@ -679,14 +558,13 @@ def plot_qc(samples, labels=None, plot_kwargs=None, **kwargs):
     plot.set_figure_size()
     return plot
 
-
-def plot_skyline(samples, seq_source=None, profile="profile", labels=None,
+def plot_skyline(samples, sequence=None, profile="profile", labels=None,
                  annotations=None, region="all", plot_kwargs=None, **kwargs):
     """Plots multiple per-nucleotide datasets on a single axis.
 
     Args:
         samples (list of rnavigate.Sample): samples to plot.
-        seq_source (str or data object, optional): a key from sample.data, a
+        sequence (str or data object, optional): a key from sample.data, a
             sequence string, or a Data object. All data will be mapped to this
             string using a user-defined or pairwise sequence alignment.
             Defaults to the value of the profile argument below.
@@ -712,27 +590,29 @@ def plot_skyline(samples, seq_source=None, profile="profile", labels=None,
     if plot_kwargs is None:
         plot_kwargs = {}
     if labels is None:
-        labels = ["label"]*len(samples)
-    sequence = get_sequence(seq_source, samples[0], profile)
+        labels = [sample.sample for sample in samples]
+    sequence = get_sequence(sequence, samples[0], profile)
     plot = plots.Skyline(num_samples=len(samples),
                          nt_length=sequence.length,
                          region=region,
                          **plot_kwargs)
     for sample, label in zip(samples, labels):
-        fit_data_list(sample, annotations + [profile], sequence)
-        plot.add_sample(sample, profile=profile, annotations=annotations,
-                        label=label, **kwargs)
+        data_dict = sample.get_data({
+            'profile': profile,
+            'annotations': annotations})
+        data_dict = fit_data(data_dict, sequence)
+        plot.plot_data(**data_dict, label=label, **kwargs)
     plot.set_figure_size()
     return plot
 
 
-def plot_profile(samples, seq_source=None, profile="profile", labels=None,
+def plot_profile(samples, sequence=None, profile="profile", labels=None,
                  annotations=None, region="all", plot_kwargs=None, **kwargs):
     """Aligns reactivity profiles by sequence and plots them on seperate axes.
 
     Args:
         samples (list of rnavigate.Sample): samples to plot.
-        seq_source (str or data object, optional): a key from sample.data, a
+        sequence (str or data object, optional): a key from sample.data, a
             sequence string, or a Data object. All data will be mapped to this
             string using a user-defined or pairwise sequence alignment.
             Defaults to the value of the profile argument below.
@@ -758,16 +638,20 @@ def plot_profile(samples, seq_source=None, profile="profile", labels=None,
     if plot_kwargs is None:
         plot_kwargs = {}
     if labels is None:
-        labels = ["label"]*len(samples)
-    sequence = get_sequence(seq_source, samples[0], profile)
+        labels = [sample.sample for sample in samples]
+    sequence = get_sequence(sequence, samples[0], profile)
     plot = plots.skyline.Profile(num_samples=len(samples),
                                  nt_length=sequence.length,
                                  region=region,
                                  **plot_kwargs)
     for sample, label in zip(samples, labels):
-        fit_data_list(sample, annotations + [profile], sequence)
-        plot.add_sample(sample, seq=sequence, profile=profile,
-                        annotations=annotations, label=label, **kwargs)
+        data_dict = sample.get_data({
+            'annotations': annotations,
+            'profile': profile,
+            'seq': sequence
+        })
+        data_dict = fit_data(data_dict, sequence)
+        plot.plot_data(**data_dict, label=label, **kwargs)
     plot.set_figure_size()
     return plot
 
@@ -795,19 +679,18 @@ def plot_alignment(data1, data2, labels=None, plot_kwargs=None, **kwargs):
     if labels is None:
         labels = [f"{s.sample}: {seq}" for s, seq in [data1, data2]]
     plot = plots.Alignment(num_samples=1, **plot_kwargs)
-    plot.add_sample(sample=None,
-                    data1=data1[0].data[data1[1]],
-                    data2=data2[0].data[data2[1]],
-                    label=labels, **kwargs)
+    alignment = data.SequenceAlignment(
+        data1[0].data[data1[1]], data1[0].data[data1[1]])
+    plot.plot_data(alignment=alignment, label=labels)
     plot.set_figure_size()
     return plot
 
 
-def plot_arcs(samples, seq_source=None, ct="ct", comp=None, interactions=None,
-              interactions_filter=None, interactions2=None,
-              interactions2_filter=None, filters=None, profile="profile",
-              annotations=None, labels=None, region="all", plot_kwargs=None,
-              colorbar=True, **kwargs):
+def plot_arcs(samples, sequence=None, structure=None, comp=None,
+              interactions=None, interactions_filter=None, filters=None,
+              interactions2=None, interactions2_filter=None,
+              profile=None, annotations=None, labels=None, region="all",
+              plot_kwargs=None, colorbar=True, **kwargs):
     """Generates a multipanel arc plot displaying combinations of secondary
     structures, per-nucleotide data, inter-nucleotide data, and sequence
     annotations. Each plot may display a unique sample and/or filtering scheme.
@@ -816,31 +699,26 @@ def plot_arcs(samples, seq_source=None, ct="ct", comp=None, interactions=None,
         samples (list of rnavigate.Sample): Samples to retreive data from.
             number of panels will equal the length of this list, unless filters
             argument below is also used.
-        seq_source (str or data object, optional): a key from sample.data, a
+        sequence (str or data object, optional): a key from sample.data, a
             sequence string, or a Data object. All data will be mapped to this
             string using a user-defined or pairwise sequence alignment.
             Defaults to the value of the ct argument below.
-        ct (str, optional): a key from sample.data to retreive a secondary
+        structure (str, optional): a key from sample.data to retreive a secondary
             structure. This will be plotted on the top half of each panel.
-            Defaults to "ct".
+            Defaults to "ss".
         comp (str, optional): same as ct. basepairs from ct and comp will be
             plotted on the top half of each panel. Basepairs are colored by
             which structure contains them (shared, ct only, comp only).
             Defaults to None.
         interactions (str, optional): a key from sample.data to retrieve inter-
-            nucleotide data. These data are mapped to seq_source coordinates,
+            nucleotide data. These data are mapped to sequence coordinates,
             filtered using interactions_filter arguments, and displayed on the
             bottom half of each panel.
             Defaults to None.
         interactions_filter (dict, optional): These key-value pairs are passed
             as keyword arguments to sample.filter_interactions along with
-            interactions=interactions and fit_to=seq_source. See
+            interactions=interactions and fit_to=sequence. See
             rnavigate.Sample.filter_interactions for more detail.
-            Defaults to {}.
-        interactions2 (str, optional): same as interactions above.
-            Defaults to None.
-        interactions2_filter (dict, optional): same as interactions_filter
-            above but applied to interactions2.
             Defaults to {}.
         filters (list of dict, optional): For plotting multiple filtering
             schemes applied to each sample, each in a new panel. Each
@@ -851,6 +729,11 @@ def plot_arcs(samples, seq_source=None, ct="ct", comp=None, interactions=None,
             ignored. interactions2 and interactions2_filter will be displayed
             in every panel.
             Defaults to [].
+        interactions2 (str, optional): same as interactions above.
+            Defaults to None.
+        interactions2_filter (dict, optional): same as interactions_filter
+            above but applied to interactions2.
+            Defaults to {}.
         profile (str, optional): a key from sample.data used to retrieve per-
             nucleotide data. These data are displayed in center of each panel.
             Defaults to "profile".
@@ -861,7 +744,7 @@ def plot_arcs(samples, seq_source=None, ct="ct", comp=None, interactions=None,
         labels (str, optional): Same length as samples list. Labels to
             be used in plot legends. Defaults to default sample name.
         region (list of int: length 2, optional): start and end position of
-            seq_source to be plotted. 1-indexed, inclusive.
+            sequence to be plotted. 1-indexed, inclusive.
             Defaults to [0, sequence length].
         plot_kwargs (dict, optional): kwargs passed to AP(). See
             rnavigate.plots.AP for more detail.
@@ -894,29 +777,29 @@ def plot_arcs(samples, seq_source=None, ct="ct", comp=None, interactions=None,
     # coerce interactions and interactions_filter into filters format
     elif filters is None:
         filters = [{"interactions": interactions} | interactions_filter]
-    # initialize plot using all structure drawings
+    # initialize plot
     num_samples = len(samples) * len(filters)
-    seq = get_sequence(seq_source=seq_source, sample=samples[0], default=ct)
-    plot = plots.AP(num_samples=num_samples, nt_length=seq.length,
-                    region=region, **plot_kwargs)
+    sequence = get_sequence(sequence=sequence, sample=samples[0], default=structure)
+    plot = plots.AP(
+        num_samples=num_samples,
+        nt_length=sequence.length,
+        region=region, **plot_kwargs)
     # loop through samples and filters, adding each as a new axis
     for sample, label in zip(samples, labels):
         sample.filter_interactions(interactions2, **interactions2_filter)
-        data_dict = {
-            'annotations': sample.get_data_list(annotations),
-            'ct': sample.get_data(ct),
-            'comp': sample.get_data(comp),
-            'profile': sample.get_data(profile),
-            'interactions2': sample.get_data(interactions2),
-        }
-        data_dict = fit_data(data_dict, seq)
+        data_dict = sample.get_data({
+            'annotations': annotations,
+            'ct': structure,
+            'comp': comp,
+            'profile': profile,
+            'interactions2': interactions2})
+        data_dict = fit_data(data_dict, sequence)
         data_dict['label'] = sample.get_data(label)
-        data_dict['seq'] = seq
+        data_dict['seq'] = sequence
         for filt in filters:
             sample.filter_interactions(**filt)
-            interactions = sample.get_data(filt.pop('interactions'))
-            interactions = fit_data(interactions, seq)
-            data_dict['interactions'] = interactions
+            interactions = sample.get_data(filt['interactions'])
+            data_dict['interactions'] = fit_data(interactions, sequence)
             plot.plot_data(**data_dict, **kwargs)
     plot.set_figure_size()
     if colorbar:
@@ -924,7 +807,7 @@ def plot_arcs(samples, seq_source=None, ct="ct", comp=None, interactions=None,
     return plot
 
 
-def plot_arcs_compare(samples, seq_source=None, ct="ct", comp=None,
+def plot_arcs_compare(samples, sequence=None, structure="ct", comp=None,
                       interactions=None, interactions_filter=None,
                       interactions2=None, interactions2_filter=None,
                       profile="profile", labels=None, region="all",
@@ -938,7 +821,7 @@ def plot_arcs_compare(samples, seq_source=None, ct="ct", comp=None,
         samples (list of rnavigate.Sample): Samples to retreive data from.
             number of panels will equal the length of this list, unless filters
             argument below is also used.
-        seq_source (str or data object, optional): a key from sample.data, a
+        sequence (str or data object, optional): a key from sample.data, a
             sequence string, or a Data object. All data will be mapped to this
             string using a user-defined or pairwise sequence alignment.
             Defaults to the value of the ct argument below.
@@ -950,13 +833,13 @@ def plot_arcs_compare(samples, seq_source=None, ct="ct", comp=None,
             which structure contains them (shared, ct only, comp only).
             Defaults to None.
         interactions (str, optional): a key from sample.data to retrieve inter-
-            nucleotide data. These data are mapped to seq_source coordinates,
+            nucleotide data. These data are mapped to sequence coordinates,
             filtered using interactions_filter arguments, and displayed on the
             bottom half of each panel.
             Defaults to None.
         interactions_filter (dict, optional): These key-value pairs are passed
             as keyword arguments to sample.filter_interactions along with
-            interactions=interactions and fit_to=seq_source. See
+            interactions=interactions and fit_to=sequence. See
             rnavigate.Sample.filter_interactions for more detail.
             Defaults to {}.
         interactions2 (str, optional): same as interactions above.
@@ -970,7 +853,7 @@ def plot_arcs_compare(samples, seq_source=None, ct="ct", comp=None,
         labels (str, optional): Same length as samples list. Labels to
             be used in plot legends. Defaults to default sample name.
         region (list of int: length 2, optional): start and end position of
-            seq_source to be plotted. 1-indexed, inclusive.
+            sequence to be plotted. 1-indexed, inclusive.
             Defaults to [0, sequence length].
         plot_kwargs (dict, optional): kwargs passed to AP(). See
             rnavigate.plots.AP for more detail.
@@ -982,16 +865,9 @@ def plot_arcs_compare(samples, seq_source=None, ct="ct", comp=None,
         rnavigate.plots.AP plot: object containing matplotlib figure and axes
             with additional plotting and file saving methods
     """
-    seq1 = get_sequence(seq_source=seq_source, sample=samples[0], default=ct)
-    seq2 = get_sequence(seq_source=seq_source, sample=samples[1], default=ct)
+    seq1 = get_sequence(sequence=sequence, sample=samples[0], default=structure)
+    seq2 = get_sequence(sequence=sequence, sample=samples[1], default=structure)
     alignment = data.SequenceAlignment(seq1, seq2)
-    _, _, al1, al2 = alignment.get_alignment(return_alignment=True)
-    seq1_full = al1.replace('-', '.')
-    seq2_full = al2.replace('-', '.')
-    seq1_full = get_sequence(seq_source=seq1_full,
-                             sample=samples[0], default=ct)
-    seq2_full = get_sequence(seq_source=seq2_full,
-                             sample=samples[0], default=ct)
     # use mutable defaults
     if interactions_filter is None:
         interactions_filter = {}
@@ -1001,39 +877,45 @@ def plot_arcs_compare(samples, seq_source=None, ct="ct", comp=None,
         labels = ["label"]*len(samples)
     if plot_kwargs is None:
         plot_kwargs = {}
-    if region != "all":
-        al1 = [i for i, nt in enumerate(seq1_full.sequence) if nt != '.']
-        region = [al1[region[0]], al1[region[1]]]
     # coerce interactions and interactions_filter into filters format
     filters = [{"interactions": interactions} | interactions_filter]
     # initialize plot using all structure drawings
-    plot = plots.AP(num_samples=1, nt_length=seq1_full.length, region=region,
-                    **plot_kwargs)
+    plot = plots.AP(num_samples=1, nt_length=len(alignment.target),
+                    region=region, **plot_kwargs)
     # loop through samples and filters, adding each as a new axis
-    for sample, seq, panel in zip(samples, [seq1_full, seq2_full],
-                                  ["top", "bottom"]):
-        fit_data_list(sample, [ct, comp, profile], seq)
-        sample.filter_interactions(interactions=interactions2,
-                                   fit_to=seq, **interactions2_filter)
+    for sample, seq, panel in zip(samples, [1, 2], ["top", "bottom"]):
+        if seq == 1:
+            seq, other_seq = seq1, seq2
+        else:
+            seq, other_seq = seq2, seq1
+        alignment = data.SequenceAlignment(seq, other_seq)
+        sample.filter_interactions(interactions2, **interactions2_filter)
+        data_dict = sample.get_data({
+            'ct': structure,
+            'comp': comp,
+            'profile': profile,
+            'interactions2': interactions2,
+        })
+        panels = {
+            'ct_panel': panel, 
+            'interactions_panel': panel,
+            'interactions2_panel': panel,
+            'profile_panel': panel}
+        data_dict = fit_data(data_dict, seq, alignment)
         for filt in filters:
-            sample.filter_interactions(fit_to=seq, **filt)
-            plot.add_sample(ax=0, seq=None, sample=sample, annotation_gap=10,
-                            ct=ct, comp=comp, ct_panel=panel,
-                            interactions=filt["interactions"],
-                            interactions_panel=panel,
-                            interactions2=interactions2,
-                            interactions2_panel=panel,
-                            profile=profile, profile_panel=panel, label='',
-                            annotations=[], seqbar=False, **kwargs)
-    plots.alignment.plot_alignment(plot=plot, ax=plot.axes[0, 0], data1=seq1,
-                                   data2=seq2,
-                                   label=labels, center=-5, offset=4,
-                                   spines_positions={"top": 0, "bottom": -10})
+            sample.filter_interactions(**filt)
+            interactions = sample.get_data(filt['interactions'])
+            data_dict['interactions'] = fit_data(interactions, seq, alignment)
+            plot.plot_data(
+                ax=0, seq=None, annotation_gap=10, label='', seqbar=False,
+                **panels, **data_dict, **kwargs)
+    plots.alignment.plot_alignment(
+        plot=plot, ax=plot.axes[0, 0], alignment=alignment, label=labels,
+        center=-5, offset=4, spines_positions={"top": 0, "bottom": -10})
     plot.set_figure_size()
     if colorbar:
         plot.plot_colorbars()
     return plot
-
 
 def plot_ss(samples, ss="ss", profile="profile", annotations=[],
             interactions=None, interactions_filter=None, interactions2=None,
@@ -1119,15 +1001,19 @@ def plot_ss(samples, ss="ss", profile="profile", annotations=[],
     plot = plots.SS(num_samples=num_samples, **plot_kwargs)
     # loop through samples and filters, adding each as a new axis
     for sample, label in zip(samples, labels):
-        fit_data_list(sample, annotations + [profile], sample.data[ss])
-        sample.filter_interactions(interactions=interactions2, fit_to=ss,
-                                   **interactions2_filter)
+        sample.filter_interactions(interactions2, **interactions2_filter)
+        data_dict = sample.get_data({
+            'structure': ss,
+            'annotations': annotations,
+            'profile': profile,
+            'interactions2': interactions2})
+        data_dict = fit_data(data_dict, data_dict['structure'])
         for filt in filters:
-            sample.filter_interactions(fit_to=ss, **filt)
-            plot.add_sample(sample, structure=ss,
-                            interactions=filt["interactions"],
-                            interactions2=interactions2, profile=profile,
-                            annotations=annotations, label=label, **kwargs)
+            sample.filter_interactions(**filt)
+            interactions = sample.get_data(filt['interactions'])
+            data_dict['interactions'] = fit_data(interactions,
+                                                 data_dict['structure'])
+            plot.plot_data(**data_dict, label=label, **kwargs)
     plot.set_figure_size()
     if colorbar:
         plot.plot_colorbars()
@@ -1209,16 +1095,17 @@ def plot_mol(samples, structure="pdb", interactions=None,
         filters = [{"interactions": interactions} | interactions_filter]
     num_samples = len(samples) * len(filters)
     # initialize plot using 1st 3D structure (applies to all samples)
-    plot = plots.Mol(num_samples=num_samples, pdb=samples[0].data[structure],
-                     **plot_kwargs)
+    structure = samples[0].get_data(structure)
+    plot = plots.Mol(num_samples=num_samples, pdb=structure, **plot_kwargs)
     # loop through samples and filters, adding each as a new viewer
     for sample, label in zip(samples, labels):
-        fit_data_list(sample, [profile], sample.data[structure])
+        data_dict = sample.get_data({'profile': profile})
+        data_dict = fit_data(data_dict, structure)
         for filt in filters:
-            sample.filter_interactions(fit_to=structure, **filt)
-            plot.add_sample(sample=sample,
-                            interactions=filt["interactions"],
-                            profile=profile, label=label, **kwargs)
+            sample.filter_interactions(**filt)
+            interactions = sample.get_data(filt['interactions'])
+            data_dict['interactions'] = fit_data(interactions, structure)
+            plot.plot_data(**data_dict, label=label, **kwargs)
     # apply custom function
     if custom_function is not None:
         custom_function(plot)
@@ -1248,14 +1135,14 @@ def plot_heatmap(samples, structure=None, interactions=None,
             PDB data with atomic coordinates (contours outline 3D distance) or
             secondary structure data (contours outline contact distance).
         interactions (str, optional): a key from sample.data to retrieve inter-
-            nucleotide data. These data are mapped to seq_source coordinates,
+            nucleotide data. These data are mapped to sequence coordinates,
             filtered using interactions_filter arguments, and displayed as
             either nucleotide-resolution heatmaps, or 2D kernel density
             estimate.
             Defaults to None.
         interactions_filter (dict, optional): These key-value pairs are passed
             as keyword arguments to sample.filter_interactions along with
-            interactions=interactions and fit_to=seq_source. See
+            interactions=interactions and fit_to=sequence. See
             rnavigate.Sample.filter_interactions for more detail.
             Defaults to {}.
         filters (list of dict, optional): For plotting multiple filtering
@@ -1297,19 +1184,19 @@ def plot_heatmap(samples, structure=None, interactions=None,
         filters = [{"interactions": interactions} | interactions_filter]
     # initialize plot using 1st 3D structure (applies to all samples)
     num_samples = len(samples) * len(filters)
-    plot = plots.Heatmap(
-        num_samples, samples[0].data[structure], **plot_kwargs)
+    structure = samples[0].data[structure]
+    plot = plots.Heatmap(num_samples, structure, **plot_kwargs)
     # loop through samples and filters, adding each as a new axis
     for sample, label in zip(samples, labels):
         for filt in filters:
-            sample.filter_interactions(fit_to=structure, **filt)
-            plot.add_sample(sample, interactions=filt["interactions"],
-                            label=label, **kwargs)
+            sample.filter_interactions(**filt)
+            interactions = sample.get_data(filt['interactions'])
+            interactions = fit_data(interactions, structure)
+            plot.plot_data(interactions=interactions, label=label, **kwargs)
     plot.set_figure_size()
     return plot
 
-
-def plot_circle(samples, seq_source=None, ct=None, comp=None,
+def plot_circle(samples, sequence=None, ct=None, comp=None,
                 interactions=None, interactions_filter=None,
                 interactions2=None, interactions2_filter=None, filters=None,
                 annotations=None, profile="profile", labels=None,
@@ -1322,7 +1209,7 @@ def plot_circle(samples, seq_source=None, ct=None, comp=None,
         samples (list of rnavigate.Sample): Samples to retreive data from.
             number of panels will equal the length of this list, unless filters
             argument below is also used.
-        seq_source (str or data object, optional): a key from sample.data, a
+        sequence (str or data object, optional): a key from sample.data, a
             sequence string, or a Data object. All data will be mapped to this
             sequence using a user-defined or pairwise sequence alignment.
             Defaults to the value of the ct argument below.
@@ -1334,13 +1221,13 @@ def plot_circle(samples, seq_source=None, ct=None, comp=None,
             (shared, ct only, comp only).
             Defaults to None.
         interactions (str, optional): a key from sample.data to retrieve inter-
-            nucleotide data. These data are mapped to seq_source coordinates,
+            nucleotide data. These data are mapped to sequence coordinates,
             filtered using interactions_filter arguments, and displayed as arcs
             within the circle.
             Defaults to None.
         interactions_filter (dict, optional): These key-value pairs are passed
             as keyword arguments to sample.filter_interactions along with
-            interactions=interactions and fit_to=seq_source. See
+            interactions=interactions and fit_to=sequence. See
             rnavigate.Sample.filter_interactions for more detail.
             Defaults to {}.
         interactions2 (str, optional): same as interactions above.
@@ -1387,7 +1274,7 @@ def plot_circle(samples, seq_source=None, ct=None, comp=None,
     if plot_kwargs is None:
         plot_kwargs = {}
     if labels is None:
-        labels = ["label"]*len(samples)
+        labels = [sample.sample for sample in samples]
     # if filters list given, rows = # samples, columns = # filters
     if ((filters is not None)
             and (len(samples) > 1)
@@ -1399,30 +1286,33 @@ def plot_circle(samples, seq_source=None, ct=None, comp=None,
     elif filters is None:
         filters = [{"interactions": interactions} | interactions_filter]
     # initialize plot
-    sequence = get_sequence(seq_source, samples[0], profile)
+    sequence = get_sequence(sequence, samples[0], ct)
     num_samples = len(samples) * len(filters)
     plot = plots.Circle(num_samples=num_samples,
-                        seq_source=sequence, **plot_kwargs)
+                        sequence=sequence, **plot_kwargs)
     # loop through samples and filters, adding each as a new axis
     for sample, label in zip(samples, labels):
-        fit_data_list(sample=sample, data_list=annotations+[ct, comp, profile],
-                      fit_to=sequence)
-        sample.filter_interactions(interactions=interactions2, fit_to=sequence,
-                                   **interactions2_filter)
+        sample.filter_interactions(interactions2, **interactions2_filter)
+        data_dict = sample.get_data({
+            'ct': ct,
+            'comp': comp,
+            'interactions2': interactions2,
+            'profile': profile,
+            'annotations': annotations})
+        data_dict = fit_data(data_dict, sequence)
         for filt in filters:
-            sample.filter_interactions(fit_to=sequence, **filt)
-            plot.add_sample(sample, ct=ct, comp=comp,
-                            interactions=filt["interactions"],
-                            interactions2=interactions2, profile=profile,
-                            annotations=annotations, label=label, **kwargs)
+            sample.filter_interactions(**filt)
+            interactions = sample.get_data(filt['interactions'])
+            data_dict['interactions'] = fit_data(interactions, sequence)
+            plot.plot_data(**data_dict, label=label, **kwargs)
     plot.set_figure_size()
     if colorbar:
         plot.plot_colorbars()
     return plot
 
 
-def plot_linreg(samples, ct="ct", profile="profile", labels=None,
-                plot_kwargs=None, **kwargs):
+def plot_linreg(samples, sequence=None, ct=None, profile="profile",
+                labels=None, plot_kwargs=None, **kwargs):
     """Performs linear regression analysis and generates scatter plots of all
     sample-to-sample profile vs. profile comparisons. Colors nucleotides by
     identity or base-pairing status.
@@ -1452,12 +1342,16 @@ def plot_linreg(samples, ct="ct", profile="profile", labels=None,
         labels = ["label"] * len(samples)
     if plot_kwargs is None:
         plot_kwargs = {}
+    sequence = get_sequence(sequence, samples[0], profile)
     plot = plots.LinReg(len(samples), **plot_kwargs)
     for sample, label in zip(samples, labels):
-        plot.add_sample(sample, ct=ct, profile=profile, label=label, **kwargs)
+        data_dict = sample.get_data({
+            'ct': ct,
+            'profile': profile})
+        data_dict = fit_data(data_dict, sequence)
+        plot.plot_data(**data_dict, label=label, **kwargs)
     plot.set_figure_size()
     return plot
-
 
 def plot_roc(samples, ct="ct", profile="profile", labels=None,
              plot_kwargs=None, **kwargs):
@@ -1488,12 +1382,16 @@ def plot_roc(samples, ct="ct", profile="profile", labels=None,
             additional plotting and file saving methods
     """
     if labels is None:
-        labels = ["label"] * len(samples)
+        labels = [sample.sample for sample in samples]
     if plot_kwargs is None:
         plot_kwargs = {}
     plot = plots.ROC(len(samples), **plot_kwargs)
     for sample, label in zip(samples, labels):
-        plot.add_sample(sample, ct=ct, profile=profile, label=label, **kwargs)
+        data_dict = sample.get_data({
+            'ct': ct,
+            'profile': profile})
+        data_dict = fit_data(data_dict, data_dict['ct'])
+        plot.plot_data(**data_dict, label=label, **kwargs)
     plot.set_figure_size()
     return plot
 
@@ -1520,7 +1418,7 @@ def plot_disthist(samples, structure="pdb", interactions=None,
             Defaults to None.
         interactions_filter (dict, optional): These key-value pairs are passed
             as keyword arguments to sample.filter_interactions along with
-            interactions=interactions and fit_to=seq_source. See
+            interactions=interactions and fit_to=sequence. See
             rnavigate.Sample.filter_interactions for more detail.
             Defaults to {}.
         bg_interactions (str, optional): same as interactions above. used to
@@ -1579,13 +1477,16 @@ def plot_disthist(samples, structure="pdb", interactions=None,
         ax = None
     # loop through samples and filters, adding each as a new axis
     for sample, label in zip(samples, labels):
-        sample.filter_interactions(interactions=bg_interactions,
-                                   fit_to=structure, **bg_interactions_filter)
+        sample.filter_interactions(bg_interactions, **bg_interactions_filter)
+        data_dict = sample.get_data({
+            'structure': structure,
+            'bg_interactions': bg_interactions
+        })
+        data_dict = fit_data(data_dict, data_dict['structure'])
         for filt in filters:
-            sample.filter_interactions(fit_to=structure, **filt)
-            plot.add_sample(sample, structure=structure,
-                            interactions=filt["interactions"],
-                            bg_interactions=bg_interactions, label=label,
-                            ax=ax, **kwargs)
+            sample.filter_interactions(**filt)
+            interactions = sample.get_data(filt['interactions'])
+            data_dict['interactions'] = fit_data(interactions, structure)
+            plot.plot_data(**data_dict, label=label, ax=ax, **kwargs)
     plot.set_figure_size()
     return plot

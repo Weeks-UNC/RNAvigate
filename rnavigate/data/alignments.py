@@ -72,44 +72,43 @@ class Alignment(ABC):
         new_values = np.full(len(self.target), fill)
         for idx1, value in enumerate(values):
             idx2 = self.mapping[idx1]
-            if idx2 != -1:
+            if idx2 == -1:
                 continue
             new_values[idx2] = value
         return new_values
 
     def map_indices(self, indices, keep_minus_one=True):
-        try:
-            index = int(indices)
-            if keep_minus_one and index == -1:
-                return 1
-            return self.mapping[index]
-        except TypeError as e:
-            pass
-        try:
-            new_indices = [self.map_indices(idx, keep_minus_one) for idx in indices]
-        except TypeError as e:
-            print('Indices must be integer (within single or nested list)')
-            raise e
+        indices = np.array(indices, dtype=int)
+        new_indices = self.mapping[indices]
+        if not keep_minus_one:
+            new_indices = new_indices[new_indices != -1]
+        return new_indices
 
     def map_positions(self, positions, keep_zero=True):
-        try:
-            position = int(positions)
-            if keep_zero and position == 0:
-                return 0
-            return self.mapping[position-1] + 1
-        except TypeError as e:
-            pass
-        try:
-            return [self.map_positions(pos, keep_zero) for pos in positions]
-        except TypeError as e:
-            print('Positions must be integer (within single or nested list)')
-            raise e
+        positions = np.array(positions, dtype=int)
+        new_positions = self.mapping[positions - 1] + 1
+        if not keep_zero:
+            new_positions = new_positions[new_positions != 0]
+        return new_positions
 
     def map_dataframe(self, dataframe, position_columns):
         dataframe = dataframe.copy()
         for col in position_columns:
             dataframe[col] = self.map_positions(dataframe[col].values)
             dataframe = dataframe[dataframe[col] != 0]
+        return dataframe.copy()
+
+    def map_nucleotide_dataframe(self, dataframe, position_column='Nucleotide',
+                                 sequence_column='Sequence'):
+        dataframe = dataframe.copy()
+        dataframe[position_column] = self.map_positions(
+            dataframe[position_column])
+        dataframe = dataframe[dataframe[position_column] != 0]
+        new_dataframe = pd.DataFrame({
+            position_column: np.arange(len(self.target))+1
+        })
+        new_dataframe = new_dataframe.merge(dataframe, 'left', 'Nucleotide')
+        new_dataframe[sequence_column] = list(self.target)
         return dataframe.copy()
 
     @abstractmethod
@@ -128,11 +127,17 @@ class SequenceAlignment(Alignment):
         self.alignment1, self.alignment2 = self.get_alignment()
         self.full = full
         if full:
-            self.target = self.alignment1
+            target = self.alignment1
         else:
-            self.target = self.sequence2
-        self.mapping = self.get_mapping()
+            target = self.sequence2
+        mapping = self.get_mapping()
+        super().__init__(target=target, mapping=mapping)
 
+    def __repr__(self):
+        return f"""alignment:
+        {self.alignment1}
+        {''.join(['X|'[n1==n2] for n1, n2 in zip(self.alignment1, self.alignment2)])}
+        {self.alignment2}"""
 
     def get_alignment(self):
         # Normalize sequences
@@ -188,6 +193,7 @@ class AlignmentChain(Alignment):
         indices = self.alignments[0].mapping
         for alignment in self.alignments[1:]:
             indices = alignment.map_indices(indices)
+        return indices
 
 class RegionAlignment(Alignment):
     def __init__(self, sequence, start, end):

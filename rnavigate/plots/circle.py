@@ -8,8 +8,8 @@ import numpy as np
 
 class Circle(plots.Plot):
 
-    def __init__(self, num_samples, seq_source, gap=8, **kwargs):
-        self.sequence = seq_source
+    def __init__(self, num_samples, sequence, gap=8, **kwargs):
+        self.sequence = sequence
         self.gap = gap
         length = self.sequence.length
         super().__init__(num_samples, **kwargs)
