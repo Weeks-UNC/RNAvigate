@@ -1,4 +1,4 @@
-from .plots import Plot
+from rnavigate import plots
 import numpy as np
 from matplotlib.colors import to_rgb
 from matplotlib.path import Path
@@ -6,7 +6,7 @@ from matplotlib.collections import LineCollection
 from scipy.spatial.distance import cdist
 
 
-class SS(Plot):
+class SS(plots.Plot):
     def __init__(self, num_samples, **kwargs):
         self.plot_params = {
             "structure_lw": 3,
@@ -63,7 +63,6 @@ class SS(Plot):
                   title=True,
                   positions=False,
                   bp_style="dotted"):
-        annotations = [annotation.fitted for annotation in annotations]
         ax = self.get_ax()
         self.plot_sequence(ax=ax, ss=structure, profile=profile, colors=colors,
                            sequence=sequence, apply_color_to=apply_color_to,
@@ -278,7 +277,7 @@ class SS(Plot):
         linewidth = self.plot_params["annotations_lw"]
         zorder = self.plot_params["annotations_z"]
         if annotation.annotation_type in ["spans", "primers"]:
-            for start, end in annotation[:]:
+            for start, end in annotation:
                 if start > end:
                     start, end = end, start
                 x = ss.xcoordinates[start-1:end]
@@ -292,7 +291,7 @@ class SS(Plot):
             ax.scatter(x, y, color=color, marker='o', ec="none", alpha=alpha,
                        s=size, zorder=zorder)
         elif annotation.annotation_type == "groups":
-            for group in annotation[:]:
+            for group in annotation:
                 x = ss.xcoordinates[[site - 1 for site in group["sites"]]]
                 y = ss.ycoordinates[[site - 1 for site in group["sites"]]]
                 color = group["color"]

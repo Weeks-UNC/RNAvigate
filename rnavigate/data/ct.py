@@ -35,7 +35,7 @@ class SecondaryStructure(data.Sequence):
         ycoordinates (numpy array): y-coordinate of each nucleotide
     """
 
-    def __init__(self, input_data, **kwargs):
+    def __init__(self, input_data, extension=None, **kwargs):
         """Creates a SecondaryStructure object from a given file or dataframe.
 
         Args:
@@ -51,7 +51,8 @@ class SecondaryStructure(data.Sequence):
             self.data = input_data
             self.filepath = "dataframe"
         elif isfile(input_data):
-            extension = input_data.split('.')[-1].lower()
+            if extension is None:
+                extension = input_data.split('.')[-1].lower()
             read_file = {
                 "varna": self.read_varna,
                 "xrna": self.read_xrna,
@@ -66,6 +67,7 @@ class SecondaryStructure(data.Sequence):
             self.filepath = input_data
             self.data = read_file(**kwargs)
         super().__init__(self.data)
+        self.normalize_coordinates()
 
     # properties to provide backwards compatibility
 
@@ -195,7 +197,7 @@ class SecondaryStructure(data.Sequence):
             pairs[i-1] = j
             pairs[j-1] = i
         return pd.DataFrame({
-            'Nucleotide': np.arange(len(sequence)),
+            'Nucleotide': np.arange(len(sequence))+1,
             'Sequence': list(sequence),
             'Pair': pairs,
             'X_coordinate': xcoords,
@@ -237,7 +239,7 @@ class SecondaryStructure(data.Sequence):
             pairs[i-1] = j
             pairs[j-1] = i
         return pd.DataFrame({
-            'Nucleotide': np.arange(len(sequence)),
+            'Nucleotide': np.arange(len(sequence))+1,
             'Sequence': list(sequence),
             'Pair': pairs,
             'X_coordinate': xcoords,
@@ -299,7 +301,7 @@ class SecondaryStructure(data.Sequence):
             pairs[i-1] = j
             pairs[j-1] = i
         return pd.DataFrame({
-            'Nucleotide': np.arange(len(sequence)),
+            'Nucleotide': np.arange(len(sequence))+1,
             'Sequence': list(sequence),
             'Pair': pairs,
             'X_coordinate': xcoords,
@@ -337,7 +339,7 @@ class SecondaryStructure(data.Sequence):
                 bp[j] = i + 1
         # store attributes
         return pd.DataFrame({
-            'Nucleotide': np.arange(len(seq)),
+            'Nucleotide': np.arange(len(seq))+1,
             'Sequence': list(seq),
             'Pair': bp})
 
@@ -366,7 +368,7 @@ class SecondaryStructure(data.Sequence):
             pairs[i-1] = j
             pairs[j-1] = i
         return pd.DataFrame({
-            'Nucleotide': np.arange(len(sequence)),
+            'Nucleotide': np.arange(len(sequence))+1,
             'Sequence': list(sequence),
             'Pair': pairs,
             'X_coordinate': xcoords,
@@ -399,7 +401,7 @@ class SecondaryStructure(data.Sequence):
             pairs[i-1] = j
             pairs[j-1] = i
         return pd.DataFrame({
-            'Nucleotide': np.arange(len(sequence)),
+            'Nucleotide': np.arange(len(sequence))+1,
             'Sequence': list(sequence),
             'Pair': pairs,
             'X_coordinate': xcoords,
@@ -1309,11 +1311,11 @@ class SecondaryStructure(data.Sequence):
         Args:
             alignment (data.Alignment): an alignment object used to map values
         """
-        df = alignment.map_dataframe(
-            self.data,
-            position_columns=["Nucleotide"])
-        df["Pair"] = alignment.map_positions(df["Pair"].values)
-        df["Sequence"] = list(alignment.target)
+        df = alignment.map_nucleotide_dataframe(self.data)
+        df['Pair'].fillna(0, inplace=True)
+        mask = df['Pair'] != 0
+        df.loc[mask, 'Pair'] = alignment.map_positions(
+            df.loc[mask, "Pair"].values)
         return SecondaryStructure(input_data=df)
 
     def get_ij_colors(self, compct=None):
@@ -1370,21 +1372,24 @@ class SecondaryStructure(data.Sequence):
         structure is centered on (0, 0) and the median base-pair distance is 1.
         """
         # scale so that the median base pair is 1 unit distance
+        if 'X_coordinate' not in self.data.columns:
+            return
+        df = self.data
         bp_list = self.pairList()
         bp_distances = []
         for bp in bp_list:
-            y_dist = self.ycoordinates[bp[0]-1] - self.ycoordinates[bp[1]-1]
-            x_dist = self.xcoordinates[bp[0]-1] - self.xcoordinates[bp[1]-1]
+            y_dist = df.Y_coordinate[bp[0]-1] - df.Y_coordinate[bp[1]-1]
+            x_dist = df.X_coordinate[bp[0]-1] - df.X_coordinate[bp[1]-1]
             bp_distances.append((y_dist**2 + x_dist**2)**0.5)
         scale_factor = np.median(bp_distances)
-        self.ycoordinates /= scale_factor
-        self.xcoordinates /= scale_factor
+        df.Y_coordinate /= scale_factor
+        df.X_coordinate /= scale_factor
 
         # shift so that center of plot is [0,0]
-        x_center = (max(self.xcoordinates) + min(self.xcoordinates))/2
-        self.xcoordinates -= x_center
-        y_center = (max(self.ycoordinates) + min(self.ycoordinates))/2
-        self.ycoordinates -= y_center
+        x_center = (max(df.X_coordinate) + min(df.X_coordinate))/2
+        df.X_coordinate -= x_center
+        y_center = (max(df.Y_coordinate) + min(df.Y_coordinate))/2
+        df.Y_coordinate -= y_center
 
 
 ###############################################################################

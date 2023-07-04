@@ -1,10 +1,10 @@
 import numpy as np
-from .plots import Plot
+from rnavigate import plots
 from matplotlib.patches import Rectangle
-from ..styles import rx_color, bg_color, dc_color, apply_style, sm
+from rnavigate.styles import rx_color, bg_color, dc_color, apply_style, sm
 
 
-class SM(Plot):
+class SM(plots.Plot):
     def __init__(self, nt_length, region=None,
                  panels=["profile", "rates", "depth"]):
         if region is None:

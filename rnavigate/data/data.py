@@ -8,7 +8,7 @@ from rnavigate import data
 
 
 def get_pairs_sens_ppv(self, structure="ct"):
-    "Returns sensitivity and PPV for pair data to the ct structure"
+    """Returns sensitivity and PPV for pair data to the ct structure"""
     import pmanalysis as pma
     pairmap = pma.PairMap(self.paths["pairs"])
     structure = getattr(self, structure).copy()
@@ -30,12 +30,12 @@ class Sequence():
         self.other_info = dict()
         if isinstance(input_data, str):
             if isfile(input_data):
-                self.read_fasta(input_data)
+                self.sequence = self.read_fasta(input_data)
             else:
                 self.sequence = input_data
         elif isinstance(input_data, pd.DataFrame):
             self.get_seq_from_dataframe(input_data)
-        elif isinstance(input_data, Data):
+        elif isinstance(input_data, Sequence):
             self.sequence = input_data.sequence
 
     def read_fasta(self, fasta):
@@ -47,8 +47,7 @@ class Sequence():
         """
         with open(fasta, 'r') as file:
             fasta = list(Bio.SeqIO.parse(file, 'fasta'))
-        self.sequence = str(fasta[0].seq).replace("T", "U")
-        self.other_info['gene'] = fasta[0].id
+        return str(fasta[0].seq).replace("T", "U")
 
     def get_seq_from_dataframe(self, dataframe):
         """Parse a dataframe for the sequence string, store as self.sequence.
@@ -104,14 +103,14 @@ class Sequence():
             colormap = data.ScalarMappable(pos_cmap, '0_1', None)
             return colormap(np.arange(self.length))
         elif isinstance(source, str) and (source == "profile"):
-            alignment = data.AlignmentChain(
-                data.SequenceAlignment(profile, self),
-                self.alignment)
+            alignment = data.SequenceAlignment(profile, self)
             return alignment.map_values(profile.colors, fill="#808080")
         elif isinstance(source, str) and (source == "annotations"):
             colors = np.full(self.length, 'gray', dtype='<U16')
             for annotation in annotations:
-                for site, color in zip(*annotation.get_sites_colors(self)):
+                annotation = annotation.get_aligned_data(
+                    data.SequenceAlignment(annotation, self))
+                for site, color in zip(*annotation.get_sites_colors()):
                     colors[site-1] = color
             return colors
         elif isinstance(source, str) and (source == "structure"):
@@ -161,10 +160,15 @@ class Data(Sequence):
                 'normalization': '0_1',
                 'values': None,
                 'labels': None}}
-        self.metric_defaults |= metric_defaults
+        self.add_metric_defaults(metric_defaults)
         self.default_metric = metric
         self._metric = None
         self.metric = metric
+
+    def add_metric_defaults(self, metric_defaults):
+        default_defaults = self.metric_defaults['default']
+        for metric, defaults in metric_defaults.items():
+            self.metric_defaults[metric] = default_defaults | defaults
 
     @property
     def metric(self):
@@ -177,9 +181,13 @@ class Data(Sequence):
                 self._metric = self.metric_defaults[value]
                 return
             except KeyError as e:
-                print(f"metric ({value}) not found in defaults:\n"
-                      + str(list(self.metric_defaults.keys())))
-                raise e
+                if value not in self.data.columns:
+                    print(f"metric ({value}) not found in data:\n"
+                          + str(list(self.data.columns)))
+                    raise e
+                self._metric = self.metric_defaults['default']
+                self._metric['metric_column'] = value
+                return
         if value["metric_column"] in self.metric_defaults:
             defaults = self.metric_defaults[value["metric_column"]]
         else:

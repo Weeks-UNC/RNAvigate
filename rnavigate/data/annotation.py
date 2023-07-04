@@ -4,7 +4,7 @@ import pandas as pd
 from rnavigate import data
 
 
-class Annotation(data.Data):
+class Annotation(data.Sequence):
     def __init__(self, input_data, annotation_type,
                  sequence, name=None, color="blue"):
         """Base annotation class to store 1D features of an RNA. This can
@@ -34,21 +34,21 @@ class Annotation(data.Data):
         """
         self.name = name
         self.color = color
-        super().__init__(sequence=sequence)
+        super().__init__(sequence)
 
         # make sure input data matches expected format
         valid_types = ["sites", "spans", "groups", "primers"]
         self.annotation_type = annotation_type
-        if annotation_type in ['spans', 'primers']:
+        if isinstance(input_data, pd.DataFrame):
+            self.data = input_data
+        elif annotation_type in ['spans', 'primers']:
             self.data = self.from_spans(input_data)
         elif annotation_type in ['sites', 'groups']:
             self.data = self.from_sites(input_data)
-        elif isinstance(input_data, pd.DataFrame):
-            self.data = input_data
         else:
             raise ValueError(f"annotation_type not in {valid_types}")
 
-    def from_spans(spans):
+    def from_spans(self, spans):
         data_dict = {'start':[], 'end':[]}
         for span in spans:
             if ((len(span) != 2)
@@ -62,14 +62,14 @@ class Annotation(data.Data):
             data_dict['end'].append(int(end))
         return pd.DataFrame(data_dict)
 
-    def from_sites(sites):
+    def from_sites(self, sites):
         if any(not isinstance(site, int) for site in sites):
             raise ValueError(
                 f'{self.annotation_type} must be a list of integers:\n{sites}')
         return pd.DataFrame({'site': sites})
 
     def get_aligned_data(self, alignment):
-        new_input_data = alignment.map_dataframe(self.data)
+        new_input_data = alignment.map_dataframe(self.data, self.data.columns)
         return Annotation(
             name=self.name,
             color=self.color,
@@ -90,19 +90,23 @@ class Annotation(data.Data):
             for _, row in self.data.iterrows():
                 sites.extend(list(range(row['start'], row['end']+1)))
         elif self.annotation_type in ["sites", "groups"]:
-            sites = list(self.data['sites'].values)
+            sites = list(self.data['site'].values)
         colors = [self.color] * len(sites)
         return sites, colors
 
-    def __getitem__(self, i):
-        return self._list[i]
+    def __getitem__(self, idx):
+        return self.data.loc[idx]
+
+    def __iter__(self):
+        for _, row in self.data.iterrows():
+            yield row
 
     def __len__(self):
         return len(self._list)
 
 
 class Motif(Annotation):
-    def __init__(self, sequence, motif,
+    def __init__(self, input_data, sequence,
                  name=None, color="blue"):
         """Creates a Motif annotation, which acts like a span Annotation, for
         highlighting a sequence motif of interest, given with conventional

@@ -15,13 +15,7 @@ class Profile(data.Data):
             read_table_kw=read_table_kw)
 
     def get_aligned_data(self, alignment):
-        dataframe = pd.DataFrame({
-            'Sequence': list(alignment.target),
-            'Nucleotide': np.arange(len(alignment.target))}
-        ).merge(
-            alignment.map_dataframe(self.data, ["Nucleotide"]),
-            how='left',
-            on=['Sequence', 'Nucleotide'])
+        dataframe = alignment.map_nucleotide_dataframe(self.data)
         return self.__class__(
             input_data=dataframe,
             metric=self._metric,

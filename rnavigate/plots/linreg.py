@@ -1,10 +1,10 @@
 from scipy import stats
 import seaborn as sns
 import numpy as np
-from .plots import Plot
+from rnavigate import plots
 
 
-class LinReg(Plot):
+class LinReg(plots.Plot):
     def __init__(self, num_samples):
         super().__init__(num_samples)
         self.paired = None
@@ -37,7 +37,7 @@ class LinReg(Plot):
     def get_figsize(self):
         return (7*self.columns, 7*self.rows)
 
-    def plot_data(self, ct, profile, label, colorby="structure"):
+    def plot_data(self, ct, profile, label, colorby="sequence"):
         self.labels.append(label)
         seq = profile.data["Sequence"].values
         seq_mask = [i for i, x in enumerate(seq) if x.isupper()]

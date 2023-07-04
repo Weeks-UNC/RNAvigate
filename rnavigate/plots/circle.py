@@ -2,11 +2,11 @@ from matplotlib.collections import PatchCollection
 from matplotlib.patches import Path, PathPatch
 from matplotlib.colors import to_rgb
 from math import sin, cos, pi
-from .plots import Plot
+from rnavigate import plots
 import numpy as np
 
 
-class Circle(Plot):
+class Circle(plots.Plot):
 
     def __init__(self, num_samples, seq_source, gap=8, **kwargs):
         self.sequence = seq_source
@@ -59,7 +59,6 @@ class Circle(Plot):
                   annotations, label,
                   colors="sequence", apply_color_to="sequence",
                   title=True, positions=True):
-        annotations = [annotation.fitted for annotation in annotations]
         ax = self.get_ax()
         self.add_patches(ax, ct, comp)
         self.add_patches(ax, interactions)
@@ -149,7 +148,7 @@ class Circle(Plot):
         color = annotation.color
         zorder = self.zorder["annotations"]
         if annotation.annotation_type == "spans":
-            for start, end in annotation[:]:
+            for start, end in annotation:
                 x = self.x[start-1:end] + 3*self.x[start-1:end]/self.diameter
                 y = self.y[start-1:end] + 3*self.y[start-1:end]/self.diameter
                 ax.plot(x, y, color=color, alpha=0.8, lw=10, zorder=zorder)
@@ -159,7 +158,7 @@ class Circle(Plot):
             ax.scatter(x, y, color=color, marker='o', ec="none", alpha=0.7,
                        s=30**2, zorder=zorder)
         elif annotation.annotation_type == "groups":
-            for group in annotation[:]:
+            for group in annotation:
                 x = self.structure.xcoordinates[group["sites"]]
                 y = self.structure.ycoordinates[group["sites"]]
                 color = group["color"]
@@ -167,7 +166,7 @@ class Circle(Plot):
                 ax.scatter(x, y, color=color, marker='o', ec="none", alpha=0.4,
                            s=30**2, zorder=zorder)
         elif annotation.annotation_type == "primers":
-            for start, end in annotation[:]:
+            for start, end in annotation:
                 if start < end:
                     index = np.arange(start-1, end)
                 elif start > end:

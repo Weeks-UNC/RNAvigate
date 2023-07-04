@@ -1,8 +1,8 @@
-from .plots import Plot
+from rnavigate import plots
 import numpy as np
 
 
-class Alignment(Plot):
+class Alignment(plots.Plot):
     def __init__(self, num_samples, rows=None, cols=1, figsize=None, **kwargs):
         super().__init__(num_samples, rows, cols, figsize, **kwargs)
 

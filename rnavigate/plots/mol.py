@@ -1,10 +1,10 @@
 import py3Dmol
 import matplotlib.colors as mpc
-from .plots import Plot
+from rnavigate import plots
 import matplotlib.pyplot as plt
 
 
-class Mol(Plot):
+class Mol(plots.Plot):
     def __init__(self, num_samples, pdb, width=400, height=400,
                  background_alpha=1, rotation=None, orientation=None,
                  rows=None, cols=None):

@@ -2,7 +2,7 @@
 
 import numpy as np
 import sys
-from .ct import CT
+from rnavigate.data import CT
 
 
 class DotPlot:

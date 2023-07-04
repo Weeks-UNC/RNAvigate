@@ -13,13 +13,6 @@ class ScalarMappable(cm.ScalarMappable):
         self._rnav_cmap = cmap
         self._rnav_labels = labels
 
-    def __eq__(self, other):
-        for prop in ['_rnav_norm', '_rnav_vals', '_rnav_cmap', '_rnav_labels']:
-            if getattr(self, prop) != getattr(other, prop):
-                return False
-        else:
-            return True
-
     def values_to_hexcolors(self, values, alpha=1.0):
         colors = super().to_rgba(x=values, alpha=alpha)
         return np.array([mpc.to_hex(c, keep_alpha=True) for c in colors])

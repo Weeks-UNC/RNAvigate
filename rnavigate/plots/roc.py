@@ -1,9 +1,9 @@
 import numpy as np
-from .plots import Plot
+from rnavigate import plots
 from sklearn.metrics import roc_curve, auc
 
 
-class ROC(Plot):
+class ROC(plots.Plot):
     def __init__(self, num_samples):
         super().__init__(num_samples)
         self.a_ax = self.axes[0, 2]
@@ -42,9 +42,10 @@ class ROC(Plot):
     def plot_data(self, ct, profile, label):
         self.i += 1
 
-        valid = ~np.isnan(profile.data["Norm_profile"])
+        metric = profile.metric
+        valid = ~np.isnan(profile.data[metric])
         y = ct.ct[valid] == 0
-        scores = profile.data.loc[valid, "Norm_profile"]
+        scores = profile.data.loc[valid, metric]
         tpr, fpr, _ = roc_curve(y, scores)
         auc_score = auc(tpr, fpr)
         self.main_ax.plot(tpr, fpr, label=f"{label}: AUC={auc_score:.2f}")
@@ -55,16 +56,16 @@ class ROC(Plot):
             ax.plot([0, 1], [0, 1], "k--")
             ax.set(title=nt,
                    aspect='equal')
-            valid = ~np.isnan(profile.data["Norm_profile"])
+            valid = ~np.isnan(profile.data[metric])
             valid &= profile.data["Sequence"] == nt
             y = ct.ct[valid] == 0
-            scores = profile.data.loc[valid, "Norm_profile"]
+            scores = profile.data.loc[valid, metric]
             tpr, fpr, _ = roc_curve(y, scores)
             auc_score = auc(tpr, fpr)
             ax.plot(tpr, fpr, label=f"AUC={auc_score:.2f}")
 
         if self.i == self.length:
-            self.main_ax.legend()
+            self.main_ax.legend(loc=4)
             self.main_ax.set(title="Receiver Operator Characteristic",
                              ylabel="True Positive Rate",
                              xlabel="False Positive Rate",

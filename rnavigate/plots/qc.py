@@ -2,10 +2,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from .plots import Plot
+from rnavigate import plots
 
 
-class QC(Plot):
+class QC(plots.Plot):
 
     def __init__(self, num_samples):
         super().__init__(num_samples)

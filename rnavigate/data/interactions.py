@@ -1,11 +1,9 @@
 from operator import ge, le, gt, lt, eq, ne
-from os.path import isfile
-from rnavigate import data
 import pandas as pd
 import matplotlib.colors as mpc
-import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+from rnavigate import data
 
 
 class Interactions(data.Data):
@@ -36,13 +34,14 @@ class Interactions(data.Data):
                 as a list of floats (values) to use with given metric (keys).
                 Defaults to {}.
         """
+        self.window = window
         super().__init__(
             input_data=input_data,
             sequence=sequence,
             metric=metric,
             metric_defaults=metric_defaults,
             read_table_kw=read_table_kw)
-        self.window = window
+        self.reset_mask()
 
     def mask_on_sequence(self, compliment_only=None, nts=None,
                          return_mask=False):
@@ -587,7 +586,7 @@ class SHAPEJuMP(Interactions):
             metric=metric,
             metric_defaults=metric_defaults,
             read_table_kw=read_table_kw,
-            window=window)
+            window=1)
 
     def read_file(self, input_data, read_table_kw=None):
         """Parses a deletions.txt file and stores data as a dataframe at
@@ -602,8 +601,7 @@ class SHAPEJuMP(Interactions):
         data = pd.read_table(input_data, names=column_names, header=0,
                            **read_table_kw)
         data["Percentile"] = data["Metric"].rank(method="max", pct=True)
-        self.data = data
-        self.window = 1
+        return data
 
 
 class RINGMaP(Interactions):
@@ -707,9 +705,9 @@ class PAIRMaP(RINGMaP):
                 'error_column': None,
                 'color_column': None,
                 'cmap': mpc.ListedColormap([
-                    [0.3, 0.3, 0.3, 0.2],
-                    [0.0, 0.0, 0.95, 0.6],
-                    [0.12, 0.76, 1.0, 0.6]]),
+                    [0.7, 0.7, 0.7],
+                    [0.0, 0.0, 0.95],
+                    [0.12, 0.76, 1.0]]),
                 'normalization': 'none',
                 'values': None,
                 'labels': None}
@@ -769,7 +767,7 @@ class PAIRMaP(RINGMaP):
         if self.metric != "Class":
             return super().get_sorted_data()
         metric = self.metric
-        columns = ["i_offset", "j_offset", metric]
+        columns = ["i", "j", metric]
         dataframe = self.data[columns].copy()
         # Class data have a weird order
         dataframe = pd.concat(

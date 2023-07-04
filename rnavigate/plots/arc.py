@@ -1,9 +1,9 @@
-from .plots import Plot
+from rnavigate import plots
 from matplotlib.patches import Wedge
 from matplotlib.collections import PatchCollection
 
 
-class AP(Plot):
+class AP(plots.Plot):
     def __init__(self, num_samples, nt_length, region="all", **kwargs):
         if region == "all":
             self.nt_length = nt_length
@@ -163,7 +163,7 @@ class AP(Plot):
         assert mode in modes, f"annotation mode must be one of: {modes}"
         a_type = annotation.annotation_type
         if a_type == "spans" or (a_type == "primers" and mode == "vbar"):
-            for start, end in annotation[:]:
+            for start, end in annotation:
                 if start > end:
                     start, end = end, start
                 if (self.region[0] > end) or (self.region[1] < start):
@@ -188,23 +188,22 @@ class AP(Plot):
                 for site in sites:
                     ax.axvline(site, color=color, ls=":")
         elif a_type == "groups":
-            for group in annotation[:]:
-                sites = group["sites"]
-                color = group["color"]
-                span = [min(sites), max(sites)]
-                if mode == "track":
-                    ax.plot(span, [yvalue, yvalue],
-                            color=color, alpha=0.4, lw=11)
-                    ax.scatter(sites, [yvalue]*len(sites),
-                               color=color, marker='o', ec="none", alpha=0.7,
-                               s=11**2)
-                elif mode == "vbar":
-                    ax.axvspan(span[0]-0.5, span[1]+0.5,
-                               fc=color, ec="none", alpha=0.1)
-                    for site in sites:
-                        ax.axvline(site, color=color, ls=":")
+            sites = annotation[:]
+            span = [min(sites), max(sites)]
+            if mode == "track":
+                ax.plot(span, [yvalue, yvalue],
+                        color=color, alpha=0.4, lw=11)
+                ax.scatter(sites, [yvalue]*len(sites),
+                            color=color, marker='o', ec="none", alpha=0.7,
+                            s=11**2)
+            elif mode == "vbar":
+                ax.axvspan(span[0]-0.5, span[1]+0.5,
+                            fc=color, ec="none", alpha=0.1)
+                for site in sites:
+                    ax.axvspan(site-0.5, site+0.5, fc=color, ec="none",
+                               alpha=0.1)
         elif a_type == "primers":
-            for start, end in annotation[:]:
+            for start, end in annotation:
                 if mode == "track":
                     if start < end:
                         xs = [start, end, end-1]
