@@ -14,14 +14,14 @@ class LinReg(plots.Plot):
         self.labels = []
         self.pass_through = ["colorby"]
 
-    def set_figure_size(self, fig=None, ax=None,
+    def set_figure_size(self, fig=None, axis=None,
                         rows=None, cols=None,
                         height_ax_rel=None, width_ax_rel=None,
                         width_ax_in=7, height_ax_in=7,
                         height_gap_in=1, width_gap_in=0.5,
                         top_in=1, bottom_in=0.5,
                         left_in=0.5, right_in=0.5):
-        super().set_figure_size(fig=fig, ax=ax, rows=rows, cols=cols,
+        super().set_figure_size(fig=fig, axis=axis, rows=rows, cols=cols,
                                 height_ax_rel=height_ax_rel,
                                 width_ax_rel=width_ax_rel,
                                 width_ax_in=width_ax_in,
@@ -63,7 +63,7 @@ class LinReg(plots.Plot):
                                    title="Structure")
 
     def plot_regression(self, i, j):
-        ax = self.axes[i, j]
+        axis = self.axes[i, j]
         p1 = self.profiles[i]
         p2 = self.profiles[j]
         s1 = self.labels[i]
@@ -71,16 +71,16 @@ class LinReg(plots.Plot):
         column = "Reactivity"
         colors = self.colors[i]
 
-        ax.plot([0, 1], [0, 1], color='black')
+        axis.plot([0, 1], [0, 1], color='black')
         notNans = ~np.isnan(p1) & ~np.isnan(p2)
         p1 = p1[notNans]
         p2 = p2[notNans]
         colors = colors[notNans]
         gradient, _, r_value, _, _ = stats.linregress(p1, p2)
-        ax.text(0.1, 0.8, f'R^2 = {r_value**2:.2f}\nslope = {gradient:.2f}',
-                transform=ax.transAxes)
-        ax.scatter(p1, p2, c=colors)
-        ax.set(xscale='log',
+        axis.text(0.1, 0.8, f'R^2 = {r_value**2:.2f}\nslope = {gradient:.2f}',
+                transform=axis.transAxes)
+        axis.scatter(p1, p2, c=colors)
+        axis.set(xscale='log',
                xlim=[0.00001, 0.3],
                yscale='log',
                ylim=[0.00001, 0.3],
@@ -89,14 +89,14 @@ class LinReg(plots.Plot):
     def plot_kde(self, i):
         if self.paired is None:
             return
-        ax = self.axes[i, i]
+        axis = self.axes[i, i]
         paired = self.paired
         profile = self.profiles[i]
         label = self.labels[i]
         valid = profile > 0
         sns.kdeplot(profile[paired & valid], bw_adjust=0.6, shade=True,
-                    label='SS', ax=ax, log_scale=True)
+                    label='SS', ax=axis, log_scale=True)
         sns.kdeplot(profile[~paired & valid], bw_adjust=0.6, shade=True,
-                    label='DS', ax=ax, log_scale=True)
-        ax.annotate(label, (0.1, 0.9), xycoords="axes fraction")
-        ax.set(xlim=(0.00001, 0.5))
+                    label='DS', ax=axis, log_scale=True)
+        axis.annotate(label, (0.1, 0.9), xycoords="axes fraction")
+        axis.set(xlim=(0.00001, 0.5))

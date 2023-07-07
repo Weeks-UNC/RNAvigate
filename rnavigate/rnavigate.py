@@ -389,16 +389,20 @@ class Sample:
             return
         try:
             interactions = self.data[interactions]
-            if not isinstance(interactions, data.Interactions):
-                raise ValueError(f'{interactions} is not interactions data')
         except KeyError as exception:
             raise KeyError(
                 f'{interactions} is not in {self.sample}') from exception
+        if not isinstance(interactions, data.Interactions):
+            raise ValueError(f'{interactions} is not interactions data')
 
-        if metric is not None and metric.startswith("Distance"):
-            metric = (metric, self.data["pdb"])
-        else:
+        if metric is None:
             metric = interactions.default_metric
+        elif metric is not None and metric.startswith("Distance"):
+            if len(metric.split('_')) == 2:
+                metric, atom = metric.split('_')
+            else:
+                atom = "O2'"
+            interactions.set_3d_distances(self.data["pdb"], atom)
         metric = {'metric_column': metric}
         if cmap is not None:
             metric['cmap'] = cmap

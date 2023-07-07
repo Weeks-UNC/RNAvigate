@@ -21,14 +21,14 @@ class SM(plots.Plot):
             "width_ax": None,
             "height_ax": 6}
 
-    def set_figure_size(self, fig=None, ax=None,
+    def set_figure_size(self, fig=None, axis=None,
                         rows=None, cols=None,
                         height_ax_rel=None, width_ax_rel=0.1,
                         width_ax_in=None, height_ax_in=6,
                         height_gap_in=1, width_gap_in=0.5,
                         top_in=1, bottom_in=0.5,
                         left_in=0.5, right_in=0.5):
-        super().set_figure_size(fig=fig, ax=ax, rows=rows, cols=cols,
+        super().set_figure_size(fig=fig, axis=axis, rows=rows, cols=cols,
                                 height_ax_rel=height_ax_rel,
                                 width_ax_rel=width_ax_rel,
                                 width_ax_in=width_ax_in,
@@ -52,14 +52,14 @@ class SM(plots.Plot):
         """
         self.fig.suptitle(label, fontsize=30)
         for i, plot in enumerate(self.panels):
-            ax = self.get_ax(i)
+            axis = self.get_ax(i)
             plot_func = {"profile": self.plot_sm_profile,
                          "rates": self.plot_sm_rates,
                          "depth": self.plot_sm_depth
                          }[plot]
-            plot_func(ax, profile)
+            plot_func(axis, profile)
 
-    def plot_sm_profile(self, ax, profile):
+    def plot_sm_profile(self, axis, profile):
         """Plots classic ShapeMapper normalized reactivity on the given axis
 
         Args:
@@ -72,21 +72,21 @@ class SM(plots.Plot):
         colors = profile.get_colors("profile", profile=profile)
         sample = profile.data["Norm_profile"].copy()
         sample[np.isnan(sample)] = -1
-        ax.bar(profile.data['Nucleotide'], sample, align="center",
+        axis.bar(profile.data['Nucleotide'], sample, align="center",
                width=1.05, color=colors, edgecolor=colors,
                linewidth=0.0, yerr=profile.data['Norm_stderr'],
                ecolor=near_black, capsize=1)
-        ax.set_title("Normalized Profile", fontsize=16)
-        ax.set_ylim(yMin, ymax)
-        ax.set_xlim(1, profile.length)
-        ax.yaxis.grid(True)
-        ax.set_axisbelow(True)
-        ax.set_xlabel("Nucleotide", fontsize=14, labelpad=0)
-        ax.set_ylabel("Shape Reactivity", fontsize=14)
-        # add a SHAPE colorbar to the vertical ax
+        axis.set_title("Normalized Profile", fontsize=16)
+        axis.set_ylim(yMin, ymax)
+        axis.set_xlim(1, profile.length)
+        axis.yaxis.grid(True)
+        axis.set_axisbelow(True)
+        axis.set_xlabel("Nucleotide", fontsize=14, labelpad=0)
+        axis.set_ylabel("Shape Reactivity", fontsize=14)
+        # add a SHAPE colorbar to the vertical axis
         # uses a little transformation magic to place correctly
-        inv = ax.transData.inverted()
-        for loc, spine in list(ax.spines.items()):
+        inv = axis.transData.inverted()
+        for loc, spine in list(axis.spines.items()):
             if loc == 'left':
                 trans = spine.get_transform()
         tp = trans.transform_point([0, 0])
@@ -99,96 +99,96 @@ class SM(plots.Plot):
         rectW = tpB2[0] - tpA2[0]
         rect = Rectangle((rectX, -0.5), rectW, orange_thresh +
                          0.5, facecolor="black", edgecolor="none")
-        ax.add_patch(rect)
+        axis.add_patch(rect)
         rect.set_clip_on(False)
         rect = Rectangle((rectX, orange_thresh), rectW, red_thresh -
                          orange_thresh, facecolor="orange", edgecolor="none")
-        ax.add_patch(rect)
+        axis.add_patch(rect)
         rect.set_clip_on(False)
         rect = Rectangle((rectX, red_thresh), rectW, 4 -
                          red_thresh, facecolor="red", edgecolor="none")
-        ax.add_patch(rect)
+        axis.add_patch(rect)
         rect.set_clip_on(False)
-        ax.get_xaxis().tick_bottom()   # remove unneeded ticks
-        ax.get_yaxis().tick_left()
-        ax.tick_params(axis='y', which='minor', left=False)
-        ax.minorticks_on()
+        axis.get_xaxis().tick_bottom()   # remove unneeded ticks
+        axis.get_yaxis().tick_left()
+        axis.tick_params(axis='y', which='minor', left=False)
+        axis.minorticks_on()
 
-        yticks = ax.get_yticks()
+        yticks = axis.get_yticks()
         stripped_ticks = [str(int(val)) for val in yticks]
-        ax.set(yticks=yticks,
+        axis.set(yticks=yticks,
                yticklabels=stripped_ticks)
 
-        for line in ax.get_yticklines():
+        for line in axis.get_yticklines():
             line.set_markersize(6)
             line.set_markeredgewidth(1)
 
-        for line in ax.get_xticklines():
+        for line in axis.get_xticklines():
             line.set_markersize(7)
             line.set_markeredgewidth(2)
 
-        for line in ax.xaxis.get_ticklines(minor=True):
+        for line in axis.xaxis.get_ticklines(minor=True):
             line.set_markersize(5)
             line.set_markeredgewidth(1)
 
         # put nuc sequence below axis
-        self.add_sequence(ax, profile.sequence, yvalue=0.01)
+        self.add_sequence(axis, profile.sequence, yvalue=0.01)
 
-    def plot_sm_depth(self, ax, profile):
+    def plot_sm_depth(self, axis, profile):
         """Plots classic ShapeMapper read depth on the given axis
 
         Args:
             axis (pyplot axis): axis on which to add plot
         """
         sample = profile.data
-        ax.plot(sample['Nucleotide'], sample['Modified_read_depth'],
+        axis.plot(sample['Nucleotide'], sample['Modified_read_depth'],
                 linewidth=1.5, color=rx_color, alpha=1.0, label="Modified")
-        ax.plot(sample['Nucleotide'], sample['Untreated_read_depth'],
+        axis.plot(sample['Nucleotide'], sample['Untreated_read_depth'],
                 linewidth=1.5, color=bg_color, alpha=1.0, label="Untreated")
-        ax.plot(sample['Nucleotide'], sample['Denatured_read_depth'],
+        axis.plot(sample['Nucleotide'], sample['Denatured_read_depth'],
                 linewidth=1.5, color=dc_color, alpha=1.0, label="Denatured")
-        ax.set_xlim(1, profile.length)
-        ax.legend(loc=2, borderpad=0.8, handletextpad=0.2, framealpha=0.75)
-        ax.plot(sample['Nucleotide'], sample['Modified_effective_depth'],
+        axis.set_xlim(1, profile.length)
+        axis.legend(loc=2, borderpad=0.8, handletextpad=0.2, framealpha=0.75)
+        axis.plot(sample['Nucleotide'], sample['Modified_effective_depth'],
                 linewidth=1.0, color=rx_color, alpha=0.3)
-        ax.plot(sample['Nucleotide'], sample['Untreated_effective_depth'],
+        axis.plot(sample['Nucleotide'], sample['Untreated_effective_depth'],
                 linewidth=1.0, color=bg_color, alpha=0.3)
-        ax.plot(sample['Nucleotide'], sample['Denatured_effective_depth'],
+        axis.plot(sample['Nucleotide'], sample['Denatured_effective_depth'],
                 linewidth=1.0, color=dc_color, alpha=0.3)
-        xmin, xmax, ymin, ymax = ax.axis()
-        ax.set_ylim(0, ymax)
-        ax.set_xlabel("Nucleotide\n" +
+        xmin, xmax, ymin, ymax = axis.axis()
+        axis.set_ylim(0, ymax)
+        axis.set_xlabel("Nucleotide\n" +
                       "NOTE: effective read depths shown in lighter colors",
                       fontsize=14, labelpad=0)
-        ax.minorticks_on()
-        ax.tick_params(axis='y', which='minor', left=False)
-        yticks = [int(y) for y in ax.get_yticks()]
+        axis.minorticks_on()
+        axis.tick_params(axis='y', which='minor', left=False)
+        yticks = [int(y) for y in axis.get_yticks()]
         formatted_ticks = [self.metric_abbreviate(val) for val in yticks]
-        ax.set(yticks=yticks, yticklabels=formatted_ticks)
-        for line in ax.get_yticklines():
+        axis.set(yticks=yticks, yticklabels=formatted_ticks)
+        for line in axis.get_yticklines():
             line.set_markersize(6)
             line.set_markeredgewidth(1)
-        for line in ax.get_xticklines():
+        for line in axis.get_xticklines():
             line.set_markersize(7)
             line.set_markeredgewidth(2)
-        for line in ax.xaxis.get_ticklines(minor=True):
+        for line in axis.xaxis.get_ticklines(minor=True):
             line.set_markersize(5)
             line.set_markeredgewidth(1)
-        ax.yaxis.grid(True)
-        ax.set_axisbelow(True)
-        ax.set_ylabel("Read depth", fontsize=14)
+        axis.yaxis.grid(True)
+        axis.set_axisbelow(True)
+        axis.set_ylabel("Read depth", fontsize=14)
         # tried to make an offset, smaller font note about effective depths,
         # but couldn't get positioning/transforms to work properly.
         # For now just putting in xaxis label
 
-    def plot_sm_rates(self, ax, profile):
+    def plot_sm_rates(self, axis, profile):
         """Plots classic ShapeMapper mutation rates on the given axis
 
         Args:
             axis (pyplot axis): axis on which to add plot
         """
         sample = profile.data
-        # choose a decent range for ax, excluding high-background positions
+        # choose a decent range for axis, excluding high-background positions
         temp_rates = sample.loc[sample['Untreated_rate'] <= 0.05,
                                 'Modified_rate']
         near_top_rate = np.nanpercentile(temp_rates, 98.0)
@@ -203,39 +203,39 @@ class SM(plots.Plot):
         dc_err = sample['Denatured_rate'] / sample['Denatured_effective_depth']
         dc_upper = sample['Denatured_rate'] + dc_err
         dc_lower = sample['Denatured_rate'] - dc_err
-        ax.set_xlabel("Nucleotide", fontsize=14)
-        ax.set_ylabel("Mutation rate (%)", fontsize=14)
-        ax.plot(sample['Nucleotide'], sample['Modified_rate'], zorder=3,
+        axis.set_xlabel("Nucleotide", fontsize=14)
+        axis.set_ylabel("Mutation rate (%)", fontsize=14)
+        axis.plot(sample['Nucleotide'], sample['Modified_rate'], zorder=3,
                 color=rx_color, linewidth=1.5, label='Modified')
-        ax.plot(sample['Nucleotide'], sample['Untreated_rate'], zorder=2,
+        axis.plot(sample['Nucleotide'], sample['Untreated_rate'], zorder=2,
                 color=bg_color, linewidth=1.5, label='Untreated')
-        ax.plot(sample['Nucleotide'], sample['Denatured_rate'], zorder=2,
+        axis.plot(sample['Nucleotide'], sample['Denatured_rate'], zorder=2,
                 color=dc_color, linewidth=1.5)
-        ax.fill_between(sample['Nucleotide'], rx_lower, rx_upper,
+        axis.fill_between(sample['Nucleotide'], rx_lower, rx_upper,
                         edgecolor="none", alpha=0.5, facecolor=rx_color)
-        ax.fill_between(sample['Nucleotide'], bg_lower, bg_upper,
+        axis.fill_between(sample['Nucleotide'], bg_lower, bg_upper,
                         edgecolor="none", alpha=0.5, facecolor=bg_color)
-        ax.fill_between(sample['Nucleotide'], dc_lower, dc_upper,
+        axis.fill_between(sample['Nucleotide'], dc_lower, dc_upper,
                         edgecolor="none", alpha=0.5, facecolor=dc_color)
-        ax.legend(loc=2, borderpad=0.8, handletextpad=0.2, framealpha=0.75)
-        ax.set_xlim((1, len(sample['Modified_rate'])))
-        ax.set_ylim((0, ymax))
-        ax.minorticks_on()
-        ax.tick_params(axis='y', which='minor', left=False)
-        yticks = ax.get_yticks()
+        axis.legend(loc=2, borderpad=0.8, handletextpad=0.2, framealpha=0.75)
+        axis.set_xlim((1, len(sample['Modified_rate'])))
+        axis.set_ylim((0, ymax))
+        axis.minorticks_on()
+        axis.tick_params(axis='y', which='minor', left=False)
+        yticks = axis.get_yticks()
         yticklabels = [str(int(x*100)) for x in yticks]
-        ax.set(yticks=yticks, yticklabels=yticklabels)
-        for line in ax.get_yticklines():
+        axis.set(yticks=yticks, yticklabels=yticklabels)
+        for line in axis.get_yticklines():
             line.set_markersize(6)
             line.set_markeredgewidth(1)
-        for line in ax.get_xticklines():
+        for line in axis.get_xticklines():
             line.set_markersize(7)
             line.set_markeredgewidth(2)
-        for line in ax.xaxis.get_ticklines(minor=True):
+        for line in axis.xaxis.get_ticklines(minor=True):
             line.set_markersize(5)
             line.set_markeredgewidth(1)
-        ax.yaxis.grid(True)
-        ax.set_axisbelow(True)
+        axis.yaxis.grid(True)
+        axis.set_axisbelow(True)
 
     def metric_abbreviate(self, num):
         """takes a large number and applies an appropriate abbreviation

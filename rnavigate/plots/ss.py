@@ -33,19 +33,19 @@ class SS(plots.Plot):
                 self.plot_params[kw] = kwargs.pop(kw)
         super().__init__(num_samples, sharey=True, sharex=True, **kwargs)
         for i in range(self.length):
-            ax = self.get_ax(i)
-            ax.axis("off")
+            axis = self.get_ax(i)
+            axis.axis("off")
         self.pass_through = ["colors", "sequence", "apply_color_to",
                              "title", "positions", "bp_style"]
 
-    def set_figure_size(self, fig=None, ax=None,
+    def set_figure_size(self, fig=None, axis=None,
                         rows=None, cols=None,
                         height_ax_rel=0.55, width_ax_rel=0.55,
                         width_ax_in=None, height_ax_in=None,
                         height_gap_in=1, width_gap_in=0.5,
                         top_in=1, bottom_in=0.5,
                         left_in=0.5, right_in=0.5):
-        super().set_figure_size(fig=fig, ax=ax, rows=rows, cols=cols,
+        super().set_figure_size(fig=fig, axis=axis, rows=rows, cols=cols,
                                 height_ax_rel=height_ax_rel,
                                 width_ax_rel=width_ax_rel,
                                 width_ax_in=width_ax_in,
@@ -63,24 +63,24 @@ class SS(plots.Plot):
                   title=True,
                   positions=False,
                   bp_style="dotted"):
-        ax = self.get_ax()
-        self.plot_sequence(ax=ax, ss=structure, profile=profile, colors=colors,
+        axis = self.get_ax()
+        self.plot_sequence(axis=axis, ss=structure, profile=profile, colors=colors,
                            sequence=sequence, apply_color_to=apply_color_to,
                            bp_style=bp_style, annotations=annotations)
         if positions:
-            self.plot_positions(ax=ax, ss=structure)
-        self.plot_interactions(ax=ax, ss=structure, interactions=interactions)
-        self.plot_interactions(ax=ax, ss=structure, interactions=interactions2)
+            self.plot_positions(axis=axis, ss=structure)
+        self.plot_interactions(axis=axis, ss=structure, interactions=interactions)
+        self.plot_interactions(axis=axis, ss=structure, interactions=interactions2)
         for annotation in annotations:
-            self.plot_annotation(ax=ax, ss=structure, annotation=annotation)
+            self.plot_annotation(axis=axis, ss=structure, annotation=annotation)
         if title:
-            ax.set_title(label)
+            axis.set_title(label)
         self.i += 1
 
     def get_figsize(self):
         return (5*self.columns, 5*self.rows)
 
-    def plot_structure(self, ax, ss, struct_color, bp_style):
+    def plot_structure(self, axis, ss, struct_color, bp_style):
         bp_styles = ["conventional", "dotted", "line"]
         assert bp_style in bp_styles, f"bp_style must be one of {bp_styles}"
 
@@ -114,7 +114,7 @@ class SS(plots.Plot):
         zorder = self.plot_params["structure_z"]
         lc = LineCollection(new_segments, colors=new_colors, zorder=zorder,
                             lw=self.plot_params["structure_lw"])
-        ax.add_collection(lc)
+        axis.add_collection(lc)
 
         zorder = self.plot_params["basepair_z"]
         for pair in ss.pairList():
@@ -141,16 +141,16 @@ class SS(plots.Plot):
                 segs = int(max([1/3, caps_dist]) * 3) * 2
                 x_dots = [x_caps[0]-x_caps_dist*i/segs for i in range(segs+1)]
                 y_dots = [y_caps[0]-y_caps_dist*i/segs for i in range(segs+1)]
-                ax.scatter(x_dots, y_dots, c="grey", marker='.', s=4,
+                axis.scatter(x_dots, y_dots, c="grey", marker='.', s=4,
                            zorder=zorder)
             if bp_style == "line":
-                ax.plot(x_caps, y_caps, color="grey", zorder=zorder)
+                axis.plot(x_caps, y_caps, color="grey", zorder=zorder)
             if bp_style == "conventional":
                 nts = ''.join([ss.sequence[p-1] for p in pair]).upper()
                 # x_caps = [x[0] + i * xdist / 7 for i in [2, 5]]
                 # y_caps = [y[0] + i * ydist / 7 for i in [2, 5]]
                 if nts in ["UA", "AU", "GU", "UG"]:
-                    ax.plot(x_caps, y_caps, color="grey", zorder=zorder,
+                    axis.plot(x_caps, y_caps, color="grey", zorder=zorder,
                             solid_capstyle='butt')
                 if nts in ["GU", "UG", "AG", "GA"]:
                     x_center = x[0] + xdist/2
@@ -161,15 +161,15 @@ class SS(plots.Plot):
                     elif nts in ["AG", "GA"]:
                         fc = 'grey'
                         ec = 'none'
-                    ax.scatter(x_center, y_center, zorder=zorder+1, s=36,
+                    axis.scatter(x_center, y_center, zorder=zorder+1, s=36,
                                color="grey", marker="o", fc=fc, ec=ec)
                 if nts in ["GC", "CG"]:
-                    ax.plot(x_caps, y_caps, color="grey", zorder=zorder,
+                    axis.plot(x_caps, y_caps, color="grey", zorder=zorder,
                             linewidth=6, solid_capstyle='butt')
-                    ax.plot(x_caps, y_caps, color="white", zorder=zorder,
+                    axis.plot(x_caps, y_caps, color="white", zorder=zorder,
                             linewidth=2)
 
-    def plot_sequence(self, ax, ss, profile, colors, sequence, annotations,
+    def plot_sequence(self, axis, ss, profile, colors, sequence, annotations,
                       apply_color_to, bp_style):
         nuc_z = self.plot_params["nucleotide_z"]
         seq_z = self.plot_params["sequence_z"]
@@ -182,16 +182,16 @@ class SS(plots.Plot):
         if apply_color_to == "structure":
             struct_color = ss.get_colors(colors, profile=profile,
                                          ct=ss, annotations=annotations)
-            self.plot_structure(ax=ax, ss=ss, struct_color=struct_color,
+            self.plot_structure(axis=axis, ss=ss, struct_color=struct_color,
                                 bp_style=bp_style)
-            ax.scatter(ss.xcoordinates, ss.ycoordinates, marker=".",
+            axis.scatter(ss.xcoordinates, ss.ycoordinates, marker=".",
                        c=struct_color, zorder=seq_z,
                        s=self.plot_params["structure_s"])
             return
         if apply_color_to == "background":
             bg_color = ss.get_colors(colors, profile=profile,
                                      ct=ss, annotations=annotations)
-            self.plot_structure(ax=ax, ss=ss,
+            self.plot_structure(axis=axis, ss=ss,
                                 struct_color=ss.get_colors("grey"),
                                 bp_style=bp_style)
         if apply_color_to == "sequence":
@@ -199,7 +199,7 @@ class SS(plots.Plot):
             nt_color = ss.get_colors(colors, profile=profile,
                                      ct=ss, annotations=annotations)
             bg_color = ss.get_colors("white")
-            self.plot_structure(ax=ax, ss=ss,
+            self.plot_structure(axis=axis, ss=ss,
                                 struct_color=ss.get_colors('grey'),
                                 bp_style=bp_style)
         elif sequence:
@@ -210,7 +210,7 @@ class SS(plots.Plot):
                     nt_color[i] = 'w'
             nt_color = np.array(nt_color)
 
-        ax.scatter(ss.xcoordinates, ss.ycoordinates, marker="o",
+        axis.scatter(ss.xcoordinates, ss.ycoordinates, marker="o",
                    c=bg_color, s=256, zorder=nuc_z)
         if sequence:
             for nuc in "GUACguac":
@@ -218,26 +218,26 @@ class SS(plots.Plot):
                 xcoords = ss.xcoordinates[mask]
                 ycoords = ss.ycoordinates[mask]
                 marker = "$\mathsf{"+nuc+"}$"
-                ax.scatter(xcoords, ycoords, marker=marker, s=100,
+                axis.scatter(xcoords, ycoords, marker=marker, s=100,
                            c=nt_color[mask], lw=1, zorder=seq_z)
 
-    def add_lines(self, ax, ss, i, j, color):
+    def add_lines(self, axis, ss, i, j, color):
         zorder = self.plot_params["data_z"]
         alpha = self.plot_params["data_a"]
         x = [ss.xcoordinates[i-1], ss.xcoordinates[j-1]]
         y = [ss.ycoordinates[i-1], ss.ycoordinates[j-1]]
-        ax.plot(x, y, color=color, lw=self.plot_params[
+        axis.plot(x, y, color=color, lw=self.plot_params[
             "data_lw"], zorder=zorder, alpha=alpha)
 
-    def plot_interactions(self, ax, ss, interactions):
+    def plot_interactions(self, axis, ss, interactions):
         if interactions is None:
             return
         ij_colors = interactions.get_ij_colors()
         for i, j, color in zip(*ij_colors):
-            self.add_lines(ax=ax, ss=ss, i=i, j=j, color=color)
+            self.add_lines(axis=axis, ss=ss, i=i, j=j, color=color)
         self.add_colorbar_args(interactions=interactions)
 
-    def plot_positions(self, ax, ss, spacing=20):
+    def plot_positions(self, axis, ss, spacing=20):
         zorder = self.plot_params["position_z"]
         xs = ss.xcoordinates
         ys = ss.ycoordinates
@@ -264,13 +264,13 @@ class SS(plots.Plot):
             x_label = x_pos[which_pos]
             y_label = y_pos[which_pos]
             bbox=dict(boxstyle="round", fc="w", ec="w", pad=0.1)
-            ax.plot([float(x_nt), float(x_label)],
+            axis.plot([float(x_nt), float(x_label)],
                     [float(y_nt), float(y_label)],
                     color='k', lw=3)
-            ax.text(x_label, y_label, str(nt+1), ha='center', va='center',
+            axis.text(x_label, y_label, str(nt+1), ha='center', va='center',
                     bbox=bbox, zorder=zorder+1)
 
-    def plot_annotation(self, ax, ss, annotation):
+    def plot_annotation(self, axis, ss, annotation):
         color = annotation.color
         alpha = self.plot_params["annotations_a"]
         size = self.plot_params["annotations_s"]
@@ -282,20 +282,20 @@ class SS(plots.Plot):
                     start, end = end, start
                 x = ss.xcoordinates[start-1:end]
                 y = ss.ycoordinates[start-1:end]
-                ax.plot(x, y, color=color, alpha=alpha, lw=linewidth,
+                axis.plot(x, y, color=color, alpha=alpha, lw=linewidth,
                         zorder=zorder)
         elif annotation.annotation_type == "sites":
             sites = np.array(annotation[:])-1
             x = ss.xcoordinates[sites]
             y = ss.ycoordinates[sites]
-            ax.scatter(x, y, color=color, marker='o', ec="none", alpha=alpha,
+            axis.scatter(x, y, color=color, marker='o', ec="none", alpha=alpha,
                        s=size, zorder=zorder)
         elif annotation.annotation_type == "groups":
             for group in annotation:
                 x = ss.xcoordinates[[site - 1 for site in group["sites"]]]
                 y = ss.ycoordinates[[site - 1 for site in group["sites"]]]
                 color = group["color"]
-                ax.plot(x, y, color=color, a=alpha,
+                axis.plot(x, y, color=color, a=alpha,
                         lw=linewidth, zorder=zorder)
-                ax.scatter(x, y, color=color, marker='o', ec="none", a=alpha,
+                axis.scatter(x, y, color=color, marker='o', ec="none", a=alpha,
                            s=size, zorder=zorder)

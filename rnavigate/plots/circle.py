@@ -21,10 +21,10 @@ class Circle(plots.Plot):
         self.x = np.sin(self.theta)*self.diameter
         self.y = np.cos(self.theta)*self.diameter
         for i in range(self.length):
-            ax = self.get_ax(i)
-            ax.set_aspect('equal')
-            ax.axis('off')
-            # ax.set(xlim=(-10.1, 10.1),
+            axis = self.get_ax(i)
+            axis.set_aspect('equal')
+            axis.axis('off')
+            # axis.set(xlim=(-10.1, 10.1),
             #        ylim=(-10.1, 10.1))
         self.pass_through = ["colors", "apply_color_to", "sequence",
                              "title", "positions"]
@@ -34,14 +34,14 @@ class Circle(plots.Plot):
                        "sequence": 15,
                        "position": 20}
 
-    def set_figure_size(self, fig=None, ax=None,
+    def set_figure_size(self, fig=None, axis=None,
                         rows=None, cols=None,
                         height_ax_rel=1/pi/4, width_ax_rel=1/pi/4,
                         width_ax_in=None, height_ax_in=None,
                         height_gap_in=1, width_gap_in=0.5,
                         top_in=1, bottom_in=0.5,
                         left_in=0.5, right_in=0.5):
-        super().set_figure_size(fig=fig, ax=ax, rows=rows, cols=cols,
+        super().set_figure_size(fig=fig, axis=axis, rows=rows, cols=cols,
                                 height_ax_rel=height_ax_rel,
                                 width_ax_rel=width_ax_rel,
                                 width_ax_in=width_ax_in,
@@ -59,22 +59,22 @@ class Circle(plots.Plot):
                   annotations, label,
                   colors="sequence", apply_color_to="sequence",
                   title=True, positions=True):
-        ax = self.get_ax()
-        self.add_patches(ax, ct, comp)
-        self.add_patches(ax, interactions)
-        self.add_patches(ax, interactions2)
-        # self.add_sequence(ax, ct.sequence, yvalue=0.5)
-        # self.plot_profile(ax, profile, ct)
-        self.plot_sequence(ax, profile, colors, apply_color_to)
+        axis = self.get_ax()
+        self.add_patches(axis, ct, comp)
+        self.add_patches(axis, interactions)
+        self.add_patches(axis, interactions2)
+        # self.add_sequence(axis, ct.sequence, yvalue=0.5)
+        # self.plot_profile(axis, profile, ct)
+        self.plot_sequence(axis, profile, colors, apply_color_to)
         for annotation in annotations:
-            self.plot_annotation(ax, annotation)
+            self.plot_annotation(axis, annotation)
         if title:
-            ax.set_title(label)
+            axis.set_title(label)
         if positions:
-            self.plot_positions(ax)
+            self.plot_positions(axis)
         self.i += 1
 
-    def plot_sequence(self, ax, profile, colors, apply_color_to):
+    def plot_sequence(self, axis, profile, colors, apply_color_to):
         sequence = self.sequence
         nuc_z = self.zorder["nucleotide"]
         seq_z = self.zorder["sequence"]
@@ -96,25 +96,25 @@ class Circle(plots.Plot):
                 if (r*0.299 + g*0.587 + b*0.114) < 175/256:
                     nt_color[i] = 'w'
             nt_color = np.array(nt_color)
-        ax.scatter(self.x, self.y, marker="o", c=bg_color, s=256, zorder=nuc_z)
+        axis.scatter(self.x, self.y, marker="o", c=bg_color, s=256, zorder=nuc_z)
         for nuc in "GUACguac":
             mask = [nt == nuc for nt in sequence.sequence]
             xcoords = self.x[mask]
             ycoords = self.y[mask]
             marker = "$\mathsf{"+nuc+"}$"
-            ax.scatter(xcoords, ycoords, marker=marker, s=100,
+            axis.scatter(xcoords, ycoords, marker=marker, s=100,
                        c=nt_color[mask], lw=1, zorder=seq_z)
 
-    def plot_positions(self, ax, interval=20):
+    def plot_positions(self, axis, interval=20):
         for i in np.arange(interval-1, self.sequence.length+1, interval):
             x = self.x[i]
             y = self.y[i]
             theta = self.theta[i] * -180/np.pi
-            ax.plot([x, x+5*x/self.diameter], [y, y+5*y/self.diameter], c='k')
-            ax.text(x+7*x/self.diameter, y+7*y/self.diameter, i+1, ha='center',
+            axis.plot([x, x+5*x/self.diameter], [y, y+5*y/self.diameter], c='k')
+            axis.text(x+7*x/self.diameter, y+7*y/self.diameter, i+1, ha='center',
                     va='center', rotation=theta)
 
-    def add_patches(self, ax, data, comp=None):
+    def add_patches(self, axis, data, comp=None):
         if comp is not None:
             ij_colors = data.get_ij_colors(comp)
             self.add_colorbar_args(interactions="ct_compare")
@@ -142,28 +142,28 @@ class Circle(plots.Plot):
             verts = [[x_i, y_i], [x_center*f, y_center*f], [x_j, y_j]]
             codes = [Path.MOVETO, Path.CURVE3, Path.CURVE3]
             patches.append(PathPatch(Path(verts, codes), fc="none", ec=color))
-        ax.add_collection(PatchCollection(patches, match_original=True))
+        axis.add_collection(PatchCollection(patches, match_original=True))
 
-    def plot_annotation(self, ax, annotation):
+    def plot_annotation(self, axis, annotation):
         color = annotation.color
         zorder = self.zorder["annotations"]
         if annotation.annotation_type == "spans":
             for start, end in annotation:
                 x = self.x[start-1:end] + 3*self.x[start-1:end]/self.diameter
                 y = self.y[start-1:end] + 3*self.y[start-1:end]/self.diameter
-                ax.plot(x, y, color=color, alpha=0.8, lw=10, zorder=zorder)
+                axis.plot(x, y, color=color, alpha=0.8, lw=10, zorder=zorder)
         elif annotation.annotation_type == "sites":
             x = self.x[annotation[:]]
             y = self.y[annotation[:]]
-            ax.scatter(x, y, color=color, marker='o', ec="none", alpha=0.7,
+            axis.scatter(x, y, color=color, marker='o', ec="none", alpha=0.7,
                        s=30**2, zorder=zorder)
         elif annotation.annotation_type == "groups":
             for group in annotation:
                 x = self.structure.xcoordinates[group["sites"]]
                 y = self.structure.ycoordinates[group["sites"]]
                 color = group["color"]
-                ax.plot(x, y, color=color, alpha=0.2, lw=30, zorder=zorder)
-                ax.scatter(x, y, color=color, marker='o', ec="none", alpha=0.4,
+                axis.plot(x, y, color=color, alpha=0.2, lw=30, zorder=zorder)
+                axis.scatter(x, y, color=color, marker='o', ec="none", alpha=0.4,
                            s=30**2, zorder=zorder)
         elif annotation.annotation_type == "primers":
             for start, end in annotation:
@@ -176,4 +176,4 @@ class Circle(plots.Plot):
                 y = self.y[index] + 3*self.y[index]/self.diameter
                 x[-1] += x[-1]/self.diameter
                 y[-1] += y[-1]/self.diameter
-                ax.plot(x, y, color=color, alpha=0.8, zorder=zorder)
+                axis.plot(x, y, color=color, alpha=0.8, zorder=zorder)

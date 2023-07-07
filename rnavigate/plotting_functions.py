@@ -14,14 +14,16 @@ _dict = object()
 ###############################################################################
 
 
-def replace_sentinels(*args):
+def replace_sentinel(arg):
     """takes arguments, replaces any _dict with {} and _list with []
 
     Returns:
         list: arguments with sentinels replaced
     """
     mutable = {_dict: {}, _list: []}
-    return [mutable[arg] if arg in mutable else arg for arg in args]
+    if arg in [_dict, _list]:
+        return mutable[arg]
+    return arg
 
 
 def get_sequence(sequence, sample=None, default=None):
@@ -119,7 +121,7 @@ def plot_qc(samples, labels=None, plot_kwargs=_dict, **kwargs):
     """
     if labels is None:
         labels = [sample.sample for sample in samples]
-    plot_kwargs = replace_sentinels(plot_kwargs)
+    plot_kwargs = replace_sentinel(plot_kwargs)
     plot = plots.QC(num_samples=len(samples), **plot_kwargs)
     for sample, label in zip(samples, labels):
         plot.add_sample(sample=sample, log="log", profile="profile",
@@ -154,7 +156,8 @@ def plot_skyline(samples, sequence=None, profile="profile", labels=None,
         rnavigate.plots.Skyline plot: object containing matplotlib figure and
             axes with additional plotting and file saving methods
     """
-    annotations, plot_kwargs = replace_sentinels(annotations, plot_kwargs)
+    annotations = replace_sentinel(annotations)
+    plot_kwargs = replace_sentinel(plot_kwargs)
     if labels is None:
         labels = [sample.sample for sample in samples]
     sequence = get_sequence(sequence, samples[0], profile)
@@ -199,7 +202,8 @@ def plot_profile(samples, sequence=None, profile="profile", labels=None,
         rnavigate.plots.Profile plot: object containing matplotlib figure and
             axes with additional plotting and file saving methods
     """
-    annotations, plot_kwargs = replace_sentinels(annotations, plot_kwargs)
+    annotations = replace_sentinel(annotations)
+    plot_kwargs = replace_sentinel(plot_kwargs)
     if labels is None:
         labels = [sample.sample for sample in samples]
     sequence = get_sequence(sequence, samples[0], profile)
@@ -237,7 +241,7 @@ def plot_alignment(data1, data2, labels=None, plot_kwargs=_dict):
         rnavigate.plots.Alignment plot: object containing matplotlib figure and
             axes with additional plotting and file saving methods
     """
-    plot_kwargs = replace_sentinels(plot_kwargs)
+    plot_kwargs = replace_sentinel(plot_kwargs)
     if labels is None:
         labels = [f"{s.sample}: {seq}" for s, seq in [data1, data2]]
     plot = plots.Alignment(num_samples=1, **plot_kwargs)
@@ -319,9 +323,10 @@ def plot_arcs(samples, sequence=None, structure=None, comp=None,
             with additional plotting and file saving methods
     """
     # use mutable defaults
-    annotations, plot_kwargs = replace_sentinels(annotations, plot_kwargs)
-    interactions_filter = replace_sentinels(interactions_filter)
-    interactions2_filter = replace_sentinels(interactions2_filter)
+    annotations = replace_sentinel(annotations)
+    plot_kwargs = replace_sentinel(plot_kwargs)
+    interactions_filter = replace_sentinel(interactions_filter)
+    interactions2_filter = replace_sentinel(interactions2_filter)
     if labels is None:
         labels = [sample.sample for sample in samples]
     # coerce interactions and interactions_filter into filters format
@@ -329,7 +334,7 @@ def plot_arcs(samples, sequence=None, structure=None, comp=None,
         filters = [{"interactions": interactions} | interactions_filter]
     # if filters and samples > 1, rows = # samples, columns = # filters
     if (len(filters) > 1) and (len(samples) > 1):
-        plot_kwargs |= {'rows': len(filters), 'cols': len(samples)}
+        plot_kwargs |= {'rows': len(samples), 'cols': len(filters)}
     # initialize plot
     num_samples = len(samples) * len(filters)
     sequence = get_sequence(sequence, samples[0], structure)
@@ -422,9 +427,9 @@ def plot_arcs_compare(samples, sequence=None, structure="ss", structure2=None,
     seq2 = get_sequence(sequence, samples[1], structure)
     alignment = data.SequenceAlignment(seq1, seq2)
     # use mutable defaults
-    interactions_filter = replace_sentinels(interactions_filter)
-    interactions2_filter = replace_sentinels(interactions2_filter)
-    plot_kwargs = replace_sentinels(plot_kwargs)
+    interactions_filter = replace_sentinel(interactions_filter)
+    interactions2_filter = replace_sentinel(interactions2_filter)
+    plot_kwargs = replace_sentinel(plot_kwargs)
     if labels is None:
         labels = [sample.sample for sample in samples]
     # coerce interactions and interactions_filter into filters format
@@ -457,10 +462,10 @@ def plot_arcs_compare(samples, sequence=None, structure="ss", structure2=None,
             interactions = sample.get_data(filt['interactions'])
             data_dict['interactions'] = fit_data(interactions, seq, alignment)
             plot.plot_data(
-                ax=0, seq=None, annotation_gap=10, label='', seqbar=False,
+                axis=0, seq=None, annotation_gap=10, label='', seqbar=False,
                 **panels, **data_dict, **kwargs)
     plots.alignment.plot_alignment(
-        plot=plot, ax=plot.axes[0, 0], alignment=alignment, label=labels,
+        plot=plot, axis=plot.axes[0, 0], alignment=alignment, label=labels,
         center=-5, offset=4, spines_positions={"top": 0, "bottom": -10})
     plot.set_figure_size()
     if colorbar:
@@ -528,9 +533,10 @@ def plot_ss(samples, structure="ss", profile="profile", annotations=_list,
             with additional plotting and file saving methods
     """
     # use mutable defaults
-    interactions_filter = replace_sentinels(interactions_filter)
-    interactions2_filter = replace_sentinels(interactions2_filter)
-    annotations, plot_kwargs = replace_sentinels(annotations, plot_kwargs)
+    interactions_filter = replace_sentinel(interactions_filter)
+    interactions2_filter = replace_sentinel(interactions2_filter)
+    annotations = replace_sentinel(annotations)
+    plot_kwargs = replace_sentinel(plot_kwargs)
     if labels is None:
         labels = [sample.sample for sample in samples]
     # coerce interactions and interactions_filter into filters format
@@ -538,7 +544,7 @@ def plot_ss(samples, structure="ss", profile="profile", annotations=_list,
         filters = [{"interactions": interactions} | interactions_filter]
     # if filters and samples > 1, rows = # samples, columns = # filters
     if (len(filters) > 1) and (len(samples) > 1):
-        plot_kwargs |= {'rows': len(filters), 'cols': len(samples)}
+        plot_kwargs |= {'rows': len(samples), 'cols': len(filters)}
     # initialize plot using all structure drawings
     num_samples = len(samples) * len(filters)
     plot = plots.SS(num_samples=num_samples, **plot_kwargs)
@@ -620,8 +626,8 @@ def plot_mol(samples, structure="pdb", interactions=None,
             additional plotting and file saving methods
     """
     # use mutable defaults
-    interactions_filter = replace_sentinels(interactions_filter)
-    plot_kwargs = replace_sentinels(plot_kwargs)
+    interactions_filter = replace_sentinel(interactions_filter)
+    plot_kwargs = replace_sentinel(plot_kwargs)
     if labels is None:
         labels = [sample.sample for sample in samples]
     # coerce interactions and interactions_filter into filters format
@@ -629,7 +635,7 @@ def plot_mol(samples, structure="pdb", interactions=None,
         filters = [{"interactions": interactions} | interactions_filter]
     # if filters and samples > 1, rows = # samples, columns = # filters
     if (len(filters) > 1) and (len(samples) > 1):
-        plot_kwargs |= {'rows': len(filters), 'cols': len(samples)}
+        plot_kwargs |= {'rows': len(samples), 'cols': len(filters)}
     num_samples = len(samples) * len(filters)
     # initialize plot using 1st 3D structure (applies to all samples)
     structure = samples[0].get_data(structure)
@@ -703,8 +709,8 @@ def plot_heatmap(samples, structure=None, interactions=None,
             axes with additional plotting and file saving methods
     """
     # use mutable defaults
-    interactions_filter = replace_sentinels(interactions_filter)
-    plot_kwargs = replace_sentinels(plot_kwargs)
+    interactions_filter = replace_sentinel(interactions_filter)
+    plot_kwargs = replace_sentinel(plot_kwargs)
     if labels is None:
         labels = [sample.sample for sample in samples]
     # coerce interactions and interactions_filter into filters format
@@ -712,7 +718,7 @@ def plot_heatmap(samples, structure=None, interactions=None,
         filters = [{"interactions": interactions} | interactions_filter]
     # if filters and samples > 1, rows = # samples, columns = # filters
     if (len(filters) > 1) and (len(samples) > 1):
-        plot_kwargs |= {'rows': len(filters), 'cols': len(samples)}
+        plot_kwargs |= {'rows': len(samples), 'cols': len(filters)}
     # initialize plot using 1st 3D structure (applies to all samples)
     num_samples = len(samples) * len(filters)
     structure = samples[0].data[structure]
@@ -796,9 +802,10 @@ def plot_circle(samples, sequence=None, structure=None, structure2=None,
             with additional plotting and file saving methods
     """
     # use mutable defaults
-    interactions_filter = replace_sentinels(interactions_filter)
-    interactions2_filter = replace_sentinels(interactions2_filter)
-    annotations, plot_kwargs = replace_sentinels(annotations, plot_kwargs)
+    interactions_filter = replace_sentinel(interactions_filter)
+    interactions2_filter = replace_sentinel(interactions2_filter)
+    annotations = replace_sentinel(annotations)
+    plot_kwargs = replace_sentinel(plot_kwargs)
     if labels is None:
         labels = [sample.sample for sample in samples]
     # coerce interactions and interactions_filter into filters format
@@ -806,7 +813,7 @@ def plot_circle(samples, sequence=None, structure=None, structure2=None,
         filters = [{"interactions": interactions} | interactions_filter]
     # if filters and samples > 1, rows = # samples, columns = # filters
     if (len(filters) > 1) and (len(samples) > 1):
-        plot_kwargs |= {'rows': len(filters), 'cols': len(samples)}
+        plot_kwargs |= {'rows': len(samples), 'cols': len(filters)}
     # initialize plot
     sequence = get_sequence(sequence, samples[0], structure)
     num_samples = len(samples) * len(filters)
@@ -860,7 +867,7 @@ def plot_linreg(samples, sequence=None, structure=None, profile="profile",
         rnavigate.plots.LinReg: object containing matplotlib figure and axes
             with additional plotting and file saving methods
     """
-    plot_kwargs = replace_sentinels(plot_kwargs)
+    plot_kwargs = replace_sentinel(plot_kwargs)
     if labels is None:
         labels = [sample.sample for sample in samples]
     sequence = get_sequence(sequence, samples[0], profile)
@@ -902,7 +909,7 @@ def plot_roc(samples, structure="ct", profile="profile", labels=None,
         rnavigate.plots.ROC: object containing matplotlib figure and axes with
             additional plotting and file saving methods
     """
-    plot_kwargs = replace_sentinels(plot_kwargs)
+    plot_kwargs = replace_sentinel(plot_kwargs)
     if labels is None:
         labels = [sample.sample for sample in samples]
     plot = plots.ROC(len(samples), **plot_kwargs)
@@ -968,9 +975,9 @@ def plot_disthist(samples, structure="pdb", interactions=None,
             with additional plotting and file saving methods
     """
     # use mutable defaults
-    interactions_filter = replace_sentinels(interactions_filter)
-    bg_interactions_filter = replace_sentinels(bg_interactions_filter)
-    plot_kwargs = replace_sentinels(plot_kwargs)
+    interactions_filter = replace_sentinel(interactions_filter)
+    bg_interactions_filter = replace_sentinel(bg_interactions_filter)
+    plot_kwargs = replace_sentinel(plot_kwargs)
     if labels is None:
         labels = [sample.sample for sample in samples]
     # coerce interactions and interactions_filter into filters format
@@ -978,11 +985,12 @@ def plot_disthist(samples, structure="pdb", interactions=None,
         filters = [{"interactions": interactions} | interactions_filter]
     # if filters and samples > 1, rows = # samples, columns = # filters
     if (len(filters) > 1) and (len(samples) > 1) and (not same_axis):
-        plot_kwargs |= {'rows': len(filters), 'cols': len(samples)}
+        plot_kwargs |= {'rows': len(samples), 'cols': len(filters)}
     # initialize plot
     num_samples = len(samples) * len(filters)
     if same_axis:
-        plot = plots.DistHist(num_samples=1, **plot_kwargs)
+        plot_kwargs |= {'rows': 1, 'cols': 1}
+        plot = plots.DistHist(num_samples=num_samples, **plot_kwargs)
         axis = plot.axes[0, 0]
     else:
         plot = plots.DistHist(num_samples=num_samples, **plot_kwargs)
@@ -998,7 +1006,8 @@ def plot_disthist(samples, structure="pdb", interactions=None,
         for filt in filters:
             sample.filter_interactions(**filt)
             interactions = sample.get_data(filt['interactions'])
-            data_dict['interactions'] = fit_data(interactions, structure)
-            plot.plot_data(**data_dict, label=label, ax=axis, **kwargs)
+            data_dict['interactions'] = fit_data(interactions,
+                                                 data_dict['structure'])
+            plot.plot_data(**data_dict, label=label, axis=axis, **kwargs)
     plot.set_figure_size()
     return plot

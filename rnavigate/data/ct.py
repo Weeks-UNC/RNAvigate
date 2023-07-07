@@ -73,11 +73,11 @@ class SecondaryStructure(data.Sequence):
 
     @property
     def num(self):
-        return self.data['Nucleotide'].values
+        return self.data['Nucleotide'].values.tolist()
 
     @property
     def ct(self):
-        return self.data["Pair"].values
+        return self.data["Pair"].values.tolist()
 
     @property
     def ycoordinates(self):

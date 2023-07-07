@@ -159,7 +159,16 @@ class Data(Sequence):
                 'cmap': 'viridis',
                 'normalization': '0_1',
                 'values': None,
-                'labels': None}}
+                'labels': None},
+            "Distance": {
+                "metric_column": "Distance",
+                'error_column': None,
+                'color_column': None,
+                "cmap": "cool",
+                "normalization": "min_max",
+                "values": [5, 50],
+                'labels': None},
+            }
         self.add_metric_defaults(metric_defaults)
         self.default_metric = metric
         self._metric = None

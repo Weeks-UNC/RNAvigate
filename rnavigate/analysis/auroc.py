@@ -102,11 +102,11 @@ class WindowedAUROC():
             region_length = stop - start + 1
 
         plot = AP(1, region_length, cols=1, rows=1, region=region)
-        ax = plot.axes[0, 0]
+        axis = plot.axes[0, 0]
 
         # fill between auroc values and median, using secondary axis
         x_values = np.arange(start, stop + 1)
-        auc_ax = ax.twinx()
+        auc_ax = axis.twinx()
         auc_ax.set_ylim(0.5, 1.6)
         auc_ax.set_yticks([0.5, self.auroc_median, 1.0])
         auc_ax.fill_between(x_values, self.auroc[start-1:stop],
@@ -128,21 +128,21 @@ class WindowedAUROC():
             plot_error=False)
 
         # Place Track Labels
-        ax.set_title(f"{self.sample.sample}\n{start} - {stop}", loc='left',
+        axis.set_title(f"{self.sample.sample}\n{start} - {stop}", loc='left',
                      fontdict={"fontsize": 48})
-        ax.text(1.002, 6/8, "Secondary\nStructure",
-                transform=ax.transAxes, fontsize=36, va='center')
-        ax.text(1.002, 2/8, f"{self.window}-nt window\nAUROC",
-                transform=ax.transAxes, va='center', fontsize=36)
+        axis.text(1.002, 6/8, "Secondary\nStructure",
+                transform=axis.transAxes, fontsize=36, va='center')
+        axis.text(1.002, 2/8, f"{self.window}-nt window\nAUROC",
+                transform=axis.transAxes, va='center', fontsize=36)
 
         # limits, ticks, spines, and grid
-        ax.set_ylim([-305, 315])
-        ax.set_xticks(ticks=[x for x in range(500, stop, 500) if x > start])
-        ax.set_xticks(ticks=[x for x in range(100, stop, 100) if x > start],
+        axis.set_ylim([-305, 315])
+        axis.set_xticks(ticks=[x for x in range(500, stop, 500) if x > start])
+        axis.set_xticks(ticks=[x for x in range(100, stop, 100) if x > start],
                       minor=True)
-        ax.tick_params(axis='x', which='major', labelsize=36)
-        adjust_spines(ax, ['bottom'])
-        ax.grid(axis='x')
+        axis.tick_params(axis='x', which='major', labelsize=36)
+        adjust_spines(axis, ['bottom'])
+        axis.grid(axis='x')
 
         # set figure size so that 100 axis units == 1 inch
         plot.set_figure_size(height_ax_rel=1/100, width_ax_rel=1/100)

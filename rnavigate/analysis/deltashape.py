@@ -127,9 +127,9 @@ class DeltaSHAPE():
         Returns:
             matplotlib figure and axis objects
         """
-        fig, ax = plt.subplots(1, figsize=self.get_figsize())
+        fig, axis = plt.subplots(1, figsize=self.get_figsize())
 
-        ax.plot(self.data["Nucleotide"], self.data["Smooth_diff"],
+        axis.plot(self.data["Nucleotide"], self.data["Smooth_diff"],
                 drawstyle='steps-mid', color='black')
         plt.axhline(0, color='black')
 
@@ -139,10 +139,10 @@ class DeltaSHAPE():
                     color="grey", alpha=0.25)
 
         # color deltaSHAPE sites
-        ax.bar(self.data["Nucleotide"],
+        axis.bar(self.data["Nucleotide"],
                self.data.eval("Smooth_diff * Positive * Significant"),
                width=1, ec=None, fc='#3EB452', lw=0)
-        ax.bar(self.data["Nucleotide"],
+        axis.bar(self.data["Nucleotide"],
                self.data.eval("Smooth_diff * (~Positive) * Significant"),
                width=1, ec=None, fc='#7F3B95', lw=0)
 
@@ -155,12 +155,12 @@ class DeltaSHAPE():
         if ylims is None:
             ylims = (np.nanmin(self.data["Smooth_diff"])-0.25,
                      np.nanmax(self.data["Smooth_diff"])+0.25)
-        ax.set(
+        axis.set(
             xlim=xlims,
             ylim=ylims,
             xlabel="Nucleotide",
             ylabel=r'$\Delta$SHAPE')
-        ax.tick_params(
+        axis.tick_params(
             which='both',
             direction='out',
             top='off',
@@ -173,7 +173,7 @@ class DeltaSHAPE():
         # turn warnings back on in case something terrible happens.
         warnings.resetwarnings()
 
-        return fig, ax
+        return fig, axis
 
 # "mask_5 int: Specify the number of nucleotides at the 5' end to ignore. Default: 0"
 # "mask_3 int: Specify the number of nucleotides at the 3' end to ignore. Default: 0"

@@ -98,12 +98,12 @@ class Plot(ABC):
             return (None, None)
         # TODO: implement as a new plot class that accepts another plot class.
         fig, axes = plt.subplots(rows, 1, figsize=(8, 2 * rows), squeeze=False)
-        for kwargs, ax in zip(self.colorbars, axes[:, 0]):
-            self.view_colormap(ax, **kwargs)
-        return (fig, ax)
+        for kwargs, axis in zip(self.colorbars, axes[:, 0]):
+            self.view_colormap(axis, **kwargs)
+        return (fig, axis)
 
     @classmethod
-    def view_colormap(self, ax=None, interactions=None, ticks=None,
+    def view_colormap(self, axis=None, interactions=None, ticks=None,
                       values=None, title=None, cmap=None):
         if interactions is not None:
             cbargs = self.get_colorbar_args(interactions=interactions)
@@ -121,14 +121,14 @@ class Plot(ABC):
             cmap = plt.get_cmap(cmap)
             cmap = cmap(np.arange(cmap.N)).tolist()
 
-        if ax is None:
-            _, ax = plt.subplots(1, figsize=(6, 2))
-        ax.imshow([cmap], extent=[0, 10, 0, 1])
-        ax.set_title(title)
-        ax.set_xticks(ticks)
-        ax.set_xticklabels(values)
-        ax.set_yticks([])
-        return ax
+        if axis is None:
+            _, axis = plt.subplots(1, figsize=(6, 2))
+        axis.imshow([cmap], extent=[0, 10, 0, 1])
+        axis.set_title(title)
+        axis.set_xticks(ticks)
+        axis.set_xticklabels(values)
+        axis.set_yticks([])
+        return axis
 
     def get_rows_columns(self, rows=None, cols=None):
         has_rows = isinstance(rows, int)
@@ -157,20 +157,20 @@ class Plot(ABC):
             rows = math.ceil(self.length / cols)
         return rows, cols
 
-    def add_sequence(self, ax, sequence, yvalue=0, ytrans="axes"):
+    def add_sequence(self, axis, sequence, yvalue=0, ytrans="axes"):
         # set font style and colors for each nucleotide
         font_prop = mp.font_manager.FontProperties(
             family="monospace", style="normal", weight="bold", size="12"
         )
         # transform yvalue to a y-axis data value
         if ytrans == "axes":
-            trans = ax.get_xaxis_transform()
+            trans = axis.get_xaxis_transform()
         elif ytrans == "data":
-            trans = ax.transData
+            trans = axis.transData
         sequence = sequence[self.region[0] - 1 : self.region[1]]
         for i, seq in enumerate(sequence):
             col = styles.get_nt_color(seq, colors="old")
-            ax.text(
+            axis.text(
                 i + self.region[0],
                 yvalue,
                 seq,
@@ -202,7 +202,7 @@ class Plot(ABC):
     def set_figure_size(
         self,
         fig=None,
-        ax=None,
+        axis=None,
         rows=None,
         cols=None,
         height_ax_rel=None,
@@ -236,8 +236,8 @@ class Plot(ABC):
         """
         if fig is None:
             fig = self.fig
-        if ax is None:
-            ax = self.axes[0, 0]
+        if axis is None:
+            axis = self.axes[0, 0]
         if rows is None:
             rows = self.rows
         if cols is None:
@@ -245,7 +245,7 @@ class Plot(ABC):
 
         if width_ax_in is None:
             # x limits of axes
-            left_ax, right_ax = ax.get_xlim()
+            left_ax, right_ax = axis.get_xlim()
             # width of axes in inches
             width_ax_in = (right_ax - left_ax) * width_ax_rel
         if width_gap_in is None:
@@ -272,7 +272,7 @@ class Plot(ABC):
 
         # repeat the process for figure height
         if height_ax_in is None:
-            bottom_ax, top_ax = ax.get_ylim()
+            bottom_ax, top_ax = axis.get_ylim()
             height_ax_in = (top_ax - bottom_ax) * height_ax_rel
         if height_gap_in is None:
             height_gap_in = fig.subplotpars.hspace * height_ax_in
@@ -292,26 +292,26 @@ class Plot(ABC):
         fig.set_size_inches(width_fig_in, height_fig_in)
 
 
-def adjust_spines(ax, spines):
-    for loc, spine in ax.spines.items():
+def adjust_spines(axis, spines):
+    for loc, spine in axis.spines.items():
         if loc in spines:
             spine.set_position(("outward", 10))  # outward by 10 points
         else:
             spine.set_color("none")  # don't draw spine
     if "left" in spines:
-        ax.yaxis.set_ticks_position("left")
+        axis.yaxis.set_ticks_position("left")
     else:
-        ax.yaxis.set_ticks([])
+        axis.yaxis.set_ticks([])
     if "bottom" in spines:
-        ax.xaxis.set_ticks_position("bottom")
+        axis.xaxis.set_ticks_position("bottom")
     else:
-        ax.xaxis.set_ticks([])
+        axis.xaxis.set_ticks([])
 
 
-def clip_spines(ax, spines):
+def clip_spines(axis, spines):
     for spine in spines:
         if spine in ["left", "right"]:
-            ticks = ax.get_yticks()
+            ticks = axis.get_yticks()
         if spine in ["top", "bottom"]:
-            ticks = ax.get_xticks()
-        ax.spines[spine].set_bounds((min(ticks), max(ticks)))
+            ticks = axis.get_xticks()
+        axis.spines[spine].set_bounds((min(ticks), max(ticks)))

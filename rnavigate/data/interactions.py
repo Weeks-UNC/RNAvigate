@@ -246,9 +246,9 @@ class Interactions(data.Data):
             self.mask_on_values(Statistic_ge=23) evaluates to:
             self.update_mask(self.data["Statistic"] >= 23)
         """
-        for key in kwargs.keys():
+        for key, value in kwargs.items():
             if key in self.data.keys():
-                self.update_mask(self.data[key] > kwargs[key])
+                self.update_mask(self.data[key] > value)
             elif "_" in key:
                 key2, comparison = key.rsplit("_", 1)
                 operators = {
@@ -258,13 +258,13 @@ class Interactions(data.Data):
                     "lt": lt,
                     "eq": eq,
                     "ne": ne}
-                if key2 in self.data.keys() and comparison in operators.keys():
+                if key2 in self.data.columns and comparison in operators:
                     operator = operators[comparison]
-                    self.update_mask(operator(self.data[key2], kwargs[key]))
+                    self.update_mask(operator(self.data[key2], value))
                 else:
-                    print(f"{key}={kwargs[key]} is not a valid filter.")
+                    print(f"{key}={value} is not a valid filter.")
             else:
-                print(f"{key}={kwargs[key]} is not a valid filter.")
+                print(f"{key}={value} is not a valid filter.")
 
     def reset_mask(self):
         """Resets the mask to all True (removes previous filters)"""
@@ -859,8 +859,10 @@ class PairingProbability(Interactions):
 
 
 class AllPossible(Interactions):
-    def __init__(self, sequence, metric='Probability',
+    def __init__(self, sequence, metric='data', input_data=None,
                  metric_defaults=None, read_table_kw=None, window=1):
+        if isinstance(sequence, data.Sequence):
+            sequence = sequence.sequence
         if metric_defaults is None:
             metric_defaults = {}
         metric_defaults = {
@@ -873,13 +875,16 @@ class AllPossible(Interactions):
                 'values': None,
                 'labels': None}
         } | metric_defaults
-        dataframe = {"i": [], "j": [], "data": []}
-        for i in range(1, len(sequence)):
-            for j in range(i + 1, len(sequence) + 1):
-                dataframe["i"].append(i)
-                dataframe["j"].append(j)
-                dataframe["data"].append(0)
-        dataframe = pd.DataFrame(dataframe)
+        if input_data is not None:
+            dataframe=input_data
+        else:
+            dataframe = {"i": [], "j": [], "data": []}
+            for i in range(1, len(sequence)):
+                for j in range(i + 1, len(sequence) + 1):
+                    dataframe["i"].append(i)
+                    dataframe["j"].append(j)
+                    dataframe["data"].append(0)
+            dataframe = pd.DataFrame(dataframe)
         super().__init__(
             input_data=dataframe,
             sequence=sequence,

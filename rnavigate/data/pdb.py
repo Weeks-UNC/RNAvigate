@@ -115,5 +115,5 @@ class PDB(data.Sequence):
         b = y - y[:, np.newaxis]
         c = z - z[:, np.newaxis]
         matrix = np.sqrt(a*a + b*b + c*c)
-        self.distance_matrix[atom] = np.nan_to_num(matrix, nan=1000)
+        # self.distance_matrix[atom] = np.nan_to_num(matrix, nan=1000)
         return matrix

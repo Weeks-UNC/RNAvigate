@@ -116,10 +116,10 @@ class LowSS():
 
         # create arc plot instance
         plot = AP(1, region_length, cols=1, rows=1, region=region)
-        ax = plot.axes[0, 0]
+        axis = plot.axes[0, 0]
         x_values = np.arange(start, stop + 1)
         # plot median SHAPE on secondary axis
-        prof_ax = ax.twinx()
+        prof_ax = axis.twinx()
         prof_ax.set_ylim(-3, 1)
         prof_ax.set_yticks([0.0, 0.4, 0.85])
         prof_ax.fill_between(x_values, [self.median_profile]*region_length,
@@ -129,7 +129,7 @@ class LowSS():
         clip_spines(prof_ax, ["left"])
 
         # plot median entropy on second secondary axis
-        ent_ax = ax.twinx()
+        ent_ax = axis.twinx()
         ent_ax.set_ylim(-1.5, 1.5)
         ent_ax.set_yticks(ticks=[0, 0.08, 0.5])
         ent_ax.fill_between(x_values, [0.08]*region_length,
@@ -154,30 +154,30 @@ class LowSS():
             annotation_mode="vbar")
 
         # Place Track Labels
-        ax.set_title(f"{self.sample.sample}\n{start} - {stop}", loc='left',
+        axis.set_title(f"{self.sample.sample}\n{start} - {stop}", loc='left',
                      fontdict={"fontsize": 48})
-        ax.text(1.002, 7/8, "SHAPE\nReactivity",
-                fontsize=36, transform=ax.transAxes, va='center')
-        ax.text(1.002, 5/8, "Shannon\nEntropy",
-                fontsize=36, transform=ax.transAxes, va='center')
-        ax.text(1.002, 3/8, "Secondary\nStructure",
-                transform=ax.transAxes, fontsize=36, va='center')
-        ax.text(1.002, 1/8, "Pairing\nProbability",
-                transform=ax.transAxes, va='center', fontsize=36)
+        axis.text(1.002, 7/8, "SHAPE\nReactivity",
+                fontsize=36, transform=axis.transAxes, va='center')
+        axis.text(1.002, 5/8, "Shannon\nEntropy",
+                fontsize=36, transform=axis.transAxes, va='center')
+        axis.text(1.002, 3/8, "Secondary\nStructure",
+                transform=axis.transAxes, fontsize=36, va='center')
+        axis.text(1.002, 1/8, "Pairing\nProbability",
+                transform=axis.transAxes, va='center', fontsize=36)
 
         # Place region labels
         for i, (lssr_start, lssr_stop) in enumerate(self.lowss_regions):
             middle = (lssr_stop + lssr_start) / 2
             if start < middle < stop:
-                ax.text(middle, 550, str(i+1),
+                axis.text(middle, 550, str(i+1),
                         ha='center', va='center', fontsize=36)
 
-        ax.set_ylim([-305, 915])
-        ax.set_xticks(ticks=[x for x in range(500, stop+1, 500) if x > start])
-        ax.set_xticks(ticks=[x for x in range(100, stop+1, 100) if x > start],
+        axis.set_ylim([-305, 915])
+        axis.set_xticks(ticks=[x for x in range(500, stop+1, 500) if x > start])
+        axis.set_xticks(ticks=[x for x in range(100, stop+1, 100) if x > start],
                       minor=True)
-        ax.tick_params(axis='x', which='major', labelsize=36)
-        adjust_spines(ax, ['bottom'])
+        axis.tick_params(axis='x', which='major', labelsize=36)
+        adjust_spines(axis, ['bottom'])
 
         # set figure size so that 100 axis units == 1 inch
         plot.set_figure_size(height_ax_rel=1/100, width_ax_rel=1/100)
