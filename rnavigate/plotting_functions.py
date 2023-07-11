@@ -4,14 +4,13 @@ import os.path
 from rnavigate import plots
 from rnavigate import data
 
-_list = object()
-_dict = object()
-
 ###############################################################################
-# accessory functions
+#   replace_sentinel
 #   get_sequence
 #   fit_data
 ###############################################################################
+_list = object()
+_dict = object()
 
 
 def replace_sentinel(arg):
@@ -101,7 +100,11 @@ def fit_data(data_list, fit_to, second_alignment=None):
 ###############################################################################
 
 
-def plot_qc(samples, labels=None, plot_kwargs=_dict, **kwargs):
+def plot_qc(
+        samples,
+        labels=None,
+        plot_kwargs=_dict,
+        **kwargs):
     """Makes a multipanel quality control plot displaying mutations per
     molecule, read length distribution, and mutation rate distributions for
     modified and unmodified samples.
@@ -124,13 +127,49 @@ def plot_qc(samples, labels=None, plot_kwargs=_dict, **kwargs):
     plot_kwargs = replace_sentinel(plot_kwargs)
     plot = plots.QC(num_samples=len(samples), **plot_kwargs)
     for sample, label in zip(samples, labels):
-        plot.add_sample(sample=sample, log="log", profile="profile",
-                        label=label, **kwargs)
+        data_kwargs = sample.get_data({
+            "log": "log",
+            "profile": "default_profile"})
+        plot.plot_data(**data_kwargs, label=label, **kwargs)
     plot.set_figure_size()
     return plot
 
-def plot_skyline(samples, sequence=None, profile="profile", labels=None,
-                 annotations=_list, region="all", plot_kwargs=_dict, **kwargs):
+
+def plot_shapemapper(
+        sample,
+        profile="default_profile",
+        panels=None):
+    """Makes a standard ShapeMapper2 profile plot with 3 panels: Normalized
+    Reactivities, modified and untreated mutation rates, and modified and
+    untreated read depths.
+
+    Args:
+        profile (str, optional):
+            data keyword pointing to rnavigate.ShapeMaP data
+        panels (list, optional):
+            Which of the three panels to include.
+            Defaults to ["profile", "rates", "depth"].
+
+    Returns:
+        Plot object:
+    """
+    if panels is None:
+        panels = ["profile", "rates", "depth"]
+    profile = sample.get_data(profile)
+    plot = plots.SM(profile.length, panels=panels)
+    plot.plot_data(profile=profile, label="label")
+    plot.set_figure_size()
+    return plot
+
+def plot_skyline(
+        samples,
+        sequence=None,
+        profile="default_profile",
+        labels=None,
+        annotations=_list,
+        region="all",
+        plot_kwargs=_dict,
+        **kwargs):
     """Plots multiple per-nucleotide datasets on a single axis.
 
     Args:
@@ -140,7 +179,7 @@ def plot_skyline(samples, sequence=None, profile="profile", labels=None,
             string using a user-defined or pairwise sequence alignment.
             Defaults to the value of the profile argument below.
         profile (str, optional): per-nucleotide data to retrieve from sample.
-            Defaults to "profile".
+            Defaults to "default_profile".
         labels (list of str, optional): Same length as samples list. Labels to
             be used in plot legends. Defaults to default sample name.
         annotations (list of str, optional): annotations to retrive from
@@ -175,8 +214,15 @@ def plot_skyline(samples, sequence=None, profile="profile", labels=None,
     return plot
 
 
-def plot_profile(samples, sequence=None, profile="profile", labels=None,
-                 annotations=_list, region="all", plot_kwargs=_dict, **kwargs):
+def plot_profile(
+        samples,
+        sequence=None,
+        profile="default_profile",
+        labels=None,
+        annotations=_list,
+        region="all",
+        plot_kwargs=_dict,
+        **kwargs):
     """Aligns reactivity profiles by sequence and plots them on seperate axes.
 
     Args:
@@ -186,7 +232,7 @@ def plot_profile(samples, sequence=None, profile="profile", labels=None,
             string using a user-defined or pairwise sequence alignment.
             Defaults to the value of the profile argument below.
         profile (str, optional): per-nucleotide data to retrieve from sample.
-            Defaults to "profile".
+            Defaults to "default_profile".
         labels (list of str, optional): Same length as samples list. Labels to
             be used in plot legends. Defaults to default sample name.
         annotations (list of str, optional): annotations to retrive from
@@ -252,11 +298,23 @@ def plot_alignment(data1, data2, labels=None, plot_kwargs=_dict):
     return plot
 
 
-def plot_arcs(samples, sequence=None, structure=None, comp=None,
-              interactions=None, interactions_filter=_dict, filters=None,
-              interactions2=None, interactions2_filter=_dict,
-              profile=None, annotations=_list, labels=None, region="all",
-              plot_kwargs=_dict, colorbar=True, **kwargs):
+def plot_arcs(
+        samples,
+        sequence=None,
+        structure="default_structure",
+        comp=None,
+        interactions=None,
+        interactions_filter=_dict,
+        filters=None,
+        interactions2=None,
+        interactions2_filter=_dict,
+        profile="default_profile",
+        annotations=_list,
+        labels=None,
+        region="all",
+        plot_kwargs=_dict,
+        colorbar=True,
+        **kwargs):
     """Generates a multipanel arc plot displaying combinations of secondary
     structures, per-nucleotide data, inter-nucleotide data, and sequence
     annotations. Each plot may display a unique sample and/or filtering scheme.
@@ -302,7 +360,7 @@ def plot_arcs(samples, sequence=None, structure=None, comp=None,
             Defaults to {}.
         profile (str, optional): a key from sample.data used to retrieve per-
             nucleotide data. These data are displayed in center of each panel.
-            Defaults to "profile".
+            Defaults to "default_profile".
         annotations (list, optional): a list of keys from sample.data used to
             retrieve sequence annotations. These annotations are displayed in
             the center of each panel.
@@ -365,11 +423,21 @@ def plot_arcs(samples, sequence=None, structure=None, comp=None,
     return plot
 
 
-def plot_arcs_compare(samples, sequence=None, structure="ss", structure2=None,
-                      interactions=None, interactions_filter=_dict,
-                      interactions2=None, interactions2_filter=_dict,
-                      profile="profile", labels=None, region="all",
-                      plot_kwargs=_dict, colorbar=True, **kwargs):
+def plot_arcs_compare(
+        samples,
+        sequence=None,
+        structure="default_structure",
+        structure2=None,
+        interactions=None,
+        interactions_filter=_dict,
+        interactions2=None,
+        interactions2_filter=_dict,
+        profile="default_profile",
+        region="all",
+        labels=None,
+        plot_kwargs=_dict,
+        colorbar=True,
+        **kwargs):
     """Generates a single arc plot displaying combinations of secondary
     structures, per-nucleotide data, inter-nucleotide data, and sequence
     annotations. The first sample will be on top, the second on the bottom.
@@ -377,16 +445,18 @@ def plot_arcs_compare(samples, sequence=None, structure="ss", structure2=None,
 
     Args:
         samples (list of rnavigate.Sample): Samples to retreive data from.
-            number of panels will equal the length of this list, unless filters
-            argument below is also used.
-        sequence (str or data object, optional): a key from sample.data, a
-            sequence string, or a Data object. All data will be mapped to this
-            string using a user-defined or pairwise sequence alignment.
+        sequence (str | rnavigate.Sequence, optional):
+            a data keyword from sample.data, a sequence string, or an
+            rnavigate.Sequence object. All data will be aligned and mapped to
+            positions in this sequence.
             Defaults to the value of the ct argument below.
-        ct (str, optional): a key from sample.data to retreive a secondary
-            structure. This will be plotted on the top half of each panel.
-            Defaults to "ct".
-        comp (str, optional): same as ct. basepairs from ct and comp will be
+        structure (str | rnavigate.SecondaryStructure, optional):
+            an rnavigate.SecondaryStructure object or a data keyword pointing
+            to an rnavigate.SecondaryStructure.
+            Defaults to "default_structure".
+        structure2 (str | rnavigate.SecondaryStructure, optional):
+            Same as structure.
+            basepairs from ct and comp will be
             plotted on the top half of each panel. Basepairs are colored by
             which structure contains them (shared, ct only, comp only).
             Defaults to None.
@@ -407,7 +477,7 @@ def plot_arcs_compare(samples, sequence=None, structure="ss", structure2=None,
             Defaults to {}.
         profile (str, optional): a key from sample.data used to retrieve per-
             nucleotide data. These data are displayed in center of each panel.
-            Defaults to "profile".
+            Defaults to "default_profile".
         labels (str, optional): Same length as samples list. Labels to
             be used in plot legends. Defaults to default sample name.
         region (list of int: length 2, optional): start and end position of
@@ -472,10 +542,20 @@ def plot_arcs_compare(samples, sequence=None, structure="ss", structure2=None,
         plot.plot_colorbars()
     return plot
 
-def plot_ss(samples, structure="ss", profile="profile", annotations=_list,
-            interactions=None, interactions_filter=_dict, interactions2=None,
-            interactions2_filter=_dict, filters=None, labels=None,
-            plot_kwargs=_dict, colorbar=True, **kwargs):
+def plot_ss(
+        samples,
+        structure="default_structure",
+        profile="default_profile",
+        annotations=_list,
+        interactions=None,
+        interactions_filter=_dict,
+        interactions2=None,
+        interactions2_filter=_dict,
+        filters=None,
+        labels=None,
+        plot_kwargs=_dict,
+        colorbar=True,
+        **kwargs):
     """Generates a multipanel secondary structure drawing with optional
     coloring by per-nucleotide data and display of inter-nucleotide data and/or
     sequence annotations. Each plot may display a unique sample and/or
@@ -491,7 +571,7 @@ def plot_ss(samples, structure="ss", profile="profile", annotations=_list,
         profile (str, optional): a key from sample.data used to retrieve per-
             nucleotide data. These data may be used to color nucleotides in the
             structure drawing.
-            Defaults to "profile".
+            Defaults to "default_profile".
         annotations (list, optional): a list of keys from sample.data used to
             retrieve sequence annotations. These annotations are highlighted on
             the structure drawing.
@@ -569,10 +649,20 @@ def plot_ss(samples, structure="ss", profile="profile", annotations=_list,
     return plot
 
 
-def plot_mol(samples, structure="pdb", interactions=None,
-             interactions_filter=_dict, filters=None, profile="profile",
-             labels=None, show=True, hide_cylinders=False, colorbar=True,
-             custom_function=None, plot_kwargs=_dict, **kwargs):
+def plot_mol(
+        samples,
+        structure="pdb",
+        interactions=None,
+        interactions_filter=_dict,
+        filters=None,
+        profile="default_profile",
+        labels=None,
+        show=True,
+        hide_cylinders=False,
+        colorbar=True,
+        custom_function=None,
+        plot_kwargs=_dict,
+        **kwargs):
     """Generates a multipanel interactive 3D molecular rendering of a PDB
     structure. Nucleotides may be colored by per-nucleotide data or custom
     color lists. Inter-nucleotide data may be displayed as cylinders connecting
@@ -605,7 +695,7 @@ def plot_mol(samples, structure="pdb", interactions=None,
             Defaults to [].
         profile (str, optional): a key from sample.data used to retrieve per-
             nucleotide data. These data may be used to color nucleotides.
-            Defaults to "profile".
+            Defaults to "default_profile".
         labels (str, optional): Same length as samples list. Labels to
             be used in plot legends.
             Defaults to default sample name.
@@ -663,9 +753,15 @@ def plot_mol(samples, structure="pdb", interactions=None,
     return plot
 
 
-def plot_heatmap(samples, structure=None, interactions=None,
-                 interactions_filter=_dict, filters=None, labels=None,
-                 plot_kwargs=_dict, **kwargs):
+def plot_heatmap(
+        samples,
+        structure=None,
+        interactions=None,
+        interactions_filter=_dict,
+        filters=None,
+        labels=None,
+        plot_kwargs=_dict,
+        **kwargs):
     """Generates a multipanel plot displaying a heatmap of inter-nucleotide
     data (nucleotide resolution of 2D KDE) and/or contour map of structure
     distances. Each plot may display a unique sample and/or filtering scheme.
@@ -733,11 +829,22 @@ def plot_heatmap(samples, structure=None, interactions=None,
     plot.set_figure_size()
     return plot
 
-def plot_circle(samples, sequence=None, structure=None, structure2=None,
-                interactions=None, interactions_filter=_dict,
-                interactions2=None, interactions2_filter=_dict, filters=None,
-                annotations=_list, profile="profile", labels=None,
-                colorbar=True, plot_kwargs=_dict, **kwargs):
+def plot_circle(
+        samples,
+        sequence=None,
+        structure=None,
+        structure2=None,
+        interactions=None,
+        interactions_filter=_dict,
+        interactions2=None,
+        interactions2_filter=_dict,
+        filters=None,
+        annotations=_list,
+        profile="default_profile",
+        labels=None,
+        colorbar=True,
+        plot_kwargs=_dict,
+        **kwargs):
     """Generates a multipanel circle plot displaying combinations of secondary
     structures, per-nucleotide data, inter-nucleotide data, and sequence
     annotations. Each plot may display a unique sample and/or filtering scheme.
@@ -787,7 +894,7 @@ def plot_circle(samples, sequence=None, structure=None, structure2=None,
             Defaults to [].
         profile (str, optional): a key from sample.data used to retrieve per-
             nucleotide data. These data may be used to color nucleotides.
-            Defaults to "profile".
+            Defaults to "default_profile".
         labels (str, optional): Same length as samples list. Labels to
             be used as titles.
             Defaults to default sample name.
@@ -840,8 +947,14 @@ def plot_circle(samples, sequence=None, structure=None, structure2=None,
     return plot
 
 
-def plot_linreg(samples, sequence=None, structure=None, profile="profile",
-                labels=None, plot_kwargs=_dict, **kwargs):
+def plot_linreg(
+        samples,
+        sequence=None,
+        structure=None,
+        profile="default_profile",
+        labels=None,
+        plot_kwargs=_dict,
+        **kwargs):
     """Performs linear regression analysis and generates scatter plots of all
     sample-to-sample profile vs. profile comparisons. Colors nucleotides by
     identity or base-pairing status.
@@ -881,8 +994,13 @@ def plot_linreg(samples, sequence=None, structure=None, profile="profile",
     plot.set_figure_size()
     return plot
 
-def plot_roc(samples, structure="ct", profile="profile", labels=None,
-             plot_kwargs=_dict, **kwargs):
+def plot_roc(
+        samples,
+        structure="default_structure",
+        profile="default_profile",
+        labels=None,
+        plot_kwargs=_dict,
+        **kwargs):
     """Performs receiver operator characteristic analysis (ROC), calculates
     area under ROC curve (AUC), and generates ROC plots to assess how well
     per-nucleotide data predicts base-paired status. Does this for all
@@ -923,10 +1041,18 @@ def plot_roc(samples, structure="ct", profile="profile", labels=None,
     return plot
 
 
-def plot_disthist(samples, structure="pdb", interactions=None,
-                  interactions_filter=_dict, bg_interactions=None,
-                  bg_interactions_filter=_dict, filters=None, labels=None,
-                  same_axis=False, plot_kwargs=_dict, **kwargs):
+def plot_disthist(
+        samples,
+        structure=None,
+        interactions=None,
+        interactions_filter=_dict,
+        bg_interactions=None,
+        bg_interactions_filter=_dict,
+        filters=None,
+        labels=None,
+        same_axis=False,
+        plot_kwargs=_dict,
+        **kwargs):
     """Calculates 3D distance of nucleotides in inter-nucleotide data and plots
     the distribution of these distances. Compares this to a 'background'
     distribution consisting of either all pairwise distances in structure, or

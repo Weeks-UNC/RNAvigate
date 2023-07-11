@@ -26,19 +26,19 @@ data_keyword_defaults = {
         "data_class": data.RNPMaP},
     "ringmap": {
         "data_class": data.RINGMaP,
-        "sequence": "profile"},
+        "sequence": "default_profile"},
     "pairmap": {
         "data_class": data.PAIRMaP,
-        "sequence": "profile"},
+        "sequence": "default_profile"},
     "allcorrs": {
         "data_class": data.RINGMaP,
-        "sequence": "profile"},
+        "sequence": "default_profile"},
     "shapejump": {
         "data_class": data.SHAPEJuMP,
         "sequence": _required},
     "pairprob": {
         "data_class": data.PairingProbability,
-        "sequence": "profile"},
+        "sequence": "default_profile"},
     "ss": {
         "data_class": data.SecondaryStructure},
     "pdb": {
@@ -230,8 +230,18 @@ class Sample:
             self.inputs |= inherit.inputs
 
         # get data and store inputs for all data_keywords
+        datatypes = [data.Profile, data.SecondaryStructure, data.PDB]
+        dkws = ["default_profile", "default_structure", "default_pdb"]
+        for dkw in dkws:
+            if dkw not in self.data:
+                self.data[dkw] = None
         for data_keyword, kwargs in data_keywords.items():
             self.set_data(data_keyword, kwargs=kwargs)
+            for dt, dkw in zip(datatypes, dkws):
+                if (isinstance(self.data[data_keyword], dt)
+                        and (dkw not in self.data or self.data[dkw] is None)):
+                    self.data[dkw] = self.data[data_keyword]
+
 
         # for all DANCE-MaP data
         if dance_prefix is not None:
@@ -258,14 +268,12 @@ class Sample:
             raise ValueError(
                 f"'{data_keyword}' is already a data keyword. "
                 "Choose a different one.")
-
-        self.data[data_keyword] = create_data(
-            sample=self, **{data_keyword: kwargs})
+        try:
+            self.data[data_keyword] = create_data(
+                sample=self, **{data_keyword: kwargs})
+        except BaseException as exception:
+            raise ValueError(f"issue while loading {data_keyword}") from exception
         self.inputs[data_keyword] = kwargs
-        default_profiles = ["shapemap", "dmsmap", "dancemap", "rnpmap"]
-        if (data_keyword in default_profiles) and ("profile" not in self.data):
-            self.data["profile"] = self.data[data_keyword]
-
 
     def init_dance(self, filepath):
         """Initializes a list of Sample objects which each represent a
@@ -452,27 +460,3 @@ class Sample:
             dance.data["ringmap"].mask_on_ct(ctlist, min_cd=cdfilter)
             dance.data["pairmap"].filter(fit_to=fit_to, ct=dance_ct,
                                          paired_only=True)
-
-###############################################################################
-# sample plotting functions
-#     plot_shapemapper
-###############################################################################
-
-    def plot_shapemapper(self, panels=None):
-        """Makes a standard ShapeMapper2 profile plot with 3 panels: Normalized
-        Reactivities, modified and untreated mutation rates, and modified and
-        untreated read depths.
-
-        Args:
-            panels (list, optional): Which of the three panels to include.
-                Defaults to ["profile", "rates", "depth"].
-
-        Returns:
-            Plot object:
-        """
-        if panels is None:
-            panels = ["profile", "rates", "depth"]
-        plot = plots.SM(self.data["profile"].length, panels=panels)
-        plot.add_sample(self, profile="profile", label="label")
-        plot.set_figure_size()
-        return plot
