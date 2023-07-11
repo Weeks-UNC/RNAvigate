@@ -9,6 +9,7 @@ import json
 from .data import get_ss_class
 from . import plots
 from . import data
+from . import styles
 
 
 def create_code_button():
@@ -1524,7 +1525,8 @@ def plot_circle(samples, seq_source=None, ct=None, comp=None,
     return plot
 
 
-def plot_linreg(samples, ct="ct", profile="profile", labels=None,
+def plot_linreg(samples, seq_source=None, ct="ct", profile="profile",
+                annotations=None, colorby=None, labels=None, column=None,
                 plot_kwargs=None, **kwargs):
     """Performs linear regression analysis and generates scatter plots of all
     sample-to-sample profile vs. profile comparisons. Colors nucleotides by
@@ -1553,11 +1555,18 @@ def plot_linreg(samples, ct="ct", profile="profile", labels=None,
     """
     if labels is None:
         labels = ["label"] * len(samples)
+    if annotations is None:
+        annotations = []
     if plot_kwargs is None:
         plot_kwargs = {}
     plot = plots.LinReg(len(samples), **plot_kwargs)
+    sequence = get_sequence(seq_source, samples[0], profile)
     for sample, label in zip(samples, labels):
-        plot.add_sample(sample, ct=ct, profile=profile, label=label, **kwargs)
+        fit_data_list(sample=sample, data_list=annotations+[ct, profile],
+                      fit_to=sequence)
+        plot.add_sample(sample, sequence=sequence, ct=ct, profile=profile,
+                        label=label, colorby=colorby, column=column,
+                        annotations=annotations, **kwargs)
     plot.set_figure_size()
     return plot
 
