@@ -45,10 +45,12 @@ class AP(plots.Plot):
             annotation_gap = 2*(2*len(annotations) + seqbar)
         elif annotation_gap is None:
             annotation_gap = 2*seqbar
+        if ct is not None:
+            ct = ct.as_interactions(comp)
         self.set_axis(axis=axis, annotation_gap=annotation_gap)
         self.plot_arcs(
             axis=axis, data=ct, panel=ct_panel,
-            annotation_gap=annotation_gap, comp=comp)
+            annotation_gap=annotation_gap)
         self.plot_arcs(
             axis=axis, data=interactions, panel=interactions_panel,
             annotation_gap=annotation_gap)
@@ -93,15 +95,11 @@ class AP(plots.Plot):
                             "alpha": 0.5,
                             "boxstyle": "round,pad=0.1,rounding_size=0.2"})
 
-    def plot_arcs(self, axis, data, panel, annotation_gap, comp=None):
-        if comp is not None:
-            ij_colors = data.get_ij_colors(comp)
-            self.add_colorbar_args(interactions="ct_compare")
-        elif data is not None:
-            ij_colors = data.get_ij_colors()
-            self.add_colorbar_args(interactions=data)
-        else:
+    def plot_arcs(self, axis, data, panel, annotation_gap):
+        if data is None:
             return
+        ij_colors = data.get_ij_colors()
+        self.add_colorbar_args(interactions=data)
         patches = []
         mn, mx = self.region
         for i, j, color in zip(*ij_colors):

@@ -159,7 +159,10 @@ class Data(Sequence):
                 'cmap': 'viridis',
                 'normalization': '0_1',
                 'values': None,
-                'labels': None},
+                'cbar_args': {
+                    'ticks':[],
+                    'extend':'both',
+                    'label':'Type: metric'}},
             "Distance": {
                 "metric_column": "Distance",
                 'error_column': None,
@@ -167,7 +170,10 @@ class Data(Sequence):
                 "cmap": "cool",
                 "normalization": "min_max",
                 "values": [5, 50],
-                'labels': None},
+                'cbar_args': {
+                    'ticks':[],
+                    'extend':'both',
+                    'label':'Type: metric'}},
             }
         self.add_metric_defaults(metric_defaults)
         self.default_metric = metric
@@ -220,7 +226,7 @@ class Data(Sequence):
 
     @property
     def cmap(self):
-        cmap_keys = ['cmap', 'normalization', 'values', 'labels']
+        cmap_keys = ['cmap', 'normalization', 'values', 'cbar_args']
         cmap_kwargs = {k: v for k, v in self._metric.items() if k in cmap_keys}
         return data.ScalarMappable(**cmap_kwargs)
 

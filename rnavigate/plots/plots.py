@@ -3,7 +3,6 @@ import math
 import matplotlib as mp
 import matplotlib.pyplot as plt
 import numpy as np
-from rnavigate import data
 from rnavigate import styles
 
 
@@ -18,6 +17,7 @@ class Plot(ABC):
         )
         self.i = 0
         self.pass_through = []
+        self.colorbars = []
 
     def get_ax(self, i=None):
         if i is None:
@@ -26,81 +26,25 @@ class Plot(ABC):
         col = i % self.columns
         return self.axes[row, col]
 
-    def add_sample(self, sample, **kwargs):
-        if isinstance(sample, list):
-            for s in sample:
-                self.add_sample(s, **kwargs)
-            return
-        for key in kwargs.keys():
-            if key not in self.pass_through:
-                if key == "label" and kwargs[key] != "label":
-                    continue
-                elif isinstance(kwargs[key], data.Data):
-                    continue
-                kwargs[key] = sample.get_data_list(kwargs[key])
-        self.plot_data(**kwargs)
-
-    def get_colorbar_args(self, interactions):
-        return
-        # TODO: this should be implemented in ct and interactions objects
-        if interactions == "ct_compare":
-            metric = "Pairing"
-            ticks = [10 / 6, 30 / 6, 50 / 6]
-            values = ["Structure 1", "Shared", "Structure 2"]
-            title = "Base-pairing comparison"
-            cmap = mp.colors.ListedColormap(
-                [
-                    (0.15, 0.8, 0.6, 0.7),
-                    (0.6, 0.6, 0.6, 0.7),
-                    (0.6, 0.0, 1.0, 0.7),
-                ]
-            )
-        elif ((interactions is None)
-                or isinstance(interactions, data.SecondaryStructure)):
-            return None
-        else:
-            metric = interactions.metric
-            if metric == "Class":
-                ticks = [10 / 6, 30 / 6, 50 / 6]
-                values = ["Complementary", "Primary", "Secondary"]
-            else:
-                ticks = [0, 2, 4, 6, 8, 10]
-                mn, mx = interactions.min_max
-                values = [f"{mn + ((mx-mn)/5)*i:.1f}" for i in range(6)]
-            title = metric.replace('_', ' ')
-            cmap = interactions.cmap
-        cbargs = {
-            "ticks": ticks,
-            "values": values,
-            "title": title,
-            "cmap": cmap(np.arange(cmap.N)).tolist(),
-        }
-        return cbargs
-
     def add_colorbar_args(self, interactions):
-        return
-        if not hasattr(self, "colorbars"):
-            self.colorbars = []
-        cbargs = self.get_colorbar_args(interactions=interactions)
-        if (
-            (cbargs not in self.colorbars)
-            and (cbargs is not None)
-            and (len(cbargs["cmap"]) > 1)
-        ):
-            self.colorbars.append(cbargs)
+        cmap = interactions.cmap
+        for colorbar in self.colorbars:
+            if cmap.is_equivalent_to(colorbar):
+                break
+        else:
+            self.colorbars.append(cmap)
 
     def plot_colorbars(self):
-        if hasattr(self, "colorbars"):
-            rows = len(self.colorbars)
-        else:
-            return (None, None)
+        rows = len(self.colorbars)
         if rows == 0:
             return (None, None)
-        # TODO: implement as a new plot class that accepts another plot class.
-        fig, axes = plt.subplots(rows, 1, figsize=(8, 2 * rows), squeeze=False)
-        for kwargs, axis in zip(self.colorbars, axes[:, 0]):
-            self.view_colormap(axis, **kwargs)
-        return (fig, axis)
+        fig, axes = plt.subplots(rows, 1, figsize=(4, 1.5 * rows), squeeze=False)
+        for cbar, axis in zip(self.colorbars, axes[:, 0]):
+            colorbar = plt.colorbar(cbar, cax=axis, orientation="horizontal",
+                         **cbar.cbar_args)
+            colorbar.outline.set_visible(False)
+        plt.tight_layout()
+        return (fig, axes)
 
     @classmethod
     def view_colormap(self, axis=None, interactions=None, ticks=None,

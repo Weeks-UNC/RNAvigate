@@ -11,6 +11,7 @@
 
 import sys
 from os.path import isfile
+import math
 import numpy as np
 import xml.etree.ElementTree as xmlet
 from rnavigate import data
@@ -67,7 +68,8 @@ class SecondaryStructure(data.Sequence):
             self.filepath = input_data
             self.data = read_file(**kwargs)
         super().__init__(self.data)
-        self.normalize_coordinates()
+        if 'X_coordinate' in self.data.columns:
+            self.transform_coordinates(scale=1, center=(0,0))
 
     # properties to provide backwards compatibility
 
@@ -97,8 +99,7 @@ class SecondaryStructure(data.Sequence):
 
     def __str__(self):
         """print the filepath and length of the RNA"""
-        a = f'Name = {self.filepath}, length = {len(self.ct)}'
-        return a
+        return f'Name = {self.filepath}, length = {len(self.ct)}'
 
     # Loading Data
 
@@ -441,6 +442,39 @@ class SecondaryStructure(data.Sequence):
             out.write(';\nSequence from {0}\n'.format(self.filepath))
             out.write('{0}1'.format(''.join(self.sequence)))
 
+    def writeCT(self, fOUT, writemask=False):
+        """
+        Writes a ct file from the ct object.
+
+        Args:
+            writemask (bool, optional)= True will write out any masking info
+                Defaults to False.
+        """
+
+        try:
+            mask = (writemask and (len(self.mask) == len(self.ct)))
+        except AttributeError:
+            mask = False
+
+        # handle empty ct object case
+        if not self.ct:
+            print("empty ct object. Nothing to write")
+            return
+
+        w = open(fOUT, 'w')
+        w.write('{0:6d} {1}\n'.format(len(self.num), self.filepath))
+        for i, nt in enumerate(self.num):
+            prev = nt-1
+            next = nt+1 % (self.length + 1)  # last nt goes back to zero
+            seq = self.sequence[i]
+            ct = self.ct[i]
+            if mask and self.mask[i]:
+                line = f'{nt:5d} {seq} {prev:5d} {next:5d} {ct:5d} {nt:5d} 1\n'
+            else:
+                line = f'{nt:5d} {seq} {prev:5d} {next:5d} {ct:5d} {nt:5d}\n'
+            w.write(line)
+        w.close()
+
     def write_cte(self, outputPath):
         """writes the current structure out to CTE format for Structure Editor.
 
@@ -548,6 +582,8 @@ class SecondaryStructure(data.Sequence):
         dbn = ''.join(dbn)
         return dbn
 
+    # Filtering: These permanently delete data.
+
     def filterNC(self):
         """
         Removes non-canonical basepairs from the ct datastructure. Warning,
@@ -593,39 +629,6 @@ class SecondaryStructure(data.Sequence):
                 self.ct[pi] = 0
                 # print 'Deleted %d %s *' % (self.num[i], self.sequence[i])
 
-    def writeCT(self, fOUT, writemask=False):
-        """
-        Writes a ct file from the ct object.
-
-        Args:
-            writemask (bool, optional)= True will write out any masking info
-                Defaults to False.
-        """
-
-        try:
-            mask = (writemask and (len(self.mask) == len(self.ct)))
-        except AttributeError:
-            mask = False
-
-        # handle empty ct object case
-        if not self.ct:
-            print("empty ct object. Nothing to write")
-            return
-
-        w = open(fOUT, 'w')
-        w.write('{0:6d} {1}\n'.format(len(self.num), self.filepath))
-        for i, nt in enumerate(self.num):
-            prev = nt-1
-            next = nt+1 % (self.length + 1)  # last nt goes back to zero
-            seq = self.sequence[i]
-            ct = self.ct[i]
-            if mask and self.mask[i]:
-                line = f'{nt:5d} {seq} {prev:5d} {next:5d} {ct:5d} {nt:5d} 1\n'
-            else:
-                line = f'{nt:5d} {seq} {prev:5d} {next:5d} {ct:5d} {nt:5d}\n'
-            w.write(line)
-        w.close()
-
     def copy(self):
         """Returns a deep copy of the ct object."""
         out = SecondaryStructure()
@@ -634,6 +637,8 @@ class SecondaryStructure(data.Sequence):
         out.sequence = self.sequence[:]
         out.ct = self.ct[:]
         return out
+
+    # retrieve structure components
 
     def pairList(self):
         """
@@ -1318,80 +1323,150 @@ class SecondaryStructure(data.Sequence):
             df.loc[mask, "Pair"].values)
         return SecondaryStructure(input_data=df)
 
-    def get_ij_colors(self, compct=None):
-        """Gets i, j, and colors lists for plotting base pairs. i and j are the
-        5' and 3' ends of each pair, and colors is the color to use for each
-        pair (all grey for SecondaryStructure). If compct is provided, i and j
-        are the union of pairs in self and compct, and colors represents
-        whether the pair came from self, compct, or both.
+    def as_interactions(self, structure2=None):
+        """returns list of i, j basepairs as rnavigate.Interactions data.
 
         Args:
-            compct (SecondaryStructure, optional):
-                SecondaryStructure to compare to.
+            structure2 (rnavigate.data.SecondaryStructure, optional):
+                If provided, basepairs from both structures are included and
+                colored by structure (left, right, or both)
+                defaults to None.
+        """
+        mask = self.data.eval("Pair != 0 & Pair > Nucleotide")
+        input_data = self.data.loc[mask, ["Nucleotide", "Pair"]].copy()
+        input_data["Structure"] = 1
+        input_data.rename(columns={"Nucleotide": "i", "Pair": "j"}, inplace=True)
+        input_data.reset_index()
+        if structure2 is not None:
+            alignment = data.SequenceAlignment(self, structure2)
+            structure2 = structure2.get_aligned_data(alignment)
+            mask = structure2.data.eval("Pair != 0 & Pair > Nucleotide")
+            structure2 = structure2.data.loc[mask,
+                                             ["Nucleotide", "Pair"]].copy()
+            structure2["Structure"] = 1
+            structure2.rename(columns={"Nucleotide": "i", "Pair": "j"}, inplace=True)
+            structure2.reset_index()
+        return data.StructureInteractions(input_data, self.sequence, structure2)
+
+    def transform_coordinates(self, flip=None, scale=None, center=None,
+                              rotate_degrees=None):
+        """Perform transformation of structure coordinates
+
+        Args:
+            flip (str, optional):
+                "horizontal" or "vertical".
                 Defaults to None.
-
-        Returns:
-            list, list, list: 5' and 3' ends of each pair, color for each pair
+            scale (float, optional):
+                new median distance of basepairs.
+                Defaults to None.
+            center (tuple of floats, optional):
+                new center x and y coordinate.
+                Defaults to None.
+            rotate_degrees (float, optional):
+                number of degrees to rotate structure.
+                Defaults to None.
         """
-        if compct is not None:
-            alignment = data.SequenceAlignment(compct, self)
-            compct = compct.get_aligned_data(alignment)
-        ct1 = self
-        ct2 = compct
-
-        i_list, j_list, colors = [], [], []
-
-        def add_ij_color(i, j, color):
-            i_list.append(i)
-            j_list.append(j)
-            colors.append(color)
-
-        if ct2 is None:
-            ct_pairs = ct1.pairList()
-            for i, j in ct_pairs:
-                add_ij_color(i, j, (0.5, 0.5, 0.5, 0.7))
-            return (i_list, j_list, colors)
-        ct1 = set(ct1.pairList())
-        ct2 = set(ct2.pairList())
-        shared = ct1.intersection(ct2)
-        ref = ct1.difference(ct2)
-        comp = ct2.difference(ct1)
-        sharedcolor = (150/255., 150/255., 150/255., 0.7)
-        refcolor = (38/255., 202/255., 145/255., 0.7)
-        compcolor = (153/255., 0.0, 1.0, 0.7)
-        for i, j in comp:
-            add_ij_color(i, j, compcolor)
-        for i, j in ref:
-            add_ij_color(i, j, refcolor)
-        for i, j in shared:
-            add_ij_color(i, j, sharedcolor)
-        return (i_list, j_list, colors)
-
-    def normalize_coordinates(self):
-        """Normalizes (x, y) coordinates of each nucleotide such that the
-        structure is centered on (0, 0) and the median base-pair distance is 1.
-        """
-        # scale so that the median base pair is 1 unit distance
-        if 'X_coordinate' not in self.data.columns:
-            return
-        df = self.data
-        bp_list = self.pairList()
-        bp_distances = []
-        for bp in bp_list:
-            y_dist = df.Y_coordinate[bp[0]-1] - df.Y_coordinate[bp[1]-1]
-            x_dist = df.X_coordinate[bp[0]-1] - df.X_coordinate[bp[1]-1]
-            bp_distances.append((y_dist**2 + x_dist**2)**0.5)
-        scale_factor = np.median(bp_distances)
-        df.Y_coordinate /= scale_factor
-        df.X_coordinate /= scale_factor
-
-        # shift so that center of plot is [0,0]
-        x_center = (max(df.X_coordinate) + min(df.X_coordinate))/2
-        df.X_coordinate -= x_center
-        y_center = (max(df.Y_coordinate) + min(df.Y_coordinate))/2
-        df.Y_coordinate -= y_center
-
+        structure = StructureCoordinates(
+            self.xcoordinates,
+            self.ycoordinates,
+            self.pairList())
+        if flip is not None:
+            structure.flip(flip == "horizontal")
+        if scale is not None:
+            structure.scale(scale)
+        if center is not None:
+            structure.center(*center)
+        if rotate_degrees is not None:
+            structure.rotate(rotate_degrees)
+        self.xcoordinates = structure.x
+        self.ycoordinates = structure.y
 
 ###############################################################################
 # end of SecondaryStructure class
 ###############################################################################
+
+class StructureCoordinates():
+    """Helper class to perform structure coordinate transformations"""
+    def __init__(self, x, y, pairs=None):
+        """initialize structure with arrays holding x and y coordinates. A list
+        of base-paired positions is required only if scaling coordinates.
+
+        Args:
+            x (numpy.array): x coordinates
+            y (numpy.array): y coordinates
+            pairs (list of pairs, optional): list of base-paired positions.
+        """
+        self.x = x
+        self.y = y
+        self.pairs = pairs
+
+    def get_center_point(self):
+        """return the x, y coordinates for the center of structure
+
+        Returns:
+            tuple: x and y coordinates of structure center as floats
+        """
+        x_center = (max(self.x) + min(self.x)) / 2
+        y_center = (max(self.x) + min(self.x)) / 2
+        return (x_center, y_center)
+
+    def scale(self, median_bp_distance=1):
+        """Scale structure such that median base-pair distance is constant.
+
+        Args:
+            median_bp_distance (int, optional):
+                New median distance between all base-paired nucleotides.
+                Defaults to 1.
+        """
+        bp_distances = []
+        for bp in self.pairs:
+            y_dist = self.y[bp[0]-1] - self.y[bp[1]-1]
+            x_dist = self.x[bp[0]-1] - self.x[bp[1]-1]
+            bp_distances.append((y_dist**2 + x_dist**2)**0.5)
+        scale_factor = np.median(bp_distances)
+        self.y *= median_bp_distance / scale_factor
+        self.x *= median_bp_distance / scale_factor
+
+    def flip(self, horizontal=True):
+        """Flip structure vertically or horizontally
+
+        Args:
+            horizontal (bool, optional):
+                whether to flip structure horizontally, otherwise vertically
+                Defaults to True.
+        """
+        if horizontal:
+            self.x *= -1
+        else:
+            self.y *= -1
+
+    def center(self, x=0, y=0):
+        """Center structure on given x, y coordinate
+
+        Args:
+            x (int, optional): x coordinate of structure center. Defaults to 0.
+            y (int, optional): y coordinate of structure center. Defaults to 0.
+        """
+        x_center, y_center = self.get_center_point()
+        self.x -= x_center + x
+        self.x -= y_center + y
+
+    def rotate(self, degrees):
+        """Rotate structure on current center point
+
+        Args:
+            degrees (float): number of degrees to rotate structure
+        """
+        radians = math.radians(degrees)
+        center_x, center_y = self.get_center_point()
+        # Translate the coordinates to the origin
+        translated_x = self.x - center_x
+        translated_y = self.y - center_y
+        # Perform rotation
+        self.x = (translated_x * math.cos(radians)
+                  - translated_y * math.sin(radians))
+        self.y = (translated_x * math.sin(radians)
+                  + translated_y * math.cos(radians))
+        # Translate the coordinates back to the original center
+        self.x += center_x
+        self.y += center_y

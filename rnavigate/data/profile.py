@@ -50,11 +50,9 @@ class SHAPEMaP(Profile):
             'Norm_profile': {
                 'metric_column': 'Norm_profile',
                 'error_column': 'Norm_stderr',
-                'color_column': None,
                 'cmap': ["grey", "black", "orange", "red"],
                 'normalization': "bins",
-                'values': [-0.4, 0.4, 0.85],
-                'labels': None}
+                'values': [-0.4, 0.4, 0.85]}
             } | metric_defaults
         if (isinstance(input_data, str)
                 and input_data.endswith(".map")
@@ -168,12 +166,10 @@ class RNPMaP(Profile):
         metric_defaults = {
             'NormedP': {
                 'metric_column': 'NormedP',
-                'error_column': None,
                 'color_column': 'RNPsite',
                 'cmap': ["silver", "limegreen"],
                 'normalization': "none",
-                'values': None,
-                'labels': None}
+                'values': None}
             } | metric_defaults
         read_table_kw = {
             'sep': ','
@@ -205,8 +201,7 @@ class DeltaProfile(Profile):
                 'color_column': None,
                 'cmap': 'coolwarm',
                 'normalization': "min_max",
-                'values': [-0.8, 0.8],
-                'labels': None}
+                'values': [-0.8, 0.8]}
             } | metric_defaults
         super().__init__(
             input_data=new_data,

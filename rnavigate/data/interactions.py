@@ -565,20 +565,14 @@ class SHAPEJuMP(Interactions):
         metric_defaults = {
             'Percentile': {
                 'metric_column': 'Percentile',
-                'error_column': None,
-                'color_column': None,
                 'cmap': 'YlGnBu',
                 'normalization': 'min_max',
-                'values': [0.98, 1.0],
-                'labels': None},
+                'values': [0.98, 1.0]},
             'Metric': {
                 'metric_column': 'Metric',
-                'error_column': None,
-                'color_column': None,
                 'cmap': 'YlGnBu',
                 'normalization': 'min_max',
-                'values': [0, 0.001],
-                'labels': None},
+                'values': [0, 0.001]},
         } | metric_defaults
         super().__init__(
             input_data=input_data,
@@ -612,20 +606,19 @@ class RINGMaP(Interactions):
         metric_defaults = {
             'Statistic': {
                 'metric_column': 'Statistic',
-                'error_column': None,
-                'color_column': None,
                 'cmap': 'bwr',
                 'normalization': 'min_max',
                 'values': [-100, 100],
-                'labels': None},
+                'cbar_args':{
+                    'ticks':[-100, -50, 0, 50, 100],
+                    'label': 'RING-MaP: Gapc',
+                    'extend': 'both'
+                }},
             'Zij': {
                 'metric_column': 'Zij',
-                'error_column': None,
-                'color_column': None,
                 'cmap': 'bwr',
                 'normalization': 'min_max',
-                'values': [-8, 8],
-                'labels': None}
+                'values': [-8, 8]}
         } | metric_defaults
         super().__init__(
             input_data=input_data,
@@ -702,15 +695,12 @@ class PAIRMaP(RINGMaP):
         metric_defaults = {
             'Class': {
                 'metric_column': 'Class',
-                'error_column': None,
-                'color_column': None,
                 'cmap': mpc.ListedColormap([
                     [0.7, 0.7, 0.7],
                     [0.0, 0.0, 0.95],
                     [0.12, 0.76, 1.0]]),
                 'normalization': 'none',
-                'values': None,
-                'labels': None}
+                'values': None}
         } | metric_defaults
         super().__init__(
             input_data=input_data,
@@ -793,13 +783,10 @@ class PairingProbability(Interactions):
         metric_defaults = {
             'Probability': {
                 'metric_column': 'Probability',
-                'error_column': None,
-                'color_column': None,
                 'cmap': sns.cubehelix_palette(
                     10, 0.7, 0.9, 1.5, 2.5, 1, 0.4, False, True),
                 'normalization': 'none',
-                'values': None,
-                'labels': None}
+                'values': None}
         } | metric_defaults
         super().__init__(
             input_data=input_data,
@@ -868,12 +855,9 @@ class AllPossible(Interactions):
         metric_defaults = {
             'data': {
                 'metric_column': 'data',
-                'error_column': None,
-                'color_column': None,
                 'cmap': 'magenta',
                 'normalization': 'none',
-                'values': None,
-                'labels': None}
+                'values': None}
         } | metric_defaults
         if input_data is not None:
             dataframe=input_data
@@ -892,3 +876,42 @@ class AllPossible(Interactions):
             metric_defaults=metric_defaults,
             read_table_kw=read_table_kw,
             window=window)
+
+
+class StructureInteractions(Interactions):
+    def __init__(self, input_data, sequence, structure2=None):
+        metric = "Structure"
+        metric_defaults = {
+            'Structure': {
+                'metric_column': 'Structure',
+                'cmap': 'grey',
+                'normalization': 'none'}}
+        if structure2 is not None:
+            input_data = input_data.merge(
+                structure2,
+                how="left",
+                on=["i", "j"],
+                indicate="Which_structure",
+                suffixes=["_left", "_right"])
+            input_data["Which_structure"].astype(int)
+            metric = "Which_structure"
+            metric_defaults = {
+                'Structure_left': {
+                    'metric_column': 'Structure_left',
+                    'cmap': 'grey',
+                    'normalization': 'none'},
+                'Structure_right': {
+                    'metric_column': 'Structure_right',
+                    'cmap': 'grey',
+                    'normalization': 'none'},
+                'Which_structure': {
+                    'metric_column': 'Which_structure',
+                    'cmap': [
+                        (150/255., 150/255., 150/255.), # shared
+                        (38/255., 202/255., 145/255.),  # left
+                        (153/255., 0.0, 1.0),           # right
+                    ],
+                    'normalization': 'none'
+                }
+            }
+        super().__init__(input_data, sequence, metric, metric_defaults)

@@ -4,14 +4,18 @@ import matplotlib.colors as mpc
 
 
 class ScalarMappable(cm.ScalarMappable):
-    def __init__(self, cmap, normalization, values, labels=None):
+    def __init__(self, cmap, normalization, values, cbar_args):
         cmap = self.get_cmap(cmap)
         norm = self.get_norm(normalization, values, cmap)
         super().__init__(norm, cmap)
         self._rnav_norm = normalization
         self._rnav_vals = values
         self._rnav_cmap = cmap
-        self._rnav_labels = labels
+        self.cbar_args = cbar_args
+
+    def is_equivalent_to(self, cmap2):
+        attributes = ["_rnav_norm", "_rnav_vals", "_rnav_cmap", "cbar_args"]
+        return all([getattr(self, a)==getattr(cmap2, a) for a in attributes])
 
     def values_to_hexcolors(self, values, alpha=1.0):
         colors = super().to_rgba(x=values, alpha=alpha)

@@ -59,12 +59,12 @@ class Circle(plots.Plot):
                   annotations, label,
                   colors="sequence", apply_color_to="sequence",
                   title=True, positions=True):
+        if ct is not None:
+            ct = ct.as_interactions(comp)
         axis = self.get_ax()
-        self.add_patches(axis, ct, comp)
+        self.add_patches(axis, ct)
         self.add_patches(axis, interactions)
         self.add_patches(axis, interactions2)
-        # self.add_sequence(axis, ct.sequence, yvalue=0.5)
-        # self.plot_profile(axis, profile, ct)
         self.plot_sequence(axis, profile, colors, apply_color_to)
         for annotation in annotations:
             self.plot_annotation(axis, annotation)
@@ -114,15 +114,11 @@ class Circle(plots.Plot):
             axis.text(x+7*x/self.diameter, y+7*y/self.diameter, i+1, ha='center',
                     va='center', rotation=theta)
 
-    def add_patches(self, axis, data, comp=None):
-        if comp is not None:
-            ij_colors = data.get_ij_colors(comp)
-            self.add_colorbar_args(interactions="ct_compare")
-        elif data is not None:
-            ij_colors = data.get_ij_colors()
-            self.add_colorbar_args(interactions=data)
-        else:
+    def add_patches(self, axis, data):
+        if data is None:
             return
+        ij_colors = data.get_ij_colors()
+        self.add_colorbar_args(interactions=data)
         patches = []
         for i, j, color in zip(*ij_colors):
             if j < i:  # flip the order
