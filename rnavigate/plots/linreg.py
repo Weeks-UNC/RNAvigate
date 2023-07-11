@@ -139,4 +139,3 @@ class LinReg(Plot):
             sns.kdeplot(profile[group & valid], bw_adjust=0.6, shade=True,
                         ax=ax, log_scale=(self.scale=='log'), color=color)
         ax.annotate(label, (0.1, 0.9), xycoords="axes fraction")
-        ax.set(xlim=(0.00001, 0.5))
