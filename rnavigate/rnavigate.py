@@ -1527,7 +1527,7 @@ def plot_circle(samples, seq_source=None, ct=None, comp=None,
 
 def plot_linreg(samples, seq_source=None, ct="ct", profile="profile",
                 annotations=None, colorby=None, labels=None, column=None,
-                scale='log', plot_kwargs=None, **kwargs):
+                scale='log', regression="pearson", plot_kwargs=None, **kwargs):
     """Performs linear regression analysis and generates scatter plots of all
     sample-to-sample profile vs. profile comparisons. Colors nucleotides by
     identity or base-pairing status.
@@ -1559,7 +1559,8 @@ def plot_linreg(samples, seq_source=None, ct="ct", profile="profile",
         annotations = []
     if plot_kwargs is None:
         plot_kwargs = {}
-    plot = plots.LinReg(len(samples), scale=scale, **plot_kwargs)
+    plot = plots.LinReg(len(samples), scale=scale, regression=regression,
+                        **plot_kwargs)
     sequence = get_sequence(seq_source, samples[0], profile)
     for sample, label in zip(samples, labels):
         fit_data_list(sample=sample, data_list=annotations+[ct, profile],

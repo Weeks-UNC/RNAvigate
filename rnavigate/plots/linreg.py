@@ -7,7 +7,7 @@ from  rnavigate import styles
 
 
 class LinReg(Plot):
-    def __init__(self, num_samples, scale='log'):
+    def __init__(self, num_samples, scale='log', regression='pearson'):
         super().__init__(num_samples)
         linreg_axes = []
         kde_axes = []
@@ -20,6 +20,9 @@ class LinReg(Plot):
         self.axes[0, 1].get_shared_y_axes().join(*linreg_axes)
         self.lims = [0, 0]
         self.scale = scale
+        self.regression = {
+            'pearson': stats.pearsonr,
+            'spearman': stats.spearmanr}[regression]
         self.profiles = []
         self.colors = []
         self.labels = []
@@ -109,19 +112,22 @@ class LinReg(Plot):
             p1 = p1[notNans]
             p2 = p2[notNans]
             colors = colors[notNans]
-            gradient, _, r_value, _, _ = stats.linregress(np.log10(p1),
-                                                          np.log10(p2))
+            gradient, _, _, _, _ = stats.linregress(np.log10(p1), np.log10(p2))
+            r_value, p_value = self.regression(np.log10(p1), np.log10(p2))
         if self.scale == 'linear':
             notNans = ~np.isnan(p1) & ~np.isnan(p2)
             p1 = p1[notNans]
             p2 = p2[notNans]
             colors = colors[notNans]
-            gradient, _, r_value, _, _ = stats.linregress(p1, p2)
+            gradient, _, _, _, _ = stats.linregress(p1, p2)
+            r_value, p_value = self.regression(p1, p2)
         minimum, maximum = self.lims
         self.lims[0] = min([minimum, min(p1), min(p2)])
         self.lims[1] = max([maximum, max(p1), max(p2)])
-        ax.text(0.1, 0.8, f'R^2 = {r_value**2:.2f}\nslope = {gradient:.2f}',
-                transform=ax.transAxes)
+        ax.text(
+            0.1, 0.8,
+            f'R^2: {r_value**2:.2f}\nslope: {gradient:.2f}\np: {p_value:.4f}',
+            transform=ax.transAxes)
         ax.scatter(p1, p2, c=colors)
         ax.set(xscale=self.scale,
                yscale=self.scale,
