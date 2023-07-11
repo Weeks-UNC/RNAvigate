@@ -1,6 +1,6 @@
 from .data import Data
-from .ct import SecondaryStructure
-from .interactions import Interactions, RINGMaP, PAIRMaP, PairingProbability
+from .ct import CT, get_ss_class
+from .interactions import Interactions, RINGMaP, PAIRMaP, PairProb
 from .interactions import AllPossible, SHAPEJuMP
 from .log import Log
 from .pdb import PDB
