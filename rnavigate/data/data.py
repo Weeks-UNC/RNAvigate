@@ -159,10 +159,9 @@ class Data(Sequence):
                 'cmap': 'viridis',
                 'normalization': '0_1',
                 'values': None,
-                'cbar_args': {
-                    'ticks':[],
-                    'extend':'both',
-                    'label':'Type: metric'}},
+                'extend': 'neither',
+                'label': 'Type: metric',
+                'alpha': 0.7},
             "Distance": {
                 "metric_column": "Distance",
                 'error_column': None,
@@ -170,10 +169,9 @@ class Data(Sequence):
                 "cmap": "cool",
                 "normalization": "min_max",
                 "values": [5, 50],
-                'cbar_args': {
-                    'ticks':[],
-                    'extend':'both',
-                    'label':'Type: metric'}},
+                'extend':'both',
+                'label':'3D distance',
+                'alpha': 0.7},
             }
         self.add_metric_defaults(metric_defaults)
         self.default_metric = metric
@@ -195,11 +193,11 @@ class Data(Sequence):
             try:
                 self._metric = self.metric_defaults[value]
                 return
-            except KeyError as e:
+            except KeyError as exception:
                 if value not in self.data.columns:
                     print(f"metric ({value}) not found in data:\n"
                           + str(list(self.data.columns)))
-                    raise e
+                    raise exception
                 self._metric = self.metric_defaults['default']
                 self._metric['metric_column'] = value
                 return
@@ -226,8 +224,10 @@ class Data(Sequence):
 
     @property
     def cmap(self):
-        cmap_keys = ['cmap', 'normalization', 'values', 'cbar_args']
-        cmap_kwargs = {k: v for k, v in self._metric.items() if k in cmap_keys}
+        cmap_kwargs = {}
+        for k, v in self._metric.items():
+            if not k.endswith("column"):
+                cmap_kwargs[k] = v
         return data.ScalarMappable(**cmap_kwargs)
 
     @property

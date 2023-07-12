@@ -42,37 +42,12 @@ class Plot(ABC):
         for cbar, axis in zip(self.colorbars, axes[:, 0]):
             colorbar = plt.colorbar(cbar, cax=axis, orientation="horizontal",
                          **cbar.cbar_args)
+            if cbar.tick_labels is not None:
+                colorbar.ax.set_xticklabels(cbar.tick_labels)
             colorbar.outline.set_visible(False)
+            colorbar.set_alpha(0.7)
         plt.tight_layout()
         return (fig, axes)
-
-    @classmethod
-    def view_colormap(self, axis=None, interactions=None, ticks=None,
-                      values=None, title=None, cmap=None):
-        if interactions is not None:
-            cbargs = self.get_colorbar_args(interactions=interactions)
-        if (None in [ticks, values, title, cmap]) and (cbargs is None):
-            return
-        if ticks is None:
-            ticks = cbargs["ticks"]
-        if values is None:
-            values = cbargs["values"]
-        if title is None:
-            title = cbargs["title"]
-        if cmap is None:
-            cmap = cbargs["cmap"]
-        if isinstance(cmap, str):
-            cmap = plt.get_cmap(cmap)
-            cmap = cmap(np.arange(cmap.N)).tolist()
-
-        if axis is None:
-            _, axis = plt.subplots(1, figsize=(6, 2))
-        axis.imshow([cmap], extent=[0, 10, 0, 1])
-        axis.set_title(title)
-        axis.set_xticks(ticks)
-        axis.set_xticklabels(values)
-        axis.set_yticks([])
-        return axis
 
     def get_rows_columns(self, rows=None, cols=None):
         has_rows = isinstance(rows, int)

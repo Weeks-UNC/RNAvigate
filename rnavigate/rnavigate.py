@@ -411,7 +411,10 @@ class Sample:
             else:
                 atom = "O2'"
             interactions.set_3d_distances(self.data["pdb"], atom)
-        metric = {'metric_column': metric}
+        try:
+            metric = interactions.metric_defaults[metric]
+        except KeyError:
+            metric = {'metric_column': metric}
         if cmap is not None:
             metric['cmap'] = cmap
         if normalization is not None:

@@ -567,12 +567,17 @@ class SHAPEJuMP(Interactions):
                 'metric_column': 'Percentile',
                 'cmap': 'YlGnBu',
                 'normalization': 'min_max',
-                'values': [0.98, 1.0]},
+                'values': [0.98, 1.0],
+                'ticks':[0.98, 0.99, 1.0],
+                'label': 'SHAPE-JuMP: percentile',
+                'extend': 'min'},
             'Metric': {
                 'metric_column': 'Metric',
                 'cmap': 'YlGnBu',
                 'normalization': 'min_max',
-                'values': [0, 0.001]},
+                'values': [0, 0.001],
+                'extend': 'max',
+                'label': 'SHAPE-JuMP: rate'},
         } | metric_defaults
         super().__init__(
             input_data=input_data,
@@ -609,16 +614,15 @@ class RINGMaP(Interactions):
                 'cmap': 'bwr',
                 'normalization': 'min_max',
                 'values': [-100, 100],
-                'cbar_args':{
-                    'ticks':[-100, -50, 0, 50, 100],
-                    'label': 'RING-MaP: Gapc',
-                    'extend': 'both'
-                }},
+                'label': 'RING-MaP: Gapc',
+                'extend': 'both'},
             'Zij': {
                 'metric_column': 'Zij',
                 'cmap': 'bwr',
                 'normalization': 'min_max',
-                'values': [-8, 8]}
+                'values': [-8, 8],
+                'label': 'RING-MaP: Zij',
+                'extend': 'both'}
         } | metric_defaults
         super().__init__(
             input_data=input_data,
@@ -700,7 +704,11 @@ class PAIRMaP(RINGMaP):
                     [0.0, 0.0, 0.95],
                     [0.12, 0.76, 1.0]]),
                 'normalization': 'none',
-                'values': None}
+                'values': None,
+                'label': 'PAIR-MaP',
+                'extend': 'both',
+                'ticks': [0, 1, 2],
+                'tick_labels': ["Complimentary", "Primary", "Secondary"]}
         } | metric_defaults
         super().__init__(
             input_data=input_data,
@@ -785,8 +793,28 @@ class PairingProbability(Interactions):
                 'metric_column': 'Probability',
                 'cmap': sns.cubehelix_palette(
                     10, 0.7, 0.9, 1.5, 2.5, 1, 0.4, False, True),
-                'normalization': 'none',
-                'values': None}
+                'normalization': 'min_max',
+                'values': [0, 1],
+                'label': 'Pairing probability',
+                'extend': 'neither'},
+            'Probability_old': {
+                'metric_column': 'Probability',
+                'cmap': mpc.ListedColormap([
+                    (150,150,150),
+                    (255,204,0),
+                    (72,143,205),
+                    (81, 184, 72)]),
+                'normalization': 'bins',
+                'values': [0.1, 0.3, 0.8],
+                'extend': 'neither',
+                'label': 'Pairing probability'},
+            'Probability_continuous': {
+                'metric_column': 'Probability',
+                'cmap': 'plasma_r',
+                'normalization': 'min_max',
+                'values': [0.0, 1.0],
+                'extend': 'neither',
+                'label': 'Pairing probability'}
         } | metric_defaults
         super().__init__(
             input_data=input_data,
@@ -857,7 +885,9 @@ class AllPossible(Interactions):
                 'metric_column': 'data',
                 'cmap': 'magenta',
                 'normalization': 'none',
-                'values': None}
+                'values': None,
+                'label': 'Hypthetical pairs',
+                'extend': 'neither'}
         } | metric_defaults
         if input_data is not None:
             dataframe=input_data
@@ -885,7 +915,10 @@ class StructureInteractions(Interactions):
             'Structure': {
                 'metric_column': 'Structure',
                 'cmap': 'grey',
-                'normalization': 'none'}}
+                'normalization': 'none',
+                'ticks': [],
+                'label': 'Base-pairs',
+                'extend': 'neither'}}
         if structure2 is not None:
             input_data = input_data.merge(
                 structure2,
@@ -899,11 +932,17 @@ class StructureInteractions(Interactions):
                 'Structure_left': {
                     'metric_column': 'Structure_left',
                     'cmap': 'grey',
-                    'normalization': 'none'},
+                    'normalization': 'none',
+                    'ticks': [],
+                    'label': 'Base-pairs',
+                    'extend': 'neither'},
                 'Structure_right': {
                     'metric_column': 'Structure_right',
                     'cmap': 'grey',
-                    'normalization': 'none'},
+                    'normalization': 'none',
+                    'ticks': [],
+                    'label': 'Base-pairs',
+                    'extend': 'neither'},
                 'Which_structure': {
                     'metric_column': 'Which_structure',
                     'cmap': [
@@ -911,7 +950,9 @@ class StructureInteractions(Interactions):
                         (38/255., 202/255., 145/255.),  # left
                         (153/255., 0.0, 1.0),           # right
                     ],
-                    'normalization': 'none'
+                    'normalization': 'none',
+                    'label': 'Base-pairs by structure',
+                    'extend': 'neither'
                 }
             }
         super().__init__(input_data, sequence, metric, metric_defaults)
