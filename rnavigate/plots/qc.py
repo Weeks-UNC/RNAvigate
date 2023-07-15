@@ -31,8 +31,8 @@ class QC(plots.Plot):
                                                       self.ax_read_unt)
             self.ax_read_mod.set_yticklabels([])
             gs = self.axes[1, 0].get_gridspec()
-            for axis in self.axes[1, :]:
-                axis.remove()
+            for ax in self.axes[1, :]:
+                ax.remove()
             self.ax_boxplot = self.fig.add_subplot(gs[1, :])
         self.ax_muts_unt.set(xlabel="Mutations per molecule",
                              ylabel="Percentage of Reads",
@@ -56,14 +56,14 @@ class QC(plots.Plot):
         self.profiles = []
         plt.tight_layout()
 
-    def set_figure_size(self, fig=None, axis=None,
+    def set_figure_size(self, fig=None, ax=None,
                         rows=None, cols=None,
                         height_ax_rel=None, width_ax_rel=None,
                         width_ax_in=7, height_ax_in=7,
                         height_gap_in=1, width_gap_in=0.5,
                         top_in=1, bottom_in=0.5,
                         left_in=0.5, right_in=0.5):
-        super().set_figure_size(fig=fig, axis=axis, rows=rows, cols=cols,
+        super().set_figure_size(fig=fig, ax=ax, rows=rows, cols=cols,
                                 height_ax_rel=height_ax_rel,
                                 width_ax_rel=width_ax_rel,
                                 width_ax_in=width_ax_in,
@@ -127,9 +127,9 @@ class QC(plots.Plot):
             data.append(profile.data[cols].copy().assign(Sample=i+1))
         data = pd.concat(data)
         data = pd.melt(data, id_vars=['Sample'], var_name=['Rate'])
-        axis = sns.violinplot(x="Sample", y="value", hue='Rate', data=data,
+        ax = sns.violinplot(x="Sample", y="value", hue='Rate', data=data,
                             ax=self.ax_boxplot, split=True, scale='width')
-        axis.set(
+        ax.set(
             #    yscale='log',
             #    ylim=(0.00003, 0.3),
             ylabel="Mutation Rate",

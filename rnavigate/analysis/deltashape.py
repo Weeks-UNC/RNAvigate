@@ -119,17 +119,17 @@ class DeltaSHAPE():
         sites called.
 
         Args:
-            xlims (tuple of 2 floats, optional): sets x-axis bounds.
+            xlims (tuple of 2 floats, optional): sets x-ax bounds.
                 Defaults to None which uses Nucleotide range.
-            ylims (tuple of 2 floats, optional): sets y-axis bounds.
+            ylims (tuple of 2 floats, optional): sets y-ax bounds.
                 Defaults to None which uses smoothed difference range +/- 0.25
 
         Returns:
-            matplotlib figure and axis objects
+            matplotlib figure and ax objects
         """
-        fig, axis = plt.subplots(1, figsize=self.get_figsize())
+        fig, ax = plt.subplots(1, figsize=self.get_figsize())
 
-        axis.plot(self.data["Nucleotide"], self.data["Smooth_diff"],
+        ax.plot(self.data["Nucleotide"], self.data["Smooth_diff"],
                 drawstyle='steps-mid', color='black')
         plt.axhline(0, color='black')
 
@@ -139,10 +139,10 @@ class DeltaSHAPE():
                     color="grey", alpha=0.25)
 
         # color deltaSHAPE sites
-        axis.bar(self.data["Nucleotide"],
+        ax.bar(self.data["Nucleotide"],
                self.data.eval("Smooth_diff * Positive * Significant"),
                width=1, ec=None, fc='#3EB452', lw=0)
-        axis.bar(self.data["Nucleotide"],
+        ax.bar(self.data["Nucleotide"],
                self.data.eval("Smooth_diff * (~Positive) * Significant"),
                width=1, ec=None, fc='#7F3B95', lw=0)
 
@@ -155,12 +155,12 @@ class DeltaSHAPE():
         if ylims is None:
             ylims = (np.nanmin(self.data["Smooth_diff"])-0.25,
                      np.nanmax(self.data["Smooth_diff"])+0.25)
-        axis.set(
+        ax.set(
             xlim=xlims,
             ylim=ylims,
             xlabel="Nucleotide",
             ylabel=r'$\Delta$SHAPE')
-        axis.tick_params(
+        ax.tick_params(
             which='both',
             direction='out',
             top='off',
@@ -173,7 +173,7 @@ class DeltaSHAPE():
         # turn warnings back on in case something terrible happens.
         warnings.resetwarnings()
 
-        return fig, axis
+        return fig, ax
 
 # "mask_5 int: Specify the number of nucleotides at the 5' end to ignore. Default: 0"
 # "mask_3 int: Specify the number of nucleotides at the 3' end to ignore. Default: 0"
@@ -193,10 +193,10 @@ class DeltaSHAPE():
 # ('--Zdots', action='store_true', help='Plot markers indicating only nucleotides that pass Z-factor filtering. Default: OFF')
 # ('--SSdots', action='store_true', help='Plot markers indicating only nucleotides that pass standard score filtering. Default: OFF')
 # ('--colorfill', action='store_true', help='Highlight deltaSHAPE sites with coloration beneath the plot line for "prettier" figures. Default: OFF')
-# ('--ymin', type=float, default=-999, help='Set plot y-axis minimum. Default: Determined automatically')
-# ('--ymax', type=float, default=-999, help='Set plot y-axis maximum. Default: Determined automatically')
-# ('--xmin', type=float, default=-999, help='Set plot x-axis minimum. Default: Determined automatically')
-# ('--xmax', type=float, default=-999, help='Set plot x-axis maximum. Default: Determined automatically')
+# ('--ymin', type=float, default=-999, help='Set plot y-ax minimum. Default: Determined automatically')
+# ('--ymax', type=float, default=-999, help='Set plot y-ax maximum. Default: Determined automatically')
+# ('--xmin', type=float, default=-999, help='Set plot x-ax minimum. Default: Determined automatically')
+# ('--xmax', type=float, default=-999, help='Set plot x-ax maximum. Default: Determined automatically')
 
 
 def smooth(data, err, pad):

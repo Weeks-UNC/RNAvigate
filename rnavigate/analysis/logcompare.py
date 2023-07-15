@@ -131,8 +131,8 @@ class LogCompare():
             profile = self.rescale(profile, profile1)
             profiles.append(profile)
         stacked = np.vstack(profiles)
-        avgprofile = np.nanmean(stacked, axis=0)
-        stderr = np.std(stacked, axis=0)
+        avgprofile = np.nanmean(stacked, ax=0)
+        stderr = np.std(stacked, ax=0)
         self.groups[group] = {self.data: avgprofile,
                               "stderr": stderr,
                               "stacked": stacked,
@@ -149,29 +149,27 @@ class LogCompare():
         # create a two row, one column figure, scaled for RNA length
         _, axes = plt.subplots(2, 1, figsize=(0.1*len(prof1), 14), sharex=True)
         # first axes contains raw log10 profiles with error bars
-        axis = axes[0]
-        axis.step(x, prof1, label=name1, color="C0")
-        axis.step(x, prof2, label=name2, color="C1")
-        axis.fill_between(x, prof1-stderr1, prof1+stderr1,
+        ax = axes[0]
+        ax.step(x, prof1, label=name1, color="C0")
+        ax.step(x, prof2, label=name2, color="C1")
+        ax.fill_between(x, prof1-stderr1, prof1+stderr1,
                         step='pre', color='C0', alpha=0.25, lw=0)
-        axis.fill_between(x, prof2-stderr2, prof2+stderr2,
+        ax.fill_between(x, prof2-stderr2, prof2+stderr2,
                         step='pre', color='C1', alpha=0.25, lw=0)
-        axis.legend(loc='upper right')
-        axis.axhline(0, color='black', lw=1, zorder=0)
-        axis.set_ylabel('ln(Mod/BG)')
-        Plot.add_sequence(self, axis=axis, sequence=seq)
+        ax.legend(loc='upper right')
+        ax.axhline(0, color='black', lw=1, zorder=0)
+        ax.set_ylabel('ln(Mod/BG)')
+        Plot.add_sequence(self, ax=ax, sequence=seq)
 
-        # TODO: there is probably a numpy function for this.
         # calculate mean difference and standard error for z-scores
         stack1 = stack1+10
         rescale_dms = self.rescale(stack1, stack2)
         stack1 = rescale_dms
         diff = stack2-stack1
-        meandiff = np.nanmean(diff, axis=0)
-        std_err = np.std(diff, axis=0)
+        meandiff = np.nanmean(diff, ax=0)
+        std_err = np.std(diff, ax=0)
         # compute z-scores
         z_scores = meandiff/std_err
-        # TODO: there is a matplotlib function for this
         # normalize to 0-1 (values > 5 = 1, values < -5 = 0)
         z_scores = (z_scores + 5) / 10
         z_scores[z_scores > 1] = 1
@@ -181,17 +179,17 @@ class LogCompare():
         colormap = plt.get_cmap("bwr")
 
         # create 2nd plot of differences colored by z-score
-        axis = axes[1]
-        axis.bar(x-0.5, meandiff, color=colormap(z_scores), lw=0)
-        axis.axhline(0, color='black', lw=1)
-        axis.set_xlabel('nucleotide')
-        axis.set_ylabel(f'{name2}-{name1}')
-        axis.errorbar(x-0.5, meandiff, yerr=std_err,
+        ax = axes[1]
+        ax.bar(x-0.5, meandiff, color=colormap(z_scores), lw=0)
+        ax.axhline(0, color='black', lw=1)
+        ax.set_xlabel('nucleotide')
+        ax.set_ylabel(f'{name2}-{name1}')
+        ax.errorbar(x-0.5, meandiff, yerr=std_err,
                     fmt='none', color='black', lw=1)
-        Plot.add_sequence(self, axis=axis, sequence=seq)
+        Plot.add_sequence(self, ax=ax, sequence=seq)
 
         # create a color bar scale for z-score differences
-        axin1 = axis.inset_axes([0.8, 0.1, 0.15, 0.15])
-        Plot.view_colormap(axis=axin1, ticks=[0, 5, 10], values=[-5, 0, 5],
+        axin1 = ax.inset_axes([0.8, 0.1, 0.15, 0.15])
+        Plot.view_colormap(ax=axin1, ticks=[0, 5, 10], values=[-5, 0, 5],
                            title="Z-score", cmap="bwr")
         plt.tight_layout()

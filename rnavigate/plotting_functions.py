@@ -170,7 +170,7 @@ def plot_skyline(
         region="all",
         plot_kwargs=_dict,
         **kwargs):
-    """Plots multiple per-nucleotide datasets on a single axis.
+    """Plots multiple per-nucleotide datasets on a single ax.
 
     Args:
         samples (list of rnavigate.Sample): samples to plot.
@@ -400,7 +400,7 @@ def plot_arcs(
         num_samples=num_samples,
         nt_length=sequence.length,
         region=region, **plot_kwargs)
-    # loop through samples and filters, adding each as a new axis
+    # loop through samples and filters, adding each as a new ax
     for sample, label in zip(samples, labels):
         sample.filter_interactions(interactions2, **interactions2_filter)
         data_dict = sample.get_data({
@@ -410,13 +410,11 @@ def plot_arcs(
             'profile': profile,
             'interactions2': interactions2})
         data_dict = fit_data(data_dict, sequence)
-        data_dict['label'] = sample.get_data(label)
-        data_dict['seq'] = sequence
-        for filt in filters:
-            sample.filter_interactions(**filt)
-            interactions = sample.get_data(filt['interactions'])
+        for each_filter in filters:
+            sample.filter_interactions(**each_filter)
+            interactions = sample.get_data(each_filter['interactions'])
             data_dict['interactions'] = fit_data(interactions, sequence)
-            plot.plot_data(**data_dict, **kwargs)
+            plot.plot_data(**data_dict, label=label, seq=sequence, **kwargs)
     plot.set_figure_size()
     if colorbar:
         plot.plot_colorbars()
@@ -507,7 +505,7 @@ def plot_arcs_compare(
     # initialize plot using all structure drawings
     plot = plots.AP(num_samples=1, nt_length=len(alignment.target),
                     region=region, **plot_kwargs)
-    # loop through samples and filters, adding each as a new axis
+    # loop through samples and filters, adding each as a new ax
     for sample, seq, panel in zip(samples, [1, 2], ["top", "bottom"]):
         if seq == 1:
             seq, other_seq = seq1, seq2
@@ -532,10 +530,10 @@ def plot_arcs_compare(
             interactions = sample.get_data(filt['interactions'])
             data_dict['interactions'] = fit_data(interactions, seq, alignment)
             plot.plot_data(
-                axis=0, seq=None, annotation_gap=10, label='', seqbar=False,
+                ax=0, seq=None, annotation_gap=10, label='', seqbar=False,
                 **panels, **data_dict, **kwargs)
     plots.alignment.plot_alignment(
-        plot=plot, axis=plot.axes[0, 0], alignment=alignment, label=labels,
+        plot=plot, ax=plot.axes[0, 0], alignment=alignment, label=labels,
         center=-5, offset=4, spines_positions={"top": 0, "bottom": -10})
     plot.set_figure_size()
     if colorbar:
@@ -628,7 +626,7 @@ def plot_ss(
     # initialize plot using all structure drawings
     num_samples = len(samples) * len(filters)
     plot = plots.SS(num_samples=num_samples, **plot_kwargs)
-    # loop through samples and filters, adding each as a new axis
+    # loop through samples and filters, adding each as a new ax
     for sample, label in zip(samples, labels):
         sample.filter_interactions(interactions2, **interactions2_filter)
         data_dict = sample.get_data({
@@ -819,7 +817,7 @@ def plot_heatmap(
     num_samples = len(samples) * len(filters)
     structure = samples[0].data[structure]
     plot = plots.Heatmap(num_samples, structure, **plot_kwargs)
-    # loop through samples and filters, adding each as a new axis
+    # loop through samples and filters, adding each as a new ax
     for sample, label in zip(samples, labels):
         for filt in filters:
             sample.filter_interactions(**filt)
@@ -926,7 +924,7 @@ def plot_circle(
     num_samples = len(samples) * len(filters)
     plot = plots.Circle(num_samples=num_samples,
                         sequence=sequence, **plot_kwargs)
-    # loop through samples and filters, adding each as a new axis
+    # loop through samples and filters, adding each as a new ax
     for sample, label in zip(samples, labels):
         sample.filter_interactions(interactions2, **interactions2_filter)
         data_dict = sample.get_data({
@@ -1117,11 +1115,11 @@ def plot_disthist(
     if same_axis:
         plot_kwargs |= {'rows': 1, 'cols': 1}
         plot = plots.DistHist(num_samples=num_samples, **plot_kwargs)
-        axis = plot.axes[0, 0]
+        ax = plot.axes[0, 0]
     else:
         plot = plots.DistHist(num_samples=num_samples, **plot_kwargs)
-        axis = None
-    # loop through samples and filters, adding each as a new axis
+        ax = None
+    # loop through samples and filters, adding each as a new ax
     for sample, label in zip(samples, labels):
         sample.filter_interactions(bg_interactions, **bg_interactions_filter)
         data_dict = sample.get_data({
@@ -1134,6 +1132,6 @@ def plot_disthist(
             interactions = sample.get_data(filt['interactions'])
             data_dict['interactions'] = fit_data(interactions,
                                                  data_dict['structure'])
-            plot.plot_data(**data_dict, label=label, axis=axis, **kwargs)
+            plot.plot_data(**data_dict, label=label, ax=ax, **kwargs)
     plot.set_figure_size()
     return plot

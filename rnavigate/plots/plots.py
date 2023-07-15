@@ -39,8 +39,8 @@ class Plot(ABC):
         if rows == 0:
             return (None, None)
         fig, axes = plt.subplots(rows, 1, figsize=(4, 1.5 * rows), squeeze=False)
-        for cbar, axis in zip(self.colorbars, axes[:, 0]):
-            colorbar = plt.colorbar(cbar, cax=axis, orientation="horizontal",
+        for cbar, ax in zip(self.colorbars, axes[:, 0]):
+            colorbar = plt.colorbar(cbar, cax=ax, orientation="horizontal",
                          **cbar.cbar_args)
             if cbar.tick_labels is not None:
                 colorbar.ax.set_xticklabels(cbar.tick_labels)
@@ -76,20 +76,20 @@ class Plot(ABC):
             rows = math.ceil(self.length / cols)
         return rows, cols
 
-    def add_sequence(self, axis, sequence, yvalue=0, ytrans="axes"):
+    def add_sequence(self, ax, sequence, yvalue=0, ytrans="axes"):
         # set font style and colors for each nucleotide
         font_prop = mp.font_manager.FontProperties(
             family="monospace", style="normal", weight="bold", size="12"
         )
-        # transform yvalue to a y-axis data value
+        # transform yvalue to a y-ax data value
         if ytrans == "axes":
-            trans = axis.get_xaxis_transform()
+            trans = ax.get_xaxis_transform()
         elif ytrans == "data":
-            trans = axis.transData
+            trans = ax.transData
         sequence = sequence[self.region[0] - 1 : self.region[1]]
         for i, seq in enumerate(sequence):
             col = styles.get_nt_color(seq, colors="old")
-            axis.text(
+            ax.text(
                 i + self.region[0],
                 yvalue,
                 seq,
@@ -121,7 +121,7 @@ class Plot(ABC):
     def set_figure_size(
         self,
         fig=None,
-        axis=None,
+        ax=None,
         rows=None,
         cols=None,
         height_ax_rel=None,
@@ -138,16 +138,16 @@ class Plot(ABC):
         """Sets figure size so that axes sizes are always consistent.
 
         Args:
-            height_ax_rel (float, optional): axis unit to inches ratio for the
-                y-axis.
-            width_ax_rel (float, optional): axis unit to inches ration for the
-                x-axis.
-            width_ax_in (float, optional): fixed width of each axis in inches
-            height_ax_in (float, optional): fixed height of each axis in inches
+            height_ax_rel (float, optional): ax unit to inches ratio for the
+                y-ax.
+            width_ax_rel (float, optional): ax unit to inches ration for the
+                x-ax.
+            width_ax_in (float, optional): fixed width of each ax in inches
+            height_ax_in (float, optional): fixed height of each ax in inches
             width_gap_in (float, optional): fixed width of gaps between each
-                axis in inches
+                ax in inches
             height_gap_in (float, optional): fixed height of gaps between each
-                axis in inches
+                ax in inches
             top_in (float, optional): fixed height of top margin in inches
             bottom_in (float, optional): fixed height of bottom margin in inches
             left_in (float, optional): fixed width of left margin in inches
@@ -155,8 +155,8 @@ class Plot(ABC):
         """
         if fig is None:
             fig = self.fig
-        if axis is None:
-            axis = self.axes[0, 0]
+        if ax is None:
+            ax = self.axes[0, 0]
         if rows is None:
             rows = self.rows
         if cols is None:
@@ -164,14 +164,14 @@ class Plot(ABC):
 
         if width_ax_in is None:
             # x limits of axes
-            left_ax, right_ax = axis.get_xlim()
+            left_ax, right_ax = ax.get_xlim()
             # width of axes in inches
             width_ax_in = (right_ax - left_ax) * width_ax_rel
         if width_gap_in is None:
-            # get width from relative width * axis width
+            # get width from relative width * ax width
             width_gap_in = fig.subplotpars.wspace * width_ax_in
         else:
-            # set relative width to gap:axis ratio
+            # set relative width to gap:ax ratio
             fig.subplots_adjust(wspace=width_gap_in / width_ax_in)
         # comput subplot width
         width_subplot_in = width_gap_in * (cols - 1) + width_ax_in * cols
@@ -191,7 +191,7 @@ class Plot(ABC):
 
         # repeat the process for figure height
         if height_ax_in is None:
-            bottom_ax, top_ax = axis.get_ylim()
+            bottom_ax, top_ax = ax.get_ylim()
             height_ax_in = (top_ax - bottom_ax) * height_ax_rel
         if height_gap_in is None:
             height_gap_in = fig.subplotpars.hspace * height_ax_in
@@ -211,26 +211,26 @@ class Plot(ABC):
         fig.set_size_inches(width_fig_in, height_fig_in)
 
 
-def adjust_spines(axis, spines):
-    for loc, spine in axis.spines.items():
+def adjust_spines(ax, spines):
+    for loc, spine in ax.spines.items():
         if loc in spines:
             spine.set_position(("outward", 10))  # outward by 10 points
         else:
             spine.set_color("none")  # don't draw spine
     if "left" in spines:
-        axis.yaxis.set_ticks_position("left")
+        ax.yaxis.set_ticks_position("left")
     else:
-        axis.yaxis.set_ticks([])
+        ax.yaxis.set_ticks([])
     if "bottom" in spines:
-        axis.xaxis.set_ticks_position("bottom")
+        ax.xaxis.set_ticks_position("bottom")
     else:
-        axis.xaxis.set_ticks([])
+        ax.xaxis.set_ticks([])
 
 
-def clip_spines(axis, spines):
+def clip_spines(ax, spines):
     for spine in spines:
         if spine in ["left", "right"]:
-            ticks = axis.get_yticks()
+            ticks = ax.get_yticks()
         if spine in ["top", "bottom"]:
-            ticks = axis.get_xticks()
-        axis.spines[spine].set_bounds((min(ticks), max(ticks)))
+            ticks = ax.get_xticks()
+        ax.spines[spine].set_bounds((min(ticks), max(ticks)))

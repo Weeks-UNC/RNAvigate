@@ -11,19 +11,19 @@ class ROC(plots.Plot):
         self.g_ax = self.axes[1, 2]
         self.c_ax = self.axes[1, 3]
         gs = self.axes[0, 0].get_gridspec()
-        for axis in self.axes[:, :2].flatten():
-            axis.remove()
+        for ax in self.axes[:, :2].flatten():
+            ax.remove()
         self.main_ax = self.fig.add_subplot(gs[:, :2])
         self.pass_through = []
 
-    def set_figure_size(self, fig=None, axis=None,
+    def set_figure_size(self, fig=None, ax=None,
                         rows=None, cols=None,
                         height_ax_rel=None, width_ax_rel=None,
                         width_ax_in=6, height_ax_in=6,
                         height_gap_in=1, width_gap_in=0.5,
                         top_in=1, bottom_in=0.5,
                         left_in=0.5, right_in=0.5):
-        super().set_figure_size(fig=fig, axis=axis, rows=rows, cols=cols,
+        super().set_figure_size(fig=fig, ax=ax, rows=rows, cols=cols,
                                 height_ax_rel=height_ax_rel,
                                 width_ax_rel=width_ax_rel,
                                 width_ax_in=width_ax_in,
@@ -52,9 +52,9 @@ class ROC(plots.Plot):
         self.main_ax.plot([0, 1], [0, 1], "k--")
 
         axes = [self.a_ax, self.u_ax, self.c_ax, self.g_ax]
-        for axis, nt in zip(axes, 'AUCG'):
-            axis.plot([0, 1], [0, 1], "k--")
-            axis.set(title=nt,
+        for ax, nt in zip(axes, 'AUCG'):
+            ax.plot([0, 1], [0, 1], "k--")
+            ax.set(title=nt,
                    aspect='equal')
             valid = ~np.isnan(profile.data[metric])
             valid &= profile.data["Sequence"] == nt
@@ -62,7 +62,7 @@ class ROC(plots.Plot):
             scores = profile.data.loc[valid, metric]
             tpr, fpr, _ = roc_curve(y, scores)
             auc_score = auc(tpr, fpr)
-            axis.plot(tpr, fpr, label=f"AUC={auc_score:.2f}")
+            ax.plot(tpr, fpr, label=f"AUC={auc_score:.2f}")
 
         if self.i == self.length:
             self.main_ax.legend(loc=4)
@@ -70,6 +70,6 @@ class ROC(plots.Plot):
                              ylabel="True Positive Rate",
                              xlabel="False Positive Rate",
                              aspect='equal')
-            for axis in axes:
-                axis.set(yticks=[], xticks=[])
-                axis.legend()
+            for ax in axes:
+                ax.set(yticks=[], xticks=[])
+                ax.legend()
