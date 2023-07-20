@@ -70,6 +70,7 @@ class SecondaryStructure(data.Sequence):
         super().__init__(self.data)
         if 'X_coordinate' in self.data.columns:
             self.transform_coordinates(scale=1, center=(0,0))
+        self.distance_matrix = None
 
     # properties to provide backwards compatibility
 
@@ -247,7 +248,7 @@ class SecondaryStructure(data.Sequence):
             'Y_coordinate': ycoords})
 
     def read_cte(self):
-        """Generates SecondaryStructure object data from an ss file, including
+        """Generates SecondaryStructure object data from a CTE file, including
         nucleotide x and y coordinates.
         """
         # Parse file and get sequence, xcoords, ycoords, and list of pairs.
@@ -444,7 +445,7 @@ class SecondaryStructure(data.Sequence):
 
     def writeCT(self, fOUT, writemask=False):
         """
-        Writes a ct file from the ct object.
+        Writes a ct file from the SecondaryStructure object.
 
         Args:
             writemask (bool, optional)= True will write out any masking info
@@ -456,9 +457,9 @@ class SecondaryStructure(data.Sequence):
         except AttributeError:
             mask = False
 
-        # handle empty ct object case
+        # handle empty SecondaryStructure object case
         if not self.ct:
-            print("empty ct object. Nothing to write")
+            print("empty SecondaryStructure object. Nothing to write")
             return
 
         w = open(fOUT, 'w')
@@ -893,10 +894,10 @@ class SecondaryStructure(data.Sequence):
         return outarr
 
     def get_distance_matrix(self, recalculate=False):
-        """Based on Tom's contactDistance function below, but instead returns
+        """Based on Tom's contact_distance function, but instead returns
         the all pairs shortest paths matrix, and stores it as an attribute. If
         the attribute has already been set, it returns the attribute. This is
-        faster than calling contactDistance pairwise to fill the matrix.
+        faster than calling contact_distance pairwise to fill the matrix.
 
         Args:
             recalculate (bool, optional): Set to true to recalculate the matrix
@@ -905,9 +906,9 @@ class SecondaryStructure(data.Sequence):
         """
         if hasattr(self, "distance_matrix") and not recalculate:
             return self.distance_matrix
+
         # this method will be used later to make sure a nucleotide hasn't
         # been visited and is within the bounds of the RNA
-
         def viable(nt):
             not_empty = (nt != 0)
             valid_so_far = not_empty
@@ -946,91 +947,14 @@ class SecondaryStructure(data.Sequence):
             # set row of distance matrix for nt
             distance_matrix[i, :] = level
         # store the distance matrix from the search and return
-        self.distance_matrix = distance_matrix
-        return self.distance_matrix.copy()
+        return distance_matrix.copy()
 
-    def contactDistance(self, i, j):
-        """Contact distance is the shortest distance in a secondary structure
-        (graph) between two nucleotides (nodes), where jumping across a
-        base-pair or to an adjacent nucleotide counts as 1 distance
-        (edge length = 1). This function utilizes a breadth first search (BFS)
-        to determine the distance. BFS may take a long time on long RNAs (human
-        LSU took 10 min on my laptop), but it always finds the shortest path.
+    def contact_distance(self, i, j):
+        """Returns the contact distance between positions i and j"""
+        if self.distance_matrix is None:
+            self.distance_matrix = self.get_distance_matrix()
 
-        Added by Tom Christy
-        """
-        if hasattr(self, "distance_matrix"):
-            i_index = self.num.index(i)
-            j_index = self.num.index(j)
-            return self.distance_matrix[i_index, j_index]
-
-        # this method will be used later to make sure a nucleotide hasn't
-        # been visited and is within the bounds of the RNA
-        def viable(nt, rna):
-            addMe = True
-            # don't add if nt is the pair of an unpaired nt (0 in the ct)
-            if(nt == 0):
-                addMe = False
-            # don't add if nt is smaller than the lowest nt in the ct
-            elif(nt < rna.num[0]):
-                addMe = False
-            # don't add if nt is larger than the highest nt in the ct
-            elif(nt > rna.num[-1]):
-                addMe = False
-            # don't add if this nt has already been visited
-            elif(level[nt] >= 0):
-                addMe = False
-
-            return addMe
-
-        # create an array to keep track of how far each nt is from i
-        # The default value of -1 also means that an nt hasn't been visited.
-        level = np.zeros(len(self.num) + 1)
-        level = level - 1
-        # each index matches to the nt number,
-        # so index 0 is just an empty place holder
-
-        # create the queue and add nt i, set its level as 0
-        queue = list()
-        queue.append(i)
-        level[i] = 0
-        # while the queue has members,
-        # keep popping and searching until the NT is found
-        notFound = True
-        contactDistance = 0
-        while len(queue) > 0 and notFound:
-            currentNT = queue.pop(0)
-            # if the current nucleotide is the one we're searching for,
-            # record it's level as the contact distance
-            # and break out of the search
-            if(currentNT == j):
-                contactDistance = level[currentNT]
-                notFound = False
-                break
-
-            # grab all the neighbors of the current NT
-            # and determine if they are inbounds and unvisited
-            # If so, add them to the queue and set their levels.
-            NTBack = currentNT - 1
-            NTUp = currentNT + 1
-            # get the pair of NT -1 b/c of the weird way coded the ct file,
-            # it's off by 1
-            NTPair = self.ct[currentNT-1]
-
-            # check all the neighbors to see if they should be added to the
-            # search, and if so, record their level(ie their Contact Distance)
-            if viable(NTBack, self):
-                queue.append(NTBack)
-                level[NTBack] = level[currentNT] + 1
-            if viable(NTUp, self):
-                queue.append(NTUp)
-                level[NTUp] = level[currentNT] + 1
-            if viable(NTPair, self):
-                queue.append(NTPair)
-                level[NTPair] = level[currentNT] + 1
-
-        # return the contactDistance from the search
-        return contactDistance
+        return self.distance_matrix[i-1, j-1]
 
     def extractHelices(self, fillPairs=True, splitHelixByBulge=True,
                        keep_singles=False):

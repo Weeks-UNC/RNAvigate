@@ -125,7 +125,7 @@ class Interactions(data.Data):
                 cd = []
                 for iw in range(self.window):
                     for jw in range(self.window):
-                        cd.append(ct.contactDistance(i + iw, j + jw))
+                        cd.append(structure.contact_distance(i + iw, j + jw))
                 cd = min(cd)
                 if min_cd is not None:
                     true_so_far = cd >= min_cd
