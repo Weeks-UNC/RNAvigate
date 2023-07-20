@@ -8,6 +8,7 @@ class Mol(plots.Plot):
     def __init__(self, num_samples, pdb, width=400, height=400,
                  background_alpha=1, rotation=None, orientation=None,
                  rows=None, cols=None):
+        self.colorbars = []
         self.pdb = pdb
         self.length = num_samples
         self.rows, self.columns = self.get_rows_columns(rows=rows, cols=cols)
