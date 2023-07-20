@@ -285,25 +285,18 @@ class SS(plots.Plot):
         linewidth = self.plot_params["annotations_lw"]
         zorder = self.plot_params["annotations_z"]
         if annotation.annotation_type in ["spans", "primers"]:
-            for start, end in annotation:
+            for start, end in annotation[:]:
                 if start > end:
                     start, end = end, start
                 x = structure.xcoordinates[start-1:end]
                 y = structure.ycoordinates[start-1:end]
                 ax.plot(x, y, color=color, alpha=alpha, lw=linewidth,
                         zorder=zorder)
-        elif annotation.annotation_type == "sites":
+        elif annotation.annotation_type in ["sites", "groups"]:
             sites = np.array(annotation[:])-1
             x = structure.xcoordinates[sites]
             y = structure.ycoordinates[sites]
+            if annotation.annotation_type == "groups":
+                ax.plot(x, y, color=color, a=alpha, lw=linewidth, zorder=zorder)
             ax.scatter(x, y, color=color, marker='o', ec="none", alpha=alpha,
                        s=size, zorder=zorder)
-        elif annotation.annotation_type == "groups":
-            for group in annotation:
-                x = ss.xcoordinates[[site - 1 for site in group["sites"]]]
-                y = ss.ycoordinates[[site - 1 for site in group["sites"]]]
-                color = group["color"]
-                ax.plot(x, y, color=color, a=alpha,
-                        lw=linewidth, zorder=zorder)
-                ax.scatter(x, y, color=color, marker='o', ec="none", a=alpha,
-                           s=size, zorder=zorder)
