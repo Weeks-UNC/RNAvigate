@@ -55,14 +55,13 @@ class Circle(plots.Plot):
         dim = self.sequence.length / pi / 4
         return (dim * self.columns, dim * self.rows)
 
-    def plot_data(self, ct, comp, interactions, interactions2, profile,
-                  annotations, label,
-                  colors="sequence", apply_color_to="sequence",
-                  title=True, positions=True):
-        if ct is not None:
-            ct = ct.as_interactions(comp)
+    def plot_data(self, structure, structure2, interactions, interactions2,
+                  profile, annotations, label, colors="sequence",
+                  apply_color_to="sequence", title=True, positions=True):
+        if structure is not None:
+            structure = structure.as_interactions(structure2)
         ax = self.get_ax()
-        self.add_patches(ax, ct)
+        self.add_patches(ax, structure)
         self.add_patches(ax, interactions)
         self.add_patches(ax, interactions2)
         self.plot_sequence(ax, profile, colors, apply_color_to)

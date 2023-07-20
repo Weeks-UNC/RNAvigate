@@ -59,14 +59,14 @@ class Interactions(data.Data):
             numpy array: the mask array (only if return_mask==True)
         """
         mask = []
-        comp = {"A": "UT", "U": "AG", "T": "AG", "G": "CU", "C": "G"}
+        compliment = {"A": "UT", "U": "AG", "T": "AG", "G": "CU", "C": "G"}
         for _, i, j in self.data[["i", "j"]].itertuples():
             keep = []
             for w in range(self.window):
                 i_nt = self.sequence[i + w - 1].upper()
                 j_nt = self.sequence[j + self.window - w - 2].upper()
                 if compliment_only:
-                    keep.append(i_nt in comp[j_nt])
+                    keep.append(i_nt in compliment[j_nt])
                 if nts is not None:
                     keep.append(i_nt in nts and j_nt in nts)
             mask.append(all(keep))
@@ -75,14 +75,15 @@ class Interactions(data.Data):
         else:
             self.update_mask(mask)
 
-    def mask_on_ct(self, ct, min_cd=None, max_cd=None, ss_only=False,
-                   ds_only=False, paired_only=False, return_mask=False):
+    def mask_on_structure(self, structure, min_cd=None, max_cd=None,
+                          ss_only=False, ds_only=False, paired_only=False,
+                          return_mask=False):
         """Mask interactions based on secondary structure
 
         Args:
-            ct (CT or subclass): a data object containing secondary structure
-                information, or a list of these data objects, filters are
-                applied based on all structures.
+            structure (SecondaryStructure):
+                A SecondaryStructure object or list of these objects
+                Filters are applied based on all structures.
             min_cd (int, optional): minimum allowable contact distance.
                 Defaults to None.
             max_cd (int, optional): maximum allowable contact distance.
@@ -99,28 +100,33 @@ class Interactions(data.Data):
         Returns:
             numpy array: the mask array (only if return_mask==True)
         """
-        if isinstance(ct, list):
-            for each in ct:
-                self.mask_on_ct(each, min_cd, max_cd, ss_only, ds_only,
-                                paired_only)
+        if isinstance(structure, list):
+            for each in structure:
+                self.mask_on_structure(
+                    each, min_cd, max_cd, ss_only, ds_only, paired_only)
                 return
-        mapping = data.SequenceAlignment(self, ct).mapping
+        alignment = data.SequenceAlignment(self, structure)
         mask = []
         i_j_keep = ["i", "j", "mask"]
         for _, i, j, keep in self.data[i_j_keep].itertuples():
-            i = mapping[i - 1] + 1
-            j = mapping[j - 1] + 1
-            true_so_far = keep
+            i = alignment.map_positions(i)
+            j = alignment.map_positions(j)
+            true_so_far = keep and (-1 not in [i, j])
             if paired_only and true_so_far:
                 for w in range(self.window):
-                    true_so_far = ct.ct[i + w - 1] == j + self.window - w - 1
+                    true_so_far = structure.ct[i+w-1] == j+self.window-w-1
                     if not true_so_far:
                         break
-            if ss_only and true_so_far:
-                # TODO: which windows are ss vs. ds? At least 2 per window.
-                true_so_far = (ct.ct[i - 1] == 0) and (ct.ct[j - 1] == 0)
-            if ds_only and true_so_far:
-                true_so_far = (ct.ct[i - 1] != 0) and (ct.ct[j - 1] != 0)
+            if (ss_only or ds_only) and true_so_far:
+                percentage = 0
+                for w in range(self.window):
+                    percentage += int(structure.ct[i-1+w] == 0)
+                    percentage += int(structure.ct[j-1+w] == 0)
+                percentage /= (self.window * 2)
+                if ss_only:
+                    true_so_far = percentage > 0.501
+                if ds_only:
+                    true_so_far = percentage < 0.501
             if (min_cd is not None or max_cd is not None) and true_so_far:
                 cd = []
                 for iw in range(self.window):
@@ -295,8 +301,8 @@ class Interactions(data.Data):
 
     def filter(
             self, prefiltered=False,
-            # mask on ct
-            ct=None, min_cd=None, max_cd=None, paired_only=False,
+            # mask on structure
+            structure=None, min_cd=None, max_cd=None, paired_only=False,
             ss_only=False, ds_only=False,
             # mask on profile
             profile=None, min_profile=None, max_profile=None,
@@ -312,17 +318,17 @@ class Interactions(data.Data):
         Args:
             prefiltered (bool, optional): passed to self.set_mask_update().
                 Defaults to False.
-            ct (CT or subclass, optional): passed to self.mask_on_ct().
-                Defaults to None.
-            min_cd (int, optional): passed to self.mask_on_ct(). Defaults to
+            structure (SecondaryStructure, optional):
+                passed to self.mask_on_structure(). Defaults to None.
+            min_cd (int, optional): passed to self.mask_on_structure(). Defaults to
                 None.
-            max_cd (int, optional): passed to self.mask_on_ct(). Defaults to
+            max_cd (int, optional): passed to self.mask_on_structure(). Defaults to
                 None.
-            paired_only (bool, optional): passed to self.mask_on_ct(). Defaults
+            paired_only (bool, optional): passed to self.mask_on_structure(). Defaults
                 to False.
-            ss_only (bool, optional): passed to self.mask_on_ct(). Defaults to
+            ss_only (bool, optional): passed to self.mask_on_structure(). Defaults to
                 False.
-            ds_only (bool, optional): passed to self.mask_on_ct(). Defaults to
+            ds_only (bool, optional): passed to self.mask_on_structure(). Defaults to
                 False.
             profile (Profile or subclass, optional): passed to
                 self.mask_on_profile(). Defaults to None.
@@ -361,7 +367,8 @@ class Interactions(data.Data):
         if filters_are_on(min_profile, max_profile):
             self.mask_on_profile(profile, min_profile, max_profile)
         if filters_are_on(min_cd, max_cd, ss_only, ds_only, paired_only):
-            self.mask_on_ct(ct, min_cd, max_cd, ss_only, ds_only, paired_only)
+            self.mask_on_structure(
+                structure, min_cd, max_cd, ss_only, ds_only, paired_only)
         if filters_are_on(compliments_only, nts):
             self.mask_on_sequence(compliments_only, nts)
         kwargs = self.data_specific_filter(**kwargs)
@@ -568,7 +575,6 @@ class SHAPEJuMP(Interactions):
                 'cmap': 'YlGnBu',
                 'normalization': 'min_max',
                 'values': [0.98, 1.0],
-                'ticks':[0.98, 0.99, 1.0],
                 'label': 'SHAPE-JuMP: percentile',
                 'extend': 'min'},
             'Metric': {

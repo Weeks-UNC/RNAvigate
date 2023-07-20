@@ -228,7 +228,7 @@ class DotPlot:
 
         return np.array(shannon)
 
-    def partfunDifference(self, comp, region=None):
+    def partfunDifference(self, structure2, region=None):
         """ region is 1-based, inclusive; i.e. nt numbering"""
 
         if region is None:

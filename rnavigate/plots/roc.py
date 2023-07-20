@@ -39,12 +39,12 @@ class ROC(plots.Plot):
     def get_figsize(self):
         return (28, 14)
 
-    def plot_data(self, ct, profile, label):
+    def plot_data(self, structure, profile, label):
         self.i += 1
 
         metric = profile.metric
         valid = ~np.isnan(profile.data[metric])
-        y = ct.ct[valid] == 0
+        y = structure.ct[valid] == 0
         scores = profile.data.loc[valid, metric]
         tpr, fpr, _ = roc_curve(y, scores)
         auc_score = auc(tpr, fpr)
@@ -58,7 +58,7 @@ class ROC(plots.Plot):
                    aspect='equal')
             valid = ~np.isnan(profile.data[metric])
             valid &= profile.data["Sequence"] == nt
-            y = ct.ct[valid] == 0
+            y = structure.ct[valid] == 0
             scores = profile.data.loc[valid, metric]
             tpr, fpr, _ = roc_curve(y, scores)
             auc_score = auc(tpr, fpr)

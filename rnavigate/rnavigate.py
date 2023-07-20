@@ -1,12 +1,6 @@
-"""Contains rnavigate.Sample object"""
-
-# external python packages
 import os.path
-
-# modules in RNAvigate
-from rnavigate import plots
 from rnavigate import data
-from rnavigate.plotting_functions import get_sequence
+from .helper_functions import get_sequence
 
 _required = object()
 data_keyword_defaults = {
@@ -200,6 +194,7 @@ class Sample:
                  sample=None,
                  inherit=None,
                  dance_prefix=None,
+                 overwrite_inherited_defaults=False,
                  **data_keywords):
         """Creates a sample object which connects all chemical probing and
         structural data for a single experiment. Contains convenience methods
@@ -229,23 +224,66 @@ class Sample:
             self.data |= inherit.data
             self.inputs |= inherit.inputs
 
+        # getting ready for default data keyword setup
+        default_data = {
+            data.Profile: "default_profile",
+            data.SecondaryStructure: "default_structure",
+            data.PDB: "default_pdb",
+        }
         # get data and store inputs for all data_keywords
-        datatypes = [data.Profile, data.SecondaryStructure, data.PDB]
-        dkws = ["default_profile", "default_structure", "default_pdb"]
-        for dkw in dkws:
-            if dkw not in self.data:
-                self.data[dkw] = None
+        for each_keyword in default_data.values():
+            if each_keyword not in self.data or overwrite_inherited_defaults:
+                self.data[each_keyword] = None
         for data_keyword, kwargs in data_keywords.items():
             self.set_data(data_keyword, kwargs=kwargs)
-            for dt, dkw in zip(datatypes, dkws):
-                if (isinstance(self.data[data_keyword], dt)
-                        and (dkw not in self.data or self.data[dkw] is None)):
-                    self.data[dkw] = self.data[data_keyword]
-
+            for each_type, each_keyword in default_data.items():
+                if (isinstance(self.data[data_keyword], each_type)
+                        and self.data[each_keyword] is None):
+                    self.data[each_keyword] = self.data[data_keyword]
 
         # for all DANCE-MaP data
         if dance_prefix is not None:
             self.init_dance(dance_prefix)
+
+    @property
+    def annotations(self):
+        annotations = []
+        for data_keyword, data_object in self.data.items():
+            if isinstance(data_object, data.Annotation):
+                annotations.append(data_keyword)
+        return annotations
+
+    @property
+    def profiles(self):
+        profiles = []
+        for data_keyword, data_object in self.data.items():
+            if isinstance(data_object, data.Profile):
+                profiles.append(data_keyword)
+        return profiles
+
+    @property
+    def structure(self):
+        structure = []
+        for data_keyword, data_object in self.data.items():
+            if isinstance(data_object, data.SecondaryStructure):
+                structure.append(data_keyword)
+        return structure
+
+    @property
+    def interactions(self):
+        interactions = []
+        for data_keyword, data_object in self.data.items():
+            if isinstance(data_object, data.Interactions):
+                interactions.append(data_keyword)
+        return interactions
+
+    @property
+    def pdbs(self):
+        pdbs = []
+        for data_keyword, data_object in self.data.items():
+            if isinstance(data_object, data.PDB):
+                pdbs.append(data_keyword)
+        return pdbs
 
     def set_data(self, data_keyword, kwargs, overwrite_keyword=False):
         """This method is used internally to parse data_keywords passed to
@@ -322,47 +360,50 @@ class Sample:
 ###############################################################################
 # filtering and data retrieval
 #     get_data
-#     get_data_list
 #     filter_interactions
 #     filter_dance
 ###############################################################################
 
-    def get_data(self, data_keyword):
-        """Returns data based on data_keyword.
+    def get_data(self, data_keyword, data_class=None):
+        """Replaces data keyword with data object, even if nested.
 
         Args:
             data_keyword (str | rnavigate.data | list | dict):
-                If a string, returns self.data[data_keyword]
-                If an existing rnavigate.data object, returns data_keyword
+                If a string, returns `self.data[data_keyword]`
+                If `None`, returns `None`.
+                If an existing rnavigate.data object, returns `data_keyword`
                 If a dictionary, returns:
-                    {key: self.get_data(value) for each item in data_keyword}
+                    `{key: self.get_data(value) for each item in data_keyword}`
                 If a list, returns:
-                    [self.get_data(item) for each item in data_keyword]
+                    `[self.get_data(item) for each item in data_keyword]`
 
         Returns:
             same type as data_keyword: data keywords are replaced with
                 matching rnavigate.data objects from self
         """
         # handle special cases
+        not_in_sample = ValueError(f"{data_keyword} not in {self.sample}.")
+        wrong_class = ValueError(f"{data_keyword} is not {data_class}")
+        if data_class is None:
+            data_class = data.Sequence
         if isinstance(data_keyword, dict):
-            return {k: self.get_data(v) for k, v in data_keyword.items()}
+            return {k: self.get_data(v, data_class) for k, v in data_keyword.items()}
         elif isinstance(data_keyword, list):
-            return [self.get_data(v) for v in data_keyword]
+            return [self.get_data(v, data_class) for v in data_keyword]
         elif isinstance(data_keyword, data.Sequence):
+            if not isinstance(data_keyword, data_class):
+                raise wrong_class
             return data_keyword
-        elif data_keyword == "label":
-            return self.sample
         elif data_keyword is None:
             return None
         # if keyword is in sample.data, retreive Sequence object
         try:
             return self.data[data_keyword]
-        except (KeyError, TypeError):
+        except KeyError:
             try:
                 return self.parent.data[data_keyword]
-            except (KeyError, AttributeError):
-                print(f"{data_keyword} data not found in {self.sample}")
-                return None
+            except (KeyError, AttributeError) as exception:
+                raise not_in_sample from exception
 
     def filter_interactions(self, interactions, metric=None, cmap=None,
                             normalization=None, values=None, **kwargs):
@@ -388,8 +429,11 @@ class Sample:
                     `values` defines bins (list, length = 2 less than cmap)
                 `'min_max'`: extreme values in cmap are given to values beyond
                     minimum and maximum, defined by `values`
-                values between given minimum and maximum, values outside of
-                these limits will be given the most extreme color values.
+            values:
+                behavior depends on normalization
+                `'norm'`: values are not needed
+                `'bins'`: values should be 2 less than the number of categories
+                `'min_max'`: list or tuple containing the minimum and maximum
             **kwargs: Other arguments are passed to interactions.filter()
         """
         # check for valid interactions data
@@ -422,44 +466,42 @@ class Sample:
         if values is not None:
             metric['values'] = values
         interactions.metric = metric
-        for datatype in ["profile", "ct"]:
-            if datatype in kwargs:
-                kwargs[datatype] = self.data[kwargs[datatype]]
-            elif datatype in self.data.keys():
-                kwargs[datatype] = self.data[datatype]
+        for each_type in ["profile", "structure"]:
+            if each_type in kwargs:
+                kwargs[each_type] = self.data[kwargs[each_type]]
+            elif f"default_{each_type}" in self.data.keys():
+                kwargs[each_type] = self.data[f"default_{each_type}"]
         interactions.filter(**kwargs)
 
-    def dance_filter(self, fit_to=None, filterneg=True, cdfilter=15,
-                     sigfilter=23, ssfilter=True, **kwargs):
+    def dance_filter(self, positive_only=True, min_cd=15, Statistic_ge=23,
+                     ss_only=True, **kwargs):
         """Applies a standard filter to plot DANCE rings, pairs, and predicted
         structures together.
 
         Args:
-            fit_to (str or Data object, optional): Data will be fitted to this.
-            filterneg (bool, optional): Remove negative correlations.
+            positive_only (bool, optional): Remove negative correlations.
                 Defaults to True.
-            cdfilter (int, optional): Filters rings by contact distance based
+            min_cd (int, optional): Filters rings by contact distance based
                 on predicted structures for *ALL* DANCE components.
                 Defaults to 15.
-            sigfilter (int, optional): Lower bound for MI.
+            Statistic_ge (int, optional): Lower bound for MI.
                 Defaults to 23.
-            ssfilter (bool, optional): Filters out rings with at least one leg
+            ss_only (bool, optional): Filters out rings with at least one leg
                 in a double stranded region based on that DANCE component.
                 Defaults to True.
             **kwargs: additional arguments are used to filter "ringmap" data.
         """
         kwargs = {}
-        if filterneg:
+        if positive_only:
             kwargs["positive_only"] = True
-        if ssfilter:
+        if ss_only:
             kwargs["ss_only"] = True
-        kwargs["Statistic_ge"] = sigfilter
-        ctlist = [dance.data["ct"] for dance in self.dance]
+        kwargs["Statistic_ge"] = Statistic_ge
+        ctlist = [dance.data["default_structure"] for dance in self.dance]
         for dance in self.dance:
-            dance_ct = dance.data["ct"]
+            dance_ct = dance.data["default_structure"]
             fit_to = get_sequence(
-                sequence=fit_to, sample=dance, default='ct')
-            dance.data["ringmap"].filter(fit_to=fit_to, ct=dance_ct, **kwargs)
-            dance.data["ringmap"].mask_on_ct(ctlist, min_cd=cdfilter)
-            dance.data["pairmap"].filter(fit_to=fit_to, ct=dance_ct,
-                                         paired_only=True)
+                sequence=fit_to, sample=dance, default='default_structure')
+            dance.data["ringmap"].filter(structure=dance_ct, **kwargs)
+            dance.data["ringmap"].mask_on_ct(ctlist, min_cd=min_cd)
+            dance.data["pairmap"].filter(structure=dance_ct, paired_only=True)

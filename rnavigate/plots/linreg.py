@@ -37,15 +37,16 @@ class LinReg(plots.Plot):
     def get_figsize(self):
         return (7*self.columns, 7*self.rows)
 
-    def plot_data(self, ct, profile, label, colorby="sequence"):
+    def plot_data(self, structure, profile, label, colorby="sequence"):
         self.labels.append(label)
         seq = profile.data["Sequence"].values
         seq_mask = [i for i, x in enumerate(seq) if x.isupper()]
         self.sequences.append(seq[seq_mask])
-        colors = profile.get_colors(colorby, profile=profile, ct=ct)
+        colors = profile.get_colors(
+            colorby, profile=profile, structure=structure)
         self.colors.append(colors)
-        if ct is not None:
-            self.paired = ct.ct != 0
+        if structure is not None:
+            self.paired = structure.ct != 0
         self.profiles.append(profile.data["Reactivity_profile"].values)
         if len(self.profiles) == self.length:
             for i in range(self.length):

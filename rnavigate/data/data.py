@@ -7,8 +7,8 @@ from rnavigate.styles import get_nt_color
 from rnavigate import data
 
 
-def get_pairs_sens_ppv(self, structure="ct"):
-    """Returns sensitivity and PPV for pair data to the ct structure"""
+def get_pairs_sens_ppv(self, structure=" default_structure"):
+    """Returns sensitivity and PPV for pair data to the  structure"""
     import pmanalysis as pma
     pairmap = pma.PairMap(self.paths["pairs"])
     structure = getattr(self, structure).copy()
@@ -34,9 +34,10 @@ class Sequence():
             else:
                 self.sequence = input_data
         elif isinstance(input_data, pd.DataFrame):
-            self.get_seq_from_dataframe(input_data)
+            self.sequence = self.get_seq_from_dataframe(input_data)
         elif isinstance(input_data, Sequence):
             self.sequence = input_data.sequence
+        self._alignment = data.RegionAlignment(self.sequence, 1, self.length)
 
     def read_fasta(self, fasta):
         """Parse a fasta file for the first sequence. Store the sequence name
@@ -56,7 +57,7 @@ class Sequence():
             dataframe (pandas DataFrame): must contain a "Sequence" column
         """
         sequence = ''.join(dataframe["Sequence"].values)
-        self.sequence = sequence.replace("T", "U")
+        return sequence.replace("T", "U").replace("t", "u")
 
     @property
     def length(self):
@@ -67,8 +68,9 @@ class Sequence():
         """
         return len(self.sequence)
 
+
     def get_colors(self, source, nt_colors='new', pos_cmap='rainbow',
-                   profile=None, ct=None, annotations=None):
+                   profile=None, structure=None, annotations=None):
         """Get a numpy array of colors that fits the current sequence.
 
         Args:
@@ -86,7 +88,7 @@ class Sequence():
                 Defaults to 'rainbow'.
             profile (Profile or subclass, optional): Data object containing
                 per-nucleotide information. Defaults to None.
-            ct (CT of subclass, optional): Data object containing secondary
+            structure (CT of subclass, optional): Data object containing secondary
                 structure information. Defaults to None.
             annotations (list of Annotations or subclass, optional): list of
                 Data objects containing annotations. Defaults to None.
@@ -116,9 +118,9 @@ class Sequence():
         elif isinstance(source, str) and (source == "structure"):
             # TODO: this should be implemented in CT object for reusability
             cmap = np.array(['C0', 'C1'])
-            ct_colors = cmap[[int(nt == 0) for nt in ct.ct]]
+            ct_colors = cmap[[int(nt == 0) for nt in structure.ct]]
             colors = np.full(self.length, 'gray', dtype='<U8')
-            alignment = data.SequenceAlignment(ct, self)
+            alignment = data.SequenceAlignment(structure, self)
             return alignment.map_values(ct_colors, fill='gray')
         elif mpc.is_color_like(source):
             return np.full(self.length, source, dtype="<U16")

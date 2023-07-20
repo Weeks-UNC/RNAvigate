@@ -16,7 +16,7 @@ class LowSS():
 
     Attributes:
         sample (rnavigate.Sample): the sample to retreive data from.
-        sequence (str): sequence retreived from sample.data["ct"].sequence
+        sequence (str): sequence retreived from sample.data["ss"].sequence
         window (int): size of the windows, must be odd
         nt_length (int): length of sequence string
         windowed_profile (numpy.array): windowed median SHAPE reactivities
@@ -33,7 +33,7 @@ class LowSS():
         plot the result over a given region.
 
         Args:
-            sample (rnavigate.Sample): sample with profile, pairprob and ct
+            sample (rnavigate.Sample): sample with profile, pairprob and ss
             window (int, optional): Window size for calculating median SHAPE
                 and median Shannon entropy. Defaults to 55.
             region (list of str: len 2, optional): start and end positions to
@@ -41,14 +41,14 @@ class LowSS():
             show (bool, optional): Whether to create a plot. Defaults to True.
         """
         # Make sure this sample contains the necessary data
-        for data in ["profile", "pairprob", "ct"]:
+        for data in ["profile", "pairprob", "ss"]:
             assert data in sample.data.keys(), f"Sample missing {data} data"
         assert window % 2 == 1, "Window must be an odd number."
         # store values
         self.sample = sample
-        self.sequence = self.sample.data["ct"].sequence
+        self.sequence = self.sample.data["ss"].sequence
         self.window = window
-        self.nt_length = sample.data["ct"].length
+        self.nt_length = sample.data["ss"].length
 
         # Calculate overall median SHAPE and windowed median SHAPEs
         profile = sample.data["profile"].data["Norm_profile"].values
@@ -136,12 +136,12 @@ class LowSS():
         adjust_spines(ent_ax, ["left"])
         clip_spines(ent_ax, ["left"])
 
-        # add ct and pairing probabilities track
+        # add ss and pairing probabilities track
         self.sample.filter_interactions("pairprob", "pairprob")
         plot.plot_data(
-            seq=self.sample.data["ct"],
-            ct=self.sample.data["ct"],
-            comp=None,
+            seq=self.sample.data["ss"],
+            structure=self.sample.data["ss"],
+            structure2=None,
             interactions=self.sample.data["pairprob"],
             interactions2=None,
             profile=None,

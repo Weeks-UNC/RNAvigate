@@ -34,8 +34,9 @@ class AP(plots.Plot):
                                 bottom_in=bottom_in, left_in=left_in,
                                 right_in=right_in)
 
-    def plot_data(self, seq, ct, comp, interactions, interactions2, profile,
-                  label, ax=None, seqbar=True, title=True,
+    def plot_data(self, seq, structure, structure2, interactions,
+                  interactions2, profile, label, ax=None, seqbar=True,
+                  title=True,
                   interactions_panel="bottom", interactions2_panel="bottom",
                   ct_panel="top", annotations=[], annotation_mode="track",
                   profile_panel="top", annotation_gap=None,
@@ -45,11 +46,11 @@ class AP(plots.Plot):
             annotation_gap = 2*(2*len(annotations) + seqbar)
         elif annotation_gap is None:
             annotation_gap = 2*seqbar
-        if ct is not None:
-            ct = ct.as_interactions(comp)
+        if structure is not None:
+            structure = structure.as_interactions(structure2)
         self.set_axis(ax=ax, annotation_gap=annotation_gap)
         self.plot_arcs(
-            ax=ax, data=ct, panel=ct_panel,
+            ax=ax, data=structure, panel=ct_panel,
             annotation_gap=annotation_gap)
         self.plot_arcs(
             ax=ax, data=interactions, panel=interactions_panel,
