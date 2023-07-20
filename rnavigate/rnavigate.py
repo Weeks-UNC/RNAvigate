@@ -1223,7 +1223,7 @@ def plot_ss(samples, ss="ss", profile="profile", annotations=[],
     plot = plots.SS(num_samples=num_samples, **plot_kwargs)
     # loop through samples and filters, adding each as a new axis
     for sample, label in zip(samples, labels):
-        fit_data_list(sample, annotations + [profile], sample.data[ss])
+        fit_data_list(sample, annotations + [profile], sample.get_data(ss))
         sample.filter_interactions(interactions=interactions2, fit_to=ss,
                                    **interactions2_filter)
         for filt in filters:
