@@ -2,7 +2,9 @@
 
 from rnavigate import plots
 from rnavigate import data
-from .helper_functions import PlottingArgumentParser, _parse_plot_kwargs, fit_data, get_sequence
+from rnavigate.helper_functions import PlottingArgumentParser, _parse_plot_kwargs, fit_data
+from rnavigate.data_loading import get_sequence
+
 
 def plot_qc(
         samples,
@@ -106,7 +108,7 @@ def plot_skyline(
     parsed_args = PlottingArgumentParser(
         samples=samples,
         labels=labels,
-        alignment=sequence._alignment
+        alignment=sequence._alignment,
         profile=profile,
         annotations=annotations
     )
@@ -369,7 +371,7 @@ def plot_arcs_compare(
     )
     plot_kwargs = _parse_plot_kwargs(plot_kwargs, "rnavigate.plots.AP")
     # initialize plot
-    plot = plots.AP(num_samples=1, nt_length=len(alignment.target),
+    plot = plots.AP(num_samples=1, nt_length=len(alignment.target_sequence),
                     region=region, **plot_kwargs)
     # loop through samples and filters, adding each as a new axis
     for data_dict, seq, panel in zip(parsed_args.data_dicts, [1, 2], ["top", "bottom"]):
@@ -667,7 +669,7 @@ def plot_circle(
     parsed_args = PlottingArgumentParser(
         samples=samples,
         labels=labels,
-        alignment=sequence._alignment
+        alignment=sequence._alignment,
         structure=structure,
         structure2=structure2,
         interactions2=interactions2,

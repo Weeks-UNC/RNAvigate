@@ -1,5 +1,7 @@
 from rnavigate import data, Sample
 
+
+
 def _parse_plot_kwargs(plot_kwargs, plot):
     error = ValueError("plot_kwargs must be a dictionary of keyword-arguments "
                     f"to be passed to {plot}.")
@@ -8,40 +10,6 @@ def _parse_plot_kwargs(plot_kwargs, plot):
     elif not isinstance(plot_kwargs, dict):
         raise error
     return plot_kwargs
-
-
-def get_sequence(sequence, sample=None, default=None):
-    """Flexible function that returns a Data object containing a sequence.
-
-    Args:
-        sequence (any): a sequence string, a data keyword, or a data object
-        sample (Sample, optional): sample holding sequence data.
-            Defaults to None.
-        default (any, optional): same format as sequence above. uses this
-            as sequence value if sequence is None.
-            Defaults to None.
-
-    Raises:
-        ValueError: If sequence and default are both None
-        ValueError: If Data object could not be retreived based on inputs
-
-    Returns:
-        rnavigate.Sequence: containing the desired sequence
-    """
-    if sequence is None and default is None:
-        raise ValueError("A sequence must be provided.")
-    elif sequence is None:
-        sequence = default
-    if isinstance(sequence, data.Sequence):
-        return sequence
-    elif isinstance(sequence, str) and os.path.isfile(sequence):
-        return data.Sequence(sequence)
-    elif isinstance(sequence, str) and sequence in sample.data.keys():
-        return sample.data[sequence]
-    elif isinstance(sequence, str) and all([nt.upper() in "AUCGT." for nt in sequence]):
-        return data.Sequence(sequence=sequence)
-    else:
-        raise ValueError(f"Cannot find sequence from {sequence}")
 
 
 def fit_data(data_object, alignment):
@@ -80,11 +48,11 @@ class PlottingArgumentParser():
         self.cols = 1
         # parse special formats
         for key, value in data_dict.items():
-            if "interactions" in key:
-                return_list = key == "interactions"
-                data_dict[key] = self._parse_interactions(value, return_list)
-                if return_list:
-                    self.cols = len(value)
+            if key == "interactions":
+                data_dict[key] = self._parse_interactions(value)
+                self.cols = len(data_dict[key])
+            elif "interactions" in key:
+                data_dict[key] = self._parse_interactions(value, False)
             elif key == "annotations":
                 data_dict[key] = self._parse_annotations(value)
         self.data_dicts = []
@@ -115,11 +83,11 @@ class PlottingArgumentParser():
                 else:
                     this_data_dict[key] = value
             if "interactions" not in data_dict:
-                self.data_dicts.append()
+                self.data_dicts.append(this_data_dict)
             else:
                 for each_interaction in data_dict["interactions"]:
                     sample.filter_interactions(**each_interaction)
-                    new_value = each_interaction["interaction"]
+                    new_value = each_interaction["interactions"]
                     new_value = sample.get_data(new_value, data.Interactions)
                     new_dict = {"interactions": fit_data(new_value, alignment)}
                     self.data_dicts.append(this_data_dict | new_dict)
@@ -155,13 +123,16 @@ class PlottingArgumentParser():
     def _parse_annotations(self, annotations):
         error = ValueError(
             "annotations must be a list of data keywords or Annotation objects.")
-        if isinstance(annotations, (data.Annotation, str)):
-            annotations = list(annotations)
-        elif isinstance(annotations, list):
+        if annotations is None:
+            return []
+        if isinstance(annotations, list):
             for annotation in annotations:
                 if not isinstance(annotation, (data.Annotation, str)):
                     raise error
-        return annotations
+            return annotations
+        if isinstance(annotations, (data.Annotation, str)):
+            return [annotations]
+        raise error
 
     def _parse_interactions(self, interactions, return_list=True):
         error = ValueError("""
@@ -174,20 +145,16 @@ class PlottingArgumentParser():
             """)
         if interactions is None:
             if return_list:
-                return []
+                return [{"interactions": None}]
             else:
-                return None
+                return {"interactions": None}
         if isinstance(interactions, (data.Interactions, str)):
             interactions = {"interactions": interactions}
         if isinstance(interactions, dict):
             if return_list:
-                return list(interactions)
+                return [interactions]
             else:
                 return interactions
-        if isinstance(interactions, list):
-            if return_list:
-                return interactions
-            else:
-                raise error
-        else:
-            raise error
+        if isinstance(interactions, list) and return_list:
+            return interactions
+        raise error
