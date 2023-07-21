@@ -15,13 +15,68 @@ import numpy as np
 import pandas as pd
 from rnavigate import data
 
+# store sequence alignments
 _alignments_cache = {}
+
+# sequence alignment parameters
 _globalms_params = {
     "match": 1,
     "mismatch": 0,
     "open": -5,
     "extend": -0.1}
 
+# structure alignment parameters
+# conversion of nt+pairing to pseudo amino acid sequence
+pseudo_aa_dict = (
+    {f'A{s}': aa for s, aa in zip('([.])', 'ACDEF')}
+    | {f'C{s}': aa for s, aa in zip('([.])', 'GHIKL')}
+    | {f'U{s}': aa for s, aa in zip('([.])', 'MNPQR')}
+    | {f'G{s}': aa for s, aa in zip('([.])', 'STVWY')})
+# code used to generate structure_scoring_dict
+# pair_scores = ({}
+#     # both single-stranded = +6
+#     | {'..': 6}
+#     # pairs in the right orientation and the same nesting level = +5
+#     | {pair: 5 for pair in ['((', '))', '[[', ']]']}
+#     # pairs in the right orientation and different nesting level = +2
+#     | {pair: 2 for pair in ['([', '])', '[(', ')]']}
+#     # single stranded to double stranded = -8
+#     | {bracket+'.': -8 for bracket in '([])'}
+#     | {'.'+bracket: -8 for bracket in '([])'}
+#     # pairs in the wrong orientation = -10
+#     | {pair: -10 for pair in ['()', ')(', '[)', '(]', ')[', '](', '[]', '][']}
+# )
+# # matching nucleotides = +5, non-matching nucleotides = 0
+# nt_scores = {n1+n2: 5  if n1==n2 else 0 for n1 in 'AUCG' for n2 in 'AUCG'}
+# scoring_dict = {}
+# for (nt1, pair1), aa1 in pseudo_aa_dict.items():
+#     for (nt2, pair2), aa2 in pseudo_aa_dict.items():
+#         nt_score = nt_scores[nt1+nt2]
+#         pair_score = pair_scores[pair1+pair2]
+#         scoring_dict[(aa1, aa2)] = nt_score + pair_score
+
+structure_scoring_dict = {
+    ('A', 'A'): 10, ('A', 'C'): 7, ('A', 'D'): -3, ('A', 'E'): -5, ('A', 'F'): -5, ('A', 'G'): 5, ('A', 'H'): 2, ('A', 'I'): -8, ('A', 'K'): -10, ('A', 'L'): -10, ('A', 'M'): 5, ('A', 'N'): 2, ('A', 'P'): -8, ('A', 'Q'): -10, ('A', 'R'): -10, ('A', 'S'): 5, ('A', 'T'): 2, ('A', 'V'): -8, ('A', 'W'): -10, ('A', 'Y'): -10,
+    ('C', 'A'): 7, ('C', 'C'): 10, ('C', 'D'): -3, ('C', 'E'): -5, ('C', 'F'): -5, ('C', 'G'): 2, ('C', 'H'): 5, ('C', 'I'): -8, ('C', 'K'): -10, ('C', 'L'): -10, ('C', 'M'): 2, ('C', 'N'): 5, ('C', 'P'): -8, ('C', 'Q'): -10, ('C', 'R'): -10, ('C', 'S'): 2, ('C', 'T'): 5, ('C', 'V'): -8, ('C', 'W'): -10, ('C', 'Y'): -10,
+    ('D', 'A'): -3, ('D', 'C'): -3, ('D', 'D'): 11, ('D', 'E'): -3, ('D', 'F'): -3, ('D', 'G'): -8, ('D', 'H'): -8, ('D', 'I'): 6, ('D', 'K'): -8, ('D', 'L'): -8, ('D', 'M'): -8, ('D', 'N'): -8, ('D', 'P'): 6, ('D', 'Q'): -8, ('D', 'R'): -8, ('D', 'S'): -8, ('D', 'T'): -8, ('D', 'V'): 6, ('D', 'W'): -8, ('D', 'Y'): -8,
+    ('E', 'A'): -5, ('E', 'C'): -5, ('E', 'D'): -3, ('E', 'E'): 10, ('E', 'F'): 7, ('E', 'G'): -10, ('E', 'H'): -10, ('E', 'I'): -8, ('E', 'K'): 5, ('E', 'L'): 2, ('E', 'M'): -10, ('E', 'N'): -10, ('E', 'P'): -8, ('E', 'Q'): 5, ('E', 'R'): 2, ('E', 'S'): -10, ('E', 'T'): -10, ('E', 'V'): -8, ('E', 'W'): 5, ('E', 'Y'): 2,
+    ('F', 'A'): -5, ('F', 'C'): -5, ('F', 'D'): -3, ('F', 'E'): 7, ('F', 'F'): 10, ('F', 'G'): -10, ('F', 'H'): -10, ('F', 'I'): -8, ('F', 'K'): 2, ('F', 'L'): 5, ('F', 'M'): -10, ('F', 'N'): -10, ('F', 'P'): -8, ('F', 'Q'): 2, ('F', 'R'): 5, ('F', 'S'): -10, ('F', 'T'): -10, ('F', 'V'): -8, ('F', 'W'): 2, ('F', 'Y'): 5,
+    ('G', 'A'): 5, ('G', 'C'): 2, ('G', 'D'): -8, ('G', 'E'): -10, ('G', 'F'): -10, ('G', 'G'): 10, ('G', 'H'): 7, ('G', 'I'): -3, ('G', 'K'): -5, ('G', 'L'): -5, ('G', 'M'): 5, ('G', 'N'): 2, ('G', 'P'): -8, ('G', 'Q'): -10, ('G', 'R'): -10, ('G', 'S'): 5, ('G', 'T'): 2, ('G', 'V'): -8, ('G', 'W'): -10, ('G', 'Y'): -10,
+    ('H', 'A'): 2, ('H', 'C'): 5, ('H', 'D'): -8, ('H', 'E'): -10, ('H', 'F'): -10, ('H', 'G'): 7, ('H', 'H'): 10, ('H', 'I'): -3, ('H', 'K'): -5, ('H', 'L'): -5, ('H', 'M'): 2, ('H', 'N'): 5, ('H', 'P'): -8, ('H', 'Q'): -10, ('H', 'R'): -10, ('H', 'S'): 2, ('H', 'T'): 5, ('H', 'V'): -8, ('H', 'W'): -10, ('H', 'Y'): -10,
+    ('I', 'A'): -8, ('I', 'C'): -8, ('I', 'D'): 6, ('I', 'E'): -8, ('I', 'F'): -8, ('I', 'G'): -3, ('I', 'H'): -3, ('I', 'I'): 11, ('I', 'K'): -3, ('I', 'L'): -3, ('I', 'M'): -8, ('I', 'N'): -8, ('I', 'P'): 6, ('I', 'Q'): -8, ('I', 'R'): -8, ('I', 'S'): -8, ('I', 'T'): -8, ('I', 'V'): 6, ('I', 'W'): -8, ('I', 'Y'): -8,
+    ('K', 'A'): -10, ('K', 'C'): -10, ('K', 'D'): -8, ('K', 'E'): 5, ('K', 'F'): 2, ('K', 'G'): -5, ('K', 'H'): -5, ('K', 'I'): -3, ('K', 'K'): 10, ('K', 'L'): 7, ('K', 'M'): -10, ('K', 'N'): -10, ('K', 'P'): -8, ('K', 'Q'): 5, ('K', 'R'): 2, ('K', 'S'): -10, ('K', 'T'): -10, ('K', 'V'): -8, ('K', 'W'): 5, ('K', 'Y'): 2,
+    ('L', 'A'): -10, ('L', 'C'): -10, ('L', 'D'): -8, ('L', 'E'): 2, ('L', 'F'): 5, ('L', 'G'): -5, ('L', 'H'): -5, ('L', 'I'): -3, ('L', 'K'): 7, ('L', 'L'): 10, ('L', 'M'): -10, ('L', 'N'): -10, ('L', 'P'): -8, ('L', 'Q'): 2, ('L', 'R'): 5, ('L', 'S'): -10, ('L', 'T'): -10, ('L', 'V'): -8, ('L', 'W'): 2, ('L', 'Y'): 5,
+    ('M', 'A'): 5, ('M', 'C'): 2, ('M', 'D'): -8, ('M', 'E'): -10, ('M', 'F'): -10, ('M', 'G'): 5, ('M', 'H'): 2, ('M', 'I'): -8, ('M', 'K'): -10, ('M', 'L'): -10, ('M', 'M'): 10, ('M', 'N'): 7, ('M', 'P'): -3, ('M', 'Q'): -5, ('M', 'R'): -5, ('M', 'S'): 5, ('M', 'T'): 2, ('M', 'V'): -8, ('M', 'W'): -10, ('M', 'Y'): -10,
+    ('N', 'A'): 2, ('N', 'C'): 5, ('N', 'D'): -8, ('N', 'E'): -10, ('N', 'F'): -10, ('N', 'G'): 2, ('N', 'H'): 5, ('N', 'I'): -8, ('N', 'K'): -10, ('N', 'L'): -10, ('N', 'M'): 7, ('N', 'N'): 10, ('N', 'P'): -3, ('N', 'Q'): -5, ('N', 'R'): -5, ('N', 'S'): 2, ('N', 'T'): 5, ('N', 'V'): -8, ('N', 'W'): -10, ('N', 'Y'): -10,
+    ('P', 'A'): -8, ('P', 'C'): -8, ('P', 'D'): 6, ('P', 'E'): -8, ('P', 'F'): -8, ('P', 'G'): -8, ('P', 'H'): -8, ('P', 'I'): 6, ('P', 'K'): -8, ('P', 'L'): -8, ('P', 'M'): -3, ('P', 'N'): -3, ('P', 'P'): 11, ('P', 'Q'): -3, ('P', 'R'): -3, ('P', 'S'): -8, ('P', 'T'): -8, ('P', 'V'): 6, ('P', 'W'): -8, ('P', 'Y'): -8,
+    ('Q', 'A'): -10, ('Q', 'C'): -10, ('Q', 'D'): -8, ('Q', 'E'): 5, ('Q', 'F'): 2, ('Q', 'G'): -10, ('Q', 'H'): -10, ('Q', 'I'): -8, ('Q', 'K'): 5, ('Q', 'L'): 2, ('Q', 'M'): -5, ('Q', 'N'): -5, ('Q', 'P'): -3, ('Q', 'Q'): 10, ('Q', 'R'): 7, ('Q', 'S'): -10, ('Q', 'T'): -10, ('Q', 'V'): -8, ('Q', 'W'): 5, ('Q', 'Y'): 2,
+    ('R', 'A'): -10, ('R', 'C'): -10, ('R', 'D'): -8, ('R', 'E'): 2, ('R', 'F'): 5, ('R', 'G'): -10, ('R', 'H'): -10, ('R', 'I'): -8, ('R', 'K'): 2, ('R', 'L'): 5, ('R', 'M'): -5, ('R', 'N'): -5, ('R', 'P'): -3, ('R', 'Q'): 7, ('R', 'R'): 10, ('R', 'S'): -10, ('R', 'T'): -10, ('R', 'V'): -8, ('R', 'W'): 2, ('R', 'Y'): 5,
+    ('S', 'A'): 5, ('S', 'C'): 2, ('S', 'D'): -8, ('S', 'E'): -10, ('S', 'F'): -10, ('S', 'G'): 5, ('S', 'H'): 2, ('S', 'I'): -8, ('S', 'K'): -10, ('S', 'L'): -10, ('S', 'M'): 5, ('S', 'N'): 2, ('S', 'P'): -8, ('S', 'Q'): -10, ('S', 'R'): -10, ('S', 'S'): 10, ('S', 'T'): 7, ('S', 'V'): -3, ('S', 'W'): -5, ('S', 'Y'): -5,
+    ('T', 'A'): 2, ('T', 'C'): 5, ('T', 'D'): -8, ('T', 'E'): -10, ('T', 'F'): -10, ('T', 'G'): 2, ('T', 'H'): 5, ('T', 'I'): -8, ('T', 'K'): -10, ('T', 'L'): -10, ('T', 'M'): 2, ('T', 'N'): 5, ('T', 'P'): -8, ('T', 'Q'): -10, ('T', 'R'): -10, ('T', 'S'): 7, ('T', 'T'): 10, ('T', 'V'): -3, ('T', 'W'): -5, ('T', 'Y'): -5,
+    ('V', 'A'): -8, ('V', 'C'): -8, ('V', 'D'): 6, ('V', 'E'): -8, ('V', 'F'): -8, ('V', 'G'): -8, ('V', 'H'): -8, ('V', 'I'): 6, ('V', 'K'): -8, ('V', 'L'): -8, ('V', 'M'): -8, ('V', 'N'): -8, ('V', 'P'): 6, ('V', 'Q'): -8, ('V', 'R'): -8, ('V', 'S'): -3, ('V', 'T'): -3, ('V', 'V'): 11, ('V', 'W'): -3, ('V', 'Y'): -3,
+    ('W', 'A'): -10, ('W', 'C'): -10, ('W', 'D'): -8, ('W', 'E'): 5, ('W', 'F'): 2, ('W', 'G'): -10, ('W', 'H'): -10, ('W', 'I'): -8, ('W', 'K'): 5, ('W', 'L'): 2, ('W', 'M'): -10, ('W', 'N'): -10, ('W', 'P'): -8, ('W', 'Q'): 5, ('W', 'R'): 2, ('W', 'S'): -5, ('W', 'T'): -5, ('W', 'V'): -3, ('W', 'W'): 10, ('W', 'Y'): 7,
+    ('Y', 'A'): -10, ('Y', 'C'): -10, ('Y', 'D'): -8, ('Y', 'E'): 2, ('Y', 'F'): 5, ('Y', 'G'): -10, ('Y', 'H'): -10, ('Y', 'I'): -8, ('Y', 'K'): 2, ('Y', 'L'): 5, ('Y', 'M'): -10, ('Y', 'N'): -10, ('Y', 'P'): -8, ('Y', 'Q'): 2, ('Y', 'R'): 5, ('Y', 'S'): -5, ('Y', 'T'): -5, ('Y', 'V'): -3, ('Y', 'W'): 7, ('Y', 'Y'): 10
+}
 
 def set_alignment(sequence1, sequence2, alignment1, alignment2):
     """Add an alignment. When objects with these sequences are aligned for
@@ -80,13 +135,10 @@ class BaseAlignment(ABC):
     Attributes:
         starting_sequence (str):
             the beginning sequence
+        mapping (numpy.array): the alignment map array.
+            index of starting_sequence is mapping[index] of target_sequence
         target_sequence (str):
-            the sequence to map to
-        mapping (numpy.array):
-            a vector of size (len(starting_sequence)) which maps to an index in
-            target_sequence, i.e.:
-            starting_sequence[10] is aligned to target_sequence[mapping[10]]
-            if mapping[10] == -1, starting_sequence[10] is unmapped (deleted)
+            the portion of starting sequence that is mapped
 
     Methods:
         All map_functions map from starting sequence to target sequence.
@@ -99,7 +151,7 @@ class BaseAlignment(ABC):
             (rows that cannot be mapped are dropped)
             (missing rows filled with NaN)
     """
-    def __init__(self, starting_sequence, target_sequence):
+    def __init__(self, starting_sequence):
         """Creates a BaseAlignment with starting and target sequences.
 
         Args:
@@ -107,8 +159,25 @@ class BaseAlignment(ABC):
             target_sequence (str): the target sequence
         """
         self.starting_sequence = starting_sequence
-        self.target_sequence = target_sequence
         self.mapping = self.get_mapping()
+        self.target_sequence = self.get_target_sequence()
+
+    @abstractmethod
+    def get_mapping(self):
+        """Alignments require a mapping from starting to target sequence"""
+        return
+
+    def get_target_sequence(self):
+        """Gets the portion of starting sequence that fits the alignment"""
+        return ''.join(self.map_values(list(self.starting_sequence), fill='-'))
+
+    def get_ticks_labels(self, gap):
+        labels = np.arange(1, len(self.mapping)//gap) * gap
+        ticks = self.mapping[labels-1] + 1
+        valid = ticks != 0
+        labels = labels[valid]
+        ticks = ticks[valid]
+        return ticks, labels
 
     def map_values(self, values, fill=np.nan):
         """Takes an array of length equal to starting sequence and maps them to
@@ -211,11 +280,6 @@ class BaseAlignment(ABC):
         new_dataframe[sequence_column] = list(self.target_sequence)
         return dataframe.copy()
 
-    @abstractmethod
-    def get_mapping(self):
-        """Alignments require a mapping from starting to target sequence"""
-        pass
-
 
 class SequenceAlignment(BaseAlignment):
     """The most useful feature of RNAvigate. Maps positions from one sequence
@@ -260,17 +324,13 @@ class SequenceAlignment(BaseAlignment):
         self.sequence2 = sequence2
         self.alignment1, self.alignment2 = self.get_alignment()
         self.full = full
-        if full:
-            target_sequence = self.alignment1
-        else:
-            target_sequence = self.sequence2
-        super().__init__(sequence1, target_sequence)
+        super().__init__(sequence1)
 
     def __repr__(self):
         """a nice text only representation of an alignment"""
         return f"""alignment:
         {self.alignment1}
-        {''.join(['X|'[n1==n2] for n1, n2 in zip(self.alignment1, self.alignment2)])}
+        {''.join(['X '[n1==n2] for n1, n2 in zip(self.alignment1, self.alignment2)])}
         {self.alignment2}"""
 
     def get_alignment(self):
@@ -356,20 +416,15 @@ class AlignmentChain(BaseAlignment):
         Raises:
             ValueError: if the target sequence of one alignment doesn't match the starting sequence of the next.
         """
-        def normalize(sequence):
-            return sequence.upper().replace('T', 'U')
-
-        next_sequence = normalize(alignments[0].starting_sequence)
+        next_sequence_len = len(alignments[0].starting_sequence)
         for alignment in alignments:
-            if next_sequence == normalize(alignment.starting_sequence):
-                next_sequence = normalize(alignment.target_sequence)
+            if next_sequence_len == len(alignment.starting_sequence):
+                next_sequence_len = len(alignment.target_sequence)
             else:
                 raise ValueError("Alignments do not chain.")
 
         self.alignments = alignments
-        super().__init__(
-            self.alignments[0].starting_sequence,
-            self.alignments[-1].target_sequence)
+        super().__init__(self.alignments[0].starting_sequence)
 
     def get_mapping(self):
         """combines mappings from each alignment.
@@ -382,6 +437,7 @@ class AlignmentChain(BaseAlignment):
         for alignment in self.alignments[1:]:
             indices = alignment.map_indices(indices)
         return indices
+
 
 class RegionAlignment(BaseAlignment):
     """An alignment that drops values that are not within a region
@@ -416,7 +472,7 @@ class RegionAlignment(BaseAlignment):
         start, end = region
         self.start = start
         self.end = end
-        super().__init__(sequence, sequence[start-1: end])
+        super().__init__(sequence)
 
     def get_mapping(self):
         """returns a mapping from sequence to subsequence
@@ -428,3 +484,127 @@ class RegionAlignment(BaseAlignment):
         mapping[self.start-1:self.end] = np.arange(self.end-self.start+1,
                                                    dtype=int)
         return mapping
+
+class StructureAlignment(BaseAlignment):
+    """Experimental secondary structure alignment based on RNAlign2D algorithm
+    (https://doi.org/10.1186/s12859-021-04426-8)
+
+    Attributes:
+        sequence1 (str): the sequence to be aligned
+        sequence2 (str): the sequence to align to
+        structure1
+        structure2
+        aa_sequence1
+        aa_sequence2
+        alignment1 (str): the alignment string matching sequence1 to sequence2
+        alignment2 (str): the alignment string matching sequence2 to sequence1
+        starting_sequence (str): sequence1
+        target_sequence(str): sequence2 if full is False, else alignment2
+        mapping (numpy.array): the alignment map array.
+            index of starting_sequence is mapping[index] of target_sequence
+
+    Methods:
+        All map_functions map from starting sequence to target sequence.
+        map_values: maps per-nucleotide values
+        map_indices: maps a list of indices
+        map_positions: maps a list of positions
+        map_dataframe: maps a dataframe with multiple position columns
+            (rows that cannot be mapped are dropped)
+        map_nucleotide_dataframe: maps a dataframe with 1 row per nucleotide
+            (rows that cannot be mapped are dropped)
+            (missing rows filled with NaN)
+    """
+    def __init__(self, structure1, structure2, full=False):
+        """Creates an alignment from structure1 to structure2.
+
+        Args:
+            structure1 (str): the starting structure
+            structure2 (str): the target structure
+            full (bool, optional): whether to keep unmapped starting sequence
+                positions. Defaults to False.
+        """
+        ss_error = ValueError("structures must be SecondaryStructure objects")
+        pk_error = ValueError("Structure has too many pseudoknots to align.")
+        if isinstance(structure1, data.SecondaryStructure):
+            self.sequence1 = structure1.sequence
+            self.structure1 = structure1.get_dbn()
+        else:
+            raise ss_error
+        if isinstance(structure2, data.SecondaryStructure):
+            self.sequence2 = structure2.sequence
+            self.structure2 = structure2.get_dbn()
+        else:
+            raise ss_error
+        if '{' in self.structure1 or '{' in self.structure2:
+            raise pk_error
+        self.aa_sequence1, self.aa_sequence2 = self.get_aa_sequences()
+        self.alignment1, self.alignment2 = self.get_alignment()
+        self.full = full
+        if full:
+            target_sequence = self.alignment1
+        else:
+            target_sequence = []
+            for nt1, nt2 in zip(structure1, structure2):
+                if nt2 != '-':
+                    target_sequence.append(nt1)
+        super().__init__(structure1)
+
+    def __repr__(self):
+        """a nice text only representation of an alignment"""
+        return f"""alignment:
+        {self.alignment1}
+        {''.join(['X '[n1==n2] for n1, n2 in zip(self.alignment1, self.alignment2)])}
+        {self.alignment2}"""
+
+    def get_aa_sequences(self):
+        aa_seq1 = []
+        aa_seq2 = []
+        for nt, bp in zip(self.sequence1, self.structure1):
+            aa_seq1.append(pseudo_aa_dict[nt+bp])
+        for nt, bp in zip(self.sequence2, self.structure2):
+            aa_seq2.append(pseudo_aa_dict[nt+bp])
+        return ''.join(aa_seq1), ''.join(aa_seq2)
+
+    def get_alignment(self):
+        """Aligns pseudo-amino-acid sequences according to RNAlign2D rules.
+
+        Returns:
+            (tuple of 2 str): alignment1 and alignment2
+        """
+        # Normalize sequences
+        seq1 = self.aa_sequence1
+        seq2 = self.aa_sequence2
+        # Check if sequences match
+        if seq1 == seq2:
+            return (seq1, seq2)
+        else:
+            alignment = align.globalds(seq1, seq2, structure_scoring_dict,
+                                       -12, -1, penalize_end_gaps=False)
+            alignment1=alignment[0].seqA,
+            alignment2=alignment[0].seqB
+            return (alignment1, alignment2)
+
+    def get_mapping(self):
+        """Calculates a mapping from starting sequence to target sequence.
+
+        Returns:
+            numpy.array: an array of length of starting sequence that maps to
+                an index of target sequence. Stored as self.mapping
+                starting_sequence[idx] == target_sequence[self.mapping[idx]]
+        """
+        align1 = self.alignment1
+        align2 = self.alignment2
+        # get an index mapping from sequence 1 to the full alignment
+        seq1_to_align = np.where([nt != '-' for nt in align1])[0]
+        # if we want a mapping to a position in the full alignment, this is it.
+        if self.full:
+            return seq1_to_align
+        # extra steps to get to sequence 2 positions
+        # positions that are removed when plotting on sequence 2
+        align_mask = np.array([nt != '-' for nt in align2])
+        # an index mapping from the full alignment to position in sequence 2
+        align_to_seq2 = np.full(len(align2), -1)
+        align_to_seq2[align_mask] = np.arange(len(self.sequence2))
+        # an index mapping from sequence 1 to sequence 2 positions
+        seq1_to_seq2 = align_to_seq2[seq1_to_align]
+        return seq1_to_seq2
