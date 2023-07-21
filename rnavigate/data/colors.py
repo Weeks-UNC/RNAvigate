@@ -11,18 +11,16 @@ class ScalarMappable(cm.ScalarMappable):
         super().__init__(norm, cmap)
         self._rnav_norm = normalization
         self._rnav_vals = values
-        self._rnav_cmap = cmap
+        self._rnav_cmap = [mpc.to_hex(color) for color in cmap(np.arange(cmap.N))]
         self.cbar_args = cbar_args
         self.tick_labels = tick_labels
 
     def is_equivalent_to(self, cmap2):
-        attributes = [
-            "_rnav_norm",
-            "_rnav_vals",
-            "_rnav_cmap",
-            "tick_labels",
-            "cbar_args"]
-        return all([getattr(self, a)==getattr(cmap2, a) for a in attributes])
+        return ((self._rnav_norm == cmap2._rnav_norm)
+                and (self._rnav_vals == cmap2._rnav_vals)
+                and (self._rnav_cmap == cmap2._rnav_cmap)
+                and (self.tick_labels == cmap2.tick_labels)
+                and (self.cbar_args == cmap2.cbar_args))
 
     def values_to_hexcolors(self, values, alpha=1.0):
         colors = super().to_rgba(x=values, alpha=alpha)
@@ -56,7 +54,7 @@ class ScalarMappable(cm.ScalarMappable):
             return mpc.ListedColormap(cmap)
         try:
             return cm.get_cmap(cmap)
-        except ValueError as e:
+        except ValueError as exception:
             print("cmap must be one of: valid mpl color, list of mpl colors, or "
                 f"mpl colormap:\n{str(cmap)}")
-            raise e
+            raise exception
