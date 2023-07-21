@@ -20,7 +20,7 @@ class Profile(data.Data):
             input_data=dataframe,
             metric=self._metric,
             metric_defaults=self.metric_defaults,
-            sequence=alignment.target)
+            sequence=alignment.target_sequence)
 
     def get_plotting_dataframe(self):
         new_names = ["Nucleotide"]

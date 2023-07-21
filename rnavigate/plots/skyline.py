@@ -73,8 +73,8 @@ class Skyline(plots.Plot):
                       minor=True)
         ax.spines['bottom'].set_visible(False)
         ax.spines['left'].set_visible(False)
-        ax.grid(ax='y', visible=True)
-        ax.tick_params(ax='y', length=0, grid_alpha=0.4)
+        ax.grid(axis='y', visible=True)
+        ax.tick_params(axis='y', length=0, grid_alpha=0.4)
         sns.despine(ax=ax, bottom=True, left=True)
 
     def set_labels(self, ax, axis_title="Raw Reactivity Profile",

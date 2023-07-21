@@ -904,7 +904,7 @@ class SecondaryStructure(data.Sequence):
                 even if the attribute is set. In case changes to the structure
                 have been made.
         """
-        if hasattr(self, "distance_matrix") and not recalculate:
+        if (self.distance_matrix is not None) and not recalculate:
             return self.distance_matrix
 
         # this method will be used later to make sure a nucleotide hasn't

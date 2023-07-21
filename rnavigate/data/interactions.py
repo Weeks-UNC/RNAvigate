@@ -286,7 +286,7 @@ class Interactions(data.Data):
             position_columns=['i', 'j'])
         return self.__class__(
             input_data=new_data,
-            sequence=alignment.target,
+            sequence=alignment.target_sequence,
             metric=self._metric,
             metric_defaults=self.metric_defaults,
             window=self.window)

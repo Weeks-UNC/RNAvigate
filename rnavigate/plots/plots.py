@@ -38,7 +38,7 @@ class Plot(ABC):
         rows = len(self.colorbars)
         if rows == 0:
             return (None, None)
-        fig, axes = plt.subplots(rows, 1, figsize=(4, 1.5 * rows), squeeze=False)
+        fig, axes = plt.subplots(rows, 1, figsize=(8, 1.5 * rows), squeeze=False)
         for cbar, ax in zip(self.colorbars, axes[:, 0]):
             colorbar = plt.colorbar(cbar, cax=ax, orientation="horizontal",
                          **cbar.cbar_args)

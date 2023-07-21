@@ -37,7 +37,7 @@ class Sequence():
             self.sequence = self.get_seq_from_dataframe(input_data)
         elif isinstance(input_data, Sequence):
             self.sequence = input_data.sequence
-        self._alignment = data.RegionAlignment(self.sequence, 1, self.length)
+        self._alignment = data.RegionAlignment(self.sequence, [1, self.length])
 
     def read_fasta(self, fasta):
         """Parse a fasta file for the first sequence. Store the sequence name

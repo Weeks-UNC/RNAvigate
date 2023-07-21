@@ -73,7 +73,7 @@ class Annotation(data.Sequence):
         return Annotation(
             name=self.name,
             color=self.color,
-            sequence=alignment.target,
+            sequence=alignment.target_sequence,
             annotation_type=self.annotation_type,
             input_data=new_input_data,
         )
@@ -174,7 +174,7 @@ class Motif(Annotation):
         return Motif(
             name=self.name,
             color=self.color,
-            sequence=alignment.target,
+            sequence=alignment.target_sequence,
             motif=self.motif)
 
 
@@ -218,4 +218,4 @@ class ORFs(Annotation):
         return ORFs(
             name=self.name,
             color=self.color,
-            sequence=alignment.target)
+            sequence=alignment.target_sequence)

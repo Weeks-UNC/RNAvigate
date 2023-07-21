@@ -23,7 +23,7 @@ class Circle(plots.Plot):
         for i in range(self.length):
             ax = self.get_ax(i)
             ax.set_aspect('equal')
-            ax.ax('off')
+            ax.axis('off')
             # ax.set(xlim=(-10.1, 10.1),
             #        ylim=(-10.1, 10.1))
         self.pass_through = ["colors", "apply_color_to", "sequence",

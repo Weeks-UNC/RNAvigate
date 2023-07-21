@@ -403,19 +403,20 @@ class RegionAlignment(BaseAlignment):
             (rows that cannot be mapped are dropped)
             (missing rows filled with NaN)
     """
-    def __init__(self, sequence, start, end):
+    def __init__(self, sequence, region):
         """Creates an alignment from a sequence to a substring of itself
 
         Args:
             sequence (str | rnavigate.data.Sequence): the starting sequence
-            start (int): the 1-index inclusive starting position of subsequence
-            end (int): the 1-index inclusive ending position of subsequence
+            region (list of 2 int): the 1-indexed, inclusive starting and
+                ending position of subsequence
         """
         if isinstance(sequence, data.Data):
             sequence = sequence.sequence
+        start, end = region
         self.start = start
         self.end = end
-        super().__init__(sequence, sequence[start-1, end])
+        super().__init__(sequence, sequence[start-1: end])
 
     def get_mapping(self):
         """returns a mapping from sequence to subsequence
@@ -423,6 +424,7 @@ class RegionAlignment(BaseAlignment):
         Returns:
             numpy.array: the mapping array
         """
-        mapping = np.full(len(self.starting_sequence), -1, int)
-        mapping[self.start-1:self.end] = np.arange(self.end-self.start+1, int)
+        mapping = np.full(len(self.starting_sequence), -1, dtype=int)
+        mapping[self.start-1:self.end] = np.arange(self.end-self.start+1,
+                                                   dtype=int)
         return mapping
