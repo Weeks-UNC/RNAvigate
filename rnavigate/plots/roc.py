@@ -19,8 +19,8 @@ class ROC(plots.Plot):
     def set_figure_size(self, fig=None, ax=None,
                         rows=None, cols=None,
                         height_ax_rel=None, width_ax_rel=None,
-                        width_ax_in=6, height_ax_in=6,
-                        height_gap_in=1, width_gap_in=0.5,
+                        width_ax_in=1.5, height_ax_in=1.5,
+                        height_gap_in=0.3, width_gap_in=0.2,
                         top_in=1, bottom_in=0.5,
                         left_in=0.5, right_in=0.5):
         super().set_figure_size(fig=fig, ax=ax, rows=rows, cols=cols,

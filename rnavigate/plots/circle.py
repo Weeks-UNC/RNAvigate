@@ -36,7 +36,7 @@ class Circle(plots.Plot):
 
     def set_figure_size(self, fig=None, ax=None,
                         rows=None, cols=None,
-                        height_ax_rel=1/pi/4, width_ax_rel=1/pi/4,
+                        height_ax_rel=1/pi/12, width_ax_rel=1/pi/12,
                         width_ax_in=None, height_ax_in=None,
                         height_gap_in=1, width_gap_in=0.5,
                         top_in=1, bottom_in=0.5,
@@ -95,21 +95,21 @@ class Circle(plots.Plot):
                 if (r*0.299 + g*0.587 + b*0.114) < 175/256:
                     nt_color[i] = 'w'
             nt_color = np.array(nt_color)
-        ax.scatter(self.x, self.y, marker="o", c=bg_color, s=256, zorder=nuc_z)
+        ax.scatter(self.x, self.y, marker="o", c=bg_color, s=25, zorder=nuc_z)
         for nuc in "GUACguac":
             mask = [nt == nuc for nt in sequence.sequence]
             xcoords = self.x[mask]
             ycoords = self.y[mask]
             marker = "$\mathsf{"+nuc+"}$"
-            ax.scatter(xcoords, ycoords, marker=marker, s=100,
-                       c=nt_color[mask], lw=1, zorder=seq_z)
+            ax.scatter(xcoords, ycoords, marker=marker, s=9,
+                       c=nt_color[mask], lw=0.3, zorder=seq_z)
 
     def plot_positions(self, ax, interval=20):
         for i in np.arange(interval-1, self.sequence.length+1, interval):
             x = self.x[i]
             y = self.y[i]
             theta = self.theta[i] * -180/np.pi
-            ax.plot([x, x+5*x/self.diameter], [y, y+5*y/self.diameter], c='k')
+            ax.plot([x, x+4*x/self.diameter], [y, y+4*y/self.diameter], c='k')
             ax.text(x+7*x/self.diameter, y+7*y/self.diameter, i+1, ha='center',
                     va='center', rotation=theta)
 

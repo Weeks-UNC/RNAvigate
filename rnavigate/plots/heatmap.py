@@ -22,7 +22,7 @@ class Heatmap(plots.Plot):
     def set_figure_size(self, fig=None, ax=None,
                         rows=None, cols=None,
                         height_ax_rel=None, width_ax_rel=None,
-                        width_ax_in=10, height_ax_in=10,
+                        width_ax_in=2, height_ax_in=2,
                         height_gap_in=1, width_gap_in=0.5,
                         top_in=1, bottom_in=0.5,
                         left_in=0.5, right_in=0.5):
@@ -62,7 +62,7 @@ class Heatmap(plots.Plot):
         levels = [0.5]
         cmap = LinearSegmentedColormap.from_list('contours', ['black', 'gray'])
         x_y = list(range(1, interactions.length+1))
-        ax.contour(x_y, x_y, matrix, levels=levels, cmap=cmap, linewidths=1)
+        ax.contour(x_y, x_y, matrix, levels=levels, cmap=cmap, linewidths=0.3)
 
     def plot_contour_distances(self, ax, levels, atom):
         structure = self.structure
@@ -76,7 +76,7 @@ class Heatmap(plots.Plot):
             levels = [20]
         cmap = LinearSegmentedColormap.from_list('contours', ['black', 'gray'])
         x_y = list(range(1, structure.length+1))
-        ax.contour(x_y, x_y, distances, levels=levels, cmap=cmap, linewidths=1)
+        ax.contour(x_y, x_y, distances, levels=levels, cmap=cmap, linewidths=0.3)
 
     def plot_heatmap_data(self, ax, interactions, interpolation):
         data = interactions.get_sorted_data()

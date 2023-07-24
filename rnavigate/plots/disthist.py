@@ -19,7 +19,7 @@ class DistHist(plots.Plot):
     def set_figure_size(self, fig=None, ax=None,
                         rows=None, cols=None,
                         height_ax_rel=None, width_ax_rel=None,
-                        width_ax_in=8, height_ax_in=8,
+                        width_ax_in=2, height_ax_in=2,
                         height_gap_in=1, width_gap_in=0.4,
                         top_in=1, bottom_in=1,
                         left_in=1, right_in=1):

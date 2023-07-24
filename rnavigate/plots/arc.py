@@ -19,11 +19,11 @@ class AP(plots.Plot):
 
     def set_figure_size(self, fig=None, ax=None,
                         rows=None, cols=None,
-                        height_ax_rel=0.1, width_ax_rel=0.1,
+                        height_ax_rel=0.03, width_ax_rel=0.03,
                         width_ax_in=None, height_ax_in=None,
-                        height_gap_in=1, width_gap_in=0.5,
-                        top_in=1, bottom_in=0.5,
-                        left_in=0.5, right_in=0.5):
+                        height_gap_in=0.1, width_gap_in=0.1,
+                        top_in=1, bottom_in=1,
+                        left_in=1, right_in=1):
         super().set_figure_size(fig=fig, ax=ax, rows=rows, cols=cols,
                                 height_ax_rel=height_ax_rel,
                                 width_ax_rel=width_ax_rel,
@@ -66,7 +66,7 @@ class AP(plots.Plot):
             self.plot_annotation(ax, annotation=annotation, yvalue=-2-(4*i),
                                  mode=annotation_mode)
         if seqbar:
-            self.add_sequence(ax, seq.sequence, yvalue=1-annotation_gap,
+            self.add_sequence(ax, seq.sequence, yvalue=-annotation_gap,
                               ytrans="data")
         if title:
             self.add_title(ax, label)
@@ -123,7 +123,7 @@ class AP(plots.Plot):
 
     def add_title(self, ax, label):
         ax.annotate(label, xy=(0.1, 0.9), xycoords="axes fraction",
-                    fontsize=60, ha='left')
+                    fontsize=12, ha='left')
 
     def get_figsize(self):
         width = self.nt_length * 0.1 + 1
@@ -150,7 +150,7 @@ class AP(plots.Plot):
             ax.bar(nts[mn-1:mx], values[mn-1:mx]*factor, align="center",
                    bottom=bottom, width=1, color=colormap[mn-1:mx],
                    edgecolor=colormap[mn-1:mx], linewidth=0.0,
-                   yerr=yerr[mn-1:mx], ecolor=(0, 0, 1 / 255.0), capsize=1)
+                   yerr=yerr[mn-1:mx], ecolor=(0, 0, 1 / 255.0), capsize=0)
         else:
             ax.bar(nts[mn-1:mx], values[mn-1:mx]*factor, align="center",
                    width=1, color=colormap[mn-1:mx], bottom=bottom,

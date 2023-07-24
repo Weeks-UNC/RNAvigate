@@ -54,13 +54,12 @@ class QC(plots.Plot):
         self.ax_read_unt.set_xticklabels(xticklabels, rotation=45)
         self.ax_read_mod.set_xticklabels(xticklabels, rotation=45)
         self.profiles = []
-        plt.tight_layout()
 
     def set_figure_size(self, fig=None, ax=None,
                         rows=None, cols=None,
                         height_ax_rel=None, width_ax_rel=None,
-                        width_ax_in=7, height_ax_in=7,
-                        height_gap_in=1, width_gap_in=0.5,
+                        width_ax_in=2, height_ax_in=2,
+                        height_gap_in=1, width_gap_in=1,
                         top_in=1, bottom_in=0.5,
                         left_in=0.5, right_in=0.5):
         super().set_figure_size(fig=fig, ax=ax, rows=rows, cols=cols,

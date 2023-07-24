@@ -9,20 +9,20 @@ from scipy.spatial.distance import cdist
 class SS(plots.Plot):
     def __init__(self, num_samples, **kwargs):
         self.plot_params = {
-            "structure_lw": 3,
-            "structure_s": 10**2,
+            "structure_lw": 1,
+            "structure_s": 3**2,
 
-            "data_lw": 1.5,
+            "data_lw": 0.5,
             "data_a": None,
-            "data_z": 15,
 
-            "annotations_lw": 30,
-            "annotations_s": 30**2,
+            "annotations_lw": 10,
+            "annotations_s": 10**2,
             "annotations_a": 0.4,
 
             "basepair_z": 0,
             "structure_z": 2,
             "annotations_z": 5,
+            "data_z": 15,
             "nucleotide_z": 10,
             "sequence_z": 20,
             "position_z": 25,
@@ -34,13 +34,13 @@ class SS(plots.Plot):
         super().__init__(num_samples, sharey=True, sharex=True, **kwargs)
         for i in range(self.length):
             ax = self.get_ax(i)
-            ax.ax("off")
+            ax.axis("off")
         self.pass_through = ["colors", "sequence", "apply_color_to",
                              "title", "positions", "bp_style"]
 
     def set_figure_size(self, fig=None, ax=None,
                         rows=None, cols=None,
-                        height_ax_rel=0.55, width_ax_rel=0.55,
+                        height_ax_rel=0.2, width_ax_rel=0.2,
                         width_ax_in=None, height_ax_in=None,
                         height_gap_in=1, width_gap_in=0.5,
                         top_in=1, bottom_in=0.5,
@@ -96,7 +96,7 @@ class SS(plots.Plot):
         x, y = verts[:, 0], verts[:, 1]
         colors = [x for c in struct_color for x in [c, c]][1:-1]
         points = np.array([x, y]).T.reshape(-1, 1, 2)
-        segments = np.concatenate([points[:-1], points[1:]], ax=1)
+        segments = np.concatenate([points[:-1], points[1:]], axis=1)
 
         current_color = None
         new_segments = []
@@ -219,15 +219,15 @@ class SS(plots.Plot):
             nt_color = np.array(nt_color)
 
         ax.scatter(structure.xcoordinates, structure.ycoordinates, marker="o",
-                   c=bg_color, s=256, zorder=nuc_z)
+                   c=bg_color, s=5**2, zorder=nuc_z)
         if sequence:
             for nuc in "GUACguac":
                 mask = [nt == nuc for nt in structure.sequence]
                 xcoords = structure.xcoordinates[mask]
                 ycoords = structure.ycoordinates[mask]
                 marker = "$\mathsf{"+nuc+"}$"
-                ax.scatter(xcoords, ycoords, marker=marker, s=100,
-                           c=nt_color[mask], lw=1, zorder=seq_z)
+                ax.scatter(xcoords, ycoords, marker=marker, s=3**2,
+                           c=nt_color[mask], lw=0.3, zorder=seq_z)
 
     def add_lines(self, ax, structure, i, j, color):
         zorder = self.plot_params["data_z"]
@@ -252,9 +252,6 @@ class SS(plots.Plot):
         thetas = np.pi/32 * np.arange(64)
         x_shift = np.sin(thetas)
         y_shift = np.cos(thetas)
-        # for i, x in enumerate(xs):
-        #     for j, y in enumerate(ys):
-        #         distances[i,j] = (x**2 + y**2)**0.5
         for nt in range(spacing-1, structure.length, spacing):
             x_nt = xs[nt]
             y_nt = ys[nt]
@@ -267,14 +264,14 @@ class SS(plots.Plot):
                 np.vstack((x_pos, y_pos)).T,
                 np.vstack((xs[not_nt & nt_box], ys[not_nt & nt_box])).T,
                 'euclidean')
-            min_dists = np.min(dists, ax=1)
+            min_dists = np.min(dists, axis=1)
             which_pos = np.where(min_dists == np.max(min_dists))[0]
             x_label = x_pos[which_pos]
             y_label = y_pos[which_pos]
             bbox=dict(boxstyle="round", fc="w", ec="w", pad=0.1)
             ax.plot([float(x_nt), float(x_label)],
                     [float(y_nt), float(y_label)],
-                    color='k', lw=3)
+                    color='k', lw=1)
             ax.text(x_label, y_label, str(nt+1), ha='center', va='center',
                     bbox=bbox, zorder=zorder+1)
 

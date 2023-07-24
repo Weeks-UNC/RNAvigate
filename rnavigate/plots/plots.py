@@ -74,7 +74,7 @@ class Plot(ABC):
     def add_sequence(self, ax, sequence, yvalue=0, ytrans="axes"):
         # set font style and colors for each nucleotide
         font_prop = mp.font_manager.FontProperties(
-            family="monospace", style="normal", weight="bold", size="12"
+            family="monospace", style="normal", weight="bold", size="4"
         )
         # transform yvalue to a y-ax data value
         if ytrans == "axes":
@@ -92,7 +92,7 @@ class Plot(ABC):
                 transform=trans,
                 color=col,
                 horizontalalignment="center",
-                verticalalignment="center",
+                verticalalignment="bottom",
             )
 
     @abstractmethod
