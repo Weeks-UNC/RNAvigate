@@ -76,11 +76,11 @@ class SecondaryStructure(data.Sequence):
 
     @property
     def num(self):
-        return self.data['Nucleotide'].values.tolist()
+        return self.data['Nucleotide'].values
 
     @property
     def ct(self):
-        return self.data["Pair"].values.tolist()
+        return self.data["Pair"].values
 
     @property
     def ycoordinates(self):
@@ -596,7 +596,7 @@ class SecondaryStructure(data.Sequence):
             if nt == 0:
                 continue
 
-            pi = self.num.index(nt)
+            pi = np.where(self.num == nt)[0][0]
 
             bp = self.sequence[pi] + self.sequence[i]
             if bp not in ('AU', 'UA', 'GC', 'CG', 'GU', 'UG', '  '):
@@ -616,7 +616,7 @@ class SecondaryStructure(data.Sequence):
             if nt == 0:
                 continue
 
-            pi = self.num.index(nt)
+            pi = np.where(self.num == nt)[0][0]
 
             neigh = False
             for j in (-1, 1):
@@ -629,15 +629,6 @@ class SecondaryStructure(data.Sequence):
                 self.ct[i] = 0
                 self.ct[pi] = 0
                 # print 'Deleted %d %s *' % (self.num[i], self.sequence[i])
-
-    def copy(self):
-        """Returns a deep copy of the ct object."""
-        out = SecondaryStructure()
-        out.filepath = self.filepath[:]
-        out.num = self.num[:]
-        out.sequence = self.sequence[:]
-        out.ct = self.ct[:]
-        return out
 
     # retrieve structure components
 
@@ -679,7 +670,7 @@ class SecondaryStructure(data.Sequence):
             if nt == 0:  # if its not paired
                 continue
 
-            pi = self.num.index(nt)
+            pi = np.where(self.num == nt)[0][0]
 
             neighbors = [i-1, i+1, pi-1, pi+1]
             neighbors_paired = any(self.ct[neighbors] == 0)
@@ -743,23 +734,24 @@ class SecondaryStructure(data.Sequence):
         else:
             self.filepath = 'RNA_'+str(length)
 
-        self.ct = []
+        ct = []
         for i in range(length):
-            self.ct.append(0)
+            ct.append(0)
 
         for i, j in pairs:
-            if self.ct[i-1] != 0:
+            if ct[i-1] != 0:
                 print('Warning: conflicting pairs, (%s - %s) : (%s - %s)' %
-                      (str(i), str(j), str(self.ct[i-1]), str(i)))
+                      (str(i), str(j), str(ct[i-1]), str(i)))
                 if skipConflicting:
                     continue
-            if self.ct[j-1] != 0:
+            if ct[j-1] != 0:
                 print('Warning: conflicting pairs, (%s - %s) : (%s - %s)' %
-                      (str(i), str(j), str(j), str(self.ct[j-1])))
+                      (str(i), str(j), str(j), str(ct[j-1])))
                 if skipConflicting:
                     continue
-            self.ct[i-1] = j
-            self.ct[j-1] = i
+            ct[i-1] = j
+            ct[j-1] = i
+        self.ct = ct
 
         if filterNC:
             self.filterNC()
@@ -838,40 +830,6 @@ class SecondaryStructure(data.Sequence):
 
         return out
 
-    def cutCT(self, start, end):
-        """Returns a new ct file containing only base pairs within the
-        specified region
-
-        Args:
-            start (int): start position
-            end (int): end position
-
-        Returns:
-            SecondaryStructure: a new SecondaryStructure cut from self
-        """
-
-        sel = self.getNTslice(start, end)
-
-        offset = self.num[0]
-        numnts = end-start+1
-
-        out = SecondaryStructure()
-        out.sequence = self.sequence[sel]
-        out.num = list(range(1, numnts+1))
-        out.filepath = self.filepath + '_cut_'+str(start)+'_'+str(end)
-
-        out.ct = []
-        temp = self.ct[sel]
-        # renumber from 1
-        for nt in temp:
-            nt_out = nt-(start-offset)
-            # cut out pairings that lie outside the window
-            if nt_out <= 0 or nt_out > numnts:
-                nt_out = 0
-            out.ct.append(nt_out)
-
-        return out
-
     def stripCT(self):
         """Returns the ct attribute in non-redundant form - only pairs i<j"""
         pairs = self.pairList()
@@ -916,7 +874,7 @@ class SecondaryStructure(data.Sequence):
                 in_range = (min(self.num) <= nt <= max(self.num))
                 valid_so_far = in_range
             if valid_so_far:
-                not_visited = (level[self.num.index(nt)] == -1)
+                not_visited = (level[np.where(self.num == nt)[0][0]] == -1)
                 valid_so_far = not_visited
             return valid_so_far
 
@@ -932,7 +890,7 @@ class SecondaryStructure(data.Sequence):
             # while there are nucleotides that haven't been visited
             while len(queue) > 0:
                 current_nt = queue.pop(0)
-                current_i = self.num.index(current_nt)
+                current_i = np.where(self.num == current_nt)[0][0]
 
                 # Find all the neighbors of the current NT
                 NTBack = current_nt - 1
@@ -943,7 +901,7 @@ class SecondaryStructure(data.Sequence):
                 for neighbor in [NTBack, NTUp, NTPair]:
                     if viable(neighbor):
                         queue.append(neighbor)
-                        level[self.num.index(neighbor)] = level[current_i] + 1
+                        level[np.where(self.num == neighbor)[0][0]] = level[current_i] + 1
             # set row of distance matrix for nt
             distance_matrix[i, :] = level
         # store the distance matrix from the search and return
