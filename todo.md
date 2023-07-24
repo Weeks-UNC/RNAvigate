@@ -13,10 +13,6 @@ Top priorities (3 maximum)
 --------------------------
 
 - completing documentation website and writing doc strings
-  - [ ] plots
-  - [ ] getting started
-  - [ ] analyses
-  - [ ] namespace and getting docstrings
 - test and check everything before the next major update.
 
 Documentation To-Do List
@@ -60,33 +56,66 @@ Documentation To-Do List
 Coding To-Do List
 -----------------
 
-- check that all functions that compare objects align or check similarity
-- unify the scalar -> rgba functionality for all Data objects
-- analyses are a sub-class of Sample?
-- RNAvigate conda package
-- clean up namespace: ideally, no redundancy
-- support for undercase nucleotides
+### Highest
+- text scaling factors based on plot size (this would be easy with context)
+- implement the region alignment for all datatypes and plots
+- any genomic data
+- get Winstons eCLIP -> profile code
+- make color scales look good, more consistent.
+- all functions that compare data also align sequences (if appropriate)
+- normalizing and windowing profiles
+  - by nucleotide
+  - windowed mean, median, average
+  - gaussian smoothing
 - loading secondary structure files containing more than one structure
-- combine VARNA, NSD, XRNA, etc classes, rename to SecondaryStructure
-- refactor CT to be a subclass of Interactions
-- API changes:
-  - ct, compct, ss to basepairs or ss or something
-  - ct, ij, ij2 to structures, interactions
-- reasonable sizing for all plots
-- text scaling factors based on plot size (this would be easy with sns.context)
+- Class docstrings contain a description, init explains constructor
+### Medium
+- refactor code using ProPlot
+- build heirarchical debugging system?
+- RNAvigate conda package
+- ss plot scales with figure size and can be scaled down.
+- add a printable human-readable identifier for all data:
+  - sample + name + datatype + filepath?
+### Low
+- get median/average/mode for windows in profile data
+- better nucleotide colors and display on linear regression plots
+- New plots:
+  - Paired/Unpaired KDE
+  - disthist as violin plots
+- refactor circle plot to use polar projection
+- secondary structure alignments
+### maybe:
+- calling significant sites with log-corrected profile min-diff comparison
+- passing override values to init_dance
+- analyses are a sub-class of Sample?
+- refactor CT to be a subclass of Interactions?
 - implement profiles for interaction data
   - Pairing probability -> per-nucleotide probability or shannon entropy
   - RING-MaP -> RING density
   - store as attribute, get attribute at point of use
     - e.g. profile.profile returns profile
-- get median/average/mode for windows in profile data
-- passing override values to init_dance
-- better nucleotide colors and display on linear regression plots
+
+Finished
+--------
+- experimental secondary structure based alignments (RNAlign2D)
+- get colorbars working again
+- all rnavigate imports should be absolute and single level for readability:
+  - from rnavigate import namespace
+  - from rnavigate.namespace import variable
+- annotation groups should act exactly like sites
+- simplify arguments:
+  - structure(2) <- ss, ct, comp
+  - sequence <- fit_to, dataframe, filepath, seq_source
+  - interactions(2) <- ij(2)
+  - structure2 <- comp
+  - input_data <- dataframe, filepath
+  - defaults <- column, err_column, color_column, cmap, norm, min_max, etc.
+  - read_table_kw <- read_csv_kw, sep
+- clean up namespace
+- unify the scalar -> rgba functionality for all Data objects
+- changed sequence alignment behavior
+  - all data objects have get_aligned_data which returns a matching datatype
+    with new positions
 - reading in FORNA JSON: how to distinguish between FORNA and R2DT?
-- calling significant sites with log-corrected profile min-diff comparison
-- New plots:
-  - Paired/Unpaired KDE
-  - disthist as violin plots
-- refactor code using ProPlot
-- refactor circle plot to use polar projection
-- sequence + structure alignments
+- support for undercase nucleotides
+- combine VARNA, NSD, XRNA, JSON, CTE, DBN classes, renamed to SecondaryStructure
