@@ -66,6 +66,7 @@ def plot_shapemapper(
     plot.set_figure_size()
     return plot
 
+
 def plot_skyline(
         samples,
         sequence=None,
@@ -396,6 +397,7 @@ def plot_arcs_compare(
         plot.plot_colorbars()
     return plot
 
+
 def plot_ss(
         samples,
         structure="default_structure",
@@ -546,7 +548,7 @@ def plot_mol(
 
 def plot_heatmap(
         samples,
-        pdb=None,
+        structure=None,
         interactions=None,
         labels=None,
         plot_kwargs=None,
@@ -559,7 +561,7 @@ def plot_heatmap(
         samples (list of rnavigate.Sample): Samples to retreive data from.
             number of panels will equal the length of this list, unless filters
             argument below is also used.
-        pdb (str, optional): a key from sample.data to retrieve either
+        structure (str, optional): a key from sample.data to retrieve either
             PDB data with atomic coordinates (contours outline 3D distance) or
             secondary pdb data (contours outline contact distance).
         interactions (str, optional): a key from sample.data to retrieve inter-
@@ -584,27 +586,19 @@ def plot_heatmap(
     parsed_args = PlottingArgumentParser(
         samples=samples,
         labels=labels,
-
+        interactions=interactions
     )
-    interactions = _parse_interactions(interactions)
     plot_kwargs = _parse_plot_kwargs(plot_kwargs, "rnavigate.plots.Heatmap")
-    labels = _parse_labels(samples, labels)
-    # if interactions and samples > 1, rows = # samples, columns = # interactions
-    if (len(interactions) > 1) and (len(samples) > 1):
-        plot_kwargs |= {'rows': len(samples), 'cols': len(interactions)}
+    parsed_args.update_rows_cols(plot_kwargs)
     # initialize plot using 1st 3D pdb (applies to all samples)
-    num_samples = len(samples) * len(interactions)
-    pdb = samples[0].data[pdb]
-    plot = plots.Heatmap(num_samples, pdb, **plot_kwargs)
+    structure = samples[0].data[structure]
+    plot = plots.Heatmap(parsed_args.num_samples, structure, **plot_kwargs)
     # loop through samples and interactions, adding each as a new axis
-    for sample, label in zip(samples, labels):
-        for each_interactions in interactions:
-            sample.filter_interactions(**each_interactions)
-            each_interactions = sample.get_data(each_interactions['interactions'])
-            each_interactions = fit_data(each_interactions, pdb)
-            plot.plot_data(interactions=each_interactions, label=label, **kwargs)
+    for data_dict in parsed_args.data_dicts:
+        plot.plot_data(**data_dict, **kwargs)
     plot.set_figure_size()
     return plot
+
 
 def plot_circle(
         samples,
@@ -739,6 +733,7 @@ def plot_linreg(
     plot.set_figure_size()
     return plot
 
+
 def plot_roc(
         samples,
         structure="default_structure",
@@ -781,7 +776,7 @@ def plot_roc(
     plot_kwargs = _parse_plot_kwargs(plot_kwargs, "rnavigate.plots.ROC")
     plot = plots.ROC(parsed_args.num_samples, **plot_kwargs)
     for data_dict in parsed_args.data_dicts:
-        data_dict = fit_data(data_dict, data_dict['structure'])
+        data_dict = fit_data(data_dict, data_dict['structure']._alignment)
         plot.plot_data(**data_dict, **kwargs)
     plot.set_figure_size()
     return plot
@@ -846,9 +841,9 @@ def plot_disthist(
     else:
         parsed_args.update_rows_cols(plot_kwargs)
         plot = plots.DistHist(parsed_args.num_samples, **plot_kwargs)
-        axis = None
+        ax = None
     # loop through samples and interactions, adding each as a new axis
     for data_dict in parsed_args.data_dicts:
-        plot.plot_data(**data_dict, axis=axis, **kwargs)
+        plot.plot_data(**data_dict, ax=ax, **kwargs)
     plot.set_figure_size()
     return plot
