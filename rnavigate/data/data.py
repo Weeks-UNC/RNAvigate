@@ -162,7 +162,7 @@ class Data(Sequence):
                 'normalization': '0_1',
                 'values': None,
                 'extend': 'neither',
-                'label': 'Type: metric',
+                'title': 'Type: metric',
                 'alpha': 0.7},
             "Distance": {
                 "metric_column": "Distance",
@@ -172,7 +172,7 @@ class Data(Sequence):
                 "normalization": "min_max",
                 "values": [5, 50],
                 'extend':'both',
-                'label':'3D distance',
+                'title':'3D distance',
                 'alpha': 0.7},
             }
         self.add_metric_defaults(metric_defaults)
@@ -234,7 +234,7 @@ class Data(Sequence):
 
     @property
     def colors(self):
-        return self.cmap.values_to_hexcolors(self.data[self.color_column])
+        return self.cmap.values_to_hexcolors(np.ma.masked_invalid(self.data[self.color_column]))
 
     def read_file(self, filepath, read_table_kw):
         """Convert data file to pandas dataframe and store as self.data
