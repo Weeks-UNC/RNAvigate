@@ -575,7 +575,7 @@ class SHAPEJuMP(Interactions):
                 'cmap': 'YlGnBu',
                 'normalization': 'min_max',
                 'values': [0.98, 1.0],
-                'label': 'SHAPE-JuMP: percentile',
+                'title': 'SHAPE-JuMP: percentile',
                 'extend': 'min'},
             'Metric': {
                 'metric_column': 'Metric',
@@ -583,7 +583,7 @@ class SHAPEJuMP(Interactions):
                 'normalization': 'min_max',
                 'values': [0, 0.001],
                 'extend': 'max',
-                'label': 'SHAPE-JuMP: rate'},
+                'title': 'SHAPE-JuMP: rate'},
         } | metric_defaults
         super().__init__(
             input_data=input_data,
@@ -620,14 +620,14 @@ class RINGMaP(Interactions):
                 'cmap': 'bwr',
                 'normalization': 'min_max',
                 'values': [-100, 100],
-                'label': 'RING-MaP: Gapc',
+                'title': 'RING-MaP: Gapc',
                 'extend': 'both'},
             'Zij': {
                 'metric_column': 'Zij',
                 'cmap': 'bwr',
                 'normalization': 'min_max',
                 'values': [-8, 8],
-                'label': 'RING-MaP: Zij',
+                'title': 'RING-MaP: Zij',
                 'extend': 'both'}
         } | metric_defaults
         super().__init__(
@@ -711,7 +711,7 @@ class PAIRMaP(RINGMaP):
                     [0.12, 0.76, 1.0]]),
                 'normalization': 'none',
                 'values': None,
-                'label': 'PAIR-MaP',
+                'title': 'PAIR-MaP',
                 'extend': 'both',
                 'ticks': [0, 1, 2],
                 'tick_labels': ["Complimentary", "Primary", "Secondary"]}
@@ -801,7 +801,7 @@ class PairingProbability(Interactions):
                     10, 0.7, 0.9, 1.5, 2.5, 1, 0.4, False, True),
                 'normalization': 'min_max',
                 'values': [0, 1],
-                'label': 'Pairing probability',
+                'title': 'Pairing probability',
                 'extend': 'neither'},
             'Probability_old': {
                 'metric_column': 'Probability',
@@ -813,14 +813,14 @@ class PairingProbability(Interactions):
                 'normalization': 'bins',
                 'values': [0.1, 0.3, 0.8],
                 'extend': 'neither',
-                'label': 'Pairing probability'},
+                'title': 'Pairing probability'},
             'Probability_continuous': {
                 'metric_column': 'Probability',
                 'cmap': 'plasma_r',
                 'normalization': 'min_max',
                 'values': [0.0, 1.0],
                 'extend': 'neither',
-                'label': 'Pairing probability'}
+                'title': 'Pairing probability'}
         } | metric_defaults
         super().__init__(
             input_data=input_data,
@@ -892,7 +892,7 @@ class AllPossible(Interactions):
                 'cmap': 'magenta',
                 'normalization': 'none',
                 'values': None,
-                'label': 'Hypthetical pairs',
+                'title': 'Hypthetical pairs',
                 'extend': 'neither'}
         } | metric_defaults
         if input_data is not None:
@@ -923,7 +923,7 @@ class StructureInteractions(Interactions):
                 'cmap': 'grey',
                 'normalization': 'none',
                 'ticks': [],
-                'label': 'Base-pairs',
+                'title': 'Base-pairs',
                 'extend': 'neither'}}
         if structure2 is not None:
             input_data = input_data.merge(
@@ -940,14 +940,14 @@ class StructureInteractions(Interactions):
                     'cmap': 'grey',
                     'normalization': 'none',
                     'ticks': [],
-                    'label': 'Base-pairs',
+                    'title': 'Base-pairs',
                     'extend': 'neither'},
                 'Structure_right': {
                     'metric_column': 'Structure_right',
                     'cmap': 'grey',
                     'normalization': 'none',
                     'ticks': [],
-                    'label': 'Base-pairs',
+                    'title': 'Base-pairs',
                     'extend': 'neither'},
                 'Which_structure': {
                     'metric_column': 'Which_structure',
@@ -957,7 +957,7 @@ class StructureInteractions(Interactions):
                         (153/255., 0.0, 1.0),           # right
                     ],
                     'normalization': 'none',
-                    'label': 'Base-pairs by structure',
+                    'title': 'Base-pairs by structure',
                     'extend': 'neither'
                 }
             }

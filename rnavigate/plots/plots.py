@@ -38,16 +38,11 @@ class Plot(ABC):
         rows = len(self.colorbars)
         if rows == 0:
             return (None, None)
-        fig, axes = plt.subplots(rows, 1, figsize=(8, 1.5 * rows), squeeze=False)
-        for cbar, ax in zip(self.colorbars, axes[:, 0]):
-            colorbar = plt.colorbar(cbar, cax=ax, orientation="horizontal",
-                         **cbar.cbar_args)
-            if cbar.tick_labels is not None:
-                colorbar.ax.set_xticklabels(cbar.tick_labels)
-            colorbar.outline.set_visible(False)
-            colorbar.set_alpha(0.7)
-        plt.tight_layout()
-        return (fig, axes)
+        plot = ColorBar(rows)
+        for colorbar in self.colorbars:
+            plot.plot_data(colorbar)
+        plot.set_figure_size()
+
 
     def get_rows_columns(self, rows=None, cols=None):
         has_rows = isinstance(rows, int)
@@ -234,3 +229,29 @@ def clip_spines(ax, spines):
         if spine in ["top", "bottom"]:
             ticks = ax.get_xticks()
         ax.spines[spine].set_bounds((min(ticks), max(ticks)))
+
+class ColorBar(Plot):
+    def plot_data(self, colorbar):
+        ax = self.get_ax(self.i)
+        cax = plt.colorbar(colorbar, cax=ax, orientation="horizontal",
+                                aspect=40, **colorbar.cbar_args)
+        if colorbar.tick_labels is not None:
+            ax.set_xticklabels(colorbar.tick_labels)
+        ax.set_title(colorbar.title)
+        cax.outline.set_visible(False)
+        cax.set_alpha(0.7)
+        self.i += 1
+
+    def get_figsize(self):
+        return (2, self.rows/2)
+
+    def set_figure_size(
+            self, fig=None, ax=None, rows=None, cols=None,
+            height_ax_rel=None, width_ax_rel=None,
+            width_ax_in=3, height_ax_in=0.1,
+            height_gap_in=None, width_gap_in=None,
+            top_in=None, bottom_in=None, left_in=None, right_in=None):
+        return super().set_figure_size(
+            fig, ax, rows, cols, height_ax_rel, width_ax_rel, width_ax_in,
+            height_ax_in, height_gap_in, width_gap_in, top_in, bottom_in,
+            left_in, right_in)
