@@ -457,7 +457,7 @@ class Sample():
         """
         if isinstance(keys, list):
             return [self.get_data_list(key) for key in keys]
-        elif keys == "ctcompare":
+        elif isinstance(keys, str) and (keys == "ctcompare"):
             return self.get_data_list(["ct", "compct"])
         else:
             return self.get_data(keys)
@@ -499,7 +499,7 @@ class Sample():
                 print(f"{interactions} not found in sample data")
             return
 
-        interactions = self.data[interactions]
+        interactions = self.get_data(interactions)
         if not isinstance(interactions, data.Interactions):
             if not suppress:
                 print(f"{interactions} is not an Interactions datatype")
@@ -507,7 +507,7 @@ class Sample():
 
         if metric is not None:
             if metric.startswith("Distance"):
-                metric = (metric, self.data["pdb"])
+                metric = (metric, self.get_data("pdb"))
             interactions.metric = metric
         else:
             interactions.metric = interactions.default_metric
@@ -517,9 +517,9 @@ class Sample():
             interactions.min_max = min_max
         for datatype in ["profile", "ct"]:
             if datatype in kwargs.keys():
-                kwargs[datatype] = self.data[kwargs[datatype]]
+                kwargs[datatype] = self.get_data(kwargs[datatype])
             elif datatype in self.data.keys():
-                kwargs[datatype] = self.data[datatype]
+                kwargs[datatype] = self.get_data(datatype)
         if not hasattr(fit_to, "sequence"):
             fit_to = self.get_data_list(fit_to)
         interactions.filter(fit_to, **kwargs)
@@ -549,14 +549,14 @@ class Sample():
         if ssfilter:
             kwargs["ss_only"] = True
         kwargs["Statistic_ge"] = sigfilter
-        ctlist = [dance.data["ct"] for dance in self.dance]
+        ctlist = [dance.get_data("ct") for dance in self.dance]
         for dance in self.dance:
-            dance_ct = dance.data["ct"]
+            dance_ct = dance.get_data("ct")
             fit_to = get_sequence(
                 seq_source=fit_to, sample=dance, default='ct')
-            dance.data["ringmap"].filter(fit_to=fit_to, ct=dance_ct, **kwargs)
-            dance.data["ringmap"].mask_on_ct(ctlist, min_cd=cdfilter)
-            dance.data["pairmap"].filter(fit_to=fit_to, ct=dance_ct,
+            dance.get_data("ringmap").filter(fit_to=fit_to, ct=dance_ct, **kwargs)
+            dance.get_data("ringmap").mask_on_ct(ctlist, min_cd=cdfilter)
+            dance.get_data("pairmap").filter(fit_to=fit_to, ct=dance_ct,
                                          paired_only=True)
 
 ###############################################################################
@@ -576,7 +576,7 @@ class Sample():
         Returns:
             Plot object:
         """
-        plot = plots.SM(self.data["profile"].length, panels=panels)
+        plot = plots.SM(self.get_data("profile").length, panels=panels)
         plot.add_sample(self, profile="profile", label="label")
         plot.set_figure_size()
         return plot
@@ -612,8 +612,8 @@ def get_sequence(seq_source, sample=None, default=None):
         raise ValueError("A seq_source must be provided.")
     elif seq_source is None:
         seq_source = default
-    if seq_source in sample.data.keys():
-        sequence = sample.data[seq_source]
+    if sample.get_data(seq_source) is not None:
+        sequence = sample.get_data(seq_source)
     elif hasattr(seq_source, "sequence"):
         sequence = seq_source
     elif all([nt.upper() in "AUCGT." for nt in seq_source]):
@@ -634,7 +634,7 @@ def fit_data_list(sample, data_list, fit_to):
     """
     for data_obj in data_list:
         if data_obj in sample.data.keys():
-            sample.data[data_obj].fit_to(fit_to)
+            sample.get_data(data_obj).fit_to(fit_to)
         elif isinstance(data_obj, data.Data):
             data_obj.fit_to(fit_to)
 
@@ -910,8 +910,8 @@ def plot_alignment(data1, data2, labels=None, plot_kwargs=None, **kwargs):
         labels = [f"{s.sample}: {seq}" for s, seq in [data1, data2]]
     plot = plots.Alignment(num_samples=1, **plot_kwargs)
     plot.add_sample(sample=None,
-                    data1=data1[0].data[data1[1]],
-                    data2=data2[0].data[data2[1]],
+                    data1=data1[0].get_data(data1[1]),
+                    data2=data2[0].get_data(data2[1]),
                     label=labels, **kwargs)
     plot.set_figure_size()
     return plot
@@ -1313,11 +1313,11 @@ def plot_mol(samples, structure="pdb", interactions=None,
         filters = [{"interactions": interactions} | interactions_filter]
     num_samples = len(samples) * len(filters)
     # initialize plot using 1st 3D structure (applies to all samples)
-    plot = plots.Mol(num_samples=num_samples, pdb=samples[0].data[structure],
+    plot = plots.Mol(num_samples=num_samples, pdb=samples[0].get_data(structure),
                      **plot_kwargs)
     # loop through samples and filters, adding each as a new viewer
     for sample, label in zip(samples, labels):
-        fit_data_list(sample, [profile], sample.data[structure])
+        fit_data_list(sample, [profile], sample.get_data(structure))
         for filt in filters:
             sample.filter_interactions(fit_to=structure, **filt)
             plot.add_sample(sample=sample,
@@ -1402,7 +1402,7 @@ def plot_heatmap(samples, structure=None, interactions=None,
     # initialize plot using 1st 3D structure (applies to all samples)
     num_samples = len(samples) * len(filters)
     plot = plots.Heatmap(
-        num_samples, samples[0].data[structure], **plot_kwargs)
+        num_samples, samples[0].get_data(structure), **plot_kwargs)
     # loop through samples and filters, adding each as a new axis
     for sample, label in zip(samples, labels):
         for filt in filters:
