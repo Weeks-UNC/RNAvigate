@@ -1,1 +1,1 @@
-from .fragmapper import FragMaP, fragmapper
+from .fragmapper import FragMaP, Fragmapper
