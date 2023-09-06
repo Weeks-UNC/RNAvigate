@@ -22,7 +22,6 @@ __maintainer__ = 'Seth D. Veenbaas'
 __email__ = 'sethv@live.unc.edu'
 
 
-
 class FragMaP(Profile):
     def __init__(self, profile1, profile2, parameters,
                  column='Fragmap_profile',
@@ -41,11 +40,11 @@ class FragMaP(Profile):
 
     def get_dataframe(self, profile1, profile2, mutation_rate_threshold,
                       depth_threshold, p_significant, ss_threshold,
-                      correction_method, by_nucleotide):
+                      correction_method):
         columns = ['Nucleotide', 'Sequence', 'Modified_mutations',
-                        'Modified_effective_depth', 'Modified_rate', 'Std_err']
+                   'Modified_effective_depth', 'Modified_rate', 'Std_err']
         dataframe = pd.merge(profile1.data[columns], profile2.data[columns],
-            how='left', on=['Nucleotide', 'Sequence'], suffixes=('_1', '_2'))
+                             how='left', on=['Nucleotide', 'Sequence'], suffixes=('_1', '_2'))
 
         # Filter data
         dataframe['filter'] = True
@@ -59,27 +58,8 @@ class FragMaP(Profile):
         # Calculate Z-scores for profile 1 and profile 2
         dataframe[['zscore_1', 'zscore_2']] = np.nan
         # Z-scores per nucleotide
-        if by_nucleotide and len(dataframe) > 200:
-            for nt in 'AUCG':
-                valid_nt = valid  & (dataframe['Sequence'] == nt)
-                dataframe.loc[valid_nt, 'zscore_1'] = stats.zscore(
-                    dataframe.loc[valid_nt, 'Modified_rate_1'])
-                dataframe.loc[valid_nt, 'zscore_2'] = stats.zscore(
-                    dataframe.loc[valid_nt, 'Modified_rate_2'])
-        # Z-scores per nucleotide group: A/C and U/G
-        elif by_nucleotide:
-            for nts in [['A', 'C'], ['U', 'G']]:
-                valid_nts = valid & dataframe['sequence'].isin(nts)
-                dataframe.loc[valid_nts, 'zscore_1'] = stats.zscore(
-                    dataframe.loc[valid_nts, 'Modified_rate_1'])
-                dataframe.loc[valid_nts, 'zscore_2'] = stats.zscore(
-                    dataframe.loc[valid_nts, 'Modified_rate_2'])
-        # Z-scores for all nucleotides
-        else:
-            dataframe['zscore_1'] = stats.zscore(
-                dataframe.loc[valid, 'Modified_rate_1'])
-            dataframe['zscore_2'] = stats.zscore(
-                dataframe.loc[valid, 'Modified_rate_2'])
+        FragMaP.calc_zscore(self, valid, dataframe, incolumn='Modified_rate_1', outcolumn= 'zscore_1', base=['A', 'U', 'C', 'G'])
+        FragMaP.calc_zscore(self, valid, dataframe, incolumn='Modified_rate_2', outcolumn= 'zscore_2', base=['A', 'U', 'C', 'G'])
 
         # Frag-MaP profile is the difference in Z-scores
         dataframe.eval('Fragmap_profile = zscore_1 - zscore_2', inplace=True)
@@ -121,12 +101,32 @@ class FragMaP(Profile):
 
         return dataframe
 
+
+    def calc_zscore(self, valid, dataframe, incolumn: str, outcolumn: str, base: list) -> None:
+        sele_data = dataframe.loc[dataframe['Sequence'].isin(base)].copy()
+
+        # Calculate outlier nucleotides 
+        Q1 = sele_data[incolumn].quantile(0.25)
+        Q3 = sele_data[incolumn].quantile(0.75)
+        IQR = Q3 - Q1
+        lower_limit = Q1 - 1.5*IQR
+        upper_limit = Q3 + 1.5*IQR
+        nonoutlier = dataframe[incolumn].between(lower_limit, upper_limit)
+
+        # Calculate zscore
+        valid_nt = valid & dataframe['Sequence'].isin(base)
+        mean = np.mean(np.log10(dataframe.loc[valid_nt & nonoutlier, incolumn]))
+        std = np.std(np.log10(dataframe.loc[valid_nt & nonoutlier, incolumn]))
+        dataframe.loc[valid_nt, outcolumn] = ((np.log10(dataframe.loc[valid_nt, incolumn])) - mean) / std
+
+
     def get_annotation(self):
-        return Annotation(
-            'Frag-MaP sites',
-            sequence=self.sequence,
-            sites=self.data.loc[self.data['Site'], "Nucleotide"].to_list(),
-            color="green")
+        return Annotation(name='Frag-MaP sites',
+                          sequence=self.sequence,
+                          sites=self.data.loc[self.data['Site'],
+                                              "Nucleotide"].to_list(),
+                          annotation_type='sites',
+                          color="green")
 
 
 class Fragmapper(Sample):
@@ -144,8 +144,7 @@ class Fragmapper(Sample):
             'depth_threshold': 5000,
             'p_significant': 0.01,
             'ss_threshold': 0.05,
-            'correction_method': 'fdr_bh',
-            'by_nucleotide': True
+            'correction_method': None
         }
         self.parameters |= parameters
 
