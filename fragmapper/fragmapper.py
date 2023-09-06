@@ -76,9 +76,9 @@ class FragMaP(Profile):
                     dataframe.loc[valid_nts, 'Modified_rate_2'])
         # Z-scores for all nucleotides
         else:
-            dataframe[valid, 'zscore_1'] = stats.zscore(
+            dataframe.loc[valid, 'zscore_1'] = stats.zscore(
                 dataframe.loc[valid, 'Modified_rate_1'])
-            dataframe[valid, 'zscore_2'] = stats.zscore(
+            dataframe.loc[valid, 'zscore_2'] = stats.zscore(
                 dataframe.loc[valid, 'Modified_rate_2'])
 
         # Frag-MaP profile is the difference in Z-scores
