@@ -142,7 +142,7 @@ class Fragmapper(Sample):
         self.parameters = {
             'mutation_rate_threshold': 0.025,
             'depth_threshold': 5000,
-            'p_significant': 0.01,
+            'p_significant': 0.001,
             'ss_threshold': 0.05,
             'correction_method': None
         }
