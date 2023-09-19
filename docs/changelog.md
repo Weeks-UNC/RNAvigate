@@ -47,3 +47,16 @@ Features:
   - sets figure size so that axis unit to inches ratio is consistent
 
 ---
+
+0.2.0 (September 2023)
+----------------------
+
+NOTES:
+
+- Got rid of `sample.plot_function()` because it is redundant: use `rnav.plot_function([sample])` instead
+- Position labelling on secondary structure is prettier
+- New features for linear regression plots:
+  - pearson or spear correlations
+  - any column of data
+  - log or linear regression
+- Fragmapper analysis

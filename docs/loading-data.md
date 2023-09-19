@@ -4,7 +4,7 @@ Loading data
 RNAvigate is built around the `Sample` object, which is used to define the
 data files that are associated with a particular experimental sample or a
 particular RNA. Creating a `Sample` and providing data files will load each of
-your data files and store the data as Python objects. The Data objects allow
+your data files and store the data as Python objects. These data objects allow
 access to all of the visualization and analysis tools RNAvigate has to offer.
 Here is how to create a sample:
 
@@ -19,21 +19,19 @@ my_sample = rnav.Sample(
 `import rnavigate as rnav` imports the RNAvigate module and gives you access to
 all of its functionality using the alias `rnav`.
 
-`my_sample` is the python variable that your sample is stored to.
-
-`rnav.Sample()` calls the `Sample` initialization method, creating a new sample.
-
-`sample="My Sample Name"` is always the first argument-value pair, it defines
-the label that will be used in legends and figure titles when plotting data
-from `my_sample`. It should succinctly describe the experiment and/or the RNA.
-e.g., "RNaseP DMS-MaP".
-
-`datatype="Path/to/my/data.file"` loads a data file and adds it to
-`my_sample.data`, a Python dictionary. You can access this data using
-`my_sample.data["datatype"]`. However, `datatype` is just a placeholder, not a
-valid argument. Below are all of the valid arguments and their default values.
-Further below are explainations of the values that can be used with each
-argument. As support for new data types are added, this list will grow.
+`my_sample = rnav.Sample()` creates a new `Sample` and stores it in the
+local variable `my_sample`. Within the parentheses, you can provide any number
+of argument-value pairs:
+- `sample="My Sample Name"` defines the label that will be used in legends and
+  figure titles when plotting data from `my_sample`. It should succinctly
+  describe the experiment and/or the RNA. e.g., "RNaseP DMS-MaP".
+- `datatype="Path/to/my/data.file"` loads a data file and adds it to
+  `my_sample.data`, a Python dictionary. You can access this data using
+  `my_sample.data["datatype"]`.
+`datatype` in the example above is just a placeholder, not a valid argument.
+Below are all of the valid arguments and their default values. Further below
+are explainations of the values that can be used with each argument. This list
+will grow over time as support for new datatypes is added.
 
 ```python
 my_sample = rnav.Sample(
