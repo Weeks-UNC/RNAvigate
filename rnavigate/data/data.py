@@ -257,7 +257,7 @@ class Data():
         elif isinstance(source, str) and (source == "position"):
             cmap = plt.get_cmap(pos_cmap)
             cmap_values = np.arange(self.length)/self.length
-            return cmap(cmap_values)
+            return np.array([mpc.rgb2hex(rgb) for rgb in cmap(cmap_values)])
         elif isinstance(source, str) and (source == "profile"):
             prof_colors = profile.colors
             colors = np.full(self.length, 'gray', dtype='<U16')

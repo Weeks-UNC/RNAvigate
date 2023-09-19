@@ -192,6 +192,7 @@ class LogCompare():
 
         # create a color bar scale for z-score differences
         axin1 = ax.inset_axes([0.8, 0.1, 0.15, 0.15])
+        cmap = plt.get_cmap('bwr')
         Plot.view_colormap(ax=axin1, ticks=[0, 5, 10], values=[-5, 0, 5],
-                           title="Z-score", cmap="bwr")
+                           title="Z-score", cmap=list(cmap(np.arange(cmap.N))))
         plt.tight_layout()
