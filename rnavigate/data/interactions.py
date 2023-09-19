@@ -363,7 +363,7 @@ class Interactions(data.Data):
         if filters_are_on(exclude_nts, isolate_nts):
             self.mask_on_position(exclude_nts, isolate_nts)
         if filters_are_on(max_distance, min_distance):
-            self.mask_on_distance(max_dist=max_distance, min_dist=min_distance)
+            self.mask_on_on_distance(max_dist=max_distance, min_dist=min_distance)
         if filters_are_on(min_profile, max_profile):
             self.mask_on_profile(profile, min_profile, max_profile)
         if filters_are_on(min_cd, max_cd, ss_only, ds_only, paired_only):

@@ -7,8 +7,9 @@ import matplotlib.pyplot as plt
 class Mol(plots.Plot):
     def __init__(self, num_samples, pdb, width=400, height=400,
                  background_alpha=1, rotation=None, orientation=None,
-                 rows=None, cols=None):
+                 style='cartoon', rows=None, cols=None):
         self.colorbars = []
+        self.style = style
         self.pdb = pdb
         self.length = num_samples
         self.rows, self.columns = self.get_rows_columns(rows=rows, cols=cols)
@@ -17,12 +18,12 @@ class Mol(plots.Plot):
         view.setBackgroundColor('white', background_alpha)
         with open(self.pdb.path, 'r') as pdb_file:
             pdb_str = pdb_file.read()
-        if self.pdb.path.split('.')[-1] == "pdb":
+        if self.pdb.path.split('.')[-1] == 'pdb':
             view.addModel(pdb_str, 'pdb')
-        elif self.pdb.path.split('.')[-1] == "cif":
+        elif self.pdb.path.split('.')[-1] == 'cif':
             view.addModel(pdb_str, 'mmcif')
-        view.setStyle({"cartoon": {'color': 'spectrum'}})
-        view.zoomTo({"chain": self.pdb.chain})
+        view.setStyle({self.style: {'color': 'spectrum'}})
+        view.zoomTo({'chain': self.pdb.chain})
         if orientation is not None:
             view.setView(orientation)
         elif rotation is not None:
@@ -31,10 +32,10 @@ class Mol(plots.Plot):
         self.view = view
         self.i = 0
         self.pass_through = [
-            "nt_color",
-            "atom",
-            "title",
-            "get_orientation"]
+            'nt_color',
+            'atom',
+            'title',
+            'get_orientation']
 
     def get_figsize(self):
         pass
@@ -103,7 +104,7 @@ class Mol(plots.Plot):
                 color_selector[color] = [res]
         for color in color_selector.keys():
             selector = {'chain': self.pdb.chain, 'resi': color_selector[color]}
-            style = {"cartoon": {"color": color}}
+            style = {self.style: {"color": color}}
             self.view.setStyle(selector, style, viewer=viewer)
         selector = {'chain': self.pdb.chain,
                     'resi': valid_pdbres, 'invert': 'true'}

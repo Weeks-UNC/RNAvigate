@@ -3,14 +3,14 @@ from rnavigate import data
 import numpy as np
 
 
-class PDB(data.Sequence):
-    def __init__(self, input_data, chain, sequence=None):
+class PDB(data.Data):
+    def __init__(self, filepath, chain, sequence=None):
         self.chain = chain
         if sequence is None:
-            sequence = self.get_sequence(input_data)
-        super().__init__(input_data=sequence)
-        self.read_pdb(input_data)
-        self.path = input_data
+            sequence = self.get_sequence(filepath)
+        super().__init__(sequence=sequence)
+        self.read_pdb(filepath)
+        self.path = filepath
         self.distance_matrix = {}
 
     def get_sequence(self, pdb):

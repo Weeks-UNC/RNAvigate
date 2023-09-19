@@ -80,7 +80,7 @@ class Sample:
         return profiles
 
     @property
-    def structure(self):
+    def structures(self):
         structure = []
         for data_keyword, data_object in self.data.items():
             if isinstance(data_object, data.SecondaryStructure):
@@ -258,7 +258,7 @@ class Sample:
         if interactions is None:
             return
         try:
-            interactions = self.data[interactions]
+            interactions = self.get_data(interactions)
         except KeyError as exception:
             raise KeyError(
                 f'{interactions} is not in {self.sample}') from exception
@@ -272,7 +272,7 @@ class Sample:
                 metric, atom = metric.split('_')
             else:
                 atom = "O2'"
-            interactions.set_3d_distances(self.data["pdb"], atom)
+            interactions.set_3d_distances(self.get_data("pdb"), atom)
         try:
             metric = interactions.metric_defaults[metric]
         except KeyError:
@@ -315,7 +315,7 @@ class Sample:
         if ss_only:
             kwargs["ss_only"] = True
         kwargs["Statistic_ge"] = Statistic_ge
-        ctlist = [dance.data["default_structure"] for dance in self.dance]
+        ctlist = [dance.get_data("default_structure") for dance in self.dance]
         for dance in self.dance:
             dance_ct = dance.data["default_structure"]
             fit_to = get_sequence(

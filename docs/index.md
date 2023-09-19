@@ -41,7 +41,7 @@ sample_name = rnav.Sample(
 ```python
 rnav.plotting_function(
     samples=[sample_name]
-    plotting_keyword="data_class_keyword"
+    plotting_keyword="data_keyword"
 )
 ```
 

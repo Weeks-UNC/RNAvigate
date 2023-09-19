@@ -51,8 +51,8 @@ class WindowedAUROC():
 
         # store basic information
         self.sample = sample
-        self.structure = sample.data[structure]
-        self.profile = sample.data[profile]
+        self.structure = sample.get_data(structure)
+        self.profile = sample.get_data(profile)
         self.sequence = self.structure.sequence
         self.window = pad * 2 + 1
         self.nt_length = self.structure.length

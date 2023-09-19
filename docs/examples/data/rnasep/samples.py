@@ -26,9 +26,6 @@ common_data = rnav.Sample(
     },
     ss=abspath("RC_CRYSTAL_STRUCTURE.xrna"),
     ct=abspath("RNaseP.ct"),
-    pairprob={
-        "filepath": abspath("rnasep.dp"),
-        "fasta": abspath("RNaseP-withSC.fasta")}
 )
 
 example1 = rnav.Sample(
@@ -39,6 +36,7 @@ example1 = rnav.Sample(
     pairmap=abspath("example1-rnasep-pairmap.txt"),
     ringmap=abspath("example1-rnasep.corrs"),
     dance_prefix=abspath("example1_rnasep"),
+    pairprob=abspath("rnasep.dp")
 )
 
 example2 = rnav.Sample(
@@ -49,6 +47,7 @@ example2 = rnav.Sample(
     pairmap=abspath("example2-rnasep-pairmap.txt"),
     ringmap=abspath("example2-rnasep.corrs"),
     dance_prefix=abspath("example2_rnasep"),
+    pairprob=abspath("rnasep.dp")
 )
 
 example3 = rnav.Sample(
@@ -59,6 +58,7 @@ example3 = rnav.Sample(
     pairmap=abspath("example3-rnasep-pairmap.txt"),
     ringmap=abspath("example3-rnasep.corrs"),
     dance_prefix=abspath("example3_rnasep"),
+    pairprob=abspath("rnasep.dp")
 )
 
 example4 = rnav.Sample(
@@ -69,4 +69,5 @@ example4 = rnav.Sample(
     pairmap=abspath("example4-rnasep-pairmap.txt"),
     ringmap=abspath("example4-rnasep.corrs"),
     dance_prefix=abspath("example4_rnasep"),
+    pairprob=abspath("rnasep.dp")
 )
