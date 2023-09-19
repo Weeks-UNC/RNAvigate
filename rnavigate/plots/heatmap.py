@@ -2,10 +2,11 @@ from matplotlib.colors import LinearSegmentedColormap, ListedColormap
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
-from .plots import Plot
+from rnavigate import plots
+from rnavigate import data
 
 
-class Heatmap(Plot):
+class Heatmap(plots.Plot):
     def __init__(self, num_samples, structure):
         super().__init__(num_samples, sharey=True)
         self.structure = structure
@@ -69,11 +70,10 @@ class Heatmap(Plot):
         for i in range(structure.length):
             for j in range(i, structure.length):
                 distances[i, j] = 0
-        if levels is None:
-            levels = {"ct": [5],
-                      "ss": [5],
-                      "pdb": [20]
-                      }[structure.datatype]
+        if (levels is None) and isinstance(structure, data.CT):
+            levels = [5]
+        elif (levels is None) and isinstance(structure, data.PDB):
+            levels = [20]
         cmap = LinearSegmentedColormap.from_list('contours', ['black', 'gray'])
         x_y = list(range(1, structure.length+1))
         ax.contour(x_y, x_y, distances, levels=levels, cmap=cmap,
@@ -84,7 +84,7 @@ class Heatmap(Plot):
         data = interactions.data.loc[interactions.data["mask"]].copy()
         metric = interactions.metric
         columns = ["i_offset", "j_offset", metric]
-        if interactions.datatype == "rings":
+        if isinstance(interactions, data.RINGMaP):
             data = data[columns+["Sign"]]
             data[metric] = data[metric]*data["Sign"]
         data = data[columns]
@@ -111,7 +111,7 @@ class Heatmap(Plot):
         else:
             cmap = interactions.cmap
             cmap = cmap(np.arange(cmap.N))
-        if interactions.datatype != "rings":
+        if not isinstance(interactions, data.RINGMaP):
             cmap[0, :] = [1, 1, 1, 0]
         cmap = ListedColormap(cmap)
         ax.imshow(data_im, cmap=cmap, vmin=min_max[0], vmax=min_max[1],

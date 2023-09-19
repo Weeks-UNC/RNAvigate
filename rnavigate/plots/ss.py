@@ -1,9 +1,9 @@
 from .plots import Plot
 import numpy as np
-import matplotlib.pyplot as plt
 from matplotlib.colors import to_rgb
 from matplotlib.path import Path
 from matplotlib.collections import LineCollection
+from scipy.spatial.distance import cdist
 
 
 class SS(Plot):
@@ -67,8 +67,9 @@ class SS(Plot):
         ax = self.get_ax()
         self.plot_sequence(ax=ax, ss=structure, profile=profile, colors=colors,
                            sequence=sequence, apply_color_to=apply_color_to,
-                           positions=positions, bp_style=bp_style,
-                           annotations=annotations)
+                           bp_style=bp_style, annotations=annotations)
+        if positions:
+            self.plot_positions(ax=ax, ss=structure)
         self.plot_interactions(ax=ax, ss=structure, interactions=interactions)
         self.plot_interactions(ax=ax, ss=structure, interactions=interactions2)
         for annotation in annotations:
@@ -170,7 +171,7 @@ class SS(Plot):
                             linewidth=2)
 
     def plot_sequence(self, ax, ss, profile, colors, sequence, annotations,
-                      apply_color_to, positions, bp_style):
+                      apply_color_to, bp_style):
         nuc_z = self.plot_params["nucleotide_z"]
         seq_z = self.plot_params["sequence_z"]
         valid_apply = ["background", "sequence", "structure", None]
@@ -210,8 +211,6 @@ class SS(Plot):
                     nt_color[i] = 'w'
             nt_color = np.array(nt_color)
 
-        if positions:
-            self.plot_positions(ax, text_color=nt_color, bbox_color=bg_color)
         ax.scatter(ss.xcoordinates, ss.ycoordinates, marker="o",
                    c=bg_color, s=256, zorder=nuc_z)
         if sequence:
@@ -239,17 +238,38 @@ class SS(Plot):
             self.add_lines(ax=ax, ss=ss, i=i, j=j, color=color)
         self.add_colorbar_args(interactions=interactions)
 
-    def plot_positions(self, ax, ss, text_color, bbox_color, spacing=20):
+    def plot_positions(self, ax, ss, spacing=20):
         zorder = self.plot_params["position_z"]
-        for i in range(spacing, ss.length, spacing):
-            ax.annotate(f"{ss.sequence[i-1]}\n{i}",
-                        xy=(ss.xcoordinates[i-1], ss.ycoordinates[i-1]),
-                        horizontalalignment="center",
-                        verticalalignment="center",
-                        color=text_color[i-1],
-                        xycoords="data", fontsize=12, zorder=zorder,
-                        bbox=dict(boxstyle="Circle", pad=0.1, ec="none",
-                                  fc=bbox_color[i-1]))
+        xs = ss.xcoordinates
+        ys = ss.ycoordinates
+        thetas = np.pi/32 * np.arange(64)
+        x_shift = np.sin(thetas)
+        y_shift = np.cos(thetas)
+        # for i, x in enumerate(xs):
+        #     for j, y in enumerate(ys):
+        #         distances[i,j] = (x**2 + y**2)**0.5
+        for nt in range(spacing-1, ss.length, spacing):
+            x_nt = xs[nt]
+            y_nt = ys[nt]
+            x_pos = xs[nt] + (x_shift * 2)
+            y_pos = ys[nt] + (y_shift * 2)
+            not_nt = np.arange(ss.length) != nt
+            nt_box = (np.abs(xs - xs[nt]) < 4) & (np.abs(ys - ys[nt]) < 4)
+            # print(np.vstack((x_pos, y_pos)).T)
+            dists = cdist(
+                np.vstack((x_pos, y_pos)).T,
+                np.vstack((xs[not_nt & nt_box], ys[not_nt & nt_box])).T,
+                'euclidean')
+            min_dists = np.min(dists, axis=1)
+            which_pos = np.where(min_dists == np.max(min_dists))[0]
+            x_label = x_pos[which_pos]
+            y_label = y_pos[which_pos]
+            bbox=dict(boxstyle="round", fc="w", ec="w", pad=0.1)
+            ax.plot([float(x_nt), float(x_label)],
+                    [float(y_nt), float(y_label)],
+                    color='k', lw=3)
+            ax.text(x_label, y_label, str(nt+1), ha='center', va='center',
+                    bbox=bbox, zorder=zorder+1)
 
     def plot_annotation(self, ax, ss, annotation):
         color = annotation.color

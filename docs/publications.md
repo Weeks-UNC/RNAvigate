@@ -6,8 +6,5 @@ appreciate a citation! I will add your paper to this list.
 
 ## RNAvigate paper
 
-citation:
-
-* link: coming soon
-* pdf: coming soon
+* [bioRxiv](https://www.biorxiv.org/content/10.1101/2023.04.25.538311v1)
 * [figure notebooks](https://github.com/Weeks-UNC/RNAvigate_figures)

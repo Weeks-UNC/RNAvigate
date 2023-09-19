@@ -14,7 +14,7 @@ RNAvigate is not available via pip or conda. This is coming soon. However, I
 have included a conda environment file. If you are using conda, follow this
 guide for the easiest installation.
 
-1. Open a terminal and navigate to the directory you'll be saving RNAvigate.
+1. Open a terminal and navigate to the directory in which you'll save RNAvigate.
 2. Clone the github repository.
 3. Navigate into the RNAvigate directory.
 4. Create and activate a conda enviroment using the included env.yaml file

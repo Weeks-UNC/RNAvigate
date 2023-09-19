@@ -1,7 +1,7 @@
-from .plots import Plot
+from rnavigate import plots
 
 
-class DistHist(Plot):
+class DistHist(plots.Plot):
     def __init__(self, num_samples, **plot_kwargs):
         super().__init__(num_samples, sharey=True, **plot_kwargs)
         self.axes2 = {}

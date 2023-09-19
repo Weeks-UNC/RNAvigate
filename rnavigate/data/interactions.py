@@ -391,14 +391,18 @@ class Interactions(Data):
                 kept. Defaults to False.
         """
         am = self.get_alignment_map(fit_to)
-        i = np.array([am[i-1]+1 for i in self.data["i"].values])
-        j = np.array([am[j-1]+1 for j in self.data["j"].values])
+        def new_positions(positions):
+            return np.array([am[i-1]+1 for i in positions])
+        
+        i = new_positions(self.data["i"].values)
+        j = new_positions(self.data["j"].values)
         if prefiltered:
             mask = self.data["mask"].copy()
         else:
             mask = np.ones(len(i), dtype=bool)
         for w in range(self.window):
-            mask = mask & ((i+w) != 0) & ((j+w) != 0)
+            mask &= new_positions(self.data["i"] + w) != 0
+            mask &= new_positions(self.data["j"] + w) != 0
         self.data["mask"] = mask
         self.data['i_offset'] = i
         self.data['j_offset'] = j
@@ -481,7 +485,7 @@ class Interactions(Data):
         if filters_are_on(exclude_nts, isolate_nts):
             self.mask_on_position(exclude_nts, isolate_nts)
         if filters_are_on(max_distance, min_distance):
-            self.mask_distance(max_dist=max_distance, min_dist=min_distance)
+            self.mask_on_distance(max_dist=max_distance, min_dist=min_distance)
         if filters_are_on(min_profile, max_profile):
             self.mask_on_profile(profile, min_profile, max_profile)
         if filters_are_on(min_cd, max_cd, ss_only, ds_only, paired_only):

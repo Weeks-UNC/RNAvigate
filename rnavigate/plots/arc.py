@@ -40,23 +40,25 @@ class AP(Plot):
                   ct_panel="top", annotations=[], annotation_mode="track",
                   profile_panel="top", annotation_gap=None,
                   profile_scale_factor=1, plot_error=True):
-        annotations = [annotation.fitted for annotation in annotations]
         ax = self.get_ax(ax)
         if annotation_mode == "track" and annotation_gap is None:
             annotation_gap = 2*(2*len(annotations) + seqbar)
         elif annotation_gap is None:
             annotation_gap = 2*seqbar
         self.set_axis(ax=ax, annotation_gap=annotation_gap)
-        self.add_patches(ax=ax, data=ct, panel=ct_panel,
-                         annotation_gap=annotation_gap, comp=comp)
-        self.add_patches(ax=ax, data=interactions, panel=interactions_panel,
-                         annotation_gap=annotation_gap)
-        self.add_patches(ax=ax, data=interactions2, panel=interactions2_panel,
-                         annotation_gap=annotation_gap)
-        self.plot_profile(ax=ax, profile=profile,
-                          annotation_gap=annotation_gap, panel=profile_panel,
-                          plot_error=plot_error,
-                          profile_scale_factor=profile_scale_factor)
+        self.plot_arcs(
+            ax=ax, data=ct, panel=ct_panel,
+            annotation_gap=annotation_gap, comp=comp)
+        self.plot_arcs(
+            ax=ax, data=interactions, panel=interactions_panel,
+            annotation_gap=annotation_gap)
+        self.plot_arcs(
+            ax=ax, data=interactions2, panel=interactions2_panel,
+            annotation_gap=annotation_gap)
+        self.plot_profile(
+            ax=ax, profile=profile, annotation_gap=annotation_gap,
+            panel=profile_panel, plot_error=plot_error,
+            profile_scale_factor=profile_scale_factor)
         for i, annotation in enumerate(annotations):
             self.plot_annotation(ax, annotation=annotation, yvalue=-2-(4*i),
                                  mode=annotation_mode)
@@ -91,7 +93,7 @@ class AP(Plot):
                             "alpha": 0.5,
                             "boxstyle": "round,pad=0.1,rounding_size=0.2"})
 
-    def add_patches(self, ax, data, panel, annotation_gap, comp=None):
+    def plot_arcs(self, ax, data, panel, annotation_gap, comp=None):
         if comp is not None:
             ij_colors = data.get_ij_colors(comp)
             self.add_colorbar_args(interactions="ct_compare")
@@ -134,7 +136,7 @@ class AP(Plot):
         if profile is None:
             return
         data = profile.get_plotting_dataframe()
-        factor = profile.ap_scale_factor * profile_scale_factor
+        factor = profile_scale_factor
         values = data["Values"]
         colormap = data["Colors"]
         nts = data["Nucleotide"]

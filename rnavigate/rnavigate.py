@@ -9,6 +9,7 @@ import json
 from .data import get_ss_class
 from . import plots
 from . import data
+from . import styles
 
 
 def create_code_button():
@@ -456,7 +457,7 @@ class Sample():
         """
         if isinstance(keys, list):
             return [self.get_data_list(key) for key in keys]
-        elif keys == "ctcompare":
+        elif isinstance(keys, str) and (keys == "ctcompare"):
             return self.get_data_list(["ct", "compct"])
         else:
             return self.get_data(keys)
@@ -498,7 +499,7 @@ class Sample():
                 print(f"{interactions} not found in sample data")
             return
 
-        interactions = self.data[interactions]
+        interactions = self.get_data(interactions)
         if not isinstance(interactions, data.Interactions):
             if not suppress:
                 print(f"{interactions} is not an Interactions datatype")
@@ -506,7 +507,7 @@ class Sample():
 
         if metric is not None:
             if metric.startswith("Distance"):
-                metric = (metric, self.data["pdb"])
+                metric = (metric, self.get_data("pdb"))
             interactions.metric = metric
         else:
             interactions.metric = interactions.default_metric
@@ -516,9 +517,9 @@ class Sample():
             interactions.min_max = min_max
         for datatype in ["profile", "ct"]:
             if datatype in kwargs.keys():
-                kwargs[datatype] = self.data[kwargs[datatype]]
+                kwargs[datatype] = self.get_data(kwargs[datatype])
             elif datatype in self.data.keys():
-                kwargs[datatype] = self.data[datatype]
+                kwargs[datatype] = self.get_data(datatype)
         if not hasattr(fit_to, "sequence"):
             fit_to = self.get_data_list(fit_to)
         interactions.filter(fit_to, **kwargs)
@@ -548,128 +549,20 @@ class Sample():
         if ssfilter:
             kwargs["ss_only"] = True
         kwargs["Statistic_ge"] = sigfilter
-        ctlist = [dance.data["ct"] for dance in self.dance]
+        ctlist = [dance.get_data("ct") for dance in self.dance]
         for dance in self.dance:
-            dance_ct = dance.data["ct"]
+            dance_ct = dance.get_data("ct")
             fit_to = get_sequence(
                 seq_source=fit_to, sample=dance, default='ct')
-            dance.data["ringmap"].filter(fit_to=fit_to, ct=dance_ct, **kwargs)
-            dance.data["ringmap"].mask_on_ct(ctlist, min_cd=cdfilter)
-            dance.data["pairmap"].filter(fit_to=fit_to, ct=dance_ct,
+            dance.get_data("ringmap").filter(fit_to=fit_to, ct=dance_ct, **kwargs)
+            dance.get_data("ringmap").mask_on_ct(ctlist, min_cd=cdfilter)
+            dance.get_data("pairmap").filter(fit_to=fit_to, ct=dance_ct,
                                          paired_only=True)
 
 ###############################################################################
 # sample plotting functions
-#     plot_qc
-#     plot_ss
-#     plot_mol
-#     plot_heatmap
-#     plot_circle
-#     plot_disthist
-#     plot_skyline
-#     plot_arcs
 #     plot_shapemapper
-#     plot_arcs_multifilter
-#     plot_ss_multifilter
-#     plot_mol_multifilter
-#     plot_circle_multifilter
-#     plot_disthist_multifilter
 ###############################################################################
-
-    def plot_qc(self, **kwargs):
-        """Makes a QC plot.
-        Equivalent to plot_qc(samples=[self], **kwargs)
-        See rnavigate.plot_qc for more detail.
-        """
-        return plot_qc([self], **kwargs)
-
-    def plot_ss(self, dance=False, **kwargs):
-        """Makes a secondary structure drawing.
-        Equivalent to plot_ss(samples=[self], **kwargs)
-        See plot_ss for more detail.
-        """
-        if dance:
-            self.dance_filter()
-            if "interactions_filter" in kwargs:
-                kwargs["interactions"] = {"prefiltered": True}
-            if "interactions2_filter" in kwargs:
-                kwargs["interactions2"] = {"prefiltered": True}
-            plot = plot_ss(self.dance, **kwargs)
-            for i, dance in enumerate(self.dance):
-                ax = plot.get_ax(i)
-                ax.set_title(
-                    f"DANCE component: {i}, Percent: {self.dance_percents[i]}")
-            return plot
-        return plot_ss([self], **kwargs)
-
-    def plot_mol(self, dance=False, **kwargs):
-        """Makes an interactive 3D molecular rendering.
-        Equivalent to plot_mol(samples=[self]).
-        See plot_mol for more detail.
-        """
-        if dance:
-            self.dance_filter()
-            if "interactions_filter" in kwargs:
-                kwargs["interactions_filter"] = {"prefiltered": True}
-            if "interactions2_filter" in kwargs:
-                kwargs["interactions2_filter"] = {"prefiltered": True}
-            plot = plot_mol(self.dance, **kwargs)
-            for i, dance in enumerate(self.dance):
-                ax = plot.get_ax(i)
-                ax.set_title(
-                    f"DANCE component: {i}, Percent: {self.dance_percents[i]}")
-            return plot
-        return plot_mol([self], **kwargs)
-
-    def plot_heatmap(self, **kwargs):
-        """Makes a density heatmap of interactions and/or distance contour of
-        structure.
-        Equivalent to plot_heatmap(samples=[self], **kwargs).
-        See plot_heatmap for more detail.
-        """
-        return plot_heatmap([self], **kwargs)
-
-    def plot_circle(self, **kwargs):
-        """Makes a circle plot.
-        Equivalent to plot_circle(samples=[self], **kwargs).
-        See plot_circle for more detail.
-        """
-        return plot_circle([self], **kwargs)
-
-    def plot_disthist(self, **kwargs):
-        """Makes a distance histogram of interactions data.
-        Equivalent to plot_disthist(samples=[self], **kwargs).
-        See plot_disthist for more detail.
-        """
-        return plot_disthist([self], **kwargs)
-
-    def plot_skyline(self, dance=False, **kwargs):
-        """Makes a skyline profile plot of per-nucleotide data.
-        Equivalent to plot_skyline(samples=[self], **kwargs).
-        See plot_skyline for more detail.
-        """
-        if dance:
-            plot = plot_skyline(self.dance, **kwargs)
-            plot.axes[0, 0].legend(title="Comp: Percent")
-            plot.axes[0, 0].set_title(f"{self.sample}: DANCE Reactivities")
-            return plot
-        plot = plot_skyline([self], **kwargs)
-        return plot
-
-    def plot_arcs(self, dance=False, **kwargs):
-        """Makes an arc plot.
-        Equivalent to plot_arcs(samples=[self], **kwargs).
-        See plot_arcs for more detail.
-        """
-        if dance:
-            self.dance_filter()
-            if "interactions" in kwargs:
-                kwargs["interactions_filter"] = {"prefiltered": True}
-            if "interactions2" in kwargs:
-                kwargs["interactions2_filter"] = {"prefiltered": True}
-            plot = plot_arcs(samples=self.dance, **kwargs)
-            return plot
-        return plot_arcs([self], **kwargs)
 
     def plot_shapemapper(self, panels=["profile", "rates", "depth"]):
         """Makes a standard ShapeMapper2 profile plot with 3 panels: Normalized
@@ -683,60 +576,10 @@ class Sample():
         Returns:
             Plot object:
         """
-        plot = plots.SM(self.data["profile"].length, panels=panels)
+        plot = plots.SM(self.get_data("profile").length, panels=panels)
         plot.add_sample(self, profile="profile", label="label")
         plot.set_figure_size()
         return plot
-
-    def plot_arcs_multifilter(self, filters, **kwargs):
-        """Makes a multipanel arc plot. Each panel shows data as defined by
-        filters. Equivalent to calling:
-          plot_arcs(samples=[self], filters=filters, **kwargs)
-        See plot_arcs for more detail.
-        """
-        return plot_arcs(samples=[self], filters=filters, **kwargs)
-
-    def plot_ss_multifilter(self, filters, **kwargs):
-        """Makes a multipanel secondary structure drawing. Each panel
-        shows data as defined by filters. Equivalent to calling:
-          plot_ss(samples=[self], filters=filters, **kwargs)
-        See plot_ss for more detail.
-        """
-        return plot_ss(samples=[self], filters=filters, **kwargs)
-
-    def plot_mol_multifilter(self, filters, **kwargs):
-        """Makes a multipanel interactive 3D molecular rendering. Each panel
-        shows data as defined by filters. Equivalent to calling:
-          plot_mol(samples=[self], filters=filters, **kwargs)
-        See plot_mol for more detail.
-        """
-        return plot_mol(samples=[self], filters=filters, **kwargs)
-
-    def plot_heatmap_multifilter(self, filters, **kwargs):
-        """Makes a multipanel 2D heatmap of interactions data and contour plot
-        of structure distances. Each panel shows data as defined by filters.
-        Equivalent to calling:
-          plot_heatmap(samples=[self], filters=filters, **kwargs)
-        See plot_heatmap for more detail.
-        """
-        return plot_heatmap(samples=[self], filters=filters, **kwargs)
-
-    def plot_circle_multifilter(self, filters, **kwargs):
-        """Makes a multipanel circle plot. Each panel shows data as defined
-        by filters. Equivalent to calling:
-          plot_heatmap(samples=[self], filters=filters, **kwargs)
-        See plot_heatmap for more detail.
-        """
-        return plot_circle(samples=[self], filters=filters, **kwargs)
-
-    def plot_disthist_multifilter(self, filters, **kwargs):
-        """Makes a multipanel distance distribution histogram. Each panel shows
-        data as defined by filters. Equivalent to calling:
-          plot_disthist(samples=[self], filters=filters, **kwargs)
-        See plot_disthist for more detail.
-        """
-        return plot_disthist(samples=[self], filters=filters, **kwargs)
-
 
 ###############################################################################
 # accessory functions
@@ -769,8 +612,8 @@ def get_sequence(seq_source, sample=None, default=None):
         raise ValueError("A seq_source must be provided.")
     elif seq_source is None:
         seq_source = default
-    if seq_source in sample.data.keys():
-        sequence = sample.data[seq_source]
+    if sample.get_data(seq_source) is not None:
+        sequence = sample.get_data(seq_source)
     elif hasattr(seq_source, "sequence"):
         sequence = seq_source
     elif all([nt.upper() in "AUCGT." for nt in seq_source]):
@@ -791,7 +634,7 @@ def fit_data_list(sample, data_list, fit_to):
     """
     for data_obj in data_list:
         if data_obj in sample.data.keys():
-            sample.data[data_obj].fit_to(fit_to)
+            sample.get_data(data_obj).fit_to(fit_to)
         elif isinstance(data_obj, data.Data):
             data_obj.fit_to(fit_to)
 
@@ -1067,8 +910,8 @@ def plot_alignment(data1, data2, labels=None, plot_kwargs=None, **kwargs):
         labels = [f"{s.sample}: {seq}" for s, seq in [data1, data2]]
     plot = plots.Alignment(num_samples=1, **plot_kwargs)
     plot.add_sample(sample=None,
-                    data1=data1[0].data[data1[1]],
-                    data2=data2[0].data[data2[1]],
+                    data1=data1[0].get_data(data1[1]),
+                    data2=data2[0].get_data(data2[1]),
                     label=labels, **kwargs)
     plot.set_figure_size()
     return plot
@@ -1263,7 +1106,7 @@ def plot_arcs_compare(samples, seq_source=None, ct="ct", comp=None,
     if plot_kwargs is None:
         plot_kwargs = {}
     if region != "all":
-        al1 = [i for i, nt in seq1_full.sequence if nt != '.']
+        al1 = [i for i, nt in enumerate(seq1_full.sequence) if nt != '.']
         region = [al1[region[0]], al1[region[1]]]
     # coerce interactions and interactions_filter into filters format
     filters = [{"interactions": interactions} | interactions_filter]
@@ -1380,7 +1223,7 @@ def plot_ss(samples, ss="ss", profile="profile", annotations=[],
     plot = plots.SS(num_samples=num_samples, **plot_kwargs)
     # loop through samples and filters, adding each as a new axis
     for sample, label in zip(samples, labels):
-        fit_data_list(sample, annotations + [profile], sample.data[ss])
+        fit_data_list(sample, annotations + [profile], sample.get_data(ss))
         sample.filter_interactions(interactions=interactions2, fit_to=ss,
                                    **interactions2_filter)
         for filt in filters:
@@ -1470,11 +1313,11 @@ def plot_mol(samples, structure="pdb", interactions=None,
         filters = [{"interactions": interactions} | interactions_filter]
     num_samples = len(samples) * len(filters)
     # initialize plot using 1st 3D structure (applies to all samples)
-    plot = plots.Mol(num_samples=num_samples, pdb=samples[0].data[structure],
+    plot = plots.Mol(num_samples=num_samples, pdb=samples[0].get_data(structure),
                      **plot_kwargs)
     # loop through samples and filters, adding each as a new viewer
     for sample, label in zip(samples, labels):
-        fit_data_list(sample, [profile], sample.data[structure])
+        fit_data_list(sample, [profile], sample.get_data(structure))
         for filt in filters:
             sample.filter_interactions(fit_to=structure, **filt)
             plot.add_sample(sample=sample,
@@ -1559,7 +1402,7 @@ def plot_heatmap(samples, structure=None, interactions=None,
     # initialize plot using 1st 3D structure (applies to all samples)
     num_samples = len(samples) * len(filters)
     plot = plots.Heatmap(
-        num_samples, samples[0].data[structure], **plot_kwargs)
+        num_samples, samples[0].get_data(structure), **plot_kwargs)
     # loop through samples and filters, adding each as a new axis
     for sample, label in zip(samples, labels):
         for filt in filters:
@@ -1682,8 +1525,9 @@ def plot_circle(samples, seq_source=None, ct=None, comp=None,
     return plot
 
 
-def plot_linreg(samples, ct="ct", profile="profile", labels=None,
-                plot_kwargs=None, **kwargs):
+def plot_linreg(samples, seq_source=None, ct="ct", profile="profile",
+                annotations=None, colorby=None, labels=None, column=None,
+                scale='log', regression="pearson", plot_kwargs=None, **kwargs):
     """Performs linear regression analysis and generates scatter plots of all
     sample-to-sample profile vs. profile comparisons. Colors nucleotides by
     identity or base-pairing status.
@@ -1711,11 +1555,19 @@ def plot_linreg(samples, ct="ct", profile="profile", labels=None,
     """
     if labels is None:
         labels = ["label"] * len(samples)
+    if annotations is None:
+        annotations = []
     if plot_kwargs is None:
         plot_kwargs = {}
-    plot = plots.LinReg(len(samples), **plot_kwargs)
+    plot = plots.LinReg(len(samples), scale=scale, regression=regression,
+                        **plot_kwargs)
+    sequence = get_sequence(seq_source, samples[0], profile)
     for sample, label in zip(samples, labels):
-        plot.add_sample(sample, ct=ct, profile=profile, label=label, **kwargs)
+        fit_data_list(sample=sample, data_list=annotations+[ct, profile],
+                      fit_to=sequence)
+        plot.add_sample(sample, sequence=sequence, ct=ct, profile=profile,
+                        label=label, colorby=colorby, column=column,
+                        annotations=annotations, **kwargs)
     plot.set_figure_size()
     return plot
 
