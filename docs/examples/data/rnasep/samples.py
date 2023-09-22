@@ -16,16 +16,20 @@ other_files = {
     "dbn": "RNaseP.dbn"}
 
 common_data = rnav.Sample(
+    sample="common data",
     pdb={
-        "filepath": abspath("3dhsCrystal_PlusLoops.pdb"),
+        "pdb": abspath("3dhsCrystal_PlusLoops.pdb"),
         "chain": "A"
     },
     shapejump={
-        "filepath": abspath("example-rnasep-deletions.txt"),
-        "fasta": abspath("RNaseP-noSC.fasta")
+        "shapejump": abspath("example-rnasep-deletions.txt"),
+        "sequence": abspath("RNaseP-noSC.fasta")
     },
-    ss=abspath("RC_CRYSTAL_STRUCTURE.xrna"),
-    ct=abspath("RNaseP.ct"),
+    ss_ct={'ss': abspath("RNaseP.ct")},
+    ss_pdb={'ss':abspath("RC_CRYSTAL_STRUCTURE.xrna")},
+    pairprob={
+        "pairprob": abspath("rnasep.dp"),
+        "sequence": abspath("RNaseP-withSC.fasta")}
 )
 
 example1 = rnav.Sample(
@@ -35,8 +39,7 @@ example1 = rnav.Sample(
     shapemap=abspath("example1_rnasep_profile.txt"),
     pairmap=abspath("example1-rnasep-pairmap.txt"),
     ringmap=abspath("example1-rnasep.corrs"),
-    dance_prefix=abspath("example1_rnasep"),
-    pairprob=abspath("rnasep.dp")
+    dance_prefix=abspath("example1_rnasep")
 )
 
 example2 = rnav.Sample(
@@ -46,8 +49,7 @@ example2 = rnav.Sample(
     shapemap=abspath("example2_rnasep_profile.txt"),
     pairmap=abspath("example2-rnasep-pairmap.txt"),
     ringmap=abspath("example2-rnasep.corrs"),
-    dance_prefix=abspath("example2_rnasep"),
-    pairprob=abspath("rnasep.dp")
+    dance_prefix=abspath("example2_rnasep")
 )
 
 example3 = rnav.Sample(
@@ -57,8 +59,7 @@ example3 = rnav.Sample(
     shapemap=abspath("example3_rnasep_profile.txt"),
     pairmap=abspath("example3-rnasep-pairmap.txt"),
     ringmap=abspath("example3-rnasep.corrs"),
-    dance_prefix=abspath("example3_rnasep"),
-    pairprob=abspath("rnasep.dp")
+    dance_prefix=abspath("example3_rnasep")
 )
 
 example4 = rnav.Sample(
@@ -68,6 +69,5 @@ example4 = rnav.Sample(
     shapemap=abspath("example4_rnasep_profile.txt"),
     pairmap=abspath("example4-rnasep-pairmap.txt"),
     ringmap=abspath("example4-rnasep.corrs"),
-    dance_prefix=abspath("example4_rnasep"),
-    pairprob=abspath("rnasep.dp")
+    dance_prefix=abspath("example4_rnasep")
 )
