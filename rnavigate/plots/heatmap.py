@@ -70,7 +70,7 @@ class Heatmap(plots.Plot):
         for i in range(structure.length):
             for j in range(i, structure.length):
                 distances[i, j] = 0
-        if (levels is None) and isinstance(structure, data.CT):
+        if (levels is None) and isinstance(structure, data.SecondaryStructure):
             levels = [5]
         elif (levels is None) and isinstance(structure, data.PDB):
             levels = [20]
