@@ -170,19 +170,18 @@ class Plot(ABC):
             fig.subplots_adjust(wspace=width_gap_in / width_ax_in)
         # comput subplot width
         width_subplot_in = width_gap_in * (cols - 1) + width_ax_in * cols
-        if right_in is None:
-            # get right margin size from relative size * subplot size
-            right_in = (1 - fig.subplotpars.right) * width_subplot_in
+        if right_in is not None and left_in is not None:
+            width_fig_in = left_in + width_subplot_in + right_in
+            fig.subplots_adjust(
+                right=(1 - (right_in / width_fig_in)),
+                left=(left_in / width_fig_in))
+        elif right_in is None and left_in is None:
+            right_rel = fig.subplotpars.right
+            left_rel = fig.subplotpars.left
+            width_fig_in = width_subplot_in / (right_rel - left_rel)
         else:
-            # set relative right side position to 1 - margin:subplot ratio
-            fig.subplots_adjust(right=1 - (right_in / (right_in + width_subplot_in)))
-        if left_in is None:
-            # get left margin size from relative size * subplot size
-            left_in = fig.subplotpars.left * width_subplot_in
-        else:
-            # set relative left side position to margin:subplot ratio
-            fig.subplots_adjust(left=left_in / (left_in + width_subplot_in))
-        width_fig_in = left_in + width_subplot_in + right_in
+            raise ValueError(
+                "Must provide both right and left margins or neither")
 
         # repeat the process for figure height
         if height_ax_in is None:
@@ -193,15 +192,18 @@ class Plot(ABC):
         else:
             fig.subplots_adjust(hspace=height_gap_in / height_ax_in)
         height_subplot_in = height_gap_in * (rows - 1) + height_ax_in * rows
-        if top_in is None:
-            top_in = (1 - fig.subplotpars.top) * height_subplot_in
+        if top_in is not None and bottom_in is not None:
+            height_fig_in = bottom_in + height_subplot_in + top_in
+            fig.subplots_adjust(
+                top=(1 - (top_in / height_fig_in)),
+                bottom=(bottom_in / height_fig_in))
+        elif top_in is None and bottom_in is None:
+            top_rel = fig.subplotpars.top
+            bottom_rel = fig.subplotpars.bottom
+            height_fig_in = height_subplot_in / (top_rel - bottom_rel)
         else:
-            fig.subplots_adjust(top=1 - (top_in / (top_in + height_subplot_in)))
-        if bottom_in is None:
-            bottom_in = fig.subplotpars.bottom * height_subplot_in
-        else:
-            fig.subplots_adjust(bottom=bottom_in / (bottom_in + height_subplot_in))
-        height_fig_in = top_in + height_subplot_in + bottom_in
+            raise ValueError(
+                "Must provide both top and bottom margins or neither")
 
         fig.set_size_inches(width_fig_in, height_fig_in)
 
