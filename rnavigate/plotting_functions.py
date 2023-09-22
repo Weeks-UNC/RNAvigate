@@ -43,6 +43,7 @@ def plot_qc(
 
 def plot_shapemapper(
         sample,
+        label=None,
         profile="default_profile",
         panels=None):
     """Makes a standard ShapeMapper2 profile plot with 3 panels: Normalized
@@ -60,9 +61,11 @@ def plot_shapemapper(
     """
     if panels is None:
         panels = ["profile", "rates", "depth"]
+    if label is None:
+        label = sample.sample
     profile = sample.get_data(profile)
     plot = plots.SM(profile.length, panels=panels)
-    plot.plot_data(profile=profile, label="label")
+    plot.plot_data(profile=profile, label=label)
     plot.set_figure_size()
     return plot
 
@@ -689,7 +692,10 @@ def plot_linreg(
         sequence=None,
         structure=None,
         profile="default_profile",
+        annotations=None,
         labels=None,
+        scale='linear',
+        regression='pearson',
         plot_kwargs=None,
         **kwargs):
     """Performs linear regression analysis and generates scatter plots of all
@@ -725,9 +731,11 @@ def plot_linreg(
         alignment=sequence._alignment,
         structure=structure,
         profile=profile,
+        annotations=annotations
     )
     plot_kwargs = _parse_plot_kwargs(plot_kwargs, "rnavigate.plots.LinReg")
-    plot = plots.LinReg(parsed_args.num_samples, **plot_kwargs)
+    plot = plots.LinReg(num_samples=parsed_args.num_samples, scale=scale,
+                        regression=regression, **plot_kwargs)
     for data_dict in parsed_args.data_dicts:
         plot.plot_data(**data_dict, **kwargs)
     plot.set_figure_size()
