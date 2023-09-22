@@ -103,7 +103,7 @@ class Sequence():
             return colors
         elif isinstance(source, str) and (source == "position"):
             colormap = data.ScalarMappable(pos_cmap, '0_1', None)
-            return colormap(np.arange(self.length))
+            return colormap.values_to_hexcolors(np.arange(self.length))
         elif isinstance(source, str) and (source == "profile"):
             alignment = data.SequenceAlignment(profile, self)
             return alignment.map_values(profile.colors, fill="#808080")
