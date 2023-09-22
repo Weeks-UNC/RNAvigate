@@ -115,7 +115,7 @@ def create_data(sample=None, **data_keyword):
     inputs = data_keyword[name]
 
     # if given existing rnavigate.data object return
-    if isinstance(inputs, data.Data):
+    if isinstance(inputs, data.Sequence):
         return inputs
 
     # convert case 1 or 2 into case 3:
