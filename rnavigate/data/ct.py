@@ -1289,7 +1289,7 @@ class StructureCoordinates():
             tuple: x and y coordinates of structure center as floats
         """
         x_center = (max(self.x) + min(self.x)) / 2
-        y_center = (max(self.x) + min(self.x)) / 2
+        y_center = (max(self.y) + min(self.y)) / 2
         return (x_center, y_center)
 
     def scale(self, median_bp_distance=1):
@@ -1330,8 +1330,8 @@ class StructureCoordinates():
             y (int, optional): y coordinate of structure center. Defaults to 0.
         """
         x_center, y_center = self.get_center_point()
-        self.x -= x_center + x
-        self.x -= y_center + y
+        self.x -= (x_center + x)
+        self.y -= (y_center + y)
 
     def rotate(self, degrees):
         """Rotate structure on current center point
