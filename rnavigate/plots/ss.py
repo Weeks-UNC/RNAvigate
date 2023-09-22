@@ -12,7 +12,7 @@ class SS(plots.Plot):
             "structure_lw": 1,
             "structure_s": 3**2,
 
-            "data_lw": 0.5,
+            "data_lw": 1.5,
             "data_a": None,
 
             "annotations_lw": 10,
@@ -44,7 +44,7 @@ class SS(plots.Plot):
                         rows=None, cols=None,
                         height_ax_rel=0.2, width_ax_rel=0.2,
                         width_ax_in=None, height_ax_in=None,
-                        height_gap_in=1, width_gap_in=0.5,
+                        height_gap_in=0.5, width_gap_in=0.2,
                         top_in=1, bottom_in=0.5,
                         left_in=0.5, right_in=0.5):
         super().set_figure_size(fig=fig, ax=ax, rows=rows, cols=cols,
