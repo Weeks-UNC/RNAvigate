@@ -66,7 +66,7 @@ class AP(plots.Plot):
             self.plot_annotation(ax, annotation=annotation, yvalue=-2-(4*i),
                                  mode=annotation_mode)
         if seqbar:
-            self.add_sequence(ax, seq.sequence, yvalue=-annotation_gap,
+            self.add_sequence(ax, seq.sequence, yvalue=-annotation_gap+0.2,
                               ytrans="data")
         if title:
             self.add_title(ax, label)
@@ -76,7 +76,6 @@ class AP(plots.Plot):
         def get_ticks(x, mn, mx):
             return [tick for tick in range(x, mx+1, x) if mn <= tick <= mx]
 
-        ax.set_aspect('equal')
         ax.yaxis.set_visible(False)
         ax.spines['left'].set_color('none')
         ax.spines['right'].set_color('none')
