@@ -564,7 +564,7 @@ class Interactions(data.Data):
 
 
 class SHAPEJuMP(Interactions):
-    def __init__(self, input_data, sequence=None, metric='Metric',
+    def __init__(self, input_data, sequence=None, metric='Percentile',
                  metric_defaults=None, read_table_kw=None, window=1):
         """Constructs an Interactions object from SHAPEJuMP data"""
         if metric_defaults is None:
