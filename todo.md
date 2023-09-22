@@ -121,5 +121,8 @@ Finished
 - ss plots
   - position labels look much nicer
   - axis margins are standardized to 2 data units for all size RNAs
+- linear regression plots
+  - removed KDE plots
+  - simplified and improved readability
 - all plots
   - figure scaling is standardized and correctly calculated
