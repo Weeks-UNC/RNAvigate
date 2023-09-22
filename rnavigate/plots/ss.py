@@ -35,6 +35,8 @@ class SS(plots.Plot):
         for i in range(self.length):
             ax = self.get_ax(i)
             ax.axis("off")
+        self.xlims = [-2, 2]
+        self.ylims = [-2, 2]
         self.pass_through = ["colors", "sequence", "apply_color_to",
                              "title", "positions", "bp_style"]
 
@@ -90,6 +92,14 @@ class SS(plots.Plot):
 
         x = structure.xcoordinates
         y = structure.ycoordinates
+
+        self.xlims = [
+            min([self.xlims[0], min(x)-2]),
+            max([self.xlims[1], max(x)+2])]
+        self.ylims = [
+            min([self.ylims[0], min(y)-2]),
+            max([self.ylims[1], max(y)+2])]
+        ax.set(ylim=self.ylims, xlim=self.xlims)
 
         path = Path(np.column_stack([x, y]))
         verts = path.interpolated(steps=2).vertices
@@ -255,8 +265,8 @@ class SS(plots.Plot):
         for nt in range(spacing-1, structure.length, spacing):
             x_nt = xs[nt]
             y_nt = ys[nt]
-            x_pos = xs[nt] + (x_shift * 2)
-            y_pos = ys[nt] + (y_shift * 2)
+            x_pos = xs[nt] + (x_shift * 1.5)
+            y_pos = ys[nt] + (y_shift * 1.5)
             not_nt = np.arange(structure.length) != nt
             nt_box = (np.abs(xs - xs[nt]) < 4) & (np.abs(ys - ys[nt]) < 4)
             # print(np.vstack((x_pos, y_pos)).T)

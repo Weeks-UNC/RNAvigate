@@ -111,7 +111,6 @@ Finished
   - input_data <- dataframe, filepath
   - defaults <- column, err_column, color_column, cmap, norm, min_max, etc.
   - read_table_kw <- read_csv_kw, sep
-- clean up namespace
 - unify the scalar -> rgba functionality for all Data objects
 - changed sequence alignment behavior
   - all data objects have get_aligned_data which returns a matching datatype
@@ -119,3 +118,6 @@ Finished
 - reading in FORNA JSON: how to distinguish between FORNA and R2DT?
 - support for undercase nucleotides
 - combine VARNA, NSD, XRNA, JSON, CTE, DBN classes, renamed to SecondaryStructure
+- ss plots
+  - position labels look much nicer
+  - axis margins are standardized to 2 data units for all size RNAs
