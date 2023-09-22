@@ -77,7 +77,7 @@ class DistHist(plots.Plot):
     def plot_experimental_distances(self, ax, structure, interactions, atom,
                                     histtype='bar'):
         interactions.set_3d_distances(structure, atom)
-        ij_dists = interactions.data["Distance"]
+        ij_dists = interactions.data.loc[interactions.data['mask'], "Distance"]
         if (len(ij_dists) > 0) and (histtype == 'bar'):
             ax.hist(ij_dists, bins=range(0, int(max(ij_dists))+5, 5),
                       width=5, ec='none')
