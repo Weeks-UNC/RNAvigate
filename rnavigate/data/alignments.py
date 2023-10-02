@@ -446,54 +446,7 @@ class AlignmentChain(BaseAlignment):
         return indices
 
 
-class RegionAlignment(BaseAlignment):
-    """An alignment that drops values that are not within a region
-
-    Attributes:
-        starting_sequence (str): the starting sequence
-        target_sequence (str): a subsequence of starting sequence
-        mapping (numpy.array): a vector that maps from starting to target
-            index of starting_sequence is mapping[index] of target sequence
-
-    Methods:
-        All map_functions map from starting sequence to target sequence.
-        map_values: maps per-nucleotide values
-        map_indices: maps a list of indices
-        map_positions: maps a list of positions
-        map_dataframe: maps a dataframe with multiple position columns
-            (rows that cannot be mapped are dropped)
-        map_nucleotide_dataframe: maps a dataframe with 1 row per nucleotide
-            (rows that cannot be mapped are dropped)
-            (missing rows filled with NaN)
-    """
-    def __init__(self, sequence, region):
-        """Creates an alignment from a sequence to a substring of itself
-
-        Args:
-            sequence (str | rnavigate.data.Sequence): the starting sequence
-            region (list of 2 int): the 1-indexed, inclusive starting and
-                ending position of subsequence
-        """
-        if isinstance(sequence, data.Data):
-            sequence = sequence.sequence
-        start, end = region
-        self.start = start
-        self.end = end
-        target_length = end-start+1
-        super().__init__(sequence, target_length)
-
-    def get_mapping(self):
-        """returns a mapping from sequence to subsequence
-
-        Returns:
-            numpy.array: the mapping array
-        """
-        mapping = np.full(len(self.starting_sequence), -1, dtype=int)
-        mapping[self.start-1:self.end] = np.arange(self.end-self.start+1,
-                                                   dtype=int)
-        return mapping
-
-class StructureAlignment(SequenceAlignment):
+class StructureAlignment(BaseAlignment):
     """Experimental secondary structure alignment based on RNAlign2D algorithm
     (https://doi.org/10.1186/s12859-021-04426-8)
 
@@ -548,7 +501,7 @@ class StructureAlignment(SequenceAlignment):
             target_length = len(self.alignment2)
         else:
             target_length = len(self.sequence2)
-        super().__init__(structure1, target_length)
+        super().__init__(self.sequence1, target_length)
 
     def get_aa_sequences(self):
         """Creates a fake amino acid sequence based on sequences and structures
@@ -560,6 +513,8 @@ class StructureAlignment(SequenceAlignment):
         aa_seq2 = []
         structure1_clean = self.structure1
         structure2_clean = self.structure2
+        sequence1_clean = self.sequence1.upper().replace('T', 'U')
+        sequence2_clean = self.sequence2.upper().replace('T', 'U')
         # Cleaning up pseudoknots (assumes they were assigned correctly)
         alphabet = 'abcdefghijklmnopqrstuvwxyz'
         for pair in ['{}', '<>'] + list(zip(alphabet.upper(), alphabet)):
@@ -567,9 +522,9 @@ class StructureAlignment(SequenceAlignment):
             structure1_clean.replace(pair[1], ']')
             structure2_clean.replace(pair[0], '[')
             structure2_clean.replace(pair[1], ']')
-        for nt, bp in zip(self.sequence1, self.structure1):
+        for nt, bp in zip(sequence1_clean, structure1_clean):
             aa_seq1.append(pseudo_aa_dict[nt+bp])
-        for nt, bp in zip(self.sequence2, self.structure2):
+        for nt, bp in zip(sequence2_clean, structure2_clean):
             aa_seq2.append(pseudo_aa_dict[nt+bp])
         return ''.join(aa_seq1), ''.join(aa_seq2)
 
@@ -585,8 +540,49 @@ class StructureAlignment(SequenceAlignment):
         if seq1 == seq2:
             return (seq1, seq2)
         else:
-            alignment = align.globalds(seq1, seq2, structure_scoring_dict,
-                                       -12, -1, penalize_end_gaps=False)
-            alignment1=alignment[0].seqA,
-            alignment2=alignment[0].seqB
-            return (alignment1, alignment2)
+            try:
+                alignment1, alignment2 = _alignments_cache[seq1][seq2].values()
+            except KeyError:
+                alignment = align.globalds(seq1, seq2, structure_scoring_dict,
+                                        -12, -1, penalize_end_gaps=False)
+                alignment1 = alignment[0].seqA
+                alignment2 = alignment[0].seqB
+                set_alignment(
+                    sequence1=seq1,
+                    sequence2=seq2,
+                    alignment1=alignment[0].seqA,
+                    alignment2=alignment[0].seqB
+                )
+        # convert pseudo-amino acid alignments back into nucleotide alignments
+        alignment1=np.array(list(alignment[0].seqA))
+        alignment1[alignment1 != "-"] = list(self.sequence1)
+        alignment1 = ''.join(alignment1)
+        alignment2=np.array(list(alignment[0].seqB))
+        alignment2[alignment2 != "-"] = list(self.sequence2)
+        alignment2 = ''.join(alignment2)
+        return (alignment1, alignment2)
+
+    def get_mapping(self):
+        """Calculates a mapping from starting sequence to target sequence.
+
+        Returns:
+            numpy.array: an array of length of starting sequence that maps to
+                an index of target sequence. Stored as self.mapping
+                starting_sequence[idx] == target_sequence[self.mapping[idx]]
+        """
+        align1 = self.alignment1
+        align2 = self.alignment2
+        # get an index mapping from sequence 1 to the full alignment
+        seq1_to_align = np.where([nt != '-' for nt in align1])[0]
+        # if we want a mapping to a position in the full alignment, this is it.
+        if self.full:
+            return seq1_to_align
+        # extra steps to get to sequence 2 positions
+        # positions that are removed when plotting on sequence 2
+        align_mask = np.array([nt != '-' for nt in align2])
+        # an index mapping from the full alignment to position in sequence 2
+        align_to_seq2 = np.full(len(align2), -1)
+        align_to_seq2[align_mask] = np.arange(len(self.sequence2))
+        # an index mapping from sequence 1 to sequence 2 positions
+        seq1_to_seq2 = align_to_seq2[seq1_to_align]
+        return seq1_to_seq2

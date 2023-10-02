@@ -36,7 +36,7 @@ class SecondaryStructure(data.Sequence):
         ycoordinates (numpy array): y-coordinate of each nucleotide
     """
 
-    def __init__(self, input_data, extension=None, **kwargs):
+    def __init__(self, input_data, extension=None, autoscale=True, **kwargs):
         """Creates a SecondaryStructure object from a given file or dataframe.
 
         Args:
@@ -68,7 +68,7 @@ class SecondaryStructure(data.Sequence):
             self.filepath = input_data
             self.data = read_file(**kwargs)
         super().__init__(self.data)
-        if 'X_coordinate' in self.data.columns:
+        if 'X_coordinate' in self.data.columns and autoscale == True:
             self.transform_coordinates(scale=1, center=(0,0))
         self.distance_matrix = None
 
@@ -523,7 +523,6 @@ class SecondaryStructure(data.Sequence):
         # check for pseudoknots
         level = 0
         while level in pair_levels:
-            print(level)
             indexes = np.where(pair_levels == level)[0]
             for i in indexes:
                 for j in indexes[indexes > i]:
@@ -1203,7 +1202,7 @@ class SecondaryStructure(data.Sequence):
         mask = df['Pair'] != 0
         df.loc[mask, 'Pair'] = alignment.map_positions(
             df.loc[mask, "Pair"].values)
-        return SecondaryStructure(input_data=df)
+        return SecondaryStructure(input_data=df, autoscale=False)
 
     def as_interactions(self, structure2=None):
         """returns list of i, j basepairs as rnavigate.Interactions data.

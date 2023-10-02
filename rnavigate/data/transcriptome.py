@@ -2,59 +2,11 @@ import pandas as pd
 import numpy as np
 from Bio import SeqIO
 from rnavigate import data
+from pathlib import Path
 
 
 
-class Bed():
-    def __init__(self, bedfile):
-        self.bedfile = bedfile
-        if self.bedfile.endswith('gz'):
-            self.compression = 'gzip'
-        else:
-            self.compression = None
-
-    def get_annotation(self, transcript):
-        bed_df = pd.read_table(
-            self.bedfile, compression=self.compression,
-            usecols=[0, 1, 2, 3, 4, 5], dtype={'start': int, 'end': int},
-            names=['chr', 'start', 'end', 'NA', 'score', 'strand'])
-        bed_df['start'] += 1 # bed files are 0-indexed, closed right
-        chrom = transcript.chromosome
-        strand = transcript.strand
-        tx_coordinates = transcript.coordinate_df['Coordinate']
-        mn = tx_coordinates.min()
-        mx = tx_coordinates.max()
-        bed_df = bed_df.query(
-            f'(chr == "{chrom}") & (strand == "{strand}") & '
-            f'((start > {mn} and start < {mx}) | (end > {mn} and end < {mx}))')
-        spans = []
-        for _, row in bed_df.iterrows():
-            spans.append(transcript.get_tx_range(row['start'], row['end']))
-        return data.Annotation(
-            input_data=spans,
-            annotation_type='spans',
-            sequence=transcript.sequence)
-
-    def get_profile(self, transcript):
-        bed_df = pd.read_table(
-            self.bedfile, compression=self.compression,
-            usecols=[0, 1, 2, 3, 4, 5],
-            names=['chr', 'start', 'end', 'NA', 'score', 'strand'],
-            dtype={'start': int, 'end': int})
-        chrom = transcript.chromosome
-        strand = transcript.strand
-        profile = transcript.coordinate_df.copy()
-        mn = profile['Coordinate'].min()
-        mx = profile['Coordinate'].max()
-        bed_df = bed_df.query(
-            f'chr == "{chrom}" & strand == "{strand}" & '
-            f'((start > {mn} & start < {mx}) | (end > {mn} & end < {mx}))')
-        profile['Profile'] = np.nan
-        for _, row in bed_df.iterrows():
-            query = profile.eval(
-                f'Coordinate > {row["start"]} and Coordinate < {row["end"]}')
-            profile.loc[query, 'Profile'] = row['score']
-        return data.Profile(input_data=profile)
+data_path = Path(__file__).parent.parent.parent / 'reference_data'
 
 
 class Transcript(data.Sequence):
@@ -93,24 +45,26 @@ class Transcript(data.Sequence):
         nts = df.loc[df['Coordinate'].between(start, stop), 'Nucleotide']
         return [nts.min(), nts.max()]
 
-    def get_cds_annotation(self):
+    def get_cds_annotation(self, **kwargs):
         cds = self.get_tx_range(*sorted(self.cds_coors))
         return data.Annotation(
             input_data=[cds],
             annotation_type='spans',
             sequence=self.sequence,
-            name="CDS")
+            name="CDS",
+            **kwargs)
 
-    def get_junctions_annotation(self):
+    def get_junctions_annotation(self, **kwargs):
         junctions = [self.coordinates[0][1:], self.coordinates[1][:-1]]
         junctions = [self.get_tx_range(*sorted(junc)) for junc in zip(*junctions)]
         return data.Annotation(
             input_data=junctions,
             annotation_type='spans',
             sequence=self.sequence,
-            name="exon junctions")
+            name="exon junctions",
+            **kwargs)
 
-    def get_exon_annotation(self, exon_number):
+    def get_exon_annotation(self, exon_number, **kwargs):
         if self.strand == '-':
             exon_number = len(self.coordinates[0]) + 1 - exon_number
         try:
@@ -124,13 +78,16 @@ class Transcript(data.Sequence):
             input_data=[exon],
             annotation_type='spans',
             sequence=self.sequence,
-            name=f"exon {exon_number}")
+            name=f"exon {exon_number}",
+            **kwargs)
 
 
 class Transcriptome():
-    def __init__(self, genome, annotation):
-        self.genome = genome
-        self.annotation = annotation
+    def __init__(self, genome, annotation, path=data_path):
+        if path is not data_path:
+            path = Path(path)
+        self.genome = data_path / genome
+        self.annotation = data_path / annotation
         self.start_coors = []
         self.end_coors = []
 

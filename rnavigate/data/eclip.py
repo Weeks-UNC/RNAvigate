@@ -1,0 +1,198 @@
+import pandas as pd
+from rnavigate import data
+import requests
+from pathlib import Path
+
+
+
+data_path = Path(__file__).parent.parent.parent
+data_path /= 'reference_data/eCLIP_downloads'
+
+
+def download_eclip_peaks(assembly='GRCh38', outpath=data_path):
+    """download eCLIP bed files from ENCODE database
+
+    Args:
+        assembly (string, optional): reference genome ('h19' or 'GRCh38')
+            Defaults to 'GRCh38'
+        outpath (string, optional): output directory path
+            Defaults to 'eCLIP_downloads'.
+    """
+    if Path.is_dir(outpath):
+        print(f'{outpath} folder already exists. Files will be downloaded the same folder.')
+    else:
+        Path.mkdir(outpath, parents=True)
+        print(f'Created {outpath} folder.')
+
+    print("Searching ENCODE database for eCLIP experiments")
+    accession = []
+    bed_accession = []
+
+    # Force return from the server in JSON format
+    headers = {'accept': 'application/json'}
+    # GET accession number for experiments
+    url_bed = ('https://www.encodeproject.org/search/?'
+               'type=Experiment&'
+               'assay_title=eCLIP&'
+               'frame=object&'
+               'limit=all&'
+               'files.file_type=bed+narrowPeak')
+    response = requests.get(url_bed, headers=headers)
+    # Extract the json response as a Python dictionary and append accession to list
+    experiment_dict = response.json()
+    for entry in experiment_dict['@graph']:
+        accession.append(entry['accession'])
+
+    # GET accession number for IDR bed files, store in a dict.
+    # Key is experiment acc and values are bed files acc for that experiment.
+    for exp in accession:
+        url2 = ('https://www.encodeproject.org/search/?'
+                'type=File&'
+                f'dataset=/experiments/{exp}/&'
+                'file_format=bed&'
+                'format=json&'
+                'frame=object&'
+                'limit=all')
+        response2 = requests.get(url2, headers=headers)
+        bed_dict = response2.json()
+        for i in bed_dict['@graph']:
+            # choose correct assembly and choose replicable peaks
+            # if want a specific replicate then change
+            # i["biological_replicates"] == 'rep_1' or 'rep_2'
+            if ((len(i["biological_replicates"]) == 2)
+                    and (i['assembly'] == assembly)):
+                bed_accession.append(i['accession'])
+
+    # download all IDR bed files in accession
+    for acc in bed_accession:
+        download_url = f'https://www.encodeproject.org/files/{acc}/@@download/{acc}.bed.gz'
+        bedgzfile = requests.get(download_url)
+        if outpath:
+            outfile = outpath + f'/{acc}.bed.gz'
+        else:
+            outfile = f'/{acc}.bed.gz'
+        open(outfile, 'wb').write(bedgzfile.content)
+    print(f'Download finished. All files are stored in {outpath} dir.')
+
+    # create a table to look up eCLIP files using target and cell type.
+    files = Path.iterdir(outpath)
+    codes = {
+        'accession': [],
+        'target': [],
+        'cell_line': []}
+    for file in files:
+        if not file.endswith('bed.gz'):
+            continue
+        data = pd.read_table(
+            file, compression='gzip', header=None)
+        label = data.iloc[0, 3]
+        label = label.split('_')
+        if len(label) == 1:
+            label = ['', '', '']
+        elif len(label) == 4:
+            label = [label[0], f'{label[1]}_{label[2]}', label[3]]
+        codes['accession'].append(file.rstrip('.bed.gz'))
+        codes['target'].append(label[0])
+        codes['cell_line'].append(label[1])
+    codes = pd.DataFrame(codes)
+    K562 = codes[codes['cell_line']=='K562', ['target', 'accession']]
+    K562.columns = ['target', 'K562']
+    HepG2 = codes[codes['cell_line']=='HepG2', ['target', 'accession']]
+    HepG2.columns = ['target', 'HepG2']
+    data = pd.merge(K562, HepG2, how='outer', on='target')
+    data['target', 'K562', 'HepG2'].to_csv(
+        outpath / 'eclip_codes.txt',
+        index=False, sep='\t')
+
+class eCLIP_Database():
+    def __init__(self):
+        self.path = data_path
+        self.eclip_codes = pd.read_table(self.path / 'eclip_codes.txt')
+        self.eclip_data = self.get_eclip_data()
+
+    def get_eclip_data(self):
+        eclip_data = {'HepG2': {}, 'K562': {}}
+        HepG2_rows = ~self.eclip_codes['HepG2'].isnull()
+        K562_rows = ~self.eclip_codes['K562'].isnull()
+        for _, row in self.eclip_codes[HepG2_rows].iterrows():
+            eclip_data['HepG2'][row['target']] = NarrowPeak(
+                self.path / f'{row["HepG2"]}.bed.gz')
+        for _, row in self.eclip_codes[K562_rows].iterrows():
+            eclip_data['K562'][row['target']] = NarrowPeak(
+                self.path / f'{row["K562"]}.bed.gz')
+        return eclip_data
+
+    def get_eclip_density(self, transcript, cell_line, targets=None):
+        eclip_data = self.eclip_data[cell_line]
+        if targets is not None:
+            eclip_data = {target: eclip_data[target] for target in targets}
+        eclip_density = data.Profile(
+            input_data=transcript.coordinate_df.eval('eCLIP_density = 0'),
+            metric='eCLIP_density')
+        for value in eclip_data.values():
+            values = value.get_profile(transcript).data.eval('Value != 0.0')
+            eclip_density.data['eCLIP_density'] += values
+        return eclip_density
+
+    def get_annotation(self, transcript, cell_line, target):
+        self.eclip_data[cell_line][target].get_annotation(transcript)
+
+    def get_profile(self, transcript, cell_line, target):
+        self.eclip_data[cell_line][target].get_profile(transcript)
+
+
+class NarrowPeak():
+    def __init__(self, bedfile):
+        self.bedfile = bedfile
+        if self.bedfile.suffix == '.gz':
+            self.compression = 'gzip'
+        else:
+            self.compression = None
+
+    def get_annotation(self, transcript, **kwargs):
+        bed_df = pd.read_table(
+            self.bedfile, compression=self.compression,
+            usecols=[0, 1, 2, 3, 4, 5], dtype={'start': int, 'end': int},
+            names=['chr', 'start', 'end', 'NA', 'score', 'strand'])
+        bed_df['start'] += 1 # bed files are 0-indexed, closed right
+        chrom = transcript.chromosome
+        strand = transcript.strand
+        tx_coordinates = transcript.coordinate_df['Coordinate']
+        mn = tx_coordinates.min()
+        mx = tx_coordinates.max()
+        bed_df = bed_df.query(
+            f'(chr == "{chrom}") & (strand == "{strand}") & '
+            f'((start > {mn} and start < {mx}) | (end > {mn} and end < {mx}))')
+        spans = []
+        for _, row in bed_df.iterrows():
+            spans.append(transcript.get_tx_range(row['start'], row['end']))
+        return data.Annotation(
+            input_data=spans,
+            annotation_type='spans',
+            sequence=transcript.sequence,
+            **kwargs)
+
+    def get_profile(self, transcript, **kwargs):
+        bed_df = pd.read_table(
+            self.bedfile, compression=self.compression,
+            header=None, index_col=False,
+            names=['chr', 'start', 'end', 'name', 'Score', 'strand',
+                   'Value', 'P_value', 'Q_value', 'Peak'],
+            dtype={'start': int, 'end': int, 'Value': float, 'P_value': float,
+                   'Q_value': float, 'Peak': int})
+        chrom = transcript.chromosome
+        strand = transcript.strand
+        profile = transcript.coordinate_df.copy()
+        mn = profile['Coordinate'].min()
+        mx = profile['Coordinate'].max()
+        bed_df = bed_df.query(
+            f'chr == "{chrom}" & strand == "{strand}" & '
+            f'((start > {mn} & start < {mx}) | (end > {mn} & end < {mx}))')
+        profile_cols = ['Score', 'Value', 'P_value', 'Q_value', 'Peak']
+        profile[profile_cols] = 0
+        for _, row in bed_df.iterrows():
+            site = profile.eval(
+                f'Coordinate > {row["start"]} and Coordinate < {row["end"]}')
+            for col in profile_cols:
+                profile.loc[site, col] = row[col]
+        return data.Profile(input_data=profile, metric='Value', **kwargs)

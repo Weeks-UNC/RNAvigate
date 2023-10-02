@@ -8,3 +8,4 @@ from rnavigate.data.pdb import *
 from rnavigate.data.profile import *
 from rnavigate.data.annotation import *
 from rnavigate.data.transcriptome import *
+from rnavigate.data.eclip import *

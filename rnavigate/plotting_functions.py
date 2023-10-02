@@ -306,7 +306,7 @@ def plot_arcs_compare(
         structure2=None,
         interactions=None,
         interactions2=None,
-        profile="default_profile",
+        profile=None,
         region="all",
         labels=None,
         plot_kwargs=None,
@@ -363,7 +363,7 @@ def plot_arcs_compare(
         raise ValueError("Only 2 samples can be compared.")
     seq1 = get_sequence(sequence, samples[0], structure)
     seq2 = get_sequence(sequence, samples[1], structure)
-    alignment = data.SequenceAlignment(seq1, seq2)
+    alignment = data.SequenceAlignment(seq1, seq2, full=True)
     parsed_args = PlottingArgumentParser(
         samples=samples,
         labels=labels,
@@ -378,17 +378,19 @@ def plot_arcs_compare(
     plot = plots.AP(num_samples=1, nt_length=len(alignment.target_sequence),
                     region=region, **plot_kwargs)
     # loop through samples and filters, adding each as a new axis
+    labels = []
     for data_dict, seq, panel in zip(parsed_args.data_dicts, [1, 2], ["top", "bottom"]):
         if seq == 1:
             seq, other_seq = seq1, seq2
         else:
             seq, other_seq = seq2, seq1
-        alignment = data.SequenceAlignment(seq, other_seq)
+        alignment = data.SequenceAlignment(seq, other_seq, full=True)
         panels = {
             'ct_panel': panel, 
             'interactions_panel': panel,
             'interactions2_panel': panel,
             'profile_panel': panel}
+        labels.append(data_dict.pop('label'))
         data_dict = fit_data(data_dict, alignment)
         plot.plot_data(ax=0, seq=None, annotation_gap=10, label='',
                        seqbar=False, **panels, **data_dict, **kwargs)
