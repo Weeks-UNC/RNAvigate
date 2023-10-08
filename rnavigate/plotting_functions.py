@@ -392,11 +392,13 @@ def plot_arcs_compare(
         profile=profile,
         interactions2=interactions2,
         interactions=interactions,
-    )
+        )
     plot_kwargs = _parse_plot_kwargs(plot_kwargs, "rnavigate.plots.AP")
     # initialize plot
-    plot = plots.AP(num_samples=1, nt_length=len(alignment.target_sequence),
-                    region=region, **plot_kwargs)
+    plot = plots.AP(
+        num_samples=1, nt_length=len(alignment.target_sequence), region=region,
+        **plot_kwargs
+        )
     # loop through samples and filters, adding each as a new axis
     labels = []
     for data_dict, seq, panel in zip(parsed_args.data_dicts, [1, 2], ["top", "bottom"]):
@@ -406,17 +408,20 @@ def plot_arcs_compare(
             seq, other_seq = seq2, seq1
         alignment = data.SequenceAlignment(seq, other_seq, full=True)
         panels = {
-            'ct_panel': panel, 
-            'interactions_panel': panel,
-            'interactions2_panel': panel,
-            'profile_panel': panel}
+            'structure': panel, 
+            'interactions': panel,
+            'interactions2': panel,
+            'profile': panel}
         labels.append(data_dict.pop('label'))
         data_dict = fit_data(data_dict, alignment)
-        plot.plot_data(ax=0, seq=None, annotation_gap=10, label='',
-                       seqbar=False, **panels, **data_dict, **kwargs)
-    plots.alignment.plot_alignment(
-        plot=plot, ax=plot.axes[0, 0], alignment=alignment, label=labels,
-        center=-5, offset=4, spines_positions={"top": 0, "bottom": -10})
+        plot.plot_data(
+            ax=0, seq=None, track_height=6, label='', seqbar=False,
+            panels=panels, **data_dict, **kwargs
+            )
+    plots.plot_sequence_alignment(
+        ax=plot.axes[0, 0], alignment=alignment, labels=labels, top=6,
+        bottom=0,
+        )
     plot.set_figure_size()
     if colorbar:
         plot.plot_colorbars()

@@ -1,5 +1,4 @@
-from rnavigate.plots import AP
-from rnavigate.plots.plots import adjust_spines, clip_spines
+from rnavigate import plots
 from sklearn.metrics import roc_curve, auc
 import numpy as np
 
@@ -101,7 +100,7 @@ class WindowedAUROC():
             start, stop = region
             region_length = stop - start + 1
 
-        plot = AP(1, region_length, cols=1, rows=1, region=region)
+        plot = plots.AP(1, region_length, cols=1, rows=1, region=region)
         ax = plot.axes[0, 0]
 
         # fill between auroc values and median, using secondary ax
@@ -111,8 +110,8 @@ class WindowedAUROC():
         auc_ax.set_yticks([0.5, self.auroc_median, 1.0])
         auc_ax.fill_between(x_values, self.auroc[start-1:stop],
                             self.auroc_median, fc='0.3', lw=0)
-        adjust_spines(auc_ax, ["left"])
-        clip_spines(auc_ax, ["left"])
+        plots.adjust_spines(auc_ax, ["left"])
+        plots.clip_spines(auc_ax, ["left"])
 
         # add structure and reactivity profile track
         plot.plot_data(
@@ -141,7 +140,7 @@ class WindowedAUROC():
         ax.set_xticks(ticks=[x for x in range(100, stop, 100) if x > start],
                       minor=True)
         ax.tick_params(ax='x', which='major', labelsize=36)
-        adjust_spines(ax, ['bottom'])
+        plots.adjust_spines(ax, ['bottom'])
         ax.grid(ax='x')
 
         # set figure size so that 100 ax units == 1 inch

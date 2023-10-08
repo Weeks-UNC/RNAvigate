@@ -1,10 +1,49 @@
 from functools import wraps
 import matplotlib as mpl
 import seaborn as sns
+from rnavigate import data
 
 # STYLE SHEET
 ###############################################################################
 
+settings = {
+    'sequence_bar': 'alphabet', # 'bars'
+    'sequence_colors': 'rnavigate', # 'old'
+    'ss': {
+        'structure': {
+            'linewidth': 1,
+            'zorder': 2},
+        'points': {
+            's': 3**2,
+            'zorder': 2},
+        'interactions': {
+            'linewidth': 3,
+            'alpha': None,
+            'zorder': 15},
+        'spans': {
+            'linewidth': 10,
+            'alpha': 0.4,
+            'zorder': 5},
+        'sites': {
+            'marker': 'o',
+            'edgecolor': 'none',
+            's': 10**2,
+            'alpha': 0.4,
+            'zorder': 5},
+        'basepairs': {
+            'zorder': 0},
+        'nucleotides': {
+            'marker': 'o',
+            's': 5**2,
+            'zorder': 10},
+        'sequence': {
+            'linewidth': 0.3,
+            's': 3**2,
+            'zorder': 20},
+        'positions': {
+            'zorder': 25},
+    },
+}
 
 def set_defaults():
     sns.set_context("paper")
@@ -23,20 +62,27 @@ def set_defaults():
     mpl.rcParams["svg.fonttype"] = 'none'
 
 
-def get_nt_color(nt, colors="new"):
+def get_nt_color(nt, colors=None):
+    if colors is None:
+        colors = settings['sequence_colors']
     try:
         return {"old": {"A": "#f20000",  # red
                         "U": "#f28f00",  # yellow
                         "G": "#00509d",  # blue
                         "C": "#00c200"},  # green
-                "new": {"A": "#366ef0",  # blue
-                        "U": "#9bb9ff",  # light blue
-                        "G": "#f04c4c",  # red
-                        "C": "#ffa77c"}  # light red
+                "rnavigate": {"A": "#366ef0",  # blue
+                              "U": "#9bb9ff",  # light blue
+                              "G": "#f04c4c",  # red
+                              "C": "#ffa77c"}  # light red
                 }[colors][nt.upper().replace("T", "U")]
     except KeyError:
         return "#aaaaaa"
 
+def get_nt_cmap():
+    return data.ScalarMappable(
+        cmap=[get_nt_color(nt) for nt in 'AUGC'],
+        normalization='none', values=None, title="sequence",
+        tick_labels=['A', 'U', 'G', 'C'])
 
 def apply_style(style_dict):
     def decorator(function):

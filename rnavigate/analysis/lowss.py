@@ -1,5 +1,4 @@
-from rnavigate.plots import AP
-from rnavigate.plots.plots import adjust_spines, clip_spines
+from rnavigate import plots, data
 from rnavigate.data import Annotation
 import matplotlib.pyplot as plt
 import numpy as np
@@ -41,8 +40,8 @@ class LowSS():
             show (bool, optional): Whether to create a plot. Defaults to True.
         """
         # Make sure this sample contains the necessary data
-        for data in ["profile", "pairprob", "ss"]:
-            assert data in sample.data.keys(), f"Sample missing {data} data"
+        for key in ["profile", "pairprob", "ss"]:
+            assert key in sample.data.keys(), f"Sample missing {key} data"
         assert window % 2 == 1, "Window must be an odd number."
         # store values
         self.sample = sample
@@ -78,7 +77,7 @@ class LowSS():
                     lowss_regions.append(lowss_region)
                     self.in_lowss_region[start:stop] = 1
                     lowss_region = [start, stop]
-        self.lowss_regions = Annotation(
+        self.lowss_regions = data.Annotation(
             input_data=lowss_regions, annotation_type="spans", color="grey",
             sequence=self.sequence)
         sample.data["lowss"] = self.lowss_regions
@@ -113,7 +112,7 @@ class LowSS():
         region_length = stop - start + 1
 
         # create arc plot instance
-        plot = AP(1, region_length, cols=1, rows=1, region=region)
+        plot = plots.AP(1, region_length, cols=1, rows=1, region=region)
         ax = plot.axes[0, 0]
         x_values = np.arange(start, stop + 1)
         # plot median SHAPE on secondary ax
@@ -123,8 +122,8 @@ class LowSS():
         prof_ax.fill_between(x_values, [self.median_profile]*region_length,
                              self.windowed_profile[start-1:stop],
                              fc='0.3', lw=0)
-        adjust_spines(prof_ax, ["left"])
-        clip_spines(prof_ax, ["left"])
+        plots.adjust_spines(prof_ax, ["left"])
+        plots.clip_spines(prof_ax, ["left"])
 
         # plot median entropy on second secondary ax
         ent_ax = ax.twinx()
@@ -133,8 +132,8 @@ class LowSS():
         ent_ax.fill_between(x_values, [0.08]*region_length,
                             self.windowed_entropy[start-1:stop],
                             fc='C1', lw=0)
-        adjust_spines(ent_ax, ["left"])
-        clip_spines(ent_ax, ["left"])
+        plots.adjust_spines(ent_ax, ["left"])
+        plots.clip_spines(ent_ax, ["left"])
 
         # add ss and pairing probabilities track
         self.sample.filter_interactions("pairprob", "pairprob")
@@ -175,7 +174,7 @@ class LowSS():
         ax.set_xticks(ticks=[x for x in range(100, stop+1, 100) if x > start],
                       minor=True)
         ax.tick_params(ax='x', which='major', labelsize=36)
-        adjust_spines(ax, ['bottom'])
+        plots.adjust_spines(ax, ['bottom'])
 
         # set figure size so that 100 ax units == 1 inch
         plot.set_figure_size(height_ax_rel=1/100, width_ax_rel=1/100)

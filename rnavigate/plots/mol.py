@@ -88,7 +88,7 @@ class Mol(plots.Plot):
                 io = i+w
                 jo = j+window-1-w
                 self.add_lines(io, jo, color, viewer, atom)
-        self.add_colorbar_args(interactions=interactions)
+        self.add_colorbar_args(interactions.cmap)
 
     def set_colors(self, viewer, profile, nt_color):
         colors = self.pdb.get_colors(nt_color, profile=profile)

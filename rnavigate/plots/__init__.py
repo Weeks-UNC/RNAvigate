@@ -11,3 +11,5 @@ from rnavigate.plots.sm import *
 from rnavigate.plots.ss import *
 from rnavigate.plots.roc import *
 from rnavigate.plots.alignment import *
+from rnavigate.plots.profile import *
+from rnavigate.plots.functions import *

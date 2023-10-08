@@ -1,19 +1,15 @@
 from abc import ABC, abstractmethod
-import math
-import matplotlib as mp
 import matplotlib.pyplot as plt
-import numpy as np
-from rnavigate import styles
+import math
+
 
 
 class Plot(ABC):
-    def __init__(self, num_samples, rows=None, cols=None, figsize=None, **kwargs):
+    def __init__(self, num_samples, rows=None, cols=None, **kwargs):
         self.length = num_samples
         self.rows, self.columns = self.get_rows_columns(rows, cols)
-        if figsize is None:
-            figsize = self.get_figsize()
         self.fig, self.axes = plt.subplots(
-            self.rows, self.columns, figsize=figsize, squeeze=False, **kwargs
+            self.rows, self.columns, squeeze=False, **kwargs
         )
         self.i = 0
         self.pass_through = []
@@ -26,8 +22,7 @@ class Plot(ABC):
         col = i % self.columns
         return self.axes[row, col]
 
-    def add_colorbar_args(self, interactions):
-        cmap = interactions.cmap
+    def add_colorbar_args(self, cmap):
         for colorbar in self.colorbars:
             if cmap.is_equivalent_to(colorbar):
                 break
@@ -42,7 +37,6 @@ class Plot(ABC):
         for colorbar in self.colorbars:
             plot.plot_data(colorbar)
         plot.set_figure_size()
-
 
     def get_rows_columns(self, rows=None, cols=None):
         has_rows = isinstance(rows, int)
@@ -70,34 +64,6 @@ class Plot(ABC):
             cols = 4
             rows = math.ceil(self.length / cols)
         return rows, cols
-
-    def add_sequence(self, ax, sequence, yvalue=0, ytrans="axes"):
-        # set font style and colors for each nucleotide
-        font_prop = mp.font_manager.FontProperties(
-            family="monospace", style="normal", weight="bold", size="4"
-        )
-        # transform yvalue to a y-ax data value
-        if ytrans == "axes":
-            trans = ax.get_xaxis_transform()
-        elif ytrans == "data":
-            trans = ax.transData
-        sequence = sequence[self.region[0] - 1 : self.region[1]]
-        for i, seq in enumerate(sequence):
-            col = styles.get_nt_color(seq, colors="old")
-            ax.text(
-                i + self.region[0],
-                yvalue,
-                seq,
-                fontproperties=font_prop,
-                transform=trans,
-                color=col,
-                horizontalalignment="center",
-                verticalalignment="bottom",
-            )
-
-    @abstractmethod
-    def get_figsize(self):
-        pass
 
     @abstractmethod
     def plot_data(self):
@@ -208,50 +174,26 @@ class Plot(ABC):
         fig.set_size_inches(width_fig_in, height_fig_in)
 
 
-def adjust_spines(ax, spines):
-    for loc, spine in ax.spines.items():
-        if loc in spines:
-            spine.set_position(("outward", 10))  # outward by 10 points
-        else:
-            spine.set_color("none")  # don't draw spine
-    if "left" in spines:
-        ax.yaxis.set_ticks_position("left")
-    else:
-        ax.yaxis.set_ticks([])
-    if "bottom" in spines:
-        ax.xaxis.set_ticks_position("bottom")
-    else:
-        ax.xaxis.set_ticks([])
-
-
-def clip_spines(ax, spines):
-    for spine in spines:
-        if spine in ["left", "right"]:
-            ticks = ax.get_yticks()
-        if spine in ["top", "bottom"]:
-            ticks = ax.get_xticks()
-        ax.spines[spine].set_bounds((min(ticks), max(ticks)))
-
 class ColorBar(Plot):
     def plot_data(self, colorbar):
         ax = self.get_ax(self.i)
-        cax = plt.colorbar(colorbar, cax=ax, orientation="horizontal",
-                                aspect=40, **colorbar.cbar_args)
+        cax = plt.colorbar(
+            colorbar, cax=ax, orientation="horizontal", aspect=40,
+            spacing='proportional', **colorbar.cbar_args
+            )
         if colorbar.tick_labels is not None:
             ax.set_xticklabels(colorbar.tick_labels)
         ax.set_title(colorbar.title)
         cax.outline.set_visible(False)
         cax.set_alpha(0.7)
         self.i += 1
-
-    def get_figsize(self):
         return (2, self.rows/2)
 
     def set_figure_size(
             self, fig=None, ax=None, rows=None, cols=None,
             height_ax_rel=None, width_ax_rel=None,
             width_ax_in=3, height_ax_in=0.1,
-            height_gap_in=None, width_gap_in=None,
+            height_gap_in=0.5, width_gap_in=0.5,
             top_in=None, bottom_in=None, left_in=None, right_in=None):
         return super().set_figure_size(
             fig, ax, rows, cols, height_ax_rel, width_ax_rel, width_ax_in,

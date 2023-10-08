@@ -117,7 +117,7 @@ class Circle(plots.Plot):
         if data is None:
             return
         ij_colors = data.get_ij_colors()
-        self.add_colorbar_args(interactions=data)
+        self.add_colorbar_args(data.cmap)
         patches = []
         for i, j, color in zip(*ij_colors):
             if j < i:  # flip the order
@@ -152,7 +152,7 @@ class Circle(plots.Plot):
             y = self.y[annotation[:]]
             ax.scatter(x, y, color=color, marker='o', ec="none", alpha=0.7,
                        s=30**2, zorder=zorder)
-        elif annotation.annotation_type == "groups":
+        elif annotation.annotation_type == "group":
             for group in annotation:
                 x = self.structure.xcoordinates[group["sites"]]
                 y = self.structure.ycoordinates[group["sites"]]
