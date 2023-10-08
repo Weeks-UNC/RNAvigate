@@ -5,8 +5,10 @@ from rnavigate import data
 
 
 class Profile(data.Data):
-    def __init__(self, input_data, metric, metric_defaults,
+    def __init__(self, input_data, metric='default', metric_defaults=None,
                  read_table_kw=None, sequence=None):
+        if metric_defaults is None:
+            metric_defaults = {}
         super().__init__(
             input_data=input_data,
             sequence=sequence,
@@ -50,9 +52,11 @@ class SHAPEMaP(Profile):
             'Norm_profile': {
                 'metric_column': 'Norm_profile',
                 'error_column': 'Norm_stderr',
-                'cmap': ["grey", "black", "orange", "red"],
+                'cmap': ["grey", "black", "orange", "red", "red"],
                 'normalization': "bins",
-                'values': [-0.4, 0.4, 0.85]}
+                'values': [-0.4, 0.4, 0.85, 2],
+                'title': 'SHAPE Reactivity',
+                'extend': 'both'}
             } | metric_defaults
         if (isinstance(input_data, str)
                 and input_data.endswith(".map")

@@ -3,7 +3,7 @@ import Bio.SeqIO
 import numpy as np
 import pandas as pd
 import matplotlib.colors as mpc
-from rnavigate.styles import get_nt_color
+from rnavigate import styles
 from rnavigate import data
 
 
@@ -37,7 +37,7 @@ class Sequence():
             self.sequence = self.get_seq_from_dataframe(input_data)
         elif isinstance(input_data, Sequence):
             self.sequence = input_data.sequence
-        self._alignment = data.RegionAlignment(self.sequence, [1, self.length])
+        self._alignment = data.SequenceAlignment(self.sequence, self.sequence)
 
     def read_fasta(self, fasta):
         """Parse a fasta file for the first sequence. Store the sequence name
@@ -69,8 +69,8 @@ class Sequence():
         return len(self.sequence)
 
 
-    def get_colors(self, source, nt_colors='new', pos_cmap='rainbow',
-                   profile=None, structure=None, annotations=None):
+    def get_colors(self, source, pos_cmap='rainbow', profile=None,
+                   structure=None, annotations=None):
         """Get a numpy array of colors that fits the current sequence.
 
         Args:
@@ -82,8 +82,6 @@ class Sequence():
                 "structure": colors represent base-pairing status
                 matplotlib color-like: all colors are this color
                 array of color like: must match length of sequence
-            nt_colors (str, optional): 'new' or 'old' as defined in
-                rnavigate.style. Defaults to 'new'.
             pos_cmap (str, optional): cmap used if source="position".
                 Defaults to 'rainbow'.
             profile (Profile or subclass, optional): Data object containing
@@ -99,7 +97,7 @@ class Sequence():
         """
         if isinstance(source, str) and (source == "sequence"):
             seq = self.sequence
-            colors = np.array([get_nt_color(nt, nt_colors) for nt in seq])
+            colors = np.array([styles.get_nt_color(nt) for nt in seq])
             return colors
         elif isinstance(source, str) and (source == "position"):
             colormap = data.ScalarMappable(pos_cmap, '0_1', None)
@@ -203,9 +201,9 @@ class Data(Sequence):
                 self._metric = self.metric_defaults['default']
                 self._metric['metric_column'] = value
                 return
-        if value["metric_column"] in self.metric_defaults:
+        try:
             defaults = self.metric_defaults[value["metric_column"]]
-        else:
+        except KeyError:
             defaults = self.metric_defaults['default']
         for key in value:
             if key not in defaults:
@@ -234,7 +232,9 @@ class Data(Sequence):
 
     @property
     def colors(self):
-        return self.cmap.values_to_hexcolors(np.ma.masked_invalid(self.data[self.color_column]))
+        return self.cmap.values_to_hexcolors(
+            np.ma.masked_invalid(self.data[self.color_column])
+            )
 
     def read_file(self, filepath, read_table_kw):
         """Convert data file to pandas dataframe and store as self.data
