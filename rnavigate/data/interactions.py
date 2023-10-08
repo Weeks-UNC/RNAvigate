@@ -930,7 +930,7 @@ class StructureInteractions(Interactions):
                 structure2,
                 how="left",
                 on=["i", "j"],
-                indicate="Which_structure",
+                indicator="Which_structure",
                 suffixes=["_left", "_right"])
             input_data["Which_structure"].astype(int)
             metric = "Which_structure"
