@@ -8,7 +8,7 @@ class Annotation(data.Sequence):
     def __init__(self, input_data, annotation_type,
                  sequence, name=None, color="blue"):
         """Base annotation class to store 1D features of an RNA. This can
-        include groups of separted nucleotides (e.g. binding pocket), spans of
+        include a group of separted nucleotides (e.g. binding pocket), spans of
         nucleotides (e.g. coding sequence, Alu elements), list of sites (e.g.
         m6A locations) or primer binding sites.
 
@@ -16,13 +16,13 @@ class Annotation(data.Sequence):
             input_data (list):
                 List will be treated according to annotation_type argument.
                 Expected behaviors for each value of annotation_type:
-                "sites" or "groups": 1-indexed location of sites of interest
+                "sites" or "group": 1-indexed location of sites of interest
                 "spans": 1-indexed, inclusive locations of spans of interest
                     e.g. [[1, 10], [20, 30]] is two spans, 1 to 10 and 20 to 30
                 "primers": Similar to spans, but 5'/3' direction is preserved.
                     e.g. [[1, 10], [30, 20]] forward 1 to 10, reverse 30 to 20
             annotation_type (str):
-                "groups", "sites", "spans", or "primers".
+                "group", "sites", "spans", or "primers".
             sequence (str | pandas.DataFrame):
                 Nucleotide sequence, path to fasta file, or dataframe
                 containing a "Sequence" column.
@@ -37,13 +37,13 @@ class Annotation(data.Sequence):
         super().__init__(sequence)
 
         # make sure input data matches expected format
-        valid_types = ["sites", "spans", "groups", "primers"]
+        valid_types = ["sites", "spans", "group", "primers"]
         self.annotation_type = annotation_type
         if isinstance(input_data, pd.DataFrame):
             self.data = input_data
         elif annotation_type in ['spans', 'primers']:
             self.data = self.from_spans(input_data)
-        elif annotation_type in ['sites', 'groups']:
+        elif annotation_type in ['sites', 'group']:
             self.data = self.from_sites(input_data)
         else:
             raise ValueError(f"annotation_type not in {valid_types}")
@@ -89,7 +89,7 @@ class Annotation(data.Sequence):
             sites = []
             for _, row in self.data.iterrows():
                 sites.extend(list(range(row['start'], row['end']+1)))
-        elif self.annotation_type in ["sites", "groups"]:
+        elif self.annotation_type in ["sites", "group"]:
             sites = list(self.data['site'].values)
         colors = [self.color] * len(sites)
         return sites, colors
@@ -123,8 +123,8 @@ class Motif(Annotation):
             color (str, optional): color used to display these motif locations.
                 Defaults to "blue".
         """
-        self.motif = motif
-        span_list = self.get_spans_from_motif(sequence, motif)
+        self.motif = input_data
+        span_list = self.get_spans_from_motif(sequence, input_data)
         super().__init__(
             name=name,
             sequence=sequence,
@@ -172,22 +172,20 @@ class Motif(Annotation):
 
     def get_aligned_data(self, alignment):
         return Motif(
+            input_data=self.motif,
             name=self.name,
             color=self.color,
             sequence=alignment.target_sequence,
-            motif=self.motif)
+            )
 
 
 class ORFs(Annotation):
     def __init__(self, name=None, sequence=None, color="blue"):
         span_list = self.get_spans_from_orf(sequence)
         super().__init__(
-            name=name,
-            sequence=sequence,
-            annotation_type="spans",
-            input_data=span_list,
-            color=color,
-        )
+            name=name, sequence=sequence, annotation_type="spans",
+            input_data=span_list, color=color,
+            )
 
     def get_spans_from_orf(self, sequence):
         """Given a sequence string, returns all possible ORFs
@@ -219,3 +217,11 @@ class ORFs(Annotation):
             name=self.name,
             color=self.color,
             sequence=alignment.target_sequence)
+
+def domains(input_data, names, colors, sequence):
+    return [
+        Annotation(
+            input_data=[span], annotation_type='spans', name=name,
+            color=color, sequence=sequence,
+            ) for span, name, color in zip(input_data, names, colors)
+        ]

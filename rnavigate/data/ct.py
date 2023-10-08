@@ -68,7 +68,7 @@ class SecondaryStructure(data.Sequence):
             self.filepath = input_data
             self.data = read_file(**kwargs)
         super().__init__(self.data)
-        if 'X_coordinate' in self.data.columns and autoscale == True:
+        if 'X_coordinate' in self.data.columns and autoscale is True:
             self.transform_coordinates(scale=1, center=(0,0))
         self.distance_matrix = None
 

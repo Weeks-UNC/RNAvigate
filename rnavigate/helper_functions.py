@@ -61,6 +61,7 @@ class PlottingArgumentParser():
             'annotations': data.Annotation,
             'structure': data.SecondaryStructure,
             # 'interactions': data.Interactions,
+            'domains': list,
             'pdb': data.PDB,
             'log': data.Log,
         }

@@ -56,7 +56,7 @@ data_keyword_defaults = {
         "data_class": data.Annotation,
         "sequence": _required,
         "color": _required},
-    "groups": {
+    "group": {
         "data_class": data.Annotation,
         "sequence": _required,
         "color": _required},
@@ -64,6 +64,11 @@ data_keyword_defaults = {
         "data_class": data.Annotation,
         "sequence": _required,
         "color": _required},
+    "domains": {
+        "data_class": data.domains,
+        "sequence": _required,
+        "colors": _required,
+        "names": _required},
 }
 
 def create_data(sample=None, **data_keyword):
@@ -140,7 +145,7 @@ def create_data(sample=None, **data_keyword):
     # handle special cases
     if inputs['data_keyword'] == 'allpossible':
         inputs['sequence'] = inputs.pop('input_data')
-    elif inputs['data_keyword'] in ['sites', 'spans', 'primers', 'groups']:
+    elif inputs['data_keyword'] in ['sites', 'spans', 'primers', 'group']:
         inputs['annotation_type'] = inputs['data_keyword']
 
     # 'filepath' or 'dataframe' may be used in place of 'input_data'

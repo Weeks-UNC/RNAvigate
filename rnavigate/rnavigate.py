@@ -250,8 +250,9 @@ class Sample:
             values:
                 behavior depends on normalization
                 `'norm'`: values are not needed
-                `'bins'`: values should be 2 less than the number of categories
-                `'min_max'`: list or tuple containing the minimum and maximum
+                `'bins'`: list of floats containing the boundaries between bins
+                    One fewer than the number of categories
+                `'min_max'`: list of floats containing the minimum and maximum
             **kwargs: Other arguments are passed to interactions.filter()
         """
         # check for valid interactions data
@@ -267,16 +268,13 @@ class Sample:
 
         if metric is None:
             metric = interactions.default_metric
-        elif metric is not None and metric.startswith("Distance"):
+        elif metric.startswith("Distance"):
             if len(metric.split('_')) == 2:
                 metric, atom = metric.split('_')
             else:
                 atom = "O2'"
-            interactions.set_3d_distances(self.get_data("pdb"), atom)
-        try:
-            metric = interactions.metric_defaults[metric]
-        except KeyError:
-            metric = {'metric_column': metric}
+            interactions.set_3d_distances(self.get_data("default_pdb"), atom)
+        metric = {'metric_column': metric}
         if cmap is not None:
             metric['cmap'] = cmap
         if normalization is not None:

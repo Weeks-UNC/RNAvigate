@@ -76,6 +76,7 @@ def plot_skyline(
         profile="default_profile",
         labels=None,
         annotations=None,
+        domains=None,
         region="all",
         plot_kwargs=None,
         **kwargs):
@@ -97,6 +98,9 @@ def plot_skyline(
         annotations (list of str, optional):
             a list of data keywords to retreive a list of Annotations objects.
             Defaults to [].
+        domains (str, optional):
+            a data keyword pointing to a domains annotation.
+            Defaults to None
         region (list of int: length 2, optional):
             start and end positions to plot. 1-indexed, inclusive.
             Defaults to [1, sequence length].
@@ -114,7 +118,8 @@ def plot_skyline(
         labels=labels,
         alignment=sequence._alignment,
         profile=profile,
-        annotations=annotations
+        annotations=annotations,
+        domains=domains,
     )
     plot_kwargs = _parse_plot_kwargs(plot_kwargs, "rnavigate.plots.Skyline")
     plot = plots.Skyline(num_samples=len(samples),
@@ -124,6 +129,7 @@ def plot_skyline(
     for data_dict in parsed_args.data_dicts:
         plot.plot_data(**data_dict, **kwargs)
     plot.set_figure_size()
+    plot.plot_colorbars()
     return plot
 
 
@@ -133,8 +139,10 @@ def plot_profile(
         profile="default_profile",
         labels=None,
         annotations=None,
+        domains=None,
         region="all",
         plot_kwargs=None,
+        legend=True,
         **kwargs):
     """Aligns reactivity profiles by sequence and plots them on seperate axes.
 
@@ -154,6 +162,9 @@ def plot_profile(
         annotations (list of str, optional):
             a list of data keywords to retreive a list of Annotations objects.
             Defaults to [].
+        domains (str, optional):
+            a data keyword pointing to a domains annotation.
+            Defaults to None
         region (list of int: length 2, optional):
             start and end positions to plot. 1-indexed, inclusive.
             Defaults to [1, sequence length].
@@ -171,6 +182,7 @@ def plot_profile(
         labels=labels,
         alignment=sequence._alignment,
         annotations=annotations,
+        domains=domains,
         profile=profile)
     plot_kwargs = _parse_plot_kwargs(plot_kwargs, "rnavigate.plots.Profile")
     plot = plots.Profile(num_samples=len(samples),
@@ -180,6 +192,8 @@ def plot_profile(
     for data_dict in parsed_args.data_dicts:
         plot.plot_data(**data_dict, **kwargs)
     plot.set_figure_size()
+    if legend:
+        plot.plot_colorbars()
     return plot
 
 
@@ -224,6 +238,7 @@ def plot_arcs(
         interactions2=None,
         profile="default_profile",
         annotations=None,
+        domains=None,
         labels=None,
         region="all",
         plot_kwargs=None,
@@ -260,6 +275,9 @@ def plot_arcs(
         annotations (list of str, optional):
             a list of data keywords to retreive a list of Annotations objects.
             Defaults to [].
+        domains (str, optional):
+            a data keyword pointing to a domains annotation.
+            Defaults to None
         region (list of int: length 2, optional):
             start and end positions to plot. 1-indexed, inclusive.
             Defaults to [1, sequence length].
@@ -277,12 +295,13 @@ def plot_arcs(
         labels=labels,
         alignment=sequence._alignment,
         annotations=annotations,
+        domains=domains,
         structure=structure,
         structure2=structure2,
         profile=profile,
         interactions2=interactions2,
         interactions=interactions
-    )
+        )
     plot_kwargs = _parse_plot_kwargs(plot_kwargs, "rnavigate.plots.AP")
     parsed_args.update_rows_cols(plot_kwargs)
     # initialize plot
@@ -311,7 +330,8 @@ def plot_arcs_compare(
         labels=None,
         plot_kwargs=None,
         colorbar=True,
-        **kwargs):
+        **kwargs
+        ):
     """Generates a single arc plot displaying combinations of secondary
     structures, per-nucleotide data, inter-nucleotide data, and sequence
     annotations. The first sample will be on top, the second on the bottom.
@@ -413,7 +433,8 @@ def plot_ss(
         labels=None,
         plot_kwargs=None,
         colorbar=True,
-        **kwargs):
+        **kwargs
+        ):
     """Generates a multipanel secondary structure drawing with optional
     coloring by per-nucleotide data and display of inter-nucleotide data and/or
     sequence annotations. Each plot may display a unique sample and/or
@@ -523,8 +544,10 @@ def plot_mol(
         rnavigate.plots.Mol plot: object containing py3dmol viewer with
             additional plotting and file saving methods
     """
+    sequence = get_sequence(structure, samples[0])
     parsed_args = PlottingArgumentParser(
         samples=samples,
+        alignment=sequence._alignment,
         labels=labels,
         profile=profile,
         interactions=interactions,
