@@ -210,13 +210,15 @@ def get_sequence(sequence, sample=None, default=None):
         raise ValueError("A sequence must be provided.")
     elif sequence is None:
         sequence = default
+    try:
+        sequence = sample.get_data(sequence)
+    except:
+        pass
     if isinstance(sequence, data.Sequence):
         return sequence
-    elif isinstance(sequence, str) and os.path.isfile(sequence):
+    if isinstance(sequence, str) and os.path.isfile(sequence):
         return data.Sequence(sequence)
-    elif isinstance(sequence, str) and sequence in sample.data.keys():
-        return sample.data[sequence]
-    elif isinstance(sequence, str) and all([nt.upper() in "AUCGT." for nt in sequence]):
+    if isinstance(sequence, str) and all([nt.upper() in "AUCGT." for nt in sequence]):
         return data.Sequence(sequence)
     else:
         raise ValueError(f"Cannot find sequence from {sequence}")
