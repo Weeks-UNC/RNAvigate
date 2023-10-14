@@ -845,28 +845,52 @@ class PairingProbability(Interactions):
         dataframe["Probability"] = 10 ** (-dataframe["log10p"])
         return dataframe
 
-    def set_entropy(self, printOut=False, toFile=None):
+    def get_entropy_profile(self, print_out=False, save_file=None):
         """Calculates per-nucleotide Shannon entropy and stores as self.entropy
 
         Args:
-            printOut (bool, optional): whether to print the result.
+            print_out (bool, optional): whether to print the result.
                 Defaults to False.
-            toFile (str, optional): file to write result to. Defaults to None.
+            save_file (str, optional): file to write result to.
+                Defaults to None.
         """
         self.data.eval("nlogn = log10p * 10 ** ( - log10p )", inplace=True)
         entropy = np.zeros(self.length)
-        for i in range(self.length):
-            mask = (self.data["i"] == i + 1) | (self.data["j"] == i + 1)
-            entropy[i] = self.data.loc[mask, "nlogn"].sum()
+        args = {'labels': np.arange(self.length)+1, 'fill_value': 0}
+        i_sum = self.data[['i', 'nlogn']].groupby('i').sum().reindex(**args)
+        j_sum = self.data[['j', 'nlogn']].groupby('j').sum().reindex(**args)
+        ij_sum = i_sum + j_sum
+        entropy_df = pd.DataFrame({
+            'Sequence':list(self.sequence),
+            'Nucleotide': np.arange(self.length)+1,
+            'Entropy': ij_sum['nlogn']
+            })
+        entropy_df = entropy_df.set_index('Nucleotide')
         # catch rounding errors:
-        entropy[np.where(entropy < 0)] = 0
-        if printOut:
+        entropy_df.loc[entropy_df['Entropy'] < 0, 'Entropy'] = 0
+        if print_out:
             print(*[f"{i+1} {s}" for i, s in enumerate(entropy)], sep="\n")
-        if toFile:
-            with open(toFile) as outf:
+        if save_file is not None:
+            with open(save_file) as outf:
                 for i, s in enumerate(entropy):
                     outf.write(f"{i+1}\t{s}\n")
-        self.entropy = entropy
+        return data.Profile(
+            input_data=entropy_df,
+            metric='Entropy',
+            metric_defaults={
+                'Entropy': {
+                    'metric_column': 'Entropy',
+                    'error_column': None,
+                    'color_column': None,
+                    'cmap': 'rainbow',
+                    'normalization': 'norm',
+                    'values': [0.0, 0.2],
+                    'extend': 'right',
+                    'title': 'Shannon entropy',
+                    'alpha': 1
+            }})
+
+
 
     def data_specific_filter(self, **kwargs):
         """Used by parent filter function. By default, filters out pairs with
@@ -932,7 +956,11 @@ class StructureInteractions(Interactions):
                 on=["i", "j"],
                 indicator="Which_structure",
                 suffixes=["_left", "_right"])
-            input_data["Which_structure"].astype(int)
+            categories = {'both': 0, 'left_only': 1, 'right_only': 2}
+            input_data["Which_structure"] = [
+                categories[c] for c in input_data['Which_structure']
+                ]
+            input_data['Which_structure'].astype(int)
             metric = "Which_structure"
             metric_defaults = {
                 'Structure_left': {
