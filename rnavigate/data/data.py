@@ -7,15 +7,6 @@ from rnavigate import styles
 from rnavigate import data
 
 
-def get_pairs_sens_ppv(self, structure=" default_structure"):
-    """Returns sensitivity and PPV for pair data to the  structure"""
-    import pmanalysis as pma
-    pairmap = pma.PairMap(self.paths["pairs"])
-    structure = getattr(self, structure).copy()
-    structure.filterNC()
-    structure.filterSingleton()
-    return pairmap.ppvsens_duplex(structure, ptype=1, exact=False)
-
 
 class Sequence():
     def __init__(self, input_data):
@@ -68,6 +59,59 @@ class Sequence():
         """
         return len(self.sequence)
 
+    def get_colors_from_sequence(self):
+        colors = np.array([styles.get_nt_color(nt) for nt in self.sequence])
+        colormap = data.ScalarMappable(
+            cmap=[styles.get_nt_color(nt) for nt in 'AUGC'],
+            normalization='none', values=None, extend='neither',
+            title='Nucleotide identity', alpha=1, ticks=[0, 1, 2, 3],
+            tick_labels=['A', 'U', 'G', 'C']
+            )
+        return colors, colormap
+
+    def get_colors_from_positions(self, pos_cmap='rainbow'):
+        colormap = data.ScalarMappable(
+            cmap=pos_cmap, normalization='min_max', values=[1, self.length],
+            extend='neither', title='Nucleotide position', alpha=1
+            )
+        colors = colormap.values_to_hexcolors(np.arange(self.length))
+        return colors, colormap
+
+    def get_colors_from_profile(self, profile):
+        alignment = data.SequenceAlignment(profile, self)
+        colors = alignment.map_values(profile.colors, fill="#808080")
+        colormap = profile.cmap
+        return colors, colormap
+
+    def get_colors_from_annotations(self, annotations):
+        colors = np.full(self.length, 'gray', dtype='<U16')
+        cmap = ['gray']
+        tick_labels = ['other']
+        for annotation in annotations:
+            cmap.append(annotation.color)
+            tick_labels.append(annotation.name)
+            annotation = annotation.get_aligned_data(
+                data.SequenceAlignment(annotation, self))
+            for site in annotation.get_sites():
+                colors[site-1] = annotation.color
+        colormap = data.ScalarMappable(
+            cmap=cmap, normalization='none', values=None, extend='neither',
+            title='Annotations', alpha=1, ticks=list(range(len(annotations))),
+            tick_labels=tick_labels,
+            )
+        return colors, colormap
+
+    def get_colors_from_structure(self, structure):
+        cmap = np.array(['darkOrange', 'darkOrchid', 'gray'])
+        ct_colors = cmap[[int(nt == 0) for nt in structure.ct]]
+        alignment = data.SequenceAlignment(structure, self)
+        colors = alignment.map_values(ct_colors, fill='gray')
+        colormap = data.ScalarMappable(
+            cmap=cmap, normalization='none', values=None, extend='neither',
+            title='Base-pairing status', alpha=1, ticks=[0, 1, 2],
+            tick_labels=['unpaired', 'paired', 'unaligned'],
+            )
+        return colors, colormap
 
     def get_colors(self, source, pos_cmap='rainbow', profile=None,
                    structure=None, annotations=None):
@@ -96,30 +140,15 @@ class Sequence():
                 self.sequence
         """
         if isinstance(source, str) and (source == "sequence"):
-            seq = self.sequence
-            colors = np.array([styles.get_nt_color(nt) for nt in seq])
-            return colors
+            return self.get_colors_from_sequence()
         elif isinstance(source, str) and (source == "position"):
-            colormap = data.ScalarMappable(pos_cmap, '0_1', None)
-            return colormap.values_to_hexcolors(np.arange(self.length))
+            return self.get_colors_from_positions(pos_cmap=pos_cmap)
         elif isinstance(source, str) and (source == "profile"):
-            alignment = data.SequenceAlignment(profile, self)
-            return alignment.map_values(profile.colors, fill="#808080")
+            return self.get_colors_from_profile(profile=profile)
         elif isinstance(source, str) and (source == "annotations"):
-            colors = np.full(self.length, 'gray', dtype='<U16')
-            for annotation in annotations:
-                annotation = annotation.get_aligned_data(
-                    data.SequenceAlignment(annotation, self))
-                for site, color in zip(*annotation.get_sites_colors()):
-                    colors[site-1] = color
-            return colors
+            return self.get_colors_from_annotations(annotations=annotations)
         elif isinstance(source, str) and (source == "structure"):
-            # TODO: this should be implemented in CT object for reusability
-            cmap = np.array(['C0', 'C1'])
-            ct_colors = cmap[[int(nt == 0) for nt in structure.ct]]
-            colors = np.full(self.length, 'gray', dtype='<U8')
-            alignment = data.SequenceAlignment(structure, self)
-            return alignment.map_values(ct_colors, fill='gray')
+            return self.get_colors_from_structure(structure)
         elif mpc.is_color_like(source):
             return np.full(self.length, source, dtype="<U16")
         elif ((len(source) == self.length)
