@@ -7,5 +7,4 @@ from rnavigate.data.log import *
 from rnavigate.data.pdb import *
 from rnavigate.data.profile import *
 from rnavigate.data.annotation import *
-from rnavigate.data.transcriptome import *
-from rnavigate.data.eclip import *
+from rnavigate.data.transcriptomics import *
