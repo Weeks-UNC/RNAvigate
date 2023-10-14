@@ -18,20 +18,23 @@ from rnavigate import data
 # store sequence alignments
 _alignments_cache = {}
 
-# sequence alignment parameters
-_globalms_params = {
-    "match": 1,
-    "mismatch": 0,
-    "open": -5,
-    "extend": -0.1}
-
 # structure alignment parameters
 # conversion of nt+pairing to pseudo amino acid sequence
-pseudo_aa_dict = (
+nt_dbn_to_aa_dict = (
     {f'A{s}': aa for s, aa in zip('([.])', 'ACDEF')}
     | {f'C{s}': aa for s, aa in zip('([.])', 'GHIKL')}
     | {f'U{s}': aa for s, aa in zip('([.])', 'MNPQR')}
     | {f'G{s}': aa for s, aa in zip('([.])', 'STVWY')})
+
+def convert_aa_sequence(aa, nt_or_dbn):
+    if nt_or_dbn == 'nt':
+        idx = 0
+    if nt_or_dbn == 'dbn':
+        idx = 1
+    for nt_dbn, aa in nt_dbn_to_aa_dict.items():
+        new = aa.replace(aa, nt_dbn[idx])
+    return new
+
 # code used to generate structure_scoring_dict
 # pair_scores = ({}
 #     # both single-stranded = +6
@@ -49,8 +52,8 @@ pseudo_aa_dict = (
 # # matching nucleotides = +5, non-matching nucleotides = 0
 # nt_scores = {n1+n2: 5  if n1==n2 else 0 for n1 in 'AUCG' for n2 in 'AUCG'}
 # scoring_dict = {}
-# for (nt1, pair1), aa1 in pseudo_aa_dict.items():
-#     for (nt2, pair2), aa2 in pseudo_aa_dict.items():
+# for (nt1, pair1), aa1 in nt_dbn_to_aa_dict.items():
+#     for (nt2, pair2), aa2 in nt_dbn_to_aa_dict.items():
 #         nt_score = nt_scores[nt1+nt2]
 #         pair_score = pair_scores[pair1+pair2]
 #         scoring_dict[(aa1, aa2)] = nt_score + pair_score
@@ -168,18 +171,14 @@ class BaseAlignment(ABC):
         """Alignments require a mapping from starting to target sequence"""
         return
 
+    @abstractmethod
+    def get_inverse_alignment(self):
+        """Alignments require a method to get the inverted alignment"""
+        return
+
     def get_target_sequence(self):
         """Gets the portion of starting sequence that fits the alignment"""
         return ''.join(self.map_values(list(self.starting_sequence), '-'))
-
-
-    def get_ticks_labels(self, gap):
-        labels = np.arange(1, len(self.mapping)//gap) * gap
-        ticks = self.mapping[labels-1] + 1
-        valid = ticks != 0
-        labels = labels[valid]
-        ticks = ticks[valid]
-        return ticks, labels
 
     def map_values(self, values, fill=np.nan):
         """Takes an array of length equal to starting sequence and maps them to
@@ -308,7 +307,10 @@ class SequenceAlignment(BaseAlignment):
             (rows that cannot be mapped are dropped)
             (missing rows filled with NaN)
     """
-    def __init__(self, sequence1, sequence2, full=False):
+    def __init__(
+            self, sequence1, sequence2, align_kwargs=None, full=False,
+            use_previous=True
+            ):
         """Creates an alignment from sequence1 to sequence2.
 
         Args:
@@ -317,6 +319,12 @@ class SequenceAlignment(BaseAlignment):
             full (bool, optional): whether to keep unmapped starting sequence
                 positions. Defaults to False.
         """
+        if align_kwargs is None:
+            self.align_kwargs = {
+                "match": 1,
+                "mismatch": 0,
+                "open": -5,
+                "extend": -0.1}
         if isinstance(sequence1, data.Sequence):
             sequence1 = sequence1.sequence
         if isinstance(sequence2, data.Sequence):
@@ -325,6 +333,7 @@ class SequenceAlignment(BaseAlignment):
         self.sequence2 = sequence2
         self.alignment1, self.alignment2 = self.get_alignment()
         self.full = full
+        self.use_previous = use_previous
         if self.full:
             target_length = len(self.alignment2)
         else:
@@ -337,6 +346,9 @@ class SequenceAlignment(BaseAlignment):
         {self.alignment1}
         {''.join(['X '[n1==n2] for n1, n2 in zip(self.alignment1, self.alignment2)])}
         {self.alignment2}"""
+
+    def get_inverse_alignment(self):
+        return SequenceAlignment(self.sequence2, self.sequence1, self.full)
 
     def get_alignment(self):
         """Gets an alignment that has either been user-defined or previously
@@ -356,9 +368,9 @@ class SequenceAlignment(BaseAlignment):
             try:
                 align1, align2 = _alignments_cache[seq1][seq2].values()
             except KeyError:
-                alignment = align.globalms(seq1, seq2,
-                                           penalize_end_gaps=False,
-                                           **_globalms_params)
+                alignment = align.globalms(
+                    seq1, seq2, penalize_end_gaps=False, **self.align_kwargs
+                    )
                 set_alignment(
                     sequence1=seq1,
                     sequence2=seq2,
@@ -419,7 +431,8 @@ class AlignmentChain(BaseAlignment):
         """Creates a single alignment from multiple alignments
 
         Raises:
-            ValueError: if the target sequence of one alignment doesn't match the starting sequence of the next.
+            ValueError: if the target sequence of one alignment doesn't match
+                the starting sequence of the next.
         """
         next_sequence_len = len(alignments[0].starting_sequence)
         for alignment in alignments:
@@ -445,6 +458,9 @@ class AlignmentChain(BaseAlignment):
             indices[valid] = alignment.map_indices(indices[valid])
         return indices
 
+    def get_inverse_alignment(self):
+        alignments = [a.get_inverse_alignment() for a in self.alignments[::-1]]
+        return AlignmentChain(*alignments)
 
 class StructureAlignment(BaseAlignment):
     """Experimental secondary structure alignment based on RNAlign2D algorithm
@@ -475,7 +491,8 @@ class StructureAlignment(BaseAlignment):
             (rows that cannot be mapped are dropped)
             (missing rows filled with NaN)
     """
-    def __init__(self, structure1, structure2, full=False):
+    def __init__(self, sequence1, sequence2, structure1=None, structure2=None,
+                 full=False):
         """Creates an alignment from structure1 to structure2.
 
         Args:
@@ -484,17 +501,22 @@ class StructureAlignment(BaseAlignment):
             full (bool, optional): whether to keep unmapped starting sequence
                 positions. Defaults to False.
         """
-        ss_error = ValueError("structures must be SecondaryStructure objects")
+        if structure1 is None:
+            structure1 = sequence1
+        if structure2 is None:
+            structure2 = sequence2
+        if isinstance(sequence1, data.Sequence):
+            sequence1 = sequence1.sequence
         if isinstance(structure1, data.SecondaryStructure):
-            self.sequence1 = structure1.sequence
-            self.structure1 = structure1.get_dbn()
-        else:
-            raise ss_error
+            structure1 = structure1.get_dbn()
+        self.sequence1 = sequence1
+        self.structure1 = structure1
+        if isinstance(sequence2, data.Sequence):
+            sequence2 = sequence2.sequence
         if isinstance(structure2, data.SecondaryStructure):
-            self.sequence2 = structure2.sequence
-            self.structure2 = structure2.get_dbn()
-        else:
-            raise ss_error
+            structure2 = structure2.get_dbn()
+        self.sequence2 = sequence2
+        self.structure2 = structure2
         self.alignment1, self.alignment2 = self.get_alignment()
         self.full = full
         if self.full:
@@ -517,15 +539,16 @@ class StructureAlignment(BaseAlignment):
         sequence2_clean = self.sequence2.upper().replace('T', 'U')
         # Cleaning up pseudoknots (assumes they were assigned correctly)
         alphabet = 'abcdefghijklmnopqrstuvwxyz'
-        for pair in ['{}', '<>'] + list(zip(alphabet.upper(), alphabet)):
-            structure1_clean.replace(pair[0], '[')
-            structure1_clean.replace(pair[1], ']')
-            structure2_clean.replace(pair[0], '[')
-            structure2_clean.replace(pair[1], ']')
+        for left in '{<' + alphabet.upper():
+            structure1_clean = structure1_clean.replace(left, '[')
+            structure2_clean = structure2_clean.replace(left, '[')
+        for right in '}>' + alphabet:
+            structure1_clean = structure1_clean.replace(right, ']')
+            structure2_clean = structure2_clean.replace(right, ']')
         for nt, bp in zip(sequence1_clean, structure1_clean):
-            aa_seq1.append(pseudo_aa_dict[nt+bp])
+            aa_seq1.append(nt_dbn_to_aa_dict[nt+bp])
         for nt, bp in zip(sequence2_clean, structure2_clean):
-            aa_seq2.append(pseudo_aa_dict[nt+bp])
+            aa_seq2.append(nt_dbn_to_aa_dict[nt+bp])
         return ''.join(aa_seq1), ''.join(aa_seq2)
 
     def get_alignment(self):
@@ -554,13 +577,8 @@ class StructureAlignment(BaseAlignment):
                     alignment2=alignment[0].seqB
                 )
         # convert pseudo-amino acid alignments back into nucleotide alignments
-        alignment1=np.array(list(alignment[0].seqA))
-        alignment1[alignment1 != "-"] = list(self.sequence1)
-        alignment1 = ''.join(alignment1)
-        alignment2=np.array(list(alignment[0].seqB))
-        alignment2[alignment2 != "-"] = list(self.sequence2)
-        alignment2 = ''.join(alignment2)
-        return (alignment1, alignment2)
+        return (convert_aa_sequence(alignment1, "nt"),
+                convert_aa_sequence(alignment2, "nt"))
 
     def get_mapping(self):
         """Calculates a mapping from starting sequence to target sequence.
@@ -586,3 +604,14 @@ class StructureAlignment(BaseAlignment):
         # an index mapping from sequence 1 to sequence 2 positions
         seq1_to_seq2 = align_to_seq2[seq1_to_align]
         return seq1_to_seq2
+
+    def get_inverse_alignment(self):
+        return StructureAlignment(
+            self.sequence2, self.sequence1, self.structure2, self.structure1
+            )
+
+    def set_as_default_alignment(self):
+        set_alignment(
+            sequence1=self.sequence1, sequence2=self.sequence2,
+            alignment1=self.alignment1, alignment2=self.alignment2
+            )
