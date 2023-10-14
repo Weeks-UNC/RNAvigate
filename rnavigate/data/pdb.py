@@ -81,10 +81,11 @@ class PDB(data.Sequence):
     def get_xyz_coord(self, nt, atom):
         pdb_idx = self.get_pdb_idx(nt)
         if atom == "DMS":
-            if self.sequence.upper()[nt-1] in "AG":
-                atom = "N1"
-            elif self.sequence.upper()[nt-1] in "UC":
-                atom = "N3"
+            atom = {nt: 'N1' for nt in 'AG'} | {nt: 'N3' for nt in 'UC'}
+        elif isinstance(atom, str):
+            atom = {nt: atom for nt in 'AUCG'}
+        seq = self.sequence[nt-1].upper().replace('T', 'U')
+        atom = atom[seq]
         xyz = [float(c) for c in self.pdb[0][self.chain]
                [int(pdb_idx)][atom].get_coord()]
         return xyz
