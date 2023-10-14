@@ -13,9 +13,6 @@ settings = {
         'structure': {
             'linewidth': 1,
             'zorder': 2},
-        'points': {
-            's': 3**2,
-            'zorder': 2},
         'interactions': {
             'linewidth': 3,
             'alpha': None,
@@ -34,6 +31,7 @@ settings = {
             'zorder': 0},
         'nucleotides': {
             'marker': 'o',
+            'edgecolor': 'none',
             's': 5**2,
             'zorder': 10},
         'sequence': {
@@ -44,6 +42,33 @@ settings = {
             'zorder': 25},
     },
 }
+
+def update_copy(original_settings, user_settings):
+    new_settings = dict()
+    for k, v in original_settings.items():
+        if isinstance(v, dict):
+            try:
+                new_settings[k] = update_copy(v, user_settings[k])
+            except KeyError:
+                new_settings[k] = v | {}
+        else:
+            try:
+                new_settings[k] = user_settings[k]
+            except KeyError:
+                new_settings[k] = v
+    return new_settings
+
+class Settings(dict):
+    def __init__(self, user_settings):
+        self.original_settings = update_copy(settings, {})
+        self.user_settings = update_copy(settings, user_settings)
+
+    def __enter__(self):
+        settings.update(self.user_settings)
+
+    def __exit__(self, *args, **kwargs):
+        settings.update(self.original_settings)
+
 
 def set_defaults():
     sns.set_context("paper")
