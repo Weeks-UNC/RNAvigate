@@ -1,6 +1,6 @@
 import os.path
 from rnavigate import data
-from rnavigate.data_loading import create_data
+from rnavigate.data_loading import create_data, get_sequence
 
 class Sample:
     """
@@ -289,8 +289,10 @@ class Sample:
                 kwargs[each_type] = self.data[f"default_{each_type}"]
         interactions.filter(**kwargs)
 
-    def dance_filter(self, positive_only=True, min_cd=15, Statistic_ge=23,
-                     ss_only=True, **kwargs):
+    def dance_filter(
+            self, fit_to='default_structure', positive_only=True, min_cd=15,
+            Statistic_ge=23, ss_only=True, **kwargs
+            ):
         """Applies a standard filter to plot DANCE rings, pairs, and predicted
         structures together.
 
@@ -319,5 +321,5 @@ class Sample:
             fit_to = get_sequence(
                 sequence=fit_to, sample=dance, default='default_structure')
             dance.data["ringmap"].filter(structure=dance_ct, **kwargs)
-            dance.data["ringmap"].mask_on_ct(ctlist, min_cd=min_cd)
+            dance.data["ringmap"].mask_on_structure(ctlist, min_cd=min_cd)
             dance.data["pairmap"].filter(structure=dance_ct, paired_only=True)

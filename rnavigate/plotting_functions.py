@@ -155,7 +155,7 @@ def plot_skyline(
     parsed_args = PlottingArgumentParser(
         samples=samples,
         labels=labels,
-        alignment=sequence._alignment,
+        alignment=sequence.null_alignment,
         profile=profile,
         annotations=annotations,
         domains=domains,
@@ -236,7 +236,7 @@ def plot_profile(
             Defaults to [1, length of sequence]
 
     Optional plot display arguments:
-        colorbar (True or False)
+        colorbars (True or False)
             Whether to plot color scales for per-nucleotide data
             Defaults to True
         plot_kwargs (dictionary)
@@ -250,7 +250,7 @@ def plot_profile(
     parsed_args = PlottingArgumentParser(
         samples=samples,
         labels=labels,
-        alignment=sequence._alignment,
+        alignment=sequence.null_alignment,
         annotations=annotations,
         domains=domains,
         profile=profile)
@@ -329,7 +329,7 @@ def plot_arcs(
         seqbar=True,
         region="all",
         # optional plot display
-        colorbar=True,
+        colorbars=True,
         title=True,
         plot_kwargs=None,
         ):
@@ -409,8 +409,8 @@ def plot_arcs(
             Defaults to [1, length of sequence]
 
     Optional plot display arguments:
-        colorbar (True or False)
-            Whether to plot color scales for all plot elements
+        colorbars (True or False)
+            Whether to plot colorbars for all plot elements
             Defaults to True
         title (True or False)
             Whether to display titles for each axis
@@ -426,7 +426,7 @@ def plot_arcs(
     parsed_args = PlottingArgumentParser(
         samples=samples,
         labels=labels,
-        alignment=sequence._alignment,
+        alignment=sequence.null_alignment,
         annotations=annotations,
         domains=domains,
         structure=structure,
@@ -448,7 +448,7 @@ def plot_arcs(
         plot_error=plot_error, annotation_mode=annotation_mode, seqbar=seqbar,
         profile_scale_factor=profile_scale_factor)
     plot.set_figure_size()
-    if colorbar:
+    if colorbars:
         plot.plot_colorbars()
     return plot
 
@@ -469,7 +469,7 @@ def plot_arcs_compare(
         plot_error=False,
         region="all",
         # optional plot display
-        colorbar=True,
+        colorbars=True,
         plot_kwargs=None,
         ):
     """Generates a single arc plot displaying combinations of secondary
@@ -531,7 +531,7 @@ def plot_arcs_compare(
             Defaults to [1, length of sequence]
 
     Optional plot display arguments:
-        colorbar (True or False)
+        colorbars (True or False)
             Whether to plot color scales for all plot elements
             Defaults to True
         plot_kwargs (dictionary)
@@ -587,7 +587,7 @@ def plot_arcs_compare(
         bottom=0,
         )
     plot.set_figure_size()
-    if colorbar:
+    if colorbars:
         plot.plot_colorbars()
     return plot
 
@@ -607,7 +607,7 @@ def plot_ss(
         positions=None,
         bp_style='dotted',
         # optional plot display
-        colorbar=True,
+        colorbars=True,
         plot_kwargs=None,
         ):
     """Generates a multipanel secondary structure drawing with optional
@@ -683,7 +683,7 @@ def plot_ss(
                 for canonical and wobble pairs ('G-A' plotted as solid dot)
 
     Optional plot display arguments:
-        colorbar (True or False)
+        colorbars (True or False)
             Whether to plot color scales for all plot elements
             Defaults to True
         plot_kwargs (dictionary)
@@ -709,12 +709,12 @@ def plot_ss(
     plot = plots.SS(num_samples=parsed_args.num_samples, **plot_kwargs)
     # loop through samples and filters, adding each as a new axis
     for data_dict in parsed_args.data_dicts:
-        data_dict = fit_data(data_dict, data_dict['structure']._alignment)
+        data_dict = fit_data(data_dict, data_dict['structure'].null_alignment)
         plot.plot_data(
             **data_dict, colors=colors, positions=positions, bp_style=bp_style
             )
     plot.set_figure_size()
-    if colorbar:
+    if colorbars:
         plot.plot_colorbars()
     return plot
 
@@ -737,7 +737,7 @@ def plot_mol(
         get_orientation=False,
         # optional viewer display
         title=True,
-        colorbar=True,
+        colorbars=True,
         width=400,
         height=400,
         rows=None,
@@ -824,7 +824,7 @@ def plot_mol(
         title (True or False)
             whether to display the title
             Defaults to True
-        colorbar (True or False)
+        colorbars (True or False)
             Whether to plot color scales for all plot elements
             Defaults to True
         width (integer)
@@ -858,7 +858,7 @@ def plot_mol(
         return plot
     parsed_args = PlottingArgumentParser(
         samples=samples,
-        alignment=sequence._alignment,
+        alignment=sequence.null_alignment,
         labels=labels,
         profile=profile,
         interactions=interactions,
@@ -880,7 +880,7 @@ def plot_mol(
     # show viewer grid
     if show:
         plot.view.show()
-    if colorbar:
+    if colorbars:
         plot.plot_colorbars()
     return plot
 
@@ -990,7 +990,7 @@ def plot_heatmap(
     parsed_args = PlottingArgumentParser(
         samples=samples,
         labels=labels,
-        alignment=sequence._alignment,
+        alignment=sequence.null_alignment,
         interactions=interactions
     )
     plot_kwargs = _parse_plot_kwargs(plot_kwargs, "rnavigate.plots.Heatmap")
@@ -1019,7 +1019,7 @@ def plot_circle(
         annotations=None,
         profile="default_profile",
         labels=None,
-        colorbar=True,
+        colorbars=True,
         plot_kwargs=None,
         **kwargs):
     """Generates a multipanel circle plot displaying combinations of secondary
@@ -1072,7 +1072,7 @@ def plot_circle(
     parsed_args = PlottingArgumentParser(
         samples=samples,
         labels=labels,
-        alignment=sequence._alignment,
+        alignment=sequence.null_alignment,
         structure=structure,
         structure2=structure2,
         interactions2=interactions2,
@@ -1088,7 +1088,7 @@ def plot_circle(
     for data_dict in parsed_args.data_dicts:
         plot.plot_data(**data_dict, **kwargs)
     plot.set_figure_size()
-    if colorbar:
+    if colorbars:
         plot.plot_colorbars()
     return plot
 
@@ -1175,7 +1175,7 @@ def plot_linreg(
     parsed_args = PlottingArgumentParser(
         samples=samples,
         labels=labels,
-        alignment=sequence._alignment,
+        alignment=sequence.null_alignment,
         structure=structure,
         profile=profile,
         annotations=annotations
@@ -1237,7 +1237,7 @@ def plot_roc(
     plot_kwargs = _parse_plot_kwargs(plot_kwargs, "rnavigate.plots.ROC")
     plot = plots.ROC(parsed_args.num_samples, **plot_kwargs)
     for data_dict in parsed_args.data_dicts:
-        data_dict = fit_data(data_dict, data_dict['structure']._alignment)
+        data_dict = fit_data(data_dict, data_dict['structure'].null_alignment)
         plot.plot_data(**data_dict)
     plot.set_figure_size()
     return plot
