@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -77,12 +76,6 @@ class QC(plots.Plot):
             return (1, 3)
         else:
             return (2, 4)
-
-    def get_figsize(self):
-        if self.length == 1:
-            return (30, 10)
-        else:
-            return (40, 20)
 
     def plot_data(self, log, profile, label):
         self.plot_MutsPerMol(log, label)

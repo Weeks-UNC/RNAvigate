@@ -1,7 +1,6 @@
 import py3Dmol
 import matplotlib.colors as mpc
 from rnavigate import plots
-import matplotlib.pyplot as plt
 
 
 class Mol(plots.Plot):
@@ -31,11 +30,6 @@ class Mol(plots.Plot):
                 view.rotate(rotation[key], key)
         self.view = view
         self.i = 0
-        self.pass_through = [
-            'nt_color',
-            'atom',
-            'title',
-            'get_orientation']
 
     def get_figsize(self):
         pass
@@ -47,8 +41,8 @@ class Mol(plots.Plot):
         col = i % self.columns
         return (row, col)
 
-    def plot_data(self, interactions, profile, label, nt_color="grey",
-                  atom="O2'", title=True, get_orientation=False,
+    def plot_data(self, interactions=None, profile=None, label=None,
+                  colors="grey", atom="O2'", title=True, get_orientation=False,
                   viewer=None):
         if viewer is None:
             viewer = self.get_viewer()
@@ -56,7 +50,7 @@ class Mol(plots.Plot):
             self.get_orientation()
         if interactions is not None:
             self.plot_interactions(viewer, interactions, atom)
-        self.set_colors(viewer, profile, nt_color)
+        self.set_colors(viewer, profile, colors)
         if title:
             self.view.addLabel(label,
                                {"position": {"x": 0, "y": 0, "z": 0},
@@ -90,8 +84,8 @@ class Mol(plots.Plot):
                 self.add_lines(io, jo, color, viewer, atom)
         self.add_colorbar_args(interactions.cmap)
 
-    def set_colors(self, viewer, profile, nt_color):
-        colors = self.pdb.get_colors(nt_color, profile=profile)
+    def set_colors(self, viewer, profile, colors):
+        colors = self.pdb.get_colors(colors, profile=profile)
         color_selector = {}
         valid_pdbres = []
         for res in self.pdb.pdb_idx:

@@ -42,8 +42,9 @@ def plot_sequence_track(ax, sequence, yvalue=-0.05, height=0.05, ytrans="data",
     ax.set_ylim(ymin, ymax)
 
 
-def plot_annotation_track(ax, annotation, yvalue, mode, region='all',
-                         ytrans='data'):
+def plot_annotation_track(
+        ax, annotation, yvalue, mode, region='all', ytrans='data'
+        ):
     if region == 'all':
         region = [1, annotation.length]
     mn, mx = region

@@ -1,5 +1,5 @@
-from rnavigate import plots, styles
 import seaborn as sns
+from rnavigate import plots, styles
 
 class Profile(plots.Plot):
     def __init__(self, num_samples, nt_length, region="all", **kwargs):
@@ -11,10 +11,9 @@ class Profile(plots.Plot):
             self.region = region
         super().__init__(num_samples, sharey=True, **kwargs)
         self.track_height = 0
-        self.pass_through = ["plot_errors", "column", "seqbar", "error_column"]
 
     def get_rows_columns(self, rows=None, cols=None):
-        return super().get_rows_columns(rows, cols=1)
+        return super().get_rows_columns(rows=rows, cols=1)
 
     def set_labels(self, ax, axis_title="Reactivity Profile",
                    xlabel="Nucleotide Position", ylabel="Reactivity"):
@@ -22,7 +21,7 @@ class Profile(plots.Plot):
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
 
-    def plot_data(self, profile, annotations, domains, label, plot_error=None,
+    def plot_data(self, profile, annotations, domains, label, plot_error=True,
                   column=None, seqbar=True, annotations_mode='track'):
         ax = self.get_ax()
         if column is not None:

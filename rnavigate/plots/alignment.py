@@ -13,7 +13,7 @@ class Alignment(plots.Plot):
         ax.set(
             xlim=(0, len(alignment1)+1),
             ylim=(-5, 5), yticks=[])
-        plots.plot_alignment(ax, alignment, label)
+        plots.plot_sequence_alignment(ax, alignment, label)
         for spine in ['top', 'bottom', 'left', 'right']:
             ax.spines[spine].set_color(None)
 

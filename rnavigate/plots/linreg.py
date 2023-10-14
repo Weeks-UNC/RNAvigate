@@ -22,7 +22,6 @@ class LinReg(plots.Plot):
         self.profiles = []
         self.colors = []
         self.labels = []
-        self.pass_through = ["colorby", "column"]
 
     def set_figure_size(self, fig=None, ax=None,
                         rows=None, cols=None,
@@ -44,18 +43,15 @@ class LinReg(plots.Plot):
     def get_rows_columns(self, rows=None, cols=None):
         return (self.length-1, self.length-1)
 
-    def get_figsize(self):
-        return (7*self.columns, 7*self.rows)
-
     def plot_data(self, structure, profile, annotations, label,
-                  column=None, colorby="sequence"):
+                  column=None, colors="sequence"):
         if column is None:
             column = profile.metric
         self.labels.append(label)
         self.colors.append(
-            profile.get_colors(colorby, profile=profile, structure=structure))
+            profile.get_colors(colors, profile=profile, structure=structure))
         self.profiles.append(profile.data[column].to_numpy(copy=True))
-        self.add_legend(colorby, annotations)
+        self.add_legend(colors, annotations)
         if len(self.profiles) == self.length:
             self.finalize()
 

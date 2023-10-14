@@ -2,7 +2,11 @@ from rnavigate import plots, styles
 
 
 class AP(plots.Plot):
-    def __init__(self, num_samples, nt_length, region="all", **kwargs):
+    def __init__(
+            self, num_samples, nt_length, region="all", track_labels=True,
+            **kwargs
+            ):
+        self.track_labels = track_labels
         if region == "all":
             self.nt_length = nt_length
             self.region = (1, nt_length)
@@ -10,17 +14,14 @@ class AP(plots.Plot):
             self.nt_length = region[1]-region[0]+1
             self.region = region
         super().__init__(num_samples, **kwargs)
-        self.pass_through = ["ax", "seqbar", "title", "panels",
-                             "annotation_mode", "plot_error",
-                             "profile_scale_factor", "track_height"]
 
 
     def plot_data(
-            self, seq, structure=None, structure2=None, interactions=None,
+            self, sequence, structure=None, structure2=None, interactions=None,
             interactions2=None, profile=None, annotations=None, domains=None,
             label='', ax=None, seqbar=True, title=True, panels=None,
             annotation_mode="track", track_height=None, profile_scale_factor=1,
-            plot_error=True
+            plot_error=False,
             ):
         ax = self.get_ax(ax)
         if panels is None:
@@ -79,7 +80,7 @@ class AP(plots.Plot):
         yticks, ylabels = [], []
         if seqbar:
             plots.plot_sequence_track(
-                ax, seq.sequence, yvalue=0, height=2, ytrans="data"
+                ax, sequence.sequence, yvalue=0, height=2, ytrans="data"
                 )
             yticks.append(1)
             ylabels.append('sequence')
@@ -100,6 +101,8 @@ class AP(plots.Plot):
                 )
             yticks.append(yvalue)
             ylabels.append(annotation.name)
+        if not self.track_labels:
+            yticks, ylabels = [], []
         self.set_axis(
             ax=ax, track_height=track_height, yticks=yticks, ylabels=ylabels,
             )
@@ -133,19 +136,16 @@ class AP(plots.Plot):
                 "boxstyle": "round,pad=0.1,rounding_size=0.2"
                 })
 
-    def set_figure_size(self, fig=None, ax=None,
-                        rows=None, cols=None,
-                        height_ax_rel=0.03, width_ax_rel=0.03,
-                        width_ax_in=None, height_ax_in=None,
-                        height_gap_in=0.1, width_gap_in=0.1,
-                        top_in=1, bottom_in=1,
-                        left_in=1, right_in=1):
-        super().set_figure_size(fig=fig, ax=ax, rows=rows, cols=cols,
-                                height_ax_rel=height_ax_rel,
-                                width_ax_rel=width_ax_rel,
-                                width_ax_in=width_ax_in,
-                                height_ax_in=height_ax_in,
-                                height_gap_in=height_gap_in,
-                                width_gap_in=width_gap_in, top_in=top_in,
-                                bottom_in=bottom_in, left_in=left_in,
-                                right_in=right_in)
+    def set_figure_size(
+            self, fig=None, ax=None, rows=None, cols=None, height_ax_rel=0.03,
+            width_ax_rel=0.03, width_ax_in=None, height_ax_in=None,
+            height_gap_in=0.5, width_gap_in=0.5, top_in=1, bottom_in=1,
+            left_in=1, right_in=1
+            ):
+        super().set_figure_size(
+            fig=fig, ax=ax, rows=rows, cols=cols, height_ax_rel=height_ax_rel,
+            width_ax_rel=width_ax_rel, width_ax_in=width_ax_in,
+            height_ax_in=height_ax_in, height_gap_in=height_gap_in,
+            width_gap_in=width_gap_in+self.track_labels*0.5, top_in=top_in,
+            bottom_in=bottom_in, left_in=left_in, right_in=right_in
+            )

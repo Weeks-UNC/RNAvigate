@@ -1,5 +1,4 @@
-from matplotlib.colors import LinearSegmentedColormap, ListedColormap
-import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap
 import seaborn as sns
 import numpy as np
 from rnavigate import plots
@@ -16,8 +15,6 @@ class Heatmap(plots.Plot):
             mn_mx = (0.5, structure.length + 0.5)
             ax.set(ylim=mn_mx, xlim=mn_mx,
                    xticks=list(range(50, structure.length+1, 50)))
-        self.pass_through = ["levels", "regions", "interpolation", "atom",
-                             "plot_type"]
 
     def set_figure_size(self, fig=None, ax=None,
                         rows=None, cols=None,
@@ -36,8 +33,9 @@ class Heatmap(plots.Plot):
                                 bottom_in=bottom_in, left_in=left_in,
                                 right_in=right_in)
 
-    def plot_data(self, interactions, label, levels=None, regions=None,
-                  interpolation='none', atom="O2'", plot_type="heatmap"):
+    def plot_data(
+            self, interactions, label, levels=None, regions=None,
+            interpolation=None, atom="O2'", plot_type="heatmap", weights=None):
         ax = self.get_ax()
         if regions is not None:
             self.plot_contour_regions(ax, interactions, regions)
@@ -48,7 +46,7 @@ class Heatmap(plots.Plot):
         if plot_type == "heatmap":
             self.plot_heatmap_data(ax, interactions, interpolation)
         elif plot_type == "kde":
-            self.plot_kde_data(ax, interactions)
+            self.plot_kde_data(ax, interactions, weights=weights)
         ax.set_title(label)
         self.i += 1
 
@@ -90,10 +88,12 @@ class Heatmap(plots.Plot):
         ax.imshow(data_im, cmap=interactions.cmap.cmap,
                   norm=interactions.cmap.norm, interpolation=interpolation)
 
-    def plot_kde_data(self, ax, interactions, **kwargs):
+    def plot_kde_data(self, ax, interactions, weights=None, **kwargs):
         data = interactions.get_sorted_data()
-        sns.kdeplot(ax=ax, data=data, x="i", y="j", fill=True, levels=5,
-                    bw_adjust=0.2, cmap=interactions.cmap.cmap, common_norm=True,
-                    **kwargs)
-        ax.set(xlabel="Position (i)",
-               ylabel="Position (j)")
+        sns.kdeplot(
+            ax=ax, data=data, x="i", y="j", fill=True, levels=5, bw_adjust=0.2,
+            cmap=interactions.cmap.cmap, common_norm=True, weights=weights,
+            **kwargs
+            )
+        ax.set(xlabel="Nucleotide position",
+               ylabel="Nucleotide position")

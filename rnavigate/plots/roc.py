@@ -4,8 +4,8 @@ from sklearn.metrics import roc_curve, auc
 
 
 class ROC(plots.Plot):
-    def __init__(self, num_samples):
-        super().__init__(num_samples)
+    def __init__(self, num_samples, **kwargs):
+        super().__init__(num_samples, **kwargs)
         self.a_ax = self.axes[0, 2]
         self.u_ax = self.axes[0, 3]
         self.g_ax = self.axes[1, 2]
@@ -14,7 +14,6 @@ class ROC(plots.Plot):
         for ax in self.axes[:, :2].flatten():
             ax.remove()
         self.main_ax = self.fig.add_subplot(gs[:, :2])
-        self.pass_through = []
 
     def set_figure_size(self, fig=None, ax=None,
                         rows=None, cols=None,
@@ -35,9 +34,6 @@ class ROC(plots.Plot):
 
     def get_rows_columns(self, rows=None, cols=None):
         return (2, 4)
-
-    def get_figsize(self):
-        return (28, 14)
 
     def plot_data(self, structure, profile, label):
         self.i += 1

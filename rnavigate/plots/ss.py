@@ -10,7 +10,6 @@ class SS(plots.Plot):
             ax.axis("off")
         self.xlims = [-2, 2]
         self.ylims = [-2, 2]
-        self.pass_through = ["colors", "positions", "bp_style"]
 
     def set_figure_size(self, fig=None, ax=None,
                         rows=None, cols=None,
@@ -44,7 +43,9 @@ class SS(plots.Plot):
             'basepairs': 'grey',
         } | colors
         for key in ['nucleotides', 'structure', 'basepairs', 'sequence']:
-            if colors[key] in [None, 'contrast']:
+            if isinstance(colors[key], str) and colors[key] == 'contrast':
+                continue
+            elif colors[key] is None:
                 continue
             colors[key] = structure.get_colors(
                 colors[key], profile=profile,structure=structure,

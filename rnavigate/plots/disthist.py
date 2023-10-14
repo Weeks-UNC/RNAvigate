@@ -14,7 +14,6 @@ class DistHist(plots.Plot):
                     base_ax2 = ax2
                 else:
                     ax2.sharey(base_ax2)
-        self.pass_through = ["atom", "ax"]
 
     def set_figure_size(self, fig=None, ax=None,
                         rows=None, cols=None,
@@ -60,9 +59,6 @@ class DistHist(plots.Plot):
                 for not_rightmost_axis in row[:-1]:
                     self.axes2[not_rightmost_axis].yaxis.set_tick_params(
                         labelright=False)
-
-    def get_figsize(self):
-        return (10*self.columns, 10*self.rows)
 
     def plot_structure_distances(self, ax, structure, atom):
         matrix = structure.get_distance_matrix(atom=atom)

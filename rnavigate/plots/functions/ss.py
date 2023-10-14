@@ -81,7 +81,7 @@ def plot_basepairs_ss(ax, structure, bp_style):
             nts = ''.join([structure.sequence[p-1] for p in pair]).upper()
             # x_caps = [x[0] + i * xdist / 7 for i in [2, 5]]
             # y_caps = [y[0] + i * ydist / 7 for i in [2, 5]]
-            if nts in ["UA", "AU", "GU", "UG"]:
+            if nts in ["UA", "AU"]:
                 ax.plot(x_caps, y_caps, color="grey", zorder=zorder,
                         solid_capstyle='butt')
             if nts in ["GU", "UG", "AG", "GA"]:
@@ -93,13 +93,13 @@ def plot_basepairs_ss(ax, structure, bp_style):
                 elif nts in ["AG", "GA"]:
                     fc = 'grey'
                     ec = 'none'
-                ax.scatter(x_center, y_center, zorder=zorder+1, s=36,
+                ax.scatter(x_center, y_center, zorder=zorder+1, s=3**2,
                             color="grey", marker="o", fc=fc, ec=ec)
             if nts in ["GC", "CG"]:
                 ax.plot(x_caps, y_caps, color="grey", zorder=zorder,
-                        linewidth=6, solid_capstyle='butt')
+                        linewidth=2, solid_capstyle='butt')
                 ax.plot(x_caps, y_caps, color="white", zorder=zorder,
-                        linewidth=2)
+                        linewidth=0.7)
 
 
 def plot_sequence_ss(ax, structure, colors):
@@ -177,7 +177,12 @@ def plot_annotation_ss(ax, structure, annotation):
                 start, end = end, start
             x = structure.xcoordinates[start-1:end]
             y = structure.ycoordinates[start-1:end]
-            ax.plot(x, y, color=color, **styles.settings['ss']['spans'])
+            if start == end:
+                ax.scatter(
+                    x, y, color=color, **styles.settings['ss']['sites']
+                    )
+            else:
+                ax.plot(x, y, color=color, **styles.settings['ss']['spans'])
     elif annotation.annotation_type in ["sites", "group"]:
         sites = np.array(annotation[:])-1
         x = structure.xcoordinates[sites]

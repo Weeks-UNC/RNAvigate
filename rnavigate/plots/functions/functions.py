@@ -63,11 +63,12 @@ def plot_sequence_alignment(ax, alignment, labels, top=5, bottom=-5,
                             ytrans="data"):
     al1 = alignment.alignment1
     al2 = alignment.alignment2
+    height = (top-bottom)/3
     plots.plot_sequence_track(
-        ax, sequence=al1, yvalue=bottom, height=(top-bottom)/3, ytrans=ytrans
+        ax, sequence=al1, yvalue=bottom, height=height, ytrans=ytrans
         )
     plots.plot_sequence_track(
-        ax, sequence=al2, yvalue=top, height=(top-bottom)/3, ytrans=ytrans,
+        ax, sequence=al2, yvalue=top, height=height, ytrans=ytrans,
         verticalalignment='top'
         )
     set_x_ticks(ax=ax, sequence=al1)
@@ -87,7 +88,7 @@ def plot_sequence_alignment(ax, alignment, labels, top=5, bottom=-5,
     for idx, (nt1, nt2) in enumerate(zip(al1, al2)):
         if nt1.upper().replace('T', 'U') == nt2.upper().replace('T', 'U'):
             ax.fill_between(
-                x=[idx+0.5, idx+1.5], y1=bottom, y2=top,
+                x=[idx+0.5, idx+1.5], y1=bottom+height, y2=top-height,
                 color='grey', ec="none"
                 )
 
@@ -129,7 +130,7 @@ def plot_profile_bars(ax, profile, scale_factor=1, plot_error=True, bottom=0,
     colormap = data["Colors"]
     nts = data["Nucleotide"]
     if plot_error and ("Errors" in data.columns):
-        yerr = data["Errors"]
+        yerr = data["Errors"]*scale_factor
         ax.bar(
             nts[mn-1:mx], values[mn-1:mx]*scale_factor, align="center",
             bottom=bottom, width=1, color=colormap[mn-1:mx],
@@ -146,7 +147,9 @@ def plot_profile_bars(ax, profile, scale_factor=1, plot_error=True, bottom=0,
 
 def plot_profile_skyline(ax, profile, label, columns, errors):
     values = profile.data
-    if isinstance(columns, str) and isinstance(errors, (str, type(None))):
+    if columns is None:
+        columns = profile.metric
+    if isinstance(columns, str) and not isinstance(errors, (str, type(None))):
         columns = [columns]
         errors = [errors]
     if errors is None:

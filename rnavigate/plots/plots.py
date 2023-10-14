@@ -12,7 +12,6 @@ class Plot(ABC):
             self.rows, self.columns, squeeze=False, **kwargs
         )
         self.i = 0
-        self.pass_through = []
         self.colorbars = []
 
     def get_ax(self, i=None):

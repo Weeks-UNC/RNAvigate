@@ -13,14 +13,6 @@ class SM(plots.Plot):
         super().__init__(len(panels), len(panels), cols=1)
         self.panels = panels
 
-    @property
-    def axis_dimensions(self):
-        return {
-            "yscale": None,
-            "xscale": 0.1,
-            "width_ax": None,
-            "height_ax": 6}
-
     def set_figure_size(self, fig=None, ax=None,
                         rows=None, cols=None,
                         height_ax_rel=None, width_ax_rel=0.03,
@@ -37,14 +29,6 @@ class SM(plots.Plot):
                                 width_gap_in=width_gap_in, top_in=top_in,
                                 bottom_in=bottom_in, left_in=left_in,
                                 right_in=right_in)
-
-    def get_figsize(self):
-        left_inches = 0.9
-        right_inches = 0.4
-        ax_width = self.nt_length * 0.1
-        fig_height = 6
-        fig_width = max(7, ax_width + left_inches + right_inches)
-        return (fig_width*self.columns, fig_height*self.rows)
 
     def plot_data(self, profile, label):
         """Creates a figure with the three classic Shapemapper plots.

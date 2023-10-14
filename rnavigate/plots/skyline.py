@@ -10,9 +10,8 @@ class Skyline(plots.Plot):
         else:
             self.nt_length = region[1] - region[0] + 1
             self.region = region
-        super().__init__(num_samples, **kwargs)
+        super().__init__(num_samples=num_samples, **kwargs)
         self.ax = self.axes[0, 0]
-        self.pass_through = ["columns", "seqbar", "errors", "annotations_mode"]
         self.track_height = 0
 
     def set_figure_size(
@@ -38,7 +37,7 @@ class Skyline(plots.Plot):
 
     def plot_data(
             self, profile, annotations=None, domains=None, label=None,
-            columns="Reactivity_profile", seqbar=True, errors=None,
+            columns=None, seqbar=True, errors=None,
             annotations_mode="track"
             ):
         track_unit = 0.015
