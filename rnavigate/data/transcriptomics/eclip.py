@@ -115,11 +115,11 @@ class eCLIP_Database():
         HepG2_rows = ~self.eclip_codes['HepG2'].isnull()
         K562_rows = ~self.eclip_codes['K562'].isnull()
         for _, row in self.eclip_codes[HepG2_rows].iterrows():
-            eclip_data['HepG2'][row['target']] = NarrowPeak(
-                self.path / f'{row["HepG2"]}.bed.gz')
+            eclip_data['HepG2'][row['target']] = data.NarrowPeak(
+                str(self.path / f'{row["HepG2"]}.bed.gz'))
         for _, row in self.eclip_codes[K562_rows].iterrows():
-            eclip_data['K562'][row['target']] = NarrowPeak(
-                self.path / f'{row["K562"]}.bed.gz')
+            eclip_data['K562'][row['target']] = data.NarrowPeak(
+                str(self.path / f'{row["K562"]}.bed.gz'))
         return eclip_data
 
     def get_eclip_density(self, transcript, cell_line, targets=None):
@@ -139,60 +139,3 @@ class eCLIP_Database():
 
     def get_profile(self, transcript, cell_line, target):
         self.eclip_data[cell_line][target].get_profile(transcript)
-
-
-class NarrowPeak():
-    def __init__(self, bedfile):
-        self.bedfile = bedfile
-        if self.bedfile.suffix == '.gz':
-            self.compression = 'gzip'
-        else:
-            self.compression = None
-
-    def get_annotation(self, transcript, **kwargs):
-        bed_df = pd.read_table(
-            self.bedfile, compression=self.compression,
-            usecols=[0, 1, 2, 3, 4, 5], dtype={'start': int, 'end': int},
-            names=['chr', 'start', 'end', 'NA', 'score', 'strand'])
-        bed_df['start'] += 1 # bed files are 0-indexed, closed right
-        chrom = transcript.chromosome
-        strand = transcript.strand
-        tx_coordinates = transcript.coordinate_df['Coordinate']
-        mn = tx_coordinates.min()
-        mx = tx_coordinates.max()
-        bed_df = bed_df.query(
-            f'(chr == "{chrom}") & (strand == "{strand}") & '
-            f'((start > {mn} and start < {mx}) | (end > {mn} and end < {mx}))')
-        spans = []
-        for _, row in bed_df.iterrows():
-            spans.append(transcript.get_tx_range(row['start'], row['end']))
-        return data.Annotation(
-            input_data=spans,
-            annotation_type='spans',
-            sequence=transcript.sequence,
-            **kwargs)
-
-    def get_profile(self, transcript, **kwargs):
-        bed_df = pd.read_table(
-            self.bedfile, compression=self.compression,
-            header=None, index_col=False,
-            names=['chr', 'start', 'end', 'name', 'Score', 'strand',
-                   'Value', 'P_value', 'Q_value', 'Peak'],
-            dtype={'start': int, 'end': int, 'Value': float, 'P_value': float,
-                   'Q_value': float, 'Peak': int})
-        chrom = transcript.chromosome
-        strand = transcript.strand
-        profile = transcript.coordinate_df.copy()
-        mn = profile['Coordinate'].min()
-        mx = profile['Coordinate'].max()
-        bed_df = bed_df.query(
-            f'chr == "{chrom}" & strand == "{strand}" & '
-            f'((start > {mn} & start < {mx}) | (end > {mn} & end < {mx}))')
-        profile_cols = ['Score', 'Value', 'P_value', 'Q_value', 'Peak']
-        profile[profile_cols] = 0
-        for _, row in bed_df.iterrows():
-            site = profile.eval(
-                f'Coordinate > {row["start"]} and Coordinate < {row["end"]}')
-            for col in profile_cols:
-                profile.loc[site, col] = row[col]
-        return data.Profile(input_data=profile, metric='Value', **kwargs)
