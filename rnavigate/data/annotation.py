@@ -48,6 +48,32 @@ class Annotation(data.Sequence):
         else:
             raise ValueError(f"annotation_type not in {valid_types}")
 
+    @classmethod
+    def from_boolean_array(self, values, window, sequence, annotation_type,
+                           name=None, color='blue'):
+        annotations = []
+        current_annotation = None
+        pad = window // 2
+        for i, value in enumerate(values):
+            position = i + 1
+            if value and annotation_type in ['sites', 'group']:
+                annotations.append(position)
+            elif value and annotation_type == 'spans':
+                start = max(1, position - pad)
+                stop = min(len(sequence), position + pad)
+                if current_annotation is None:
+                    current_annotation = [start, stop]
+                elif start <= current_annotation[1]+1:
+                    current_annotation[1] = stop
+                elif start > current_annotation[1]:
+                    annotations.append(current_annotation)
+                    current_annotation = [start, stop]
+        if annotation_type == 'spans':
+            annotations.append(current_annotation)
+        return Annotation(
+            input_data=annotations, annotation_type=annotation_type,
+            color=color, sequence=sequence, name=name)
+
     def from_spans(self, spans):
         data_dict = {'start':[], 'end':[]}
         for span in spans:
@@ -78,7 +104,7 @@ class Annotation(data.Sequence):
             input_data=new_input_data,
         )
 
-    def get_sites_colors(self):
+    def get_sites(self):
         """Returns a list of nucleotide positions and colors based on these
         sequence annotations.
 
@@ -91,8 +117,7 @@ class Annotation(data.Sequence):
                 sites.extend(list(range(row['start'], row['end']+1)))
         elif self.annotation_type in ["sites", "group"]:
             sites = list(self.data['site'].values)
-        colors = [self.color] * len(sites)
-        return sites, colors
+        return sites
 
     def __getitem__(self, idx):
         return self.data.loc[idx]
