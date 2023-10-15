@@ -1,7 +1,7 @@
-from os.path import isfile
 import pandas as pd
 import numpy as np
 from rnavigate import data
+from types import FunctionType
 
 
 class Profile(data.Data):
@@ -42,14 +42,263 @@ class Profile(data.Data):
         plotting_dataframe["Colors"] = self.colors
         return plotting_dataframe
 
+    def calculate_windows(
+            self, column, window, method='median', new_name=None,
+            minimum_points=None, mask_na=True,
+            ):
+        """calculates a windowed operation over a column of self.data and
+        stores the result as a new column. Value of each window is assigned to
+        the center position of the window.
+
+        Args:
+            column (str): name of column to perform operation on
+            window (int): window size, must be an odd number
+            method (str, optional): operation to perform over windows, must be
+                one of 'median', 'mean', 'minimum', 'maximum'
+                Defaults to 'median'.
+            new_name (str, optional): name of new column for stored result.
+                Defaults to f"{method}_{window}_nt", e.g. "median_55_nt".
+            minimum_points (int, optional): minimum number of points within
+                each window.
+                Defaults to the size of the window.
+        """
+        if window % 2 != 1:
+            raise ValueError('`window` argument must be an odd number.')
+        if new_name is None:
+            new_name = f'{method}_{window}_nt'
+        if minimum_points is None:
+            minimum_points = window
+        windows = self.data[column].rolling(
+            window=window, center=True, min_periods=minimum_points)
+        if method == 'median':
+            self.data[new_name] = windows.median()
+        elif method == 'mean':
+            self.data[new_name] = windows.mean()
+        elif method == 'minimum':
+            self.data[new_name] = windows.min()
+        elif method == 'maximum':
+            self.data[new_name] = windows.max()
+        elif isinstance(method, FunctionType):
+            self.data[new_name] = windows.apply(method)
+        else:
+            raise ValueError(
+                'method argument must be median, mean, maximum or minimum'
+                )
+        if mask_na:
+            self.data.loc[self.data[column].isna(), new_name] = np.nan
+
+    def calculate_gini_index(self, values):
+        """Calculate the Gini index of an array of values."""
+        # Mean absolute difference
+        mad = np.abs(np.subtract.outer(values, values)).mean()
+        # Relative mean absolute difference
+        rmad = mad/np.mean(values)
+        # Gini coefficient
+        g = 0.5 * rmad
+        return g
+
+    def normalize(
+            self, profile_column=None, new_profile=None, error_column=None,
+            new_error=None, norm_method=None, nt_groups=None,
+            profile_factors=None, **norm_kwargs
+            ):
+        """normalize the values in the given values and errors columns. Stores
+        values in column of self.data dataframe.
+
+        Args:
+            profile_column (str, optional): column name of values to normalize
+                Defaults to self.metric
+            new_profile (str, optional): column name of new normalized values
+                Defaults to "Norm_profile"
+            error_column (str, optional): column name of error values to propagate
+                Defaults to self.error_column
+            new_error (str, optional): column name of new propagated error values
+                Defaults to "Norm_error"
+            norm_method (str, optional): normalization method to use.
+                "DMS" uses self.norm_percentile and nt_groups=['AC', 'UG']
+                    scales the median of 90th to 95th percentiles to 1
+                    As and Cs are normalized seperately from Us and Gs
+                "eDMS" uses self.norm_eDMS and  nt_groups=['A', 'U', 'C', 'G']
+                    Applies the new eDMS-MaP normalization.
+                    Each nucleotide is normalized seperately.
+                "boxplot" uses self.norm_boxplot and nt_groups=['AUCG']
+                    removes outliers (> 1.5 iqr) and scales median to 1
+                    scales nucleotides together unless specified with nt_groups
+                "percentile" uses self.norm_percentile and nt_groups=['AUCG']
+                    scales the median of 90th to 95th percentiles to 1
+                    scales nucleotides together unless specified with nt_groups
+                Defaults to "boxplot": the default normalization of ShapeMapper
+            nt_groups (list of str, optional): A list of nucleotides to group
+                e.g. ['AUCG'] groups all nts together
+                     ['AC', 'UG'] groups As with Cs and Us with Gs
+                     ['A', 'C', 'U', 'G'] scales each nt seperately
+                     Default depends on norm_method
+            profile_factors (dict, optional): a scaling factor (float) for each
+                nucleotide: keys must be 'A', 'C', 'U', 'G'
+                Note: using this argument overrides any calculation of scaling
+                Defaults to None.
+            **norm_kwargs: these are passed to the norm_method function
+
+        Returns:
+            dict: the new profile scaling factors dictionary
+        """
+        if profile_column is None:
+            profile_column = self.metric
+        if new_profile is None:
+            new_profile = "Norm_profile"
+        if error_column is None:
+            error_column = self.error_column
+        if new_error is None:
+            new_error = "Norm_error"
+        profile = self.data[profile_column]
+        norm_sequence = self.sequence.upper().replace('T', 'U')
+        # initialize the error arrays
+        if error_column is not None:
+            error = self.data[error_column]
+            normerr = np.zeros(error.shape)
+            mask = profile != 0
+            normerr[mask] = (error[mask]/profile[mask])**2
+        else:
+            normerr = None
+        # calculate normalization factors, if appropriate
+        if profile_factors is None:
+            profile_factors = {}
+            error_factors = {}
+            methods_groups = {
+                'DMS': (self.norm_percentiles, ['AC', 'GU']),
+                'eDMS': (self.norm_eDMS, ['A', 'C', 'G', 'U']),
+                'boxplot': (self.norm_boxplot, nt_groups),
+                'percentiles': (self.norm_percentiles, nt_groups)
+            }
+            norm_method, nt_groups = methods_groups[norm_method]
+            if nt_groups is None:
+                nt_groups = ['AUCG']
+            for nt_group in nt_groups:
+                in_group = [nt in nt_group for nt in norm_sequence]
+                prof, err = norm_method(profile[in_group], **norm_kwargs)
+                for nt in nt_group:
+                    profile_factors[nt] = prof
+                    error_factors[nt] = err
+        # calculate the new profile
+        norm_profile = profile / [profile_factors[nt] for nt in norm_sequence]
+        self.data[new_profile] = norm_profile
+        # calculate the new errors, if appropriate
+        if normerr is not None and error_factors is not None:
+            for i in ntorder:
+                mask = [nt == i for nt in norm_sequence]
+                normerr[mask] += (error_factors[i] * profile_factors[i])**2
+                normerr[mask] = np.sqrt(normerr[mask])
+                normerr[mask] *= np.abs(norm_profile[mask])
+            self.data[new_error] = normerr
+        return profile_factors
+
+    def normalize_external(self, profiles, **kwargs):
+        """normalize reactivities using other profiles to normfactors.
+
+        Args:
+            profiles (list of rnavigate.data.Profile): a list of other profiles
+                used to compute scaling factors
+
+        Returns:
+            dict: the new profile scaling factors dictionary
+        """
+        combined_df = pd.concat([profile.data for profile in profiles])
+        combined_profile = Profile(input_data=combined_df)
+        nfacs = combined_profile.normalize(**kwargs)
+        self.normalize(profile_factors=nfacs)
+        return nfacs
+
+    def norm_boxplot(self, values):
+        """removes outliers (> 1.5 * IQR) and scales the mean to 1.
+
+        NOTE: This method varies slightly from normalization method used in the
+        SHAPEMapper pipeline. Shapemapper sets undefined values to 0, and then
+        uses these values when computing iqr and 90th percentile. Including
+        these values can skew these result. This method excludes such nan
+        values. Other elements are the same.
+
+        Args:
+            values (1D numpy array): values to scale
+
+        Returns:
+            (float, float): scaling factor and error propagation factor
+        """
+        finite_values = values[np.isfinite(values)]
+        p25, p75, p90, p95 = np.percentile(finite_values, [25, 75, 90, 95])
+        iqr = p75 - p25
+        # filter by iqr
+        iqr_values = finite_values[finite_values < (1.5 * iqr + p75)]
+        num_finite = len(finite_values)
+        num_iqr = len(iqr_values)
+        # see if too many values are classified as outliers
+        if num_finite < 100 and num_iqr/num_finite < 0.95:
+            iqr_values = finite_values[finite_values <= p95]
+        elif num_finite >= 100 and num_iqr/num_finite < 0.9:
+            iqr_values = finite_values[finite_values < p90]
+        new_p90 = np.percentile(iqr_values, 90)
+        final_values = iqr_values[iqr_values > new_p90]
+        factor = np.mean(final_values)
+        error_factor = np.std(final_values) / np.sqrt(len(final_values))
+        return factor, error_factor
+
+    def norm_eDMS(self, values):
+        """Returns normalization factors for normalize values following eDMS
+        pernt scheme in ShapeMapper 2.2
+
+        Args:
+            values (1D numpy array): values to scale
+
+        Returns:
+            (float, float): scaling factor and error propagation factor
+        """
+        # if too few values points, don't normalize
+        if len(values)<10:
+            return np.nan, np.nan
+        bounds = np.percentile(values, [90., 95.])
+        mask = (values >= bounds[0]) & (values<bounds[1])
+        normset = values[mask]
+        # compute the norm the standard way
+        n1 = np.mean(normset)
+        try:
+            # compute the norm only considering reactive nts
+            n2 = np.percentile(values[values>0.001], 75.)
+        except IndexError:
+            n2 = 0
+        factor = max(n1,n2)
+        # if signal too low, don't norm the values
+        if factor < 0.002:
+            return np.nan, np.nan
+        error_factor = np.std(normset) / np.sqrt(len(normset))
+        return factor, error_factor
+
+    def norm_percentiles(self, values, lower_bound=90, upper_bound=99):
+        """Calculates profile scaling factors and error propagation by scaling
+        the median between upper and lower bound percentiles to 1.
+
+        Args:
+            values (1D numpy.array): values to scale
+            lower_bound (int or float, optional): percentile of lower bound
+                Defaults to 90
+            upper_bound (int or float, optional): percentile of upper bound
+                Defaults to 99
+
+        Returns:
+            (float, float): scaling factor and error propagation factor
+        """
+        finite_values = values[np.isfinite(values)]
+        bounds = np.percentile(finite_values, [lower_bound, upper_bound])
+        mask = (finite_values >= bounds[0]) & (finite_values <= bounds[1])
+        normset = finite_values[mask]
+        factor = np.mean(normset)
+        error_factor = np.std(normset) / np.sqrt(len(normset))
+        return factor, error_factor
+
 
 class SHAPEMaP(Profile):
     def __init__(self, input_data, dms=False, read_table_kw=None,
                  sequence=None, metric='Norm_profile', metric_defaults=None):
-
         if metric_defaults is None:
             metric_defaults = {}
-
         metric_defaults = {
             'Norm_profile': {
                 'metric_column': 'Norm_profile',
@@ -74,50 +323,11 @@ class SHAPEMaP(Profile):
                          metric=metric,
                          metric_defaults=metric_defaults)
         if dms:
-            self.set_dms_profile()
-
-    def set_dms_profile(self):
-        """Perform normalization of data based on DMS reactivities (AC seperate
-        from GU), and replace data columns "Norm_profile" and "Norm_stderr"
-        """
-        profile = self.data["HQ_profile"]
-        error = self.data["HQ_stderr"]
-        # initialize the profile and error array
-        dms_profile = np.array(profile)
-        with np.errstate(invalid='ignore'):
-            norm_error = np.zeros(error.shape)
-            mask = profile > 0
-            norm_error[mask] = (error[mask]/profile[mask])**2
-
-        def get_norm_factors(profile):
-            finite_data = profile[np.isfinite(profile)]
-            lower, upper = np.percentile(finite_data, [90., 99.])  # 99
-            mask = (finite_data >= lower) & (finite_data <= upper)
-            norm_set = finite_data[mask]
-            average = np.mean(norm_set)
-            std = np.std(norm_set)
-            return average, std/np.sqrt(len(norm_set))
-
-        ac_mask = np.isin(self.data["Sequence"], ['A', 'C'])
-        ac_norm_factor, ac_norm_error = get_norm_factors(dms_profile[ac_mask])
-        gu_mask = np.isin(self.data["Sequence"], ['G', 'U'])
-        gu_norm_factor, gu_norm_error = get_norm_factors(dms_profile[gu_mask])
-        dms_profile[ac_mask] /= ac_norm_factor
-        dms_profile[gu_mask] /= gu_norm_factor
-        if norm_error is not None:
-            norm_error[ac_mask] += (ac_norm_error/ac_norm_factor)**2
-            norm_error[gu_mask] += (gu_norm_error/gu_norm_factor)**2
-            for mask in [ac_mask, gu_mask]:
-                norm_error[mask] = np.sqrt(norm_error[mask])
-                norm_error[mask] *= np.abs(dms_profile[mask])
-
-        self.norm_factors = {'G': gu_norm_factor,
-                             'U': gu_norm_factor,
-                             'A': ac_norm_factor,
-                             'C': ac_norm_factor}
-
-        self.data["Norm_profile"] = dms_profile
-        self.data["Norm_stderr"] = norm_error
+            self.normalize(
+                profile_column="HQ_profile", new_profile="Norm_profile",
+                error_column="HQ_stderr", new_error="Norm_stderr",
+                norm_method="DMS",
+                )
 
 
 class DanceMaP(SHAPEMaP):
