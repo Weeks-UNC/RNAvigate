@@ -16,25 +16,27 @@ class Profile(data.Data):
             metric_defaults=metric_defaults,
             read_table_kw=read_table_kw)
 
+    @property
+    def recreation_kwargs(self):
+        return {}
+
     def get_aligned_data(self, alignment):
         dataframe = alignment.map_nucleotide_dataframe(self.data)
         return self.__class__(
             input_data=dataframe,
             metric=self._metric,
             metric_defaults=self.metric_defaults,
-            sequence=alignment.target_sequence)
+            sequence=alignment.target_sequence,
+            **self.recreation_kwargs)
 
     def get_plotting_dataframe(self):
         new_names = ["Nucleotide"]
         old_names = ["Nucleotide"]
-        
         old_names.append(self.metric)
         new_names.append("Values")
-        
         if self.error_column is not None:
             old_names.append(self.error_column)
             new_names.append("Errors")
-        
         plotting_dataframe = self.data[old_names].copy()
         plotting_dataframe.columns = new_names
         plotting_dataframe["Colors"] = self.colors
@@ -121,13 +123,17 @@ class SHAPEMaP(Profile):
 class DanceMaP(SHAPEMaP):
     def __init__(self, input_data, component, read_table_kw=None,
                  sequence=None, metric='Norm_profile', metric_defaults=None):
-
         self.component = component
         super().__init__(input_data=input_data,
                          read_table_kw=read_table_kw,
                          sequence=sequence,
                          metric=metric,
                          metric_defaults=metric_defaults)
+
+    @property
+    def recreation_kwargs(self):
+        return {'component': self.component}
+
 
     def read_file(self, input_data, read_table_kw={}):
         # parse header
@@ -145,19 +151,17 @@ class DanceMaP(SHAPEMaP):
         col_offset = 3 * self.component
         bg_col = 3 * self.components + 2
         read_table_kw["usecols"] = [0, 1, 2+col_offset, 3+col_offset, bg_col]
-        self.data = pd.read_table(self.filepath, header=2, **read_table_kw)
+        df = pd.read_table(self.filepath, header=2, **read_table_kw)
         # some rows have an "i" added to the final column
         stripped = []
-        for x in self.data["Untreated_rate"]:
+        for x in df["Untreated_rate"]:
             if type(x) is float:
                 stripped.append(x)
             else:
                 stripped.append(float(x.rstrip(' i')))
-        self.data["Untreated_rate"] = stripped
-        self.data["Reactivity_profile"] = (self.data["Modified_rate"] -
-                                           self.data["Untreated_rate"])
-        sequence = ''.join(self.data["Sequence"].values)
-        self.sequence = sequence.replace("T", "U")
+        df["Untreated_rate"] = stripped
+        df = df.eval("Reactivity_profile = Modified_rate - Untreated_rate")
+        return df
 
 
 class RNPMaP(Profile):
