@@ -53,7 +53,7 @@ class SM(plots.Plot):
         near_black = (0, 0, 1 / 255.0)
         orange_thresh = 0.4
         red_thresh = 0.85
-        colors = profile.get_colors("profile", profile=profile)
+        colors, _ = profile.get_colors("profile", profile=profile)
         sample = profile.data["Norm_profile"].copy()
         sample[np.isnan(sample)] = -1
         ax.bar(profile.data['Nucleotide'], sample, align="center",
@@ -111,7 +111,7 @@ class SM(plots.Plot):
             line.set_markeredgewidth(1)
 
         # put nuc sequence below ax
-        self.add_sequence(ax, profile.sequence)
+        plots.plot_sequence_track(ax, profile.sequence, yvalue=0, ytrans='axes')
 
     def plot_sm_depth(self, ax, profile):
         """Plots classic ShapeMapper read depth on the given ax

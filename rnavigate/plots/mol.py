@@ -85,19 +85,19 @@ class Mol(plots.Plot):
         self.add_colorbar_args(interactions.cmap)
 
     def set_colors(self, viewer, profile, colors):
-        colors = self.pdb.get_colors(colors, profile=profile)
+        colors, _ = self.pdb.get_colors(colors, profile=profile)
         color_selector = {}
         valid_pdbres = []
         for res in self.pdb.pdb_idx:
             res = int(res)
             valid_pdbres.append(res)
             color = colors[self.pdb.get_seq_idx(res)-1]
-            if color in color_selector.keys():
+            if color in color_selector:
                 color_selector[color].append(res)
             else:
                 color_selector[color] = [res]
-        for color in color_selector.keys():
-            selector = {'chain': self.pdb.chain, 'resi': color_selector[color]}
+        for color, selector in color_selector.items():
+            selector = {'chain': self.pdb.chain, 'resi': selector}
             style = {self.style: {"color": color}}
             self.view.setStyle(selector, style, viewer=viewer)
         selector = {'chain': self.pdb.chain,

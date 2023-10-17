@@ -1044,6 +1044,7 @@ def plot_circle(
     plot = plots.Circle(num_samples=parsed_args.num_samples, **plot_kwargs)
     # loop through samples and interactions, adding each as a new axis
     for data_dict in parsed_args.data_dicts:
+        data_dict = fit_data(data_dict, data_dict['sequence'].null_alignment)
         plot.plot_data(
             **data_dict, colors=colors, title=title, positions=positions,
             gap=gap
@@ -1069,6 +1070,7 @@ def plot_linreg(
         colors='sequence',
         column='None',
         # optional plot display
+        colorbars=True,
         plot_kwargs=None,
         ):
     """Performs linear regression analysis and generates scatter plots of all
@@ -1124,6 +1126,9 @@ def plot_linreg(
             Defaults to profile.metric
 
     Optional plot display arguments:
+        colorbars (True or False)
+            Whether to plot colorbars for scatter plot colors
+            Defaults to True
         plot_kwargs (dictionary)
             Keyword-arguments passed to matplotlib.pyplot.subplots
             Defaults to {}.
@@ -1147,6 +1152,8 @@ def plot_linreg(
     for data_dict in parsed_args.data_dicts:
         plot.plot_data(**data_dict, colors=colors, column=column)
     plot.set_figure_size()
+    if colorbars:
+        plot.plot_colorbars()
     return plot
 
 

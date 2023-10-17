@@ -50,7 +50,7 @@ class SS(plots.Plot):
                 )
             self.add_colorbar_args(colormap)
         if isinstance(colors['sequence'], np.ndarray):
-            colors['nucleotides'] = structure.get_colors('white')
+            colors['nucleotides'], _ = structure.get_colors('white')
         elif colors['sequence'] == 'contrast':
             colors['sequence'] = plots.get_contrasting_colors(
                 colors['nucleotides']
@@ -67,16 +67,17 @@ class SS(plots.Plot):
             plots.plot_positions_ss(ax, structure, positions)
         if interactions is not None:
             plots.plot_interactions_ss(ax, structure, interactions)
+            self.add_colorbar_args(interactions.cmap)
         if interactions2 is not None:
             plots.plot_interactions_ss(ax, structure, interactions2)
+            self.add_colorbar_args(interactions2.cmap)
         for annotation in annotations:
             plots.plot_annotation_ss(ax, structure, annotation)
         ax.set_title(label)
-        self.set_axis(ax, structure)
         x = structure.xcoordinates
         y = structure.ycoordinates
-        xlims = ax.get_xlims()
-        ylims = ax.get_ylims()
+        xlims = ax.get_xlim()
+        ylims = ax.get_ylim()
         xlims = [min([xlims[0], min(x)-2]), max([xlims[1], max(x)+2])]
         ylims = [min([ylims[0], min(y)-2]), max([ylims[1], max(y)+2])]
         ax.set(ylim=ylims, xlim=xlims)

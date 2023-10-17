@@ -48,10 +48,12 @@ class LinReg(plots.Plot):
         if column is None:
             column = profile.metric
         self.labels.append(label)
-        self.colors.append(
-            profile.get_colors(colors, profile=profile, structure=structure))
+        colors, colormap = profile.get_colors(
+            colors, profile=profile, structure=structure
+            )
+        self.colors.append(colors)
+        self.add_colorbar_args(colormap)
         self.profiles.append(profile.data[column].to_numpy(copy=True))
-        self.add_legend(colors, annotations)
         if len(self.profiles) == self.length:
             self.finalize()
 
@@ -94,28 +96,6 @@ class LinReg(plots.Plot):
                         rotation=-90,
                         xycoords='axes fraction', textcoords='offset points',
                         size='large', ha='left', va='center')
-
-    def add_legend(self, colorby, annotations):
-        handles = []
-        if colorby == 'sequence':
-            for label in ['A', 'U', 'C', 'G']:
-                color = styles.get_nt_color(label)
-                handles.append(mpl.lines.Line2D(
-                    [], [], color=color, marker='o', linestyle='None',
-                    markersize=10, label=label))
-        elif colorby == 'structure':
-            for label, color in zip(['paired', 'unpaired'], ['C0', 'C1']):
-                handles.append(mpl.lines.Line2D(
-                    [], [], color=color, marker='o', linestyle='None',
-                    markersize=10, label=label))
-        elif colorby == 'annotations':
-            for annotation in annotations:
-                label = annotation.name
-                color = annotation.color
-                handles.append(mpl.lines.Line2D(
-                    [], [], color=color, marker='.', linestyle='None',
-                    markersize=10, label=label))
-        self.axes[1, 0].legend(handles=handles, loc=10, title=colorby)
 
     def plot_regression(self, i, j):
         ax = self.axes[i, j]

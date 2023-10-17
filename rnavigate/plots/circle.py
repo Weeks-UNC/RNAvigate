@@ -21,8 +21,8 @@ class Circle(plots.Plot):
 
     def set_figure_size(
             self, fig=None, ax=None, rows=None, cols=None,
-            height_ax_rel=1, width_ax_rel=1, width_ax_in=None,
-            height_ax_in=None, height_gap_in=1, width_gap_in=0.5, top_in=1,
+            height_ax_rel=0.035, width_ax_rel=0.035, width_ax_in=None,
+            height_ax_in=None, height_gap_in=1, width_gap_in=1, top_in=1,
             bottom_in=0.5, left_in=0.5, right_in=0.5
             ):
         super().set_figure_size(
@@ -53,12 +53,12 @@ class Circle(plots.Plot):
             elif colors[key] is None:
                 continue
             colors[key], colormap = seq_circle.get_colors(
-                colors[key], profile=profile,structure=structure,
+                colors[key], profile=profile, structure=structure,
                 annotations=annotations
                 )
             self.add_colorbar_args(colormap)
         if isinstance(colors['sequence'], np.ndarray):
-            colors['nucleotides'] = structure.get_colors('white')
+            colors['nucleotides'], _ = sequence.get_colors('white')
         elif colors['sequence'] == 'contrast':
             colors['sequence'] = plots.get_contrasting_colors(
                 colors['nucleotides']
@@ -92,5 +92,6 @@ class Circle(plots.Plot):
             theta_zero_location='N',
             theta_direction=-1)
         ax.spines['polar'].set_bounds(np.pi*gap/360, np.pi*(2-gap/360))
+        ax.spines['polar'].set_visible(False)
         ax.grid(False)
         self.i += 1

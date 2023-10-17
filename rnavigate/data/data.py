@@ -59,6 +59,9 @@ class Sequence():
         """
         return len(self.sequence)
 
+    def get_aligned_data(self, alignment):
+        return Sequence(alignment.target_sequence)
+
     def get_colors_from_sequence(self):
         colors = np.array([styles.get_nt_color(nt) for nt in self.sequence])
         colormap = data.ScalarMappable(
@@ -150,15 +153,15 @@ class Sequence():
         elif isinstance(source, str) and (source == "structure"):
             return self.get_colors_from_structure(structure)
         elif mpc.is_color_like(source):
-            return np.full(self.length, source, dtype="<U16")
+            return np.full(self.length, source, dtype="<U16"), None
         elif ((len(source) == self.length)
               and all(mpc.is_color_like(c) for c in source)):
-            return np.array(list(source))
+            return np.array(list(source)), None
         else:
             print('Invalid colors:\n\tchoices are "profile", "sequence", '
                   '"position", "structure", "annotations", a list of mpl '
                   'colors, or a single mpl color.\nDefaulting to sequence.')
-            return self.get_colors("sequence")
+            return self.get_colors_from_sequence()
 
 
 class Data(Sequence):

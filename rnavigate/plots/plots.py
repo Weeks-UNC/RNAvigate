@@ -22,6 +22,8 @@ class Plot(ABC):
         return self.axes[row, col]
 
     def add_colorbar_args(self, cmap):
+        if cmap is None:
+            return
         for colorbar in self.colorbars:
             if cmap.is_equivalent_to(colorbar):
                 break
@@ -122,9 +124,16 @@ class Plot(ABC):
         if cols is None:
             cols = self.columns
 
-        if width_ax_in is None:
-            # x limits of axes
+        try:
+            right_ax = ax.get_rmax()
+            top_ax = right_ax
+            left_ax = right_ax * -1
+            bottom_ax = left_ax
+        except AttributeError:
             left_ax, right_ax = ax.get_xlim()
+            bottom_ax, top_ax = ax.get_ylim()
+
+        if width_ax_in is None:
             # width of axes in inches
             width_ax_in = (right_ax - left_ax) * width_ax_rel
         if width_gap_in is None:
@@ -150,7 +159,6 @@ class Plot(ABC):
 
         # repeat the process for figure height
         if height_ax_in is None:
-            bottom_ax, top_ax = ax.get_ylim()
             height_ax_in = (top_ax - bottom_ax) * height_ax_rel
         if height_gap_in is None:
             height_gap_in = fig.subplotpars.hspace * height_ax_in

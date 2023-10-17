@@ -1,4 +1,4 @@
-from rnavigate import data, Sample
+from rnavigate import data, Sample, get_sequence
 
 
 
@@ -64,21 +64,25 @@ class PlottingArgumentParser():
             'domains': list,
             'pdb': data.PDB,
             'log': data.Log,
-            'sequence': data.Sequence
         }
         for sample, label in zip(self.samples, self.labels):
             this_data_dict = {"label": label}
             for key, value in data_dict.items():
+                if key == "sequence":
+                    new_value = get_sequence(value, sample)
+                    new_value = fit_data(new_value, alignment)
+                    this_data_dict[key] = new_value
+                    continue
+                if ("interactions" in key) and key != "interactions":
+                    sample.filter_interactions(**value)
+                    new_value = sample.get_data(
+                        value["interactions"], data.Interactions)
+                    new_value = fit_data(new_value, alignment)
+                    this_data_dict[key] = new_value
+                    continue
                 for name, data_class in classes.items():
                     if name in key:
                         new_value = sample.get_data(value, data_class)
-                        new_value = fit_data(new_value, alignment)
-                        this_data_dict[key] = new_value
-                        break
-                    elif ("interactions" in key) and key != "interactions":
-                        sample.filter_interactions(**value)
-                        new_value = sample.get_data(
-                            value["interactions"], data.Interactions)
                         new_value = fit_data(new_value, alignment)
                         this_data_dict[key] = new_value
                         break
