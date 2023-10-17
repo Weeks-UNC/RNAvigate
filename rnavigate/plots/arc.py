@@ -96,8 +96,8 @@ class AP(plots.Plot):
         for i, annotation in enumerate(annotations):
             yvalue = seqbar_height + domains_height + 4 * (i+1) - 2
             plots.plot_annotation_track(
-                ax, annotation=annotation, yvalue=yvalue, mode=annotation_mode,
-                region=self.region,
+                ax, annotation=annotation, yvalue=yvalue, height=4,
+                mode=annotation_mode, region=self.region,
                 )
             yticks.append(yvalue)
             ylabels.append(annotation.name)

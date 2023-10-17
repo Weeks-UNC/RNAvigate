@@ -11,22 +11,19 @@ class SS(plots.Plot):
         self.xlims = [-2, 2]
         self.ylims = [-2, 2]
 
-    def set_figure_size(self, fig=None, ax=None,
-                        rows=None, cols=None,
-                        height_ax_rel=0.2, width_ax_rel=0.2,
-                        width_ax_in=None, height_ax_in=None,
-                        height_gap_in=0.5, width_gap_in=0.2,
-                        top_in=1, bottom_in=0.5,
-                        left_in=0.5, right_in=0.5):
-        super().set_figure_size(fig=fig, ax=ax, rows=rows, cols=cols,
-                                height_ax_rel=height_ax_rel,
-                                width_ax_rel=width_ax_rel,
-                                width_ax_in=width_ax_in,
-                                height_ax_in=height_ax_in,
-                                height_gap_in=height_gap_in,
-                                width_gap_in=width_gap_in, top_in=top_in,
-                                bottom_in=bottom_in, left_in=left_in,
-                                right_in=right_in)
+    def set_figure_size(
+            self, fig=None, ax=None, rows=None, cols=None, height_ax_rel=0.2,
+            width_ax_rel=0.2, width_ax_in=None, height_ax_in=None,
+            height_gap_in=0.5, width_gap_in=0.2, top_in=1, bottom_in=0.5,
+            left_in=0.5, right_in=0.5
+            ):
+        super().set_figure_size(
+            fig=fig, ax=ax, rows=rows, cols=cols, height_ax_rel=height_ax_rel,
+            width_ax_rel=width_ax_rel, width_ax_in=width_ax_in,
+            height_ax_in=height_ax_in, height_gap_in=height_gap_in,
+            width_gap_in=width_gap_in, top_in=top_in, bottom_in=bottom_in,
+            left_in=left_in, right_in=right_in
+            )
 
     def plot_data(self, structure, interactions=None, interactions2=None,
                   profile=None, annotations=None, label='', colors=None,
@@ -47,10 +44,11 @@ class SS(plots.Plot):
                 continue
             elif colors[key] is None:
                 continue
-            colors[key] = structure.get_colors(
+            colors[key], colormap = structure.get_colors(
                 colors[key], profile=profile,structure=structure,
                 annotations=annotations
                 )
+            self.add_colorbar_args(colormap)
         if isinstance(colors['sequence'], np.ndarray):
             colors['nucleotides'] = structure.get_colors('white')
         elif colors['sequence'] == 'contrast':
@@ -75,15 +73,11 @@ class SS(plots.Plot):
             plots.plot_annotation_ss(ax, structure, annotation)
         ax.set_title(label)
         self.set_axis(ax, structure)
-        self.i += 1
-
-    def set_axis(self, ax, structure):
         x = structure.xcoordinates
         y = structure.ycoordinates
-        self.xlims = [
-            min([self.xlims[0], min(x)-2]),
-            max([self.xlims[1], max(x)+2])]
-        self.ylims = [
-            min([self.ylims[0], min(y)-2]),
-            max([self.ylims[1], max(y)+2])]
-        ax.set(ylim=self.ylims, xlim=self.xlims)
+        xlims = ax.get_xlims()
+        ylims = ax.get_ylims()
+        xlims = [min([xlims[0], min(x)-2]), max([xlims[1], max(x)+2])]
+        ylims = [min([ylims[0], min(y)-2]), max([ylims[1], max(y)+2])]
+        ax.set(ylim=ylims, xlim=xlims)
+        self.i += 1

@@ -20,20 +20,31 @@ _alignments_cache = {}
 
 # structure alignment parameters
 # conversion of nt+pairing to pseudo amino acid sequence
-nt_dbn_to_aa_dict = (
-    {f'A{s}': aa for s, aa in zip('([.])', 'ACDEF')}
-    | {f'C{s}': aa for s, aa in zip('([.])', 'GHIKL')}
-    | {f'U{s}': aa for s, aa in zip('([.])', 'MNPQR')}
-    | {f'G{s}': aa for s, aa in zip('([.])', 'STVWY')})
-
-def convert_aa_sequence(aa, nt_or_dbn):
-    if nt_or_dbn == 'nt':
-        idx = 0
-    if nt_or_dbn == 'dbn':
-        idx = 1
-    for nt_dbn, aa in nt_dbn_to_aa_dict.items():
-        new = aa.replace(aa, nt_dbn[idx])
-    return new
+def convert_sequence(aas, nts, dbn):
+    nts_key = 'AAAAACCCCCUUUUUGGGGG-'
+    dbn_key = '([.])([.])([.])([.])-'
+    aas_key = 'ACDEFGHIKLMNPQRSTVWY-'
+    to_aa = {nt+db: aa for nt, db, aa in zip(nts_key, dbn_key, aas_key)}
+    to_nt = {aa: nt for nt, aa in zip(nts_key, aas_key)}
+    to_db = {aa: db for db, aa in zip(dbn_key, aas_key)}
+    if aas is True:
+        # Make all nts uppercase and 'U' instead of 'T'
+        nts = nts.upper().replace('T', 'U')
+        # Make all pseudoknots level 1 (assumes they were assigned correctly)
+        pk_level = {left: '[' for left in '{<ABCDEFGHIJKLMNOPQRSTUVWXYZ'}
+        pk_level |= {right: ']' for right in '}>abcdefghijklmnopqrstuvwxyz'}
+        pk_level |= {keep: keep for keep in '.()[]'}
+        dbn = [pk_level[db] for db in dbn]
+        aas = ''.join(to_aa[nt+db] for nt, db in zip(nts, dbn))
+        return aas
+    elif nts is True:
+        nts = ''.join([to_nt[aa] for aa in aas])
+        return nts
+    elif dbn is True:
+        dbn = ''.join([to_db[aa] for aa in aas])
+        return dbn
+    raise ValueError('Please specify which sequence to return by setting aas, '
+                     'nts, or dbn to  True.')
 
 # code used to generate structure_scoring_dict
 # pair_scores = ({}
@@ -525,32 +536,6 @@ class StructureAlignment(BaseAlignment):
             target_length = len(self.sequence2)
         super().__init__(self.sequence1, target_length)
 
-    def get_aa_sequences(self):
-        """Creates a fake amino acid sequence based on sequences and structures
-
-        Returns:
-            tuple of 2 str: the pseudo-amino acid sequence for 1 and 2
-        """
-        aa_seq1 = []
-        aa_seq2 = []
-        structure1_clean = self.structure1
-        structure2_clean = self.structure2
-        sequence1_clean = self.sequence1.upper().replace('T', 'U')
-        sequence2_clean = self.sequence2.upper().replace('T', 'U')
-        # Cleaning up pseudoknots (assumes they were assigned correctly)
-        alphabet = 'abcdefghijklmnopqrstuvwxyz'
-        for left in '{<' + alphabet.upper():
-            structure1_clean = structure1_clean.replace(left, '[')
-            structure2_clean = structure2_clean.replace(left, '[')
-        for right in '}>' + alphabet:
-            structure1_clean = structure1_clean.replace(right, ']')
-            structure2_clean = structure2_clean.replace(right, ']')
-        for nt, bp in zip(sequence1_clean, structure1_clean):
-            aa_seq1.append(nt_dbn_to_aa_dict[nt+bp])
-        for nt, bp in zip(sequence2_clean, structure2_clean):
-            aa_seq2.append(nt_dbn_to_aa_dict[nt+bp])
-        return ''.join(aa_seq1), ''.join(aa_seq2)
-
     def get_alignment(self):
         """Aligns pseudo-amino-acid sequences according to RNAlign2D rules.
 
@@ -558,7 +543,12 @@ class StructureAlignment(BaseAlignment):
             (tuple of 2 str): alignment1 and alignment2
         """
         # Normalize sequences
-        seq1, seq2 = self.get_aa_sequences()
+        seq1 = convert_sequence(
+            aas=True, nts=self.sequence1, dbn=self.structure1
+            )
+        seq2 = convert_sequence(
+            aas=True, nts=self.sequence2, dbn=self.structure2
+            )
         # Check if sequences match
         if seq1 == seq2:
             return (seq1, seq2)
@@ -577,8 +567,9 @@ class StructureAlignment(BaseAlignment):
                     alignment2=alignment[0].seqB
                 )
         # convert pseudo-amino acid alignments back into nucleotide alignments
-        return (convert_aa_sequence(alignment1, "nt"),
-                convert_aa_sequence(alignment2, "nt"))
+        alignment1 = convert_sequence(aas=alignment1, nts=True, dbn=False)
+        alignment2 = convert_sequence(aas=alignment2, nts=True, dbn=False)
+        return alignment1, alignment2
 
     def get_mapping(self):
         """Calculates a mapping from starting sequence to target sequence.

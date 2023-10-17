@@ -113,10 +113,13 @@ class LowSS(Sample):
         entropies = self.data['entropy'].data['Windowed_entropy']
         shapes = self.data['shapemap'].data['Windowed_profile']
         is_lowss = entropies < maximum_entropy & shapes < maximum_shape
-        self.set_data('lowSS', data.Annotation.from_boolean_array(
-            values=is_lowss, window=self.window, annotation_type='spans',
-            color="grey", sequence=self.data['structure'].sequence
-            ), overwrite_keyword=True)
+        self.set_data(
+            overwrite_keyword=True, data_keyword='lowSS',
+            inputs=data.Annotation.from_boolean_array(
+                values=is_lowss, window=1, annotation_type='spans',
+                color="grey", sequence=self.data['structure'].sequence
+                ),
+            )
 
     def reset_window(self, window=None):
         """Resets the window size and recalculates windowed SHAPE reactivities

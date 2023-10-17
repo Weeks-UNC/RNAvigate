@@ -52,8 +52,8 @@ class Sample:
         for each_keyword in default_data.values():
             if each_keyword not in self.data or overwrite_inherited_defaults:
                 self.data[each_keyword] = None
-        for data_keyword, kwargs in data_keywords.items():
-            self.set_data(data_keyword, kwargs=kwargs)
+        for data_keyword, inputs in data_keywords.items():
+            self.set_data(data_keyword, inputs=inputs)
             for each_type, each_keyword in default_data.items():
                 if (isinstance(self.data[data_keyword], each_type)
                         and self.data[each_keyword] is None):
@@ -103,14 +103,14 @@ class Sample:
                 pdbs.append(data_keyword)
         return pdbs
 
-    def set_data(self, data_keyword, kwargs, overwrite_keyword=False):
+    def set_data(self, data_keyword, inputs, overwrite_keyword=False):
         """This method is used internally to parse data_keywords passed to
         rnavigate.Sample initialization.
 
         Args:
             data_keyword (str):
                 a keyword for the data dictionary
-            kwargs (dict):
+            inputs (dict):
                 a dictionary used to create the rnavigate.data object
             overwrite_keyword (bool, optional):
                 whether to overwrite a pre-existing data_keyword.
@@ -126,10 +126,10 @@ class Sample:
                 "Choose a different one.")
         try:
             self.data[data_keyword] = create_data(
-                sample=self, **{data_keyword: kwargs})
+                sample=self, **{data_keyword: inputs})
         except BaseException as exception:
             raise ValueError(f"issue while loading {data_keyword}") from exception
-        self.inputs[data_keyword] = kwargs
+        self.inputs[data_keyword] = inputs
 
     def init_dance(self, filepath):
         """Initializes a list of Sample objects which each represent a

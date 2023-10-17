@@ -149,7 +149,7 @@ def plot_profile_skyline(ax, profile, label, columns, errors):
     values = profile.data
     if columns is None:
         columns = profile.metric
-    if isinstance(columns, str) and not isinstance(errors, (str, type(None))):
+    if isinstance(columns, str) and isinstance(errors, (str, type(None))):
         columns = [columns]
         errors = [errors]
     if errors is None:

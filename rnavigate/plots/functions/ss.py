@@ -2,13 +2,14 @@ import numpy as np
 import matplotlib.patches as mp_patches
 import matplotlib.collections as mp_collections
 from scipy.spatial.distance import cdist
-from rnavigate import styles
+from rnavigate import styles, data
 
 
 # Secondary structure diagram ploting functions
 def plot_structure_ss(ax, structure, colors):
     x = structure.xcoordinates
     y = structure.ycoordinates
+
     # ax.scatter(x, y, marker=".", c=colors, **styles.settings['ss']['points'])
 
     path = mp_patches.Path(np.column_stack([x, y]))
@@ -103,12 +104,18 @@ def plot_basepairs_ss(ax, structure, bp_style):
 
 
 def plot_sequence_ss(ax, structure, colors):
+    if isinstance(structure, data.SequenceCircle):
+        x = structure.data['Theta']
+        y = np.full(x.shape, structure.radius)
+    else:
+        x = structure.xcoordinates
+        y = structure.ycoordinates
     if colors is None:
         colors = structure.get_colors("gray")
     for nuc in "GUTACgutac":
         mask = [nt == nuc for nt in structure.sequence]
-        xcoords = structure.xcoordinates[mask]
-        ycoords = structure.ycoordinates[mask]
+        xcoords = x[mask]
+        ycoords = y[mask]
         marker = "$\mathsf{"+nuc+"}$"
         ax.scatter(
             xcoords, ycoords, marker=marker, c=colors[mask],
@@ -117,10 +124,15 @@ def plot_sequence_ss(ax, structure, colors):
 
 
 def plot_nucleotides_ss(ax, structure, colors):
+    if isinstance(structure, data.SequenceCircle):
+        x = structure.data['Theta']
+        y = np.full(x.shape, structure.radius)
+    else:
+        x = structure.xcoordinates
+        y = structure.ycoordinates
     if colors is None:
         colors = structure.get_colors("grey")
-    ax.scatter(structure.xcoordinates, structure.ycoordinates, c=colors,
-               **styles.settings['ss']['nucleotides'])
+    ax.scatter(x, y, c=colors, **styles.settings['ss']['nucleotides'])
 
 
 def plot_positions_ss(ax, structure, spacing=20):

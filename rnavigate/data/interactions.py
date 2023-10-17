@@ -952,7 +952,7 @@ class StructureInteractions(Interactions):
         if structure2 is not None:
             input_data = input_data.merge(
                 structure2,
-                how="left",
+                how="outer",
                 on=["i", "j"],
                 indicator="Which_structure",
                 suffixes=["_left", "_right"])
@@ -985,8 +985,14 @@ class StructureInteractions(Interactions):
                         (153/255., 0.0, 1.0),           # right
                     ],
                     'normalization': 'none',
+                    'values': [],
                     'title': 'Base-pairs by structure',
-                    'extend': 'neither'
+                    'extend': 'neither',
+                    'ticks': [0, 1, 2],
+                    'tick_labels': [
+                        'common\npairs',
+                        'first\nstructure',
+                        'second\nstructure'],
                 }
             }
         super().__init__(input_data, sequence, metric, metric_defaults)

@@ -43,7 +43,7 @@ def plot_sequence_track(ax, sequence, yvalue=-0.05, height=0.05, ytrans="data",
 
 
 def plot_annotation_track(
-        ax, annotation, yvalue, mode, region='all', ytrans='data'
+        ax, annotation, yvalue, height, mode, region='all', ytrans='data',
         ):
     if region == 'all':
         region = [1, annotation.length]
@@ -51,6 +51,7 @@ def plot_annotation_track(
     if ytrans == "axes":
         ymin, ymax = ax.get_ylim()
         yvalue = (ymax - ymin) * yvalue + ymin
+        height = (ymax - ymin) * height
     color = annotation.color
     modes = ["track", "bar"]
     
@@ -88,7 +89,8 @@ def plot_annotation_track(
                 start, end = start - 0.5, end + 0.5
             ax.arrow(
                 x=start, y=yvalue, dx=end-start+1, dy=0, color=color,
-                shape='right', clip_on=False, head_width=0.01, head_length=3,
+                shape='right', clip_on=False,
+                head_width=height*0.8, head_length=3,
                 length_includes_head=True,
                 )
 

@@ -1,31 +1,16 @@
-from matplotlib.collections import PatchCollection
-from matplotlib.patches import Path, PathPatch
-from matplotlib.colors import to_rgb
-from math import sin, cos, pi
-from rnavigate import plots
+
+from rnavigate import plots, data
 import numpy as np
 
 
 class Circle(plots.Plot):
 
-    def __init__(self, num_samples, sequence, gap=8, **kwargs):
-        self.sequence = sequence
-        self.gap = gap
-        length = self.sequence.length
+    def __init__(self, num_samples, **kwargs):
+        try:
+            kwargs['subplot_kw'].update({'projection': 'polar'})
+        except KeyError:
+            kwargs['subplot_kw'] = {'projection': 'polar'}
         super().__init__(num_samples, **kwargs)
-        self.x, self.y = np.zeros(length), np.zeros(length)
-        self.diameter = (length + self.gap) / pi
-        theta_between = 2 * pi * 1/(length + self.gap - 1)
-        theta_start = theta_between * self.gap/2
-        self.theta = theta_between * np.arange(length) + theta_start
-        self.x = np.sin(self.theta)*self.diameter
-        self.y = np.cos(self.theta)*self.diameter
-        for i in range(self.length):
-            ax = self.get_ax(i)
-            ax.set_aspect('equal')
-            ax.axis('off')
-            # ax.set(xlim=(-10.1, 10.1),
-            #        ylim=(-10.1, 10.1))
         self.pass_through = ["colors", "apply_color_to", "sequence",
                              "title", "positions"]
         self.zorder = {"annotations": 0,
@@ -34,141 +19,78 @@ class Circle(plots.Plot):
                        "sequence": 15,
                        "position": 20}
 
-    def set_figure_size(self, fig=None, ax=None,
-                        rows=None, cols=None,
-                        height_ax_rel=1/pi/12, width_ax_rel=1/pi/12,
-                        width_ax_in=None, height_ax_in=None,
-                        height_gap_in=1, width_gap_in=0.5,
-                        top_in=1, bottom_in=0.5,
-                        left_in=0.5, right_in=0.5):
-        super().set_figure_size(fig=fig, ax=ax, rows=rows, cols=cols,
-                                height_ax_rel=height_ax_rel,
-                                width_ax_rel=width_ax_rel,
-                                width_ax_in=width_ax_in,
-                                height_ax_in=height_ax_in,
-                                height_gap_in=height_gap_in,
-                                width_gap_in=width_gap_in, top_in=top_in,
-                                bottom_in=bottom_in, left_in=left_in,
-                                right_in=right_in)
+    def set_figure_size(
+            self, fig=None, ax=None, rows=None, cols=None,
+            height_ax_rel=1, width_ax_rel=1, width_ax_in=None,
+            height_ax_in=None, height_gap_in=1, width_gap_in=0.5, top_in=1,
+            bottom_in=0.5, left_in=0.5, right_in=0.5
+            ):
+        super().set_figure_size(
+            fig=fig, ax=ax, rows=rows, cols=cols, height_ax_rel=height_ax_rel,
+            width_ax_rel=width_ax_rel, width_ax_in=width_ax_in,
+            height_ax_in=height_ax_in, height_gap_in=height_gap_in,
+            width_gap_in=width_gap_in, top_in=top_in, bottom_in=bottom_in,
+            left_in=left_in, right_in=right_in
+            )
 
-    def get_figsize(self):
-        dim = self.sequence.length / pi / 4
-        return (dim * self.columns, dim * self.rows)
-
-    def plot_data(self, structure, structure2, interactions, interactions2,
-                  profile, annotations, label, colors="sequence",
-                  apply_color_to="sequence", title=True, positions=True):
+    def plot_data(
+            self, sequence, structure=None, structure2=None, interactions=None,
+            interactions2=None, profile=None, annotations=None, label=None,
+            colors=None, title=True, positions=20, gap=30):
+        if annotations is None:
+            annotations = []
+        seq_circle = data.SequenceCircle(sequence, gap=gap)
+        ax = self.get_ax()
+        if colors is None:
+            colors = {}
+        colors = {
+            'sequence': None,
+            'nucleotides': 'sequence',
+        } | colors
+        for key in ['nucleotides', 'sequence']:
+            if isinstance(colors[key], str) and colors[key] == 'contrast':
+                continue
+            elif colors[key] is None:
+                continue
+            colors[key], colormap = seq_circle.get_colors(
+                colors[key], profile=profile,structure=structure,
+                annotations=annotations
+                )
+            self.add_colorbar_args(colormap)
+        if isinstance(colors['sequence'], np.ndarray):
+            colors['nucleotides'] = structure.get_colors('white')
+        elif colors['sequence'] == 'contrast':
+            colors['sequence'] = plots.get_contrasting_colors(
+                colors['nucleotides']
+                )
         if structure is not None:
             structure = structure.as_interactions(structure2)
-        ax = self.get_ax()
-        self.add_patches(ax, structure)
-        self.add_patches(ax, interactions)
-        self.add_patches(ax, interactions2)
-        self.plot_sequence(ax, profile, colors, apply_color_to)
+        if colors['sequence'] is not None:
+            plots.plot_sequence_ss(ax, seq_circle, colors['sequence'])
+        if colors['nucleotides'] is not None:
+            plots.plot_nucleotides_ss(ax, seq_circle, colors['nucleotides'])
+        if structure is not None:
+            plots.plot_interactions_circle(ax, seq_circle, structure)
+            self.add_colorbar_args(structure.cmap)
+        if interactions is not None:
+            plots.plot_interactions_circle(ax, seq_circle, interactions)
+            self.add_colorbar_args(interactions.cmap)
+        if interactions2 is not None:
+            plots.plot_interactions_circle(ax, seq_circle, interactions2)
+            self.add_colorbar_args(interactions2.cmap)
         for annotation in annotations:
-            self.plot_annotation(ax, annotation)
+            plots.plot_annotation_circle(ax, seq_circle, annotation)
         if title:
             ax.set_title(label)
-        if positions:
-            self.plot_positions(ax)
+        tick_set = seq_circle.data.query(
+            f'Nucleotide % {positions} == 0 '
+            f'| Nucleotide in [1, {seq_circle.length}]')
+        ax.set(
+            xticks=tick_set['Theta'],
+            xticklabels=tick_set['Nucleotide'],
+            yticks=[],
+            theta_zero_location='N',
+            theta_direction=-1)
+        ax.spines['polar'].set_bounds(np.pi*gap/360, np.pi*(2-gap/360))
+        ax.grid(False)
         self.i += 1
-
-    def plot_sequence(self, ax, profile, colors, apply_color_to):
-        sequence = self.sequence
-        nuc_z = self.zorder["nucleotide"]
-        seq_z = self.zorder["sequence"]
-        valid_apply = ["background", "sequence", None]
-        message = f"invalid apply_color_to, must be in {valid_apply}"
-        assert apply_color_to in valid_apply, message
-        if colors is None or apply_color_to is None:
-            colors = sequence.get_colors("black")
-            apply_color_to = "sequence"
-        if apply_color_to == "background":
-            bg_color = sequence.get_colors(colors, profile=profile)
-        if apply_color_to == "sequence":
-            nt_color = sequence.get_colors(colors, profile=profile)
-            bg_color = sequence.get_colors("white")
-        elif sequence:
-            nt_color = ['k'] * len(bg_color)
-            for i, color in enumerate(bg_color):
-                r, g, b = to_rgb(color)
-                if (r*0.299 + g*0.587 + b*0.114) < 175/256:
-                    nt_color[i] = 'w'
-            nt_color = np.array(nt_color)
-        ax.scatter(self.x, self.y, marker="o", c=bg_color, s=25, zorder=nuc_z)
-        for nuc in "GUACguac":
-            mask = [nt == nuc for nt in sequence.sequence]
-            xcoords = self.x[mask]
-            ycoords = self.y[mask]
-            marker = "$\mathsf{"+nuc+"}$"
-            ax.scatter(xcoords, ycoords, marker=marker, s=9,
-                       c=nt_color[mask], lw=0.3, zorder=seq_z)
-
-    def plot_positions(self, ax, interval=20):
-        for i in np.arange(interval-1, self.sequence.length+1, interval):
-            x = self.x[i]
-            y = self.y[i]
-            theta = self.theta[i] * -180/np.pi
-            ax.plot([x, x+4*x/self.diameter], [y, y+4*y/self.diameter], c='k')
-            ax.text(x+7*x/self.diameter, y+7*y/self.diameter, i+1, ha='center',
-                    va='center', rotation=theta)
-
-    def add_patches(self, ax, data):
-        if data is None:
-            return
-        ij_colors = data.get_ij_colors()
-        self.add_colorbar_args(data.cmap)
-        patches = []
-        for i, j, color in zip(*ij_colors):
-            if j < i:  # flip the order
-                i, j = j, i
-            x_i = self.x[i-1]
-            y_i = self.y[i-1]
-            x_j = self.x[j-1]
-            y_j = self.y[j-1]
-            x_center = (x_i+x_j)/2
-            y_center = (y_i+y_j)/2
-            # scaling the center point towards zero depending on angle(i,j)
-            if (j - i) > ((self.sequence.length + self.gap - 1) / 2):
-                diff = self.sequence.length - j + i + 8
-            else:
-                diff = j - i
-            f = (1 - (diff / (self.sequence.length + self.gap - 1))) ** 4
-            verts = [[x_i, y_i], [x_center*f, y_center*f], [x_j, y_j]]
-            codes = [Path.MOVETO, Path.CURVE3, Path.CURVE3]
-            patches.append(PathPatch(Path(verts, codes), fc="none", ec=color))
-        ax.add_collection(PatchCollection(patches, match_original=True))
-
-    def plot_annotation(self, ax, annotation):
-        color = annotation.color
-        zorder = self.zorder["annotations"]
-        if annotation.annotation_type == "spans":
-            for start, end in annotation:
-                x = self.x[start-1:end] + 3*self.x[start-1:end]/self.diameter
-                y = self.y[start-1:end] + 3*self.y[start-1:end]/self.diameter
-                ax.plot(x, y, color=color, alpha=0.8, lw=10, zorder=zorder)
-        elif annotation.annotation_type == "sites":
-            x = self.x[annotation[:]]
-            y = self.y[annotation[:]]
-            ax.scatter(x, y, color=color, marker='o', ec="none", alpha=0.7,
-                       s=30**2, zorder=zorder)
-        elif annotation.annotation_type == "group":
-            for group in annotation:
-                x = self.structure.xcoordinates[group["sites"]]
-                y = self.structure.ycoordinates[group["sites"]]
-                color = group["color"]
-                ax.plot(x, y, color=color, alpha=0.2, lw=30, zorder=zorder)
-                ax.scatter(x, y, color=color, marker='o', ec="none", alpha=0.4,
-                           s=30**2, zorder=zorder)
-        elif annotation.annotation_type == "primers":
-            for start, end in annotation:
-                if start < end:
-                    index = np.arange(start-1, end)
-                elif start > end:
-                    index = np.arange(start-1, end-2, -1)
-                index = np.append(index, index[-2])
-                x = self.x[index] + 3*self.x[index]/self.diameter
-                y = self.y[index] + 3*self.y[index]/self.diameter
-                x[-1] += x[-1]/self.diameter
-                y[-1] += y[-1]/self.diameter
-                ax.plot(x, y, color=color, alpha=0.8, zorder=zorder)

@@ -1204,6 +1204,17 @@ class SecondaryStructure(data.Sequence):
             df.loc[mask, "Pair"].values)
         return SecondaryStructure(input_data=df, autoscale=False)
 
+    def get_interactions_df(self):
+        mask = self.data.eval("Pair != 0 & Pair > Nucleotide")
+        df = self.data.loc[mask, ["Nucleotide", "Pair"]].copy()
+        df["Structure"] = 1
+        df = df.rename(
+                columns={"Nucleotide": "i", "Pair": "j"}
+            ).sort_values(
+                by=['i', 'j']
+            )
+        return df
+
     def as_interactions(self, structure2=None):
         """returns list of i, j basepairs as rnavigate.Interactions data.
 
@@ -1213,21 +1224,16 @@ class SecondaryStructure(data.Sequence):
                 colored by structure (left, right, or both)
                 defaults to None.
         """
-        mask = self.data.eval("Pair != 0 & Pair > Nucleotide")
-        input_data = self.data.loc[mask, ["Nucleotide", "Pair"]].copy()
-        input_data["Structure"] = 1
-        input_data.rename(columns={"Nucleotide": "i", "Pair": "j"}, inplace=True)
-        input_data.reset_index()
+        input_data = self.get_interactions_df()
         if structure2 is not None:
-            alignment = data.SequenceAlignment(self, structure2)
-            structure2 = structure2.get_aligned_data(alignment)
-            mask = structure2.data.eval("Pair != 0 & Pair > Nucleotide")
-            structure2 = structure2.data.loc[mask,
-                                             ["Nucleotide", "Pair"]].copy()
-            structure2["Structure"] = 1
-            structure2.rename(columns={"Nucleotide": "i", "Pair": "j"}, inplace=True)
-            structure2.reset_index()
-        return data.StructureInteractions(input_data, self.sequence, structure2)
+            # alignment = data.SequenceAlignment(self, structure2)
+            # structure2 = structure2.get_aligned_data(alignment)
+            structure2 = structure2.get_interactions_df()
+        return data.StructureInteractions(
+            input_data=input_data,
+            sequence=self.sequence,
+            structure2=structure2
+            )
 
     def transform_coordinates(self, flip=None, scale=None, center=None,
                               rotate_degrees=None):
@@ -1351,3 +1357,24 @@ class StructureCoordinates():
         # Translate the coordinates back to the original center
         self.x += center_x
         self.y += center_y
+
+class SequenceCircle(SecondaryStructure):
+    def __init__(
+            self, input_data, gap=30, **kwargs
+            ):
+        length = input_data.length
+        df = pd.DataFrame({
+            'Sequence': list(input_data.sequence),
+            'Nucleotide': np.arange(length)+1,
+            'Pair': np.zeros(length)
+            })
+        gap = 2*np.pi * gap/360
+        self.gap = gap
+        theta_between = (2 * np.pi -self.gap)* 1/(length-1)
+        self.radius = (length + gap/theta_between) / np.pi
+        theta_start = gap / 2
+        theta = theta_between * np.arange(length) + theta_start
+        df['Theta'] = theta
+        super().__init__(
+            input_data=df, extension=None, autoscale=False, **kwargs
+            )

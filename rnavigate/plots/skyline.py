@@ -40,11 +40,13 @@ class Skyline(plots.Plot):
             columns=None, seqbar=True, errors=None,
             annotations_mode="track"
             ):
-        track_unit = 0.015
-        annotations_track = 4 * track_unit * len(annotations)
+        if columns is None:
+            columns = profile.metric
+        track_unit = 0.03
+        annotations_track = 2 * track_unit * len(annotations)
         annotations_track *= annotations_mode == 'track'
-        domains_track = 6 * track_unit * (domains is not None)
-        sequence_track = 2 * track_unit * seqbar
+        domains_track = 3 * track_unit * (domains is not None)
+        sequence_track = track_unit * seqbar
         self.track_height = sequence_track + annotations_track + domains_track
 
         ax = self.get_ax()
@@ -67,8 +69,8 @@ class Skyline(plots.Plot):
                 plots.plot_annotation_track(
                     ax=ax, annotation=annotation, mode=annotations_mode,
                     yvalue=(sequence_track + domains_track
-                            - self.track_height + (i+0.5) * (4 * track_unit)),
-                    ytrans='axes', region=self.region,
+                            - self.track_height + (i+0.5) * (2 * track_unit)),
+                    height=2*track_unit, ytrans='axes', region=self.region,
                     )
 
         self.i += 1

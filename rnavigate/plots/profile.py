@@ -32,11 +32,11 @@ class Profile(plots.Plot):
             )
         self.add_colorbar_args(profile.cmap)
 
-        track_unit = 0.015
-        annotations_track = 4 * track_unit * len(annotations)
+        track_unit = 0.03
+        annotations_track = 2 * track_unit * len(annotations)
         annotations_track *= annotations_mode == 'track'
-        domains_track = 6 * track_unit * (domains is not None)
-        sequence_track = 2 * track_unit * seqbar
+        domains_track = 3 * track_unit * (domains is not None)
+        sequence_track = track_unit * seqbar
         self.track_height = sequence_track + annotations_track + domains_track
         if seqbar:
             plots.plot_sequence_track(
@@ -56,7 +56,7 @@ class Profile(plots.Plot):
                 ax=ax, annotation=annotation, mode=annotations_mode,
                 yvalue=(sequence_track + domains_track
                         - self.track_height + (i+0.5) * (4 * track_unit)),
-                ytrans='axes', region=self.region,
+                height=2*track_unit, ytrans='axes', region=self.region,
                 )
 
         self.i += 1

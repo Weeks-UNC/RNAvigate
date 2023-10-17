@@ -97,7 +97,7 @@ def plot_skyline(
         columns=None,
         errors=None,
         annotations_mode='track',
-        seqbar=True
+        seqbar=True,
         region="all",
         # optional plot display
         plot_kwargs=None,
@@ -188,7 +188,7 @@ def plot_profile(
         column=None,
         plot_error=True,
         annotations_mode='track',
-        seqbar=True
+        seqbar=True,
         region="all",
         # optional plot display
         colorbars=True,
@@ -1010,69 +1010,28 @@ def plot_heatmap(
 
 # TODO: refactor to match profile, arcs, skyline, ss, then update docstring
 def plot_circle(
+        # required
         samples,
-        sequence=None,
+        sequence,
+        # optional data inputs
         structure=None,
         structure2=None,
         interactions=None,
         interactions2=None,
         annotations=None,
-        profile="default_profile",
+        profile=None,
+        # optional data display
+        colors=None,
+        title=True,
+        positions=20,
+        gap=30,
         labels=None,
         colorbars=True,
-        plot_kwargs=None,
-        **kwargs):
-    """Generates a multipanel circle plot displaying combinations of secondary
-    structures, per-nucleotide data, inter-nucleotide data, and sequence
-    annotations. Each plot may display a unique sample and/or filtering scheme.
-
-    Args:
-        samples (list of rnavigate.Sample): Samples to retreive data from.
-            number of panels will equal the length of this list, unless filters
-            argument below is also used.
-        sequence (str or data object) a key from sample.data, a
-            sequence string, or a Data object. All data will be mapped to this
-            sequence using a user-defined or pairwise sequence alignment.
-            Defaults to the value of the structure argument below.
-        structure (str) a key from sample.data to retreive a secondary
-            structure. Basepairs are plotted as grey arcs within the circle.
-            Defaults to "structure".
-        structure2 (str) same as structure. basepairs from structure and structure2 will be
-            plotted. Basepairs are colored by which structure contains them
-            (shared, structure only, structure2 only).
-            Defaults to None.
-        interactions (str) a key from sample.data to retrieve inter-
-            nucleotide data. These data are mapped to sequence coordinates,
-            filtered using interactions_filter arguments, and displayed as arcs
-            within the circle.
-            Defaults to None.
-        interactions2 (str) same as interactions above.
-            Defaults to None.
-        annotations (list) a list of keys from sample.data used to
-            retrieve sequence annotations. These annotations are displayed next
-            to the sequence, outside of the circle.
-            Defaults to [].
-        profile (str) a key from sample.data used to retrieve per-
-            nucleotide data. These data may be used to color nucleotides.
-            Defaults to "default_profile".
-        labels (str) Same length as samples list. Labels to
-            be used as titles.
-            Defaults to default sample name.
-        plot_kwargs (dict) kwargs passed to Circle(). See
-            rnavigate.plots.Circle for more detail.
-            Defaults to {}.
-        **kwargs: additional keyword arguments are passed to Circle.plot_data.
-            see rnavigate.plots.Circle.plot_data for more detail.
-
-    Returns:
-        rnavigate.plots.Circle: object containing matplotlib figure and axes
-            with additional plotting and file saving methods
-    """
-    sequence = get_sequence(sequence, samples[0], structure)
+        plot_kwargs=None):
     parsed_args = PlottingArgumentParser(
         samples=samples,
         labels=labels,
-        alignment=sequence.null_alignment,
+        sequence=sequence,
         structure=structure,
         structure2=structure2,
         interactions2=interactions2,
@@ -1082,11 +1041,13 @@ def plot_circle(
     )
     plot_kwargs = _parse_plot_kwargs(plot_kwargs, "rnavigate.plots.Circle")
     parsed_args.update_rows_cols(plot_kwargs)
-    plot = plots.Circle(num_samples=parsed_args.num_samples,
-                        sequence=sequence, **plot_kwargs)
+    plot = plots.Circle(num_samples=parsed_args.num_samples, **plot_kwargs)
     # loop through samples and interactions, adding each as a new axis
     for data_dict in parsed_args.data_dicts:
-        plot.plot_data(**data_dict, **kwargs)
+        plot.plot_data(
+            **data_dict, colors=colors, title=title, positions=positions,
+            gap=gap
+            )
     plot.set_figure_size()
     if colorbars:
         plot.plot_colorbars()
