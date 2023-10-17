@@ -57,12 +57,13 @@ Coding To-Do List
 -----------------
 
 ### Highest
-- text scaling factors based on plot size (this would be easy with context)
-- implement the region alignment for all datatypes and plots
-- any genomic data
-- get Winstons eCLIP -> profile code
-- make color scales look good, more consistent.
+- replace kwargs with named args for high level functions
+- move plotting functions to plots, unconnected from plot objects
+- same nt_color argument for all plots
+- 'flipping' an alignment
+- codon usage bias
 - all functions that compare data also align sequences (if appropriate)
+- refactoring analyses
 - normalizing and windowing profiles
   - by nucleotide
   - windowed mean, median, average
@@ -77,7 +78,7 @@ Coding To-Do List
 - add a printable human-readable identifier for all data:
   - sample + name + datatype + filepath?
 ### Low
-- get median/average/mode for windows in profile data
+- make color scales look good, more consistent.
 - better nucleotide colors and display on linear regression plots
 - New plots:
   - Paired/Unpaired KDE
@@ -88,7 +89,6 @@ Coding To-Do List
 - calling significant sites with log-corrected profile min-diff comparison
 - passing override values to init_dance
 - analyses are a sub-class of Sample?
-- refactor CT to be a subclass of Interactions?
 - implement profiles for interaction data
   - Pairing probability -> per-nucleotide probability or shannon entropy
   - RING-MaP -> RING density
@@ -97,6 +97,9 @@ Coding To-Do List
 
 Finished
 --------
+- horizontal annotations for profile plots
+- any genomic data
+- text scaling factors based on plot size (this would be easy with context)
 - experimental secondary structure based alignments (RNAlign2D)
 - get colorbars working again
 - all rnavigate imports should be absolute and single level for readability:

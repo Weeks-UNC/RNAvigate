@@ -17,3 +17,4 @@ dependencies:
   - scikit-learn=1.0.2
   - mkdocs >= 1.2.2
   - mkdocs-jupyter >= 0.21.0
+  - mkdocstrings
