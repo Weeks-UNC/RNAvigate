@@ -32,33 +32,60 @@ from scipy.stats import zscore
 
 
 class DeltaSHAPE(Sample):
+    """Detects meaningful differences in chemical probing reactivity
+
+    Citation: (doi:10.1021/acs.biochem.5b00977)
+
+    Algorithm:
+        1. Extract SHAPE-MaP sequence, normalized profile, and normalized
+           standard error from given samples
+        2. Calculated smoothed profiles (mean) and propagate standard errors
+           over rolling windows
+        3. Subtract raw and smoothed normalized profiles and propogate errors
+        4. Calculate Z-factors for smoothed data. This is the magnitude of the
+           difference relative to the standard error
+        5. Calculate Z-scores for smoothed data. This is the magnitude of the
+           difference in standard deviations from the mean difference
+        6. Call sites. Called sites must have # nucleotides that pass Z-factor
+           and Z-score thresholds per window.
+
+    Smoothing window size, Z factor threshold, Z score threshold, site-calling
+    window size and minimum nucleotides per site can be specified.
+    """
     def __init__(
             self, sample1, sample2, profile='shapemap', smoothing_window=3,
             zf_coeff=1.96, ss_thresh=1, site_window=3, site_nts=2,
             ):
-        """Detects meaningful differences in chemical probing reactivity according
-        to the deltaSHAPE algorithm (doi:10.1021/acs.biochem.5b00977)
+        """Performs DeltaSHAPE analysis between samples 1 and 2
 
-        Args:
-            sample1 (rnavigate.Sample): First sample to compare
-            sample2 (rnavigate.Sample): Second sample to compare
-            smoothing_window (int, optional): Size of windows for data smoothing
+        Required Arguments:
+            sample1 (rnavigate.Sample)
+                First sample to compare
+            sample2 (rnavigate.Sample)
+                Second sample to compare
+
+        Optional Arguments:
+            profile (string)
+                Data keyword pointing to SHAPE-MaP data in samples 1 and 2
+                Defaults to 'shapemap'
+            smoothing_window (integer)
+                Size of windows for data smoothing
+                Defaults to 3
+            zf_coeff (float)
+                Sites must have a difference more than zf_coeff standard errors
+                Defaults to 1.96 (95% confidence interval)
+            ss_thresh (float)
+                Sites must have a difference that is ss_thresh standard
+                deviations from the mean difference
                 Defaults to 1
-            zf_coeff (float, optional): Ajust the Z-factor stringency by changing the equation coefficient.
-                Defaults to 1.96
-            ss_thresh (int, optional): Set the cutoff threshold of standard score filtering
-                Defaults to 1
-            find_site (tuple, optional): tuple of integers indicating the window pad size and number of required hits when finding binding sites
-                Defaults to (2, 3)
+            site_window (integer)
+                Number of nucleotides to include when calling sites
+                Defaults to 3
+            site_nts (integer)
+                Number of nts within site_window that must pass thresholds
+                Defaults to 2
         """
-
-        # STEP ONE
-        # extract relevant information from sample 1 and 2 profiles
-        # sequence, normalized profile, normalized standard error
-        self.parent = sample1
-        self.sample = f"{sample1.sample} vs. {sample2.sample}"
-        self.data = {}
-        columns = ["Nucleotide", "Sequence", "Norm_profile", "Norm_stderr"]
+        self.parameters = {}
         profile_1 = sample1.get_data(profile)
         profile_1 = profile_1.get_aligned_data(
             data.SequenceAlignment(profile_1, profile_1)
@@ -67,53 +94,104 @@ class DeltaSHAPE(Sample):
         profile_2 = profile_2.get_aligned_data(
             data.SequenceAlignment(profile_2, profile_1)
             )
-        self.data['profile_1'] = profile_1
-        self.data['profile_2'] = profile_2
-        df_1 = profile_1.data[columns].copy()
-        df_2 = profile_2.data[columns].copy()
-        self.data['deltashape'] = DeltaSHAPEProfile(
-            input_data=df_1.merge(
-                df_2, how="left", on=["Nucleotide", "Sequence"],
-                suffixes=("_1", "_2")
-                )
-            )
-        self.calculate_deltaSHAPE(
+        super().__init__(
+            sample=f"{sample1.sample} vs. {sample2.sample}",
+            profile_1=profile_1,
+            profile_2=profile_2,
+            deltashape=DeltaSHAPEProfile((profile_1, profile_2))
+        )
+        self.parent = sample1
+        self.calculate_deltashape(
             smoothing_window=smoothing_window, zf_coeff=zf_coeff,
             ss_thresh=ss_thresh, site_window=site_window, site_nts=site_nts
             )
 
-    def calculate_deltaSHAPE(
+    def calculate_deltashape(
             self, smoothing_window=3, zf_coeff=1.96, ss_thresh=1,
             site_window=2, site_nts=3
             ):
+        """Calculate or recalculate deltaSHAPE profile and called sites
+
+        Optional Arguments:
+            smoothing_window (integer)
+                Size of windows for data smoothing
+                Defaults to 3
+            zf_coeff (float)
+                Sites must have a difference more than zf_coeff standard errors
+                Defaults to 1.96 (95% confidence interval)
+            ss_thresh (float)
+                Sites must have a difference that is ss_thresh standard
+                deviations from the mean difference
+                Defaults to 1
+            site_window (integer)
+                Number of nucleotides to include when calling sites
+                Defaults to 3
+            site_nts (integer)
+                Number of nts within site_window that must pass thresholds
+                Defaults to 2
+        """
+        self.parameters = {
+            'smoothing_window': smoothing_window,
+            'zf_coeff': zf_coeff,
+            'ss_thresh': ss_thresh,
+            'site_nts': site_nts,
+            'site_window': site_window
+            }
         deltashape = self.data['deltashape']
-        deltashape.calculate_deltaSHAPE(
+        deltashape.calculate_deltashape(
             smoothing_window=smoothing_window, zf_coeff=zf_coeff,
             ss_thresh=ss_thresh, site_window=site_window, site_nts=site_nts
             )
-        self.data['protections'] = deltashape.get_protections_annotation(
-            site_window
-            )
-        self.data['enhancements'] = deltashape.get_enhancements_annotation(
-            site_window
-            )
+        self.set_data('protections', deltashape.get_protections_annotation())
+        self.set_data('enhancements', deltashape.get_enhancements_annotation())
 
     def plot(self, region='all'):
+        """Plot the deltaSHAPE result
+
+        Optional arguments:
+            region (list of 2 integers)
+                start and end positions to plot
+                Defaults to 'all'.
+
+        Returns:
+            rnav.plots.Profile: The plot object
+        """
         plot = plots.Profile(1, self.data['deltashape'].length, region=region)
         plot.plot_data(
             profile=self.data['deltashape'],
             annotations=self.get_data(['protections', 'enhancements']),
-            domains=None, plot_error=True, label=self.sample)
+            domains=None, plot_error=True, label=self.sample,
+            )
         plot.set_figure_size()
         return plot
 
 
-
 class DeltaSHAPEProfile(data.Profile):
+    """Profile data class for performing deltaSHAPE analysis"""
     def __init__(
-            self, input_data, metric='Smooth_diff', metric_defaults=None,
-            read_table_kw=None, sequence=None,
+            self, input_data, metric="Smooth_diff", metric_defaults=None,
+            sequence=None, **kwargs
             ):
+        """Create the deltaSHAPE Profile
+
+        Args:
+            input_data (tuple of RNAvigate Profiles or Pandas Dataframe)
+                if tuple of Profiles, the unified Dataframe will be created
+        """
+        # STEP ONE
+        # extract relevant information from sample 1 and 2 profiles
+        # sequence, normalized profile, normalized standard error
+        columns = ["Nucleotide", "Sequence", "Norm_profile", "Norm_stderr"]
+        if isinstance(input_data, (tuple, list)):
+            profile1, profile2 = input_data
+            df_1 = profile1.data[columns]
+            df_2 = profile2.data[columns]
+            input_data = df_1.merge(
+                df_2, how="left", on=["Nucleotide", "Sequence"],
+                suffixes=("_1", "_2")
+                )
+        if metric_defaults is None:
+            metric_defaults = {}
         metric_defaults = {
             'Smooth_diff': {
                 'metric_column': 'Smooth_diff',
@@ -123,18 +201,31 @@ class DeltaSHAPEProfile(data.Profile):
                 'normalization': 'none',
                 'values': None,
                 'extend': 'neither',
-                'title': 'deltaSHAPE protections\nand enhancements',
+                'title': 'deltaSHAPE',
                 'ticks': [0, 1, 2],
                 'tick_labels': ['other', 'protection', 'enhancement'],
                 'alpha': 0.7},
-        }
+            } | metric_defaults
         super().__init__(
-            input_data, metric, metric_defaults, read_table_kw, sequence
+            input_data=input_data,
+            metric=metric,
+            metric_defaults=metric_defaults,
+            sequence=sequence,
+            **kwargs
             )
 
-    def calculate_deltaSHAPE(
+    def calculate_deltashape(
             self, smoothing_window=3, zf_coeff=1.96, ss_thresh=1,
-            site_window=2, site_nts=3):
+            site_window=3, site_nts=2):
+        """Calculate the deltaSHAPE profile metrics
+
+        Args:
+            smoothing_window (int, optional): Defaults to 3.
+            zf_coeff (float, optional): Defaults to 1.96.
+            ss_thresh (int, optional): Defaults to 1.
+            site_window (int, optional): Defaults to 3.
+            site_nts (int, optional): Defaults to 2.
+        """
         # STEP TWO
         # smooth data and errors
         def propagate_errors(errors):
@@ -205,16 +296,18 @@ class DeltaSHAPEProfile(data.Profile):
         self.data.loc[self.data.eval('Significant & ~ Positive'), 'Class'] = 1
         self.data.loc[self.data.eval('Significant & Positive'), 'Class'] = 2
 
-    def get_protections_annotation(self, site_window):
+    def get_protections_annotation(self):
+        """Get an annotations object for the significant protections"""
         is_protected = self.data.eval('Significant & ~ Positive')
         return data.Annotation.from_boolean_array(
-            values=is_protected, window=site_window, annotation_type='spans',
+            values=is_protected, window=1, annotation_type='spans',
             name="Protections", sequence=self.sequence, color='#7F3B95',
             )
 
-    def get_enhancements_annotation(self, site_window):
+    def get_enhancements_annotation(self):
+        """Get an annotations object for the significant enhancements"""
         is_enhanced = self.data.eval('Significant & Positive')
         return data.Annotation.from_boolean_array(
-            values=is_enhanced, window=site_window, annotation_type='spans',
+            values=is_enhanced, window=1, annotation_type='spans',
             name="Enhancements", sequence=self.sequence, color='#3EB452',
             )

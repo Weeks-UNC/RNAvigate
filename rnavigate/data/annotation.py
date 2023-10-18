@@ -205,14 +205,17 @@ class Motif(Annotation):
 
 
 class ORFs(Annotation):
-    def __init__(self, name=None, sequence=None, color="blue"):
-        span_list = self.get_spans_from_orf(sequence)
+    def __init__(
+            self, input_data, name=None, sequence=None, color="blue"
+            ):
+        self.input_data = input_data
+        span_list = self.get_spans_from_orf(sequence, which=input_data)
         super().__init__(
             name=name, sequence=sequence, annotation_type="spans",
             input_data=span_list, color=color,
             )
 
-    def get_spans_from_orf(self, sequence):
+    def get_spans_from_orf(self, sequence, which="all"):
         """Given a sequence string, returns all possible ORFs
 
         Args:
@@ -235,10 +238,16 @@ class ORFs(Annotation):
             for stop in stop_sites:
                 if ((stop - start) % 3 == 2) and (start < stop):
                     spans.append([start, stop])
-        return spans
+        if which == "all":
+            return spans
+        if which == "longest":
+            lengths = [end-start for end, start in spans]
+            index = lengths.index(max(lengths))
+            return [spans[index]]
 
     def get_aligned_data(self, alignment):
         return ORFs(
+            input_data=self.input_data,
             name=self.name,
             color=self.color,
             sequence=alignment.target_sequence)

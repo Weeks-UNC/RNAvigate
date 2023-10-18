@@ -3,34 +3,74 @@ from rnavigate import data
 from rnavigate.data_loading import create_data, get_sequence
 
 class Sample:
-    """
-    The main RNAvigate object, representing an RNA structure with experimental
-    and/or computational data.
-    """
+    """Loads and organizes RNA structural data for use with plotting functions.
 
-    def __init__(self,
-                 sample=None,
-                 inherit=None,
-                 dance_prefix=None,
-                 overwrite_inherited_defaults=False,
-                 **data_keywords):
-        """Creates a sample object which connects all chemical probing and
-        structural data for a single experiment. Contains convenience methods
-        to plot, filter, compare and retrieve this data. Every argument is
-        optional and defaults to None.
+    The Sample class stores all of the relevant experimental and computational
+    structural data for a single RNA experiment. Between samples, common data
+    types should be given a common data keyword so they can be easily compared.
+    """
+    def __init__(
+            self, sample, inherit=None, dance_prefix=None,
+            overwrite_inherited_defaults=False, **data_keywords):
+        """Creates a Sample.
 
-        Args:
-            sample (str, optional):
-                Label to be used in plot legends.
-            inherit (Sample, optional):
-                inherit all data from this Sample. Does NOT make copies:
-                operations on inherit change self and vice versa. Saves time on
-                expensive operations and memory on large data structures.
-            dance_prefix (str, optional): "path/to/file_prefix"
+        Required arguments:
+            sample (string)
+                An arbitrary name. This will be used as a label in plot legends
+                and titles to differentiate it from other samples
+
+        Optional arguments:
+            inherit (Sample)
+                Another Sample from which to inherit stored data. This does not
+                make additional copies of the data: i.e. operations that make
+                changes to inherited data change the original sample, and any
+                other samples that inherited that data. This can be useful to
+                save time and memory on operations and large data structures.
+            dance_prefix (path, e.g. "path/to/file_prefix")
                 path and prefix for DanceMapper data, automatically locates
                 data files and stores DANCE components as a list of Sample
                 objects at self.dance
-            **data_keywords:
+
+        Data keywords:
+            There are many built-in data keywords with different expectations
+            and behaviors. For a full list with expected input formats and
+            output behavior, type:
+
+            rnavigate.standard_data_keywords
+
+            Data keywords are used in the following contexts, I'll use an
+            arbitrary data keyword ("keyword") to illustrate:
+                rnav.Sample initialization:
+                    my_sample = rnav.Sample(
+                        sample="my sample name",
+                        keyword="expected_input")
+                rnav plotting functions:
+                    rnav.plot_skyline(
+                        samples=[my_sample],
+                        profile="keyword")
+                data retrieval:
+                    my_data = my_sample.get_data("keyword")
+
+            Data keywords can either be a standard keyword or an arbitrary one.
+            During rnav.Sample initialization, if an arbitrary keyword is
+            desired, a standard data keyword must be used to specify how to
+            parse the inputs.
+
+            For the example above, if we wanted to give our pretend standard
+            data keyword ("keyword") a different name ("arbitrary"):
+                my_sample = rnav.Sample(
+                    sample="my sample name",
+                    arbitrary={"keyword": "expected_input"})
+                rnav.plot_skyline(samples=[my_sample], profile="arbitrary")
+                my_data = my_sample.get_data("arbitrary")
+
+            The arbitrary keywords must follow some simple rules:
+                1. Cannot already be a data keyword
+                2. Cannot consist only of valid nucleotides: AUCGTaucgt
+                3. Cannot start with a number: 0123456789
+                4. Cannot contain any symbols accept underscore:
+                   Not allowed: !@#$%^&*()-+=`~|}{]['";:/?.><
+                5. Should avoid "sequence"
         """
         self.sample = sample
         self.parent = None
@@ -48,6 +88,7 @@ class Sample:
             data.SecondaryStructure: "default_structure",
             data.PDB: "default_pdb",
         }
+
         # get data and store inputs for all data_keywords
         for each_keyword in default_data.values():
             if each_keyword not in self.data or overwrite_inherited_defaults:
@@ -65,6 +106,7 @@ class Sample:
 
     @property
     def annotations(self):
+        """Print a list of data keywords associated with annotations"""
         annotations = []
         for data_keyword, data_object in self.data.items():
             if isinstance(data_object, data.Annotation):
@@ -73,6 +115,7 @@ class Sample:
 
     @property
     def profiles(self):
+        """list data keywords associated with per-nucleotide data"""
         profiles = []
         for data_keyword, data_object in self.data.items():
             if isinstance(data_object, data.Profile):
@@ -81,6 +124,7 @@ class Sample:
 
     @property
     def structures(self):
+        """list data keywords associated with secondary structures"""
         structure = []
         for data_keyword, data_object in self.data.items():
             if isinstance(data_object, data.SecondaryStructure):
@@ -89,6 +133,7 @@ class Sample:
 
     @property
     def interactions(self):
+        """list data keywords associated with inter-nucleotide data"""
         interactions = []
         for data_keyword, data_object in self.data.items():
             if isinstance(data_object, data.Interactions):
@@ -97,6 +142,7 @@ class Sample:
 
     @property
     def pdbs(self):
+        """list data keywords associated with 3D molecular structures"""
         pdbs = []
         for data_keyword, data_object in self.data.items():
             if isinstance(data_object, data.PDB):
@@ -104,21 +150,40 @@ class Sample:
         return pdbs
 
     def set_data(self, data_keyword, inputs, overwrite_keyword=False):
-        """This method is used internally to parse data_keywords passed to
-        rnavigate.Sample initialization.
+        """Add data to Sample using the given data keyword and inputs
 
-        Args:
-            data_keyword (str):
-                a keyword for the data dictionary
-            inputs (dict):
-                a dictionary used to create the rnavigate.data object
-            overwrite_keyword (bool, optional):
-                whether to overwrite a pre-existing data_keyword.
+        This methods works similarly to the data keywords arguments used
+        during Sample initialization:
+
+            my_sample = rnavigate.Sample(
+                sample='name',
+                data_keyword=inputs)
+
+            is equivalent to:
+
+            my_sample = rnavigate.Sample(
+                sample='name')
+            my_sample.add_data(
+                'data_keyword', inputs)
+
+        Required arguments:
+            data_keyword (string)
+                a data keyword (arbitrary or standard) used to store and/or
+                parse the inputs
+            inputs (dictionary or RNAvigate Data)
+                a dictionary used to create the data object
+
+        Optional arguments:
+            overwrite_keyword (bool)
+                whether to overwrite a pre-existing data_keyword
                 Defaults to False.
 
         Raises:
-            ValueError: if the data keyword already exists and
-                overwrite_keyword is False
+            ValueError:
+                the data keyword already exists and overwrite_keyword is False
+            ValueError:
+                there was an issue parsing the data
+            
         """
         if (data_keyword in self.inputs) and not overwrite_keyword:
             raise ValueError(
@@ -132,8 +197,9 @@ class Sample:
         self.inputs[data_keyword] = inputs
 
     def init_dance(self, filepath):
-        """Initializes a list of Sample objects which each represent a
-        component of the DANCE model, available as self.dance.
+        """Create a list of Samples, one for each component of the DANCE model
+
+        The new list is stored in the .dance attribute.
 
         Args:
             prefix (str): Path to DanceMapper output file prefixes. Finds
@@ -185,19 +251,26 @@ class Sample:
     def get_data(self, data_keyword, data_class=None):
         """Replaces data keyword with data object, even if nested.
 
-        Args:
-            data_keyword (str | rnavigate.data | list | dict):
-                If a string, returns `self.data[data_keyword]`
-                If `None`, returns `None`.
-                If an existing rnavigate.data object, returns `data_keyword`
-                If a dictionary, returns:
-                    `{key: self.get_data(value) for each item in data_keyword}`
-                If a list, returns:
-                    `[self.get_data(item) for each item in data_keyword]`
+        Required arguments:
+            data_keyword (Data or data keyword or list/dict of such types)
+                If None, returns None.
+                If a data keyword, returns associated data from sample
+                    or sample.parent
+                If Data, returns that data.
+                If a list or dictionary, returns list or dictionary with
+                    data keyword values replaced with associated Data
+            data_class (RNAvigate Data class)
+                If provided, ensures that returned data is of this type.
 
         Returns:
-            same type as data_keyword: data keywords are replaced with
-                matching rnavigate.data objects from self
+            Same type as data_keyword argument, but data keywords are replaced
+                with associated data
+
+        Raises:
+            ValueError:
+                if data is not found in sample or sample.parent sample
+            ValueError:
+                if the data retrieved is not of the specified data_class
         """
         # handle special cases
         not_in_sample = ValueError(f"{data_keyword} not in {self.sample}.")
@@ -216,15 +289,21 @@ class Sample:
             return None
         # if keyword is in sample.data, retreive Sequence object
         try:
-            return self.data[data_keyword]
+            data_obj = self.data[data_keyword]
         except KeyError:
             try:
-                return self.parent.data[data_keyword]
+                data_obj = self.parent.data[data_keyword]
+                print(f'"{data_keyword}" not in "{self.sample}". '
+                      f'Using data from parent sample: "{self.parent.sample}"')
             except (KeyError, AttributeError) as exception:
                 raise not_in_sample from exception
+        if not isinstance(data_obj, data_class):
+            raise wrong_class
+        return data_obj
 
-    def filter_interactions(self, interactions, metric=None, cmap=None,
-                            normalization=None, values=None, **kwargs):
+    def filter_interactions(
+            self, interactions, metric=None, cmap=None, normalization=None,
+            values=None, **kwargs):
         """sets coloring properties and filters interactions data.
 
         Args:

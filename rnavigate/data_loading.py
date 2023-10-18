@@ -221,4 +221,4 @@ def get_sequence(sequence, sample=None, default=None):
     if isinstance(sequence, str) and all([nt.upper() in "AUCGT." for nt in sequence]):
         return data.Sequence(sequence)
     else:
-        raise ValueError(f"Cannot find sequence from {sequence}")
+        raise ValueError(f'Cannot find sequence from "{sequence}"')
