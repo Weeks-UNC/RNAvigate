@@ -63,6 +63,8 @@ class FragMaP(Profile):
 
         # Frag-MaP profile is the difference in Z-scores
         dataframe.eval('Fragmap_profile = zscore_1 - zscore_2', inplace=True)
+        dataframe.eval('Fragmap_err = sqrt(zscore_1_err ** 2 + zscore_2_err ** 2)', inplace=True)
+
         dataframe['Fragmap_pvalue'] = stats.norm.sf(
             dataframe['Fragmap_profile'])
 
@@ -115,9 +117,24 @@ class FragMaP(Profile):
 
         # Calculate zscore
         valid_nt = valid & dataframe['Sequence'].isin(base)
-        mean = np.mean(np.log10(dataframe.loc[valid_nt & nonoutlier, incolumn]))
-        std = np.std(np.log10(dataframe.loc[valid_nt & nonoutlier, incolumn]))
-        dataframe.loc[valid_nt, outcolumn] = ((np.log10(dataframe.loc[valid_nt, incolumn])) - mean) / std
+
+        sem_column = f'Std_err_{incolumn.split("_")[-1]}'
+        value = np.log(dataframe.loc[valid_nt, incolumn])
+        sem = np.log(dataframe.loc[valid_nt, sem_column])
+        mean = np.mean(np.log(dataframe.loc[valid_nt & nonoutlier, incolumn]))
+        std = np.std(np.log(dataframe.loc[valid_nt & nonoutlier, incolumn]))
+
+        dataframe.loc[valid_nt, outcolumn] = (value - mean) / std
+
+        # Calculate the partial derivatives
+        dz_dy = (mean * np.log(value)) / std
+        dz_dx = (np.log(value) / std)
+        dz_ds = -(mean * np.log(value) / (std**2))
+
+        # Propagate error using the error propagation formula
+        fragmap_err = np.sqrt((dz_dy * sem)**2 + (dz_dx * 0)**2 + (dz_ds * 0)**2)  # Note: The SEMs for 'x' and 's' are assumed to be zero.
+
+        dataframe.loc[valid_nt, f'{outcolumn}_err'] = fragmap_err
 
 
     def get_annotation(self):
@@ -179,8 +196,8 @@ class Fragmapper(Sample):
         for _, (nt, y, x) in sites[['Nucleotide']+columns].iterrows():
             ax.text(x, y, int(nt), fontsize=12)
 
-        ax.scatter(non_sites[columns[1]], non_sites[columns[0]], s=5)
-        ax.scatter(sites[columns[1]], sites[columns[0]], s=25)
+        ax.scatter(non_sites[columns[1]], non_sites[columns[0]], s=5, alpha=0.25)
+        ax.scatter(sites[columns[1]], sites[columns[0]], s=25, alpha=1)
 
         ax.set_xlabel(f'{self.sample2.sample} {column}', fontsize=14)
         ax.set_ylabel(f'{self.sample1.sample} {column}', fontsize=14)
