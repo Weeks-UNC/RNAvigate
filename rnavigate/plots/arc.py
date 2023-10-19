@@ -80,7 +80,8 @@ class AP(plots.Plot):
         yticks, ylabels = [], []
         if seqbar:
             plots.plot_sequence_track(
-                ax, sequence.sequence, yvalue=0, height=2, ytrans="data"
+                ax, sequence.sequence, yvalue=0, height=2, ytrans="data",
+                region=self.region
                 )
             yticks.append(1)
             ylabels.append('sequence')

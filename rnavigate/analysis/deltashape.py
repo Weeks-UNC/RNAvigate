@@ -96,9 +96,9 @@ class DeltaSHAPE(Sample):
             )
         super().__init__(
             sample=f"{sample1.sample} vs. {sample2.sample}",
+            deltashape=DeltaSHAPEProfile((profile_1, profile_2)),
             profile_1=profile_1,
             profile_2=profile_2,
-            deltashape=DeltaSHAPEProfile((profile_1, profile_2))
         )
         self.parent = sample1
         self.calculate_deltashape(

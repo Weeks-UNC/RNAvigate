@@ -104,6 +104,21 @@ class Sample:
         if dance_prefix is not None:
             self.init_dance(dance_prefix)
 
+    def print_data_keywords(self):
+        print(f"""{
+self.sample} Data keywords:
+    Annotations:
+        {'   '.join(self.annotations)}
+    Profiles:
+        {'   '.join(self.profiles)}
+    Structures:
+        {'   '.join(self.structures)}
+    Interactions:
+        {'   '.join(self.interactions)}
+    PDBs:
+        {'   '.join(self.pdbs)}
+""")
+
     @property
     def annotations(self):
         """Print a list of data keywords associated with annotations"""
@@ -111,6 +126,9 @@ class Sample:
         for data_keyword, data_object in self.data.items():
             if isinstance(data_object, data.Annotation):
                 annotations.append(data_keyword)
+            elif isinstance(data_object, list):
+                if all([isinstance(o, data.Annotation) for o in data_object]):
+                    annotations.append(data_keyword)
         return annotations
 
     @property

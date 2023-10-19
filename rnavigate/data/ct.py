@@ -60,6 +60,7 @@ class SecondaryStructure(data.Sequence):
                 "nsd": self.read_nsd,
                 "cte": self.read_cte,
                 "ct": self.read_ct,
+                "db": self.read_dotbracket,
                 "dbn": self.read_dotbracket,
                 "bracket": self.read_dotbracket,
                 "json": self.read_r2dt,
