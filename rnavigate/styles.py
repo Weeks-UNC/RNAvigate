@@ -70,20 +70,21 @@ class Settings(dict):
         settings.update(self.original_settings)
 
 
-def set_defaults():
-    sns.set_context("paper")
-    sns.set_style("ticks")
-    colors = [
-        '#0092edff',  # Blue
-        '#ff8300ff',  # Orange
-        '#a100ffff',  # Purple
-        '#edc600ff',  # Yellow
-        '#ff48e9ff',  # Pink
-        '#3fd125ff'  # Green
-    ]
+def set_defaults(context="paper", style="ticks", colors="default", dpi=140):
+    if colors == default:
+        colors = [
+            '#0092edff',  # Blue
+            '#ff8300ff',  # Orange
+            '#a100ffff',  # Purple
+            '#edc600ff',  # Yellow
+            '#ff48e9ff',  # Pink
+            '#3fd125ff',  # Green
+        ]
+    sns.set_context(context)
+    sns.set_style(style)
     sns.set_palette(colors)
     mpl.rcParams["font.sans-serif"].insert(0, "Arial")
-    mpl.rcParams['figure.dpi'] = 140
+    mpl.rcParams['figure.dpi'] = dpi
     mpl.rcParams["svg.fonttype"] = 'none'
 
 
@@ -103,11 +104,13 @@ def get_nt_color(nt, colors=None):
     except KeyError:
         return "#aaaaaa"
 
+
 def get_nt_cmap():
     return data.ScalarMappable(
         cmap=[get_nt_color(nt) for nt in 'AUGC'],
         normalization='none', values=None, title="sequence",
         tick_labels=['A', 'U', 'G', 'C'])
+
 
 def apply_style(style_dict):
     def decorator(function):
