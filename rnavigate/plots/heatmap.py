@@ -50,9 +50,6 @@ class Heatmap(plots.Plot):
         ax.set_title(label)
         self.i += 1
 
-    def get_figsize(self):
-        return (10*self.columns, 10*self.rows)
-
     def plot_contour_regions(self, ax, interactions, regions):
         matrix = np.full([interactions.length, interactions.length], 0)
         for (mn1, mx1), (mn2, mx2) in regions:

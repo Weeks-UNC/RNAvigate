@@ -15,7 +15,6 @@ class AP(plots.Plot):
             self.region = region
         super().__init__(num_samples, **kwargs)
 
-
     def plot_data(
             self, sequence, structure=None, structure2=None, interactions=None,
             interactions2=None, profile=None, annotations=None, domains=None,

@@ -31,9 +31,6 @@ class Mol(plots.Plot):
         self.view = view
         self.i = 0
 
-    def get_figsize(self):
-        pass
-
     def get_viewer(self, i=None):
         if i is None:
             i = self.i

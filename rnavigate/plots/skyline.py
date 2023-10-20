@@ -84,14 +84,6 @@ class Skyline(plots.Plot):
                             legend_title=None)
             self.set_axis(ax)
 
-    def get_figsize(self):
-        left_inches = 0.9
-        right_inches = 0.4
-        ax_width = self.nt_length * 0.1
-        fig_height = 6
-        fig_width = max(7, ax_width + left_inches + right_inches)
-        return (fig_width, fig_height)
-
     def set_axis(self, ax, xticks=20, xticks_minor=5):
         xlim = self.region
         ax.set_xlim([xlim[0] - 0.5, xlim[1] + 0.5])
