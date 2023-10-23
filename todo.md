@@ -15,65 +15,28 @@ Top priorities (3 maximum)
 - completing documentation website and writing doc strings
 - test and check everything before the next major update.
 
-Documentation To-Do List
-------------------------
-
-- guide for custom use cases
-  - loading custom profiles, interactions and annotations
-  - sequence alignments
-  - plot manipulation with mpl
-  - data manipulation with pandas
-- good doc strings
-  - [X] rnavigate
-  - [ ] styles
-  - [ ] analysis
-    - [x] logcompare
-    - [x] auroc
-    - [ ] deltashape
-    - [x] lowss
-  - [ ] data
-    - [x] annotation
-    - [x] ct
-    - [x] data
-    - [X] interactions
-    - [ ] log
-    - [ ] pdb
-    - [ ] profile
-  - [ ] plots
-    - [ ] arc
-    - [ ] circle
-    - [ ] disthist
-    - [ ] heatmap
-    - [ ] linreg
-    - [ ] mol
-    - [ ] plots
-    - [ ] qc
-    - [ ] roc
-    - [ ] skyline
-    - [ ] sm
-    - [ ] ss
-
 Coding To-Do List
 -----------------
 
 ### Highest
-- replace kwargs with named args for high level functions
+- log file specification is not working for ShapeMapper_v2.2.0
+- file name changes:
+  - ct.py -> secondary_structure.py
+  - pdb.py -> atomic_coordinates.py
+  - functions module -> plotting.py
 - move plotting functions to plots, unconnected from plot objects
-- same nt_color argument for all plots
-- 'flipping' an alignment
-- codon usage bias
-- all functions that compare data also align sequences (if appropriate)
 - refactoring analyses
-- normalizing and windowing profiles
-  - by nucleotide
-  - windowed mean, median, average
-  - gaussian smoothing
+  - [X] fragmapper
+  - [x] DeltaSHAPE
+  - [ ] AUROC
+  - [x] lowSS
+  - [ ] log-diff
+  - [ ] RNPMapper
 - loading secondary structure files containing more than one structure
-- Class docstrings contain a description, init explains constructor
 ### Medium
-- refactor code using ProPlot
-- build heirarchical debugging system?
-- RNAvigate conda package
+- annotations should be more flexible, be able to take a simple table file
+- codon usage bias
+- RNAvigate conda package, pip package, or docker image
 - ss plot scales with figure size and can be scaled down.
 - add a printable human-readable identifier for all data:
   - sample + name + datatype + filepath?
@@ -94,38 +57,3 @@ Coding To-Do List
   - RING-MaP -> RING density
   - store as attribute, get attribute at point of use
     - e.g. profile.profile returns profile
-
-Finished
---------
-- horizontal annotations for profile plots
-- any genomic data
-- text scaling factors based on plot size (this would be easy with context)
-- experimental secondary structure based alignments (RNAlign2D)
-- get colorbars working again
-- all rnavigate imports should be absolute and single level for readability:
-  - from rnavigate import namespace
-  - from rnavigate.namespace import variable
-- annotation groups should act exactly like sites
-- simplify arguments:
-  - structure(2) <- ss, ct, comp
-  - sequence <- fit_to, dataframe, filepath, seq_source
-  - interactions(2) <- ij(2)
-  - structure2 <- comp
-  - input_data <- dataframe, filepath
-  - defaults <- column, err_column, color_column, cmap, norm, min_max, etc.
-  - read_table_kw <- read_csv_kw, sep
-- unify the scalar -> rgba functionality for all Data objects
-- changed sequence alignment behavior
-  - all data objects have get_aligned_data which returns a matching datatype
-    with new positions
-- reading in FORNA JSON: how to distinguish between FORNA and R2DT?
-- support for undercase nucleotides
-- combine VARNA, NSD, XRNA, JSON, CTE, DBN classes, renamed to SecondaryStructure
-- ss plots
-  - position labels look much nicer
-  - axis margins are standardized to 2 data units for all size RNAs
-- linear regression plots
-  - removed KDE plots
-  - simplified and improved readability
-- all plots
-  - figure scaling is standardized and correctly calculated

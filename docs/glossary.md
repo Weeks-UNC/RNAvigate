@@ -7,7 +7,9 @@ Documentation terms
 * Sample: a python object created with `rnavigate.Sample`
 * Data keyword: a string that points to data within a sample
 * Data object: an rnavigate object representation of data
-    - Sample.data["data_keyword"] returns a data object
+    - `my_sample.get_data("data_keyword")` returns a data object
+* contact distance: the shortest path distance between 2 nucleotides in the
+  secondary structure graph
 
 Python arguments
 ----------------
@@ -27,5 +29,5 @@ Python arguments
 Python variables
 ----------------
 
-* index (idx) or indices: python array indices (0-indexed, start:end excludes right)
-* position (pos) or positions: nucleotide positions (1-indexed, start:end includes both)
+* index, idx, or indices: python array indices (0-indexed)
+* position, pos, or positions: nucleotide positions (1-indexed, inclusive)

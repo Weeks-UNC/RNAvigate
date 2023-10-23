@@ -33,43 +33,9 @@ class Sample:
         Data keywords:
             There are many built-in data keywords with different expectations
             and behaviors. For a full list with expected input formats and
-            output behavior, type:
+            output behavior, visit:
 
-            rnavigate.standard_data_keywords
-
-            Data keywords are used in the following contexts, I'll use an
-            arbitrary data keyword ("keyword") to illustrate:
-                rnav.Sample initialization:
-                    my_sample = rnav.Sample(
-                        sample="my sample name",
-                        keyword="expected_input")
-                rnav plotting functions:
-                    rnav.plot_skyline(
-                        samples=[my_sample],
-                        profile="keyword")
-                data retrieval:
-                    my_data = my_sample.get_data("keyword")
-
-            Data keywords can either be a standard keyword or an arbitrary one.
-            During rnav.Sample initialization, if an arbitrary keyword is
-            desired, a standard data keyword must be used to specify how to
-            parse the inputs.
-
-            For the example above, if we wanted to give our pretend standard
-            data keyword ("keyword") a different name ("arbitrary"):
-                my_sample = rnav.Sample(
-                    sample="my sample name",
-                    arbitrary={"keyword": "expected_input"})
-                rnav.plot_skyline(samples=[my_sample], profile="arbitrary")
-                my_data = my_sample.get_data("arbitrary")
-
-            The arbitrary keywords must follow some simple rules:
-                1. Cannot already be a data keyword
-                2. Cannot consist only of valid nucleotides: AUCGTaucgt
-                3. Cannot start with a number: 0123456789
-                4. Cannot contain any symbols accept underscore:
-                   Not allowed: !@#$%^&*()-+=`~|}{]['";:/?.><
-                5. Should avoid "sequence"
+            https://rnavigate.readthedocs.io/en/latest/loading-data/
         """
         self.sample = sample
         self.inputs = {}

@@ -1,49 +1,63 @@
-Installation
-============
+Installing RNAvigate
+====================
+
+This is part 1 in the getting started with RNAvigate guide.
+
+1. [Installing RNAvigate](./installing-rnavigate.md)
+2. [Loading Data](./loading-data.md)
+3. [Visualizing data](./visualizing-data.md)
+
+Sections:
 
 - [Anaconda installation](#anaconda-installation)
 - [Manual installation](#manual-installation)
 - [UNC Longleaf installation](#unc-longleaf-installation)
+- [Updating RNAvigate](#updating-rnavigate)
 
 ---
 
 Anaconda installation
 ---------------------
 
-RNAvigate is not available via pip or conda. This is coming soon. However, I
-have included a conda environment file. If you are using conda, follow this
-guide for the easiest installation.
+If you use conda, this is the easiest method.
 
-1. Open a terminal and navigate to the directory in which you'll save RNAvigate.
-2. Clone the github repository.
-3. Navigate into the RNAvigate directory.
-4. Create and activate a conda enviroment using the included env.yaml file
-5. Install the RNAvigate package in the new conda environment.
+**In a terminal, navigate to the directory in which you'll save RNAvigate.**
+
+**Clone the github repository.**
+
+**Navigate into the RNAvigate directory.**
 
 ```bash
-git clone https://github.com/Weeks-UNC/RNAvigate.git
-cd RNAvigate
+git clone https://github.com/Weeks-UNC/RNAvigate.git RNAvigate_v1.0.0
+cd RNAvigate_v1.0.0
+```
+
+**Create a conda enviroment using the included env.yaml file.**
+
+This step can take a long time, be patient.
+
+```bash
 conda env create -f env.yaml
-conda activate rnavigate
-conda develop .
 ```
 
-If you are planning to use Jupyter Notebooks to do your analyses (recommended),
-you will need to make the new conda environment available to Jupyter.
+**Activate the new conda environment.**
+
+**Install the RNAvigate package in the new conda environment.**
+
+**Install the new environment for Jupyter.**
 
 ```bash
-python -m ipykernel install --user --name=rnavigate
+conda activate RNAvigate_v1.0.0
+conda develop .
+python -m ipykernel install --user --name=RNAvigate_v1.0.0
 ```
 
-To test installation, open and run one of the example notebooks.
+7. To test installation, open and run one of the example notebooks.
 
 ---
 
 Manual installation
 -------------------
-
-This section is bit vague for now. I will make RNAvigate available as a pip
-package soon, and this section will hopefully be obsolete.
 
 To install manually, you will need the following dependencies in your python
 environment:
@@ -73,10 +87,10 @@ not change your default modules. They will be restored next time you log in.
 ```bash
 module rm python pymol pyrosetta
 module load anaconda/2019.10
-conda env create -f /proj/kweeks/bin/RNAvigate/env.yaml
-source activate RNAvigate
-conda develop /proj/kweeks/bin/RNAvigate/
-python -m ipykernel install --user --name=RNAvigate
+conda env create -f /proj/kweeks/bin/RNAvigate_v1.0.0/env.yaml
+source activate RNAvigate_v1.0.0
+conda develop /proj/kweeks/bin/RNAvigate_v1.0.0/
+python -m ipykernel install --user --name=RNAvigate_v1.0.0
 ```
 
 If this occured without errors, exit longleaf and go to
@@ -90,6 +104,8 @@ UNC's platform for using interactive programs within Longleaf.
    3. Don't forget to save before you run out of time!
 
 2. Navigate to your data directory, and open a new notebook using the
-  "rnavigate" option.
+  "RNAvigate_v1.0.0" option.
 4. Type `import rnavigate as rnav` into the first code cell and run it.
 5. If no errors occur, you're ready to starting exploring your data!
+
+---
