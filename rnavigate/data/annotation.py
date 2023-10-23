@@ -5,12 +5,23 @@ from rnavigate import data
 
 
 class Annotation(data.Sequence):
+    """Basic annotation class to store 1D features of an RNA sequence
+    
+    Each feature type must be a seperate instance. Feature types include:
+        a group of separted nucleotides (e.g. binding pocket)
+        regions of interest (e.g. coding sequence, Alu elements)
+        sites of interest (e.g. m6A locations)
+        primer binding sites.
+
+    Attributes:
+        data (Pandas DataFrame): stores the list of sites or regions
+        name (string): the label for this annotation for use on plots
+        color (valid matplotlib color): color to represent annotation on plots
+        sequence (string): the reference sequence string
+        """
     def __init__(self, input_data, annotation_type,
                  sequence, name=None, color="blue"):
-        """Base annotation class to store 1D features of an RNA. This can
-        include a group of separted nucleotides (e.g. binding pocket), spans of
-        nucleotides (e.g. coding sequence, Alu elements), list of sites (e.g.
-        m6A locations) or primer binding sites.
+        """Create an annotation from a list of sites or regions.
 
         Args:
             input_data (list):
@@ -119,6 +130,16 @@ class Annotation(data.Sequence):
             sites = list(self.data['site'].values)
         return sites
 
+    def get_subsequences(self, buffer=0):
+        subsequences = []
+        if self.annotation_type in ['spans', 'primers']:
+            for _, (start, stop) in self.data[['start', 'stop']].iterrows():
+                subsequences.append(self.sequence[start-1-buffer:stop+buffer])
+        elif self.annotation_type in ['sites', 'groups']:
+            for _, (site) in self.data[['sites']].iterrows():
+                subsequences.append(self.sequence[site-1-buffer:stop+buffer])
+        return subsequences
+
     def __getitem__(self, idx):
         return self.data.loc[idx]
 
@@ -216,32 +237,33 @@ class ORFs(Annotation):
             )
 
     def get_spans_from_orf(self, sequence, which="all"):
-        """Given a sequence string, returns all possible ORFs
+        """Given a sequence string, returns spans for specified ORFs
 
         Args:
             sequence (str): RNA nucleotide sequence
+            which (str): 'all' returns all spans, 'longest' returns longest span
+                defaults to 'all'
 
         Returns:
             list of tuples: (start, end) position of each ORF
                 1-indexed, inclusive
         """
+        if isinstance(sequence, data.Sequence):
+            sequence = sequence.sequence
+        sequence = sequence.upper().replace('T', 'U')
         spans = []
         stop_codons = "UAA|UAG|UGA"
-        stop_sites = []
-        for match in re.finditer(stop_codons, sequence):
-            stop_sites.append(match.span()[1])
         start_codon = "AUG"
-        start_sites = []
-        for match in re.finditer(start_codon, sequence):
-            start_sites.append(match.span()[0] + 1)
+        stop_sites = [m.end() for m in re.finditer(stop_codons, sequence)]
+        start_sites = [m.start()+1 for m in re.finditer(start_codon, sequence)]
         for start in start_sites:
             for stop in stop_sites:
-                if ((stop - start) % 3 == 2) and (start < stop):
+                if (stop - start)%3 == 2 and (start < stop):
                     spans.append([start, stop])
         if which == "all":
             return spans
         if which == "longest":
-            lengths = [end-start for end, start in spans]
+            lengths = [end-start for start, end in spans]
             index = lengths.index(max(lengths))
             return [spans[index]]
 
