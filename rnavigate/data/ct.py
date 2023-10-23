@@ -105,13 +105,13 @@ class SecondaryStructure(data.Sequence):
 
     # Loading Data
 
-    def read_ct(self, structNum=0):
+    def read_ct(self, structure_number=0):
         """Loads secondary structure information from a given ct file.
 
         Requires a properly formatted header!
 
         Args:
-            structNum (int, optional): If ct file contains multiple structures,
+            structure_number (int, optional): If ct file contains multiple structures,
                 uses the given structure. Defaults to 0.
         """
         fIN = self.filepath
@@ -122,23 +122,23 @@ class SecondaryStructure(data.Sequence):
 
                 # process the first line (pops off the first element)
                 spl = f.readline().split()
-                numnucs = int(spl[0])
+                nt_length = int(spl[0])
                 header = ' '.join(spl[1:])
-                curstruct = 0
+                current_structure = 0
 
                 for i, line in enumerate(f):
                     spl = line.split()
-                    if (i+1) % (numnucs+1) == 0:
+                    if (i+1) % (nt_length+1) == 0:
                         # catch the next header
-                        curstruct += 1
+                        current_structure += 1
 
-                        if curstruct > structNum:
+                        if current_structure > structure_number:
                             break
 
                         header = ' '.join(spl[1:])
                         continue
 
-                    if curstruct == structNum:
+                    if current_structure == structure_number:
                         num.append(int(spl[0]))
                         seq += str(spl[1])
                         bp.append(int(spl[4]))
@@ -149,21 +149,26 @@ class SecondaryStructure(data.Sequence):
                         else:
                             mask.append(0)
 
-        except Exception:
+        except Exception as e:
             raise IOError(
-                "{0} has invalid format or does not exist".format(fIN))
+                f"{fIN} has invalid format or does not exist"
+                ) from e
 
         if len(num) == 0:
-            sys.exit("Structure %d was not found in the ct file" % structNum)
+            sys.exit(
+                f"Structure {structure_number} was not found in the ct file"
+                )
 
         # check consistency!
-        for i in range(len(bp)):
-            if bp[i] != 0:
-                p1 = (i+1, bp[i])
-                p2 = (bp[bp[i]-1], bp[i])
-                if p1 != p2:
-                    print("WARNING: Inconsistent pair "
-                          f"{p1[0]}-{p1[1]} vs. {p2[0]}-{p2[1]}")
+        for idx, pair in enumerate(bp):
+            if pair == 0:
+                continue
+            p1 = idx+1
+            p2 = bp[pair-1]
+            if p1 != p2:
+                print(
+                    f"WARNING: inconsistency: {pair} paired to {p1} and {p2}"
+                    )
 
         self.header = header
         return pd.DataFrame({

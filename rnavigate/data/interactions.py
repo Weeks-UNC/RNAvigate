@@ -890,8 +890,6 @@ class PairingProbability(Interactions):
                     'alpha': 1
             }})
 
-
-
     def data_specific_filter(self, **kwargs):
         """Used by parent filter function. By default, filters out pairs with
         probability less that 3%
