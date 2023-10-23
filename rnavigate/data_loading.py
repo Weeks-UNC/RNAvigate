@@ -32,100 +32,77 @@ data_keyword_defaults = {
                 "colors": _required, "names": _required},
     }
 
-def create_data(sample=None, **data_keyword):
+def create_data(data_keyword, inputs, sample=None):
     """Convenience function for creating rnavigate.data objects. This function
     is used to parse **data_keywords passed to rnavigate.Sample, but can also
     be used on it's own using the same syntax.
 
-    Args:
-        sample (rnavigate.Sample, optional):
-            Requried only if 'sequence' is provided as a data keyword.
+    Required arguments:
+        data_keyword (string)
+            a standard data keyword
+            if inputs is a dictionary, this can be an arbitrary data keyword
+        inputs (any)
+            If a dictionary, the first key must be the standard data keyword
+            Otherwise, the expected type depends on the data_keyword
+
+    Optional arguments:
+        sample (rnavigate.Sample)
+            Requried only if inputs is a dictionary containing a 'sequence' key
+            with a value that is a standard data keyword
                 {'sequence': 'data_keyword'}
                     is replaced with:
-                {'sequence': sample.data['data_keyword'].sequence}
+                {'sequence': sample.get_data('data_keyword').sequence}
             Defaults to None.
-        **data_keyword:
-            There must only one additional argument provided.
-            This argument is used to create the rnavigate.data object, it's
-            syntax is flexible, see the example below.
+
+    Returns: new RNAvigate data object
 
     Usage:
-        In this example we create a data object from a fasta file using
-        three different syntaxes, starting with the most explicit:
+        In this example we create a data object from a fasta file. There are
+        two valid syntaxes:
 
-            get_data(arbitrary_name={
-                        'data_class':'fasta',
-                        'input_data': 'my_sequence.fa'})
+            create_data(
+                data_keyword="sequence",
+                inputs="my_sequence.fa"
+                )
 
-        This can be simplified by using the value of 'data_class' to replace
-        the key 'input_data':
+        OR
 
-            get_data(arbitrary_name={
-                        'fasta': 'my_sequence.fa'})
+            create_data(
+                data_keyword="arbitrary_string",
+                inputs={'sequence': 'my_sequence.fa'}
+                )
 
-        Above, an arbitrary_name is used. This allows Data to be assigned to
-        arbitrary data keywords of the given Sample. This name can be replaced
-        by our data class:
-
-            get_data(fasta='my_sequence.fa')
-
-        In all three cases, the result returned is equivalent to:
-
-            rnavigate.data.Sequence(input_data="my_sequence.fa")
+        Returns: rnavigate.data.Sequence(input_data="my_sequence.fa")
     """
-    # Parse data_keyword for name and inputs
-    if len(data_keyword) > 1:
-        raise ValueError('Only one data_keyword can be provided')
-
-    name = list(data_keyword.keys())[0]
-    inputs = data_keyword[name]
-
     # if given existing rnavigate.data object return
     if isinstance(inputs, data.Sequence):
         return inputs
 
-    # convert case 1 or 2 into case 3:
-    # 1) name='A', inputs='B'
-    # 2) inputs={'A': 'B'}
-    # 3) inputs={'data_keyword': 'A', 'input_data': 'B'}
-    if not isinstance(inputs, dict):
-        if name in data_keyword_defaults:
-            inputs = {
-                'data_keyword': name,
-                'input_data': inputs}
-    elif all([name in data_keyword_defaults,
-              name not in inputs,
-              'data_keyword' not in inputs]):
-        inputs['data_keyword'] = name
+    # data_keyword='A', inputs='B'
+    # OR
+    # data_keyword='arbitrary', inputs={'A': 'B', etc.}
+    # becomes
+    # data_keyword='A', inputs={'input_data': 'B', etc.}
+    if isinstance(inputs, dict):
+        first_key = list(inputs.keys())[0]
+        data_keyword=first_key
+        inputs["input_data"] = inputs.pop(first_key)
     else:
-        for key in list(inputs.keys()):
-            if key in data_keyword_defaults:
-                inputs['data_keyword'] = key
-                inputs['input_data'] = inputs.pop(key)
+        inputs = {'data_keyword': data_keyword, 'input_data': inputs}
 
     # handle special cases
-    if inputs['data_keyword'] == 'allpossible':
+    if data_keyword == 'allpossible':
         inputs['sequence'] = inputs.pop('input_data')
-    elif inputs['data_keyword'] in ['sites', 'spans', 'primers', 'group']:
-        inputs['annotation_type'] = inputs['data_keyword']
-
-    # 'filepath' or 'dataframe' may be used in place of 'input_data'
-    for alt_input_data in ['filepath', 'dataframe']:
-        if alt_input_data in inputs:
-            inputs['input_data'] = inputs.pop(alt_input_data)
-    if 'fasta' in inputs:
-        inputs['sequence'] = inputs.pop('fasta')
-    elif 'seq_source' in inputs:
-        inputs['sequence'] = inputs.pop('seq_source')
+    elif data_keyword in ['sites', 'spans', 'primers', 'group']:
+        inputs['annotation_type'] = data_keyword
 
     # retrieve defaults for given data_class
-    data_class = inputs.pop('data_keyword')
     try:
-        inputs = data_keyword_defaults[data_class] | inputs
-        data_class = inputs.pop('data_class')
+        inputs = data_keyword_defaults[data_keyword] | inputs
+        data_constructor = inputs.pop('data_class')
     except KeyError as exception:
         raise KeyError(
-            f"{data_class} is not a valid data keyword.") from exception
+            f"{data_keyword} is not a valid data keyword.") from exception
 
     # get sequence from another object if appropriate
     if 'sequence' in inputs:
@@ -138,15 +115,16 @@ def create_data(sample=None, **data_keyword):
             required_arguments.append(key)
     if len(required_arguments) > 0:
         raise ValueError(
-            f"Required arguments for {data_class} were not provided:\n"
+            f"{data_keyword} missing required arguments:\n"
             ", ".join(required_arguments))
 
     # instantiate and return the data class
     try:
-        return data_class(**inputs)
+        return data_constructor(**inputs)
     except BaseException as exception:
         raise ValueError(
-            f"data_class={data_class}\ninputs={inputs}") from exception
+            f"data_keyword={data_keyword}\ninputs={inputs}"
+            ) from exception
 
 
 def get_sequence(sequence, sample=None, default=None):
