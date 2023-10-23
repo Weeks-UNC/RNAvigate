@@ -63,7 +63,6 @@ class PlottingArgumentParser():
             # 'interactions': data.Interactions,
             'domains': list,
             'pdb': data.PDB,
-            'log': data.Log,
         }
         for sample, label in zip(self.samples, self.labels):
             this_data_dict = {"label": label}

@@ -10,7 +10,6 @@ def plot_qc(
         # required
         samples,
         profile,
-        log,
         # optional display
         labels=None
         ):
@@ -23,8 +22,7 @@ def plot_qc(
             samples to retrieve data from
         profile (data or data keyword)
             ShapeMaP or similar data for plotting reactivity distributions
-        log (data or data keyword)
-            ShapeMaP log for plotting quality control metrics
+            Must contain data from ShapeMapper log file
 
     Optional display arguments:
         labels (list of str)
@@ -37,7 +35,6 @@ def plot_qc(
     parsed_args = PlottingArgumentParser(
         samples=samples,
         labels=labels,
-        log=log,
         profile=profile,
     )
     plot = plots.QC(num_samples=len(samples))

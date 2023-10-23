@@ -295,8 +295,12 @@ class Profile(data.Data):
 
 
 class SHAPEMaP(Profile):
-    def __init__(self, input_data, dms=False, read_table_kw=None,
-                 sequence=None, metric='Norm_profile', metric_defaults=None):
+    def __init__(
+            self, input_data, normalize=None, read_table_kw=None,
+            sequence=None, metric='Norm_profile', metric_defaults=None,
+            log=None,
+            ):
+        self.read_lengths, self.mutations_per_read = self.read_log(log)
         if metric_defaults is None:
             metric_defaults = {}
         metric_defaults = {
@@ -322,12 +326,55 @@ class SHAPEMaP(Profile):
                          sequence=sequence,
                          metric=metric,
                          metric_defaults=metric_defaults)
-        if dms:
+        if normalize is not None:
             self.normalize(
                 profile_column="HQ_profile", new_profile="Norm_profile",
                 error_column="HQ_stderr", new_error="Norm_stderr",
-                norm_method="DMS",
+                norm_method=normalize,
                 )
+
+    def read_log_file(self, log):
+        if log is None:
+            return None, None
+        with open(log, 'r') as f:
+            flist = list(f)
+            log_format_test = 0
+            for i, line in enumerate(flist):
+                if line.startswith("  |MutationCounter_Modified"):
+                    log_format_test += 1
+                    modlength = []
+                    for x in flist[i+6:i+27]:
+                        modlength.append(float(x.strip().split('\t')[1]))
+                    modmuts = []
+                    for x in flist[i+32:i+53]:
+                        modmuts.append(float(x.strip().split('\t')[1]))
+                if line.startswith("  |MutationCounter_Untreated"):
+                    log_format_test += 1
+                    untlength = []
+                    for x in flist[i+6:i+27]:
+                        untlength.append(float(x.strip().split('\t')[1]))
+                    untmuts = []
+                    for x in flist[i+32:i+53]:
+                        untmuts.append(float(x.strip().split('\t')[1]))
+        message = ("Histogram data missing from log file. Requires" +
+                   " --per-read-histogram flag when running ShapeMapper.")
+        assert log_format_test >= 2, message
+        read_lengths = pd.DataFrame({
+            'Read_length': [
+                '0-49', '50-99', '100-149', '150-199', '200-249', '250-299',
+                '300-349', '350-399', '400-449', '450-499', '500-549',
+                '550-599', '600-649', '650-699', '700-749', '750-799',
+                '800-849', '850-899', '900-949', '950-999', '>1000'
+                ],
+            'Modified_read_length': modlength,
+            'Untreated_read_length': untlength,
+            })
+        mutations_per_read = pd.DataFrame({
+                'Mutation_count': np.arange(21),
+                'Modified_mutations_per_molecule': modmuts,
+                'Untreated_mutations_per_molecule': untmuts
+            })
+        return read_lengths, mutations_per_read
 
 
 class DanceMaP(SHAPEMaP):

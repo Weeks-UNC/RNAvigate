@@ -2,74 +2,35 @@ import os
 from rnavigate import data
 
 _required = object()
+
 data_keyword_defaults = {
-    "fasta": {
-        "data_class": data.Sequence},
-    "log": {
-        "data_class": data.Log},
-    "shapemap": {
-        "data_class": data.SHAPEMaP},
-    "dmsmap": {
-        "data_class": data.SHAPEMaP,
-        "dms": True},
-    "dancemap": {
-        "data_class": data.DanceMaP,
-        "component": _required},
-    "rnpmap": {
-        "data_class": data.RNPMaP},
-    "ringmap": {
-        "data_class": data.RINGMaP,
-        "sequence": "default_profile"},
-    "pairmap": {
-        "data_class": data.PAIRMaP,
-        "sequence": "default_profile"},
-    "allcorrs": {
-        "data_class": data.RINGMaP,
-        "sequence": "default_profile"},
-    "shapejump": {
-        "data_class": data.SHAPEJuMP,
-        "sequence": _required},
-    "pairprob": {
-        "data_class": data.PairingProbability,
-        "sequence": "default_profile"},
-    "ss": {
-        "data_class": data.SecondaryStructure},
-    "pdb": {
-        "data_class": data.PDB,
-        "chain": _required},
-    "allpossible": {
-        "data_class": data.AllPossible,
-        "sequence": _required},
-    "motif": {
-        "data_class": data.Motif,
-        "sequence": _required,
-        "color": _required},
-    "orfs": {
-        "data_class": data.ORFs,
-        "sequence": _required,
-        "color": _required},
-    "spans": {
-        "data_class": data.Annotation,
-        "sequence": _required,
-        "color": _required},
-    "sites": {
-        "data_class": data.Annotation,
-        "sequence": _required,
-        "color": _required},
-    "group": {
-        "data_class": data.Annotation,
-        "sequence": _required,
-        "color": _required},
-    "primers": {
-        "data_class": data.Annotation,
-        "sequence": _required,
-        "color": _required},
-    "domains": {
-        "data_class": data.domains,
-        "sequence": _required,
-        "colors": _required,
-        "names": _required},
-}
+    "sequence": {"data_class": data.Sequence},
+    "shapemap": {"data_class": data.SHAPEMaP},
+    "dancemap": {"data_class": data.DanceMaP, "component": _required},
+    "rnpmap": {"data_class": data.RNPMaP},
+    "ringmap": {"data_class": data.RINGMaP, "sequence": "default_profile"},
+    "pairmap": {"data_class": data.PAIRMaP, "sequence": "default_profile"},
+    "shapejump": {"data_class": data.SHAPEJuMP, "sequence": _required},
+    "pairprob": {"data_class": data.PairingProbability,
+                    "sequence": "default_profile"},
+    "ss": {"data_class": data.SecondaryStructure},
+    "pdb": {"data_class": data.PDB, "chain": _required},
+    "allpossible": {"data_class": data.AllPossible, "sequence": _required},
+    "motif": {"data_class": data.Motif, "name": _required,
+                "sequence": _required, "color": _required},
+    "orfs": {"data_class": data.ORFs, "name": _required,
+                "sequence": _required, "color": _required},
+    "spans": {"data_class": data.Annotation, "name": _required,
+                "sequence": _required, "color": _required},
+    "sites": {"data_class": data.Annotation, "name": _required,
+                "sequence": _required, "color": _required},
+    "group": {"data_class": data.Annotation, "name": _required,
+                "sequence": _required, "color": _required},
+    "primers": {"data_class": data.Annotation, "name": _required,
+                "sequence": _required, "color": _required},
+    "domains": {"data_class": data.domains, "sequence": _required,
+                "colors": _required, "names": _required},
+    }
 
 def create_data(sample=None, **data_keyword):
     """Convenience function for creating rnavigate.data objects. This function
