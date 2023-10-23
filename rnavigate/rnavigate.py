@@ -10,8 +10,9 @@ class Sample:
     types should be given a common data keyword so they can be easily compared.
     """
     def __init__(
-            self, sample, inherit=None, dance_prefix=None,
-            overwrite_inherited_defaults=False, **data_keywords):
+            self, sample, inherit=None, keep_inherited_defaults=False,
+            **data_keywords
+            ):
         """Creates a Sample.
 
         Required arguments:
@@ -20,16 +21,14 @@ class Sample:
                 and titles to differentiate it from other samples
 
         Optional arguments:
-            inherit (Sample)
-                Another Sample from which to inherit stored data. This does not
+            inherit (Sample or list of Samples)
+                Other Samples from which to inherit stored data. This does not
                 make additional copies of the data: i.e. operations that make
                 changes to inherited data change the original sample, and any
                 other samples that inherited that data. This can be useful to
                 save time and memory on operations and large data structures.
-            dance_prefix (path, e.g. "path/to/file_prefix")
-                path and prefix for DanceMapper data, automatically locates
-                data files and stores DANCE components as a list of Sample
-                objects at self.dance
+            keep_inherited_defaults (True or False)
+                whether to keep inherited default keywords
 
         Data keywords:
             There are many built-in data keywords with different expectations
@@ -73,101 +72,36 @@ class Sample:
                 5. Should avoid "sequence"
         """
         self.sample = sample
-        self.parent = None
-        self.data = {}
         self.inputs = {}
+        self.data = {}
+        self.defaults = {
+                'default_annotations': None,
+                'default_profile': None,
+                'default_structure': None,
+                'default_interactions': None,
+                'default_pdb': None
+                }
 
-        # inherit all data from another Sample
-        if hasattr(inherit, "data") and isinstance(inherit.data, dict):
-            self.data |= inherit.data
-            self.inputs |= inherit.inputs
-
-        # getting ready for default data keyword setup
-        default_data = {
-            data.Profile: "default_profile",
-            data.SecondaryStructure: "default_structure",
-            data.PDB: "default_pdb",
-        }
+        # inherit data from other Samples
+        if isinstance(inherit, Sample):
+            inherit = [inherit]
+        for inherit_sample in inherit[::-1]:
+            if isinstance(inherit, Sample):
+                self.data |= inherit_sample.data
+                self.inputs |= inherit_sample.inputs
+                if keep_inherited_defaults:
+                    self.defaults |= inherit_sample.defaults
+            else:
+                raise ValueError(
+                    "inherit only accepts rnav.Sample or list of rnav.Sample"
+                    )
 
         # get data and store inputs for all data_keywords
-        for each_keyword in default_data.values():
-            if each_keyword not in self.data or overwrite_inherited_defaults:
-                self.data[each_keyword] = None
         for data_keyword, inputs in data_keywords.items():
-            self.set_data(data_keyword, inputs=inputs)
-            for each_type, each_keyword in default_data.items():
-                if (isinstance(self.data[data_keyword], each_type)
-                        and self.data[each_keyword] is None):
-                    self.data[each_keyword] = self.data[data_keyword]
+            self.set_data(data_keyword=data_keyword, inputs=inputs)
+            self.set_as_default(data_keyword=data_keyword, overwrite=False)
 
-        # for all DANCE-MaP data
-        if dance_prefix is not None:
-            self.init_dance(dance_prefix)
-
-    def print_data_keywords(self):
-        print(f"""{
-self.sample} Data keywords:
-    Annotations:
-        {'   '.join(self.annotations)}
-    Profiles:
-        {'   '.join(self.profiles)}
-    Structures:
-        {'   '.join(self.structures)}
-    Interactions:
-        {'   '.join(self.interactions)}
-    PDBs:
-        {'   '.join(self.pdbs)}
-""")
-
-    @property
-    def annotations(self):
-        """Print a list of data keywords associated with annotations"""
-        annotations = []
-        for data_keyword, data_object in self.data.items():
-            if isinstance(data_object, data.Annotation):
-                annotations.append(data_keyword)
-            elif isinstance(data_object, list):
-                if all([isinstance(o, data.Annotation) for o in data_object]):
-                    annotations.append(data_keyword)
-        return annotations
-
-    @property
-    def profiles(self):
-        """list data keywords associated with per-nucleotide data"""
-        profiles = []
-        for data_keyword, data_object in self.data.items():
-            if isinstance(data_object, data.Profile):
-                profiles.append(data_keyword)
-        return profiles
-
-    @property
-    def structures(self):
-        """list data keywords associated with secondary structures"""
-        structure = []
-        for data_keyword, data_object in self.data.items():
-            if isinstance(data_object, data.SecondaryStructure):
-                structure.append(data_keyword)
-        return structure
-
-    @property
-    def interactions(self):
-        """list data keywords associated with inter-nucleotide data"""
-        interactions = []
-        for data_keyword, data_object in self.data.items():
-            if isinstance(data_object, data.Interactions):
-                interactions.append(data_keyword)
-        return interactions
-
-    @property
-    def pdbs(self):
-        """list data keywords associated with 3D molecular structures"""
-        pdbs = []
-        for data_keyword, data_object in self.data.items():
-            if isinstance(data_object, data.PDB):
-                pdbs.append(data_keyword)
-        return pdbs
-
-    def set_data(self, data_keyword, inputs, overwrite_keyword=False):
+    def set_data(self, data_keyword, inputs, overwrite=False):
         """Add data to Sample using the given data keyword and inputs
 
         This methods works similarly to the data keywords arguments used
@@ -192,79 +126,27 @@ self.sample} Data keywords:
                 a dictionary used to create the data object
 
         Optional arguments:
-            overwrite_keyword (bool)
+            overwrite (bool)
                 whether to overwrite a pre-existing data_keyword
                 Defaults to False.
 
         Raises:
             ValueError:
-                the data keyword already exists and overwrite_keyword is False
+                the data keyword already exists and overwrite is False
             ValueError:
                 there was an issue parsing the data
             
         """
-        if (data_keyword in self.inputs) and not overwrite_keyword:
+        if (data_keyword in self.data) and not overwrite:
             raise ValueError(
                 f"'{data_keyword}' is already a data keyword. "
                 "Choose a different one.")
         try:
             self.data[data_keyword] = create_data(
-                sample=self, **{data_keyword: inputs})
-        except BaseException as exception:
-            raise ValueError(f"issue while loading {data_keyword}") from exception
+                sample=self, data_keyword=data_keyword, inputs=inputs)
+        except BaseException as e:
+            raise ValueError(f"issue while loading {data_keyword}") from e
         self.inputs[data_keyword] = inputs
-
-    def init_dance(self, filepath):
-        """Create a list of Samples, one for each component of the DANCE model
-
-        The new list is stored in the .dance attribute.
-
-        Args:
-            prefix (str): Path to DanceMapper output file prefixes. Finds
-                profiles, rings, pairs, structures, and pairing probabilities
-                if present.
-        """
-        reactivityfile = f"{filepath}-reactivities.txt"
-        # read in 2 line header
-        with open(reactivityfile) as inf:
-            header1 = inf.readline().strip().split()
-            header2 = inf.readline().strip().split()
-        # number of components
-        self.dance_components = int(header1[0])
-        # population percentage of each component
-        self.dance_percents = header2[1:]
-        # dance is a list containing one sample for each component
-        self.dance = []
-        # build column names for reading in BM file
-        for i in range(self.dance_components):
-            kwargs = {
-                "sample": f"{self.sample}: {i} - {self.dance_percents[i]}",
-                "dancemap": {"filepath": reactivityfile,
-                             "component": i},
-                "ringmap": f"{filepath}-{i}-rings.txt",
-                "pairmap": f"{filepath}-{i}-pairmap.txt",
-                "ss": [f"{filepath}-{i}.f.ct",  # if using --pk
-                       f"{filepath}-{i}.ct"],  # if regular fold used
-                "pairprob": f"{filepath}-{i}.dp"
-            }
-            for key in ["ringmap", "pairmap", "pairprob"]:
-                if not os.path.isfile(kwargs[key]):
-                    kwargs.pop(key)
-            for structure_file in kwargs["ss"]:
-                if os.path.isfile(structure_file):
-                    kwargs["ss"] = structure_file
-            if isinstance(kwargs["ss"], list):
-                kwargs.pop("ss")
-            sample = Sample(**kwargs)
-            sample.parent = self
-            self.dance.append(sample)
-
-###############################################################################
-# filtering and data retrieval
-#     get_data
-#     filter_interactions
-#     filter_dance
-###############################################################################
 
     def get_data(self, data_keyword, data_class=None):
         """Replaces data keyword with data object, even if nested.
@@ -273,7 +155,6 @@ self.sample} Data keywords:
             data_keyword (Data or data keyword or list/dict of such types)
                 If None, returns None.
                 If a data keyword, returns associated data from sample
-                    or sample.parent
                 If Data, returns that data.
                 If a list or dictionary, returns list or dictionary with
                     data keyword values replaced with associated Data
@@ -286,7 +167,7 @@ self.sample} Data keywords:
 
         Raises:
             ValueError:
-                if data is not found in sample or sample.parent sample
+                if data is not found in sample
             ValueError:
                 if the data retrieved is not of the specified data_class
         """
@@ -296,7 +177,10 @@ self.sample} Data keywords:
         if data_class is None:
             data_class = data.Sequence
         if isinstance(data_keyword, dict):
-            return {k: self.get_data(v, data_class) for k, v in data_keyword.items()}
+            return {
+                k: self.get_data(v, data_class)
+                for k, v in data_keyword.items()
+                }
         elif isinstance(data_keyword, list):
             return [self.get_data(v, data_class) for v in data_keyword]
         elif isinstance(data_keyword, data.Sequence):
@@ -305,19 +189,36 @@ self.sample} Data keywords:
             return data_keyword
         elif data_keyword is None:
             return None
+        elif (isinstance(data_keyword, str)
+                and data_keyword.startswith("default_")):
+            data_keyword = self.defaults[data_keyword]
+            if data_keyword is None:
+                raise not_in_sample
         # if keyword is in sample.data, retreive Sequence object
         try:
             data_obj = self.data[data_keyword]
-        except KeyError:
-            try:
-                data_obj = self.parent.data[data_keyword]
-                print(f'"{data_keyword}" not in "{self.sample}". '
-                      f'Using data from parent sample: "{self.parent.sample}"')
-            except (KeyError, AttributeError) as exception:
-                raise not_in_sample from exception
+        except KeyError as exception:
+            raise not_in_sample from exception
         if not isinstance(data_obj, data_class):
             raise wrong_class
         return data_obj
+
+    def set_as_default(self, data_keyword, overwrite=True):
+        data_object = self.data[data_keyword]
+        if isinstance(data_object, data.Annotation):
+            default_keyword = "default_annotation"
+        elif isinstance(data_object, data.Profile):
+            default_keyword = "default_profile"
+        elif isinstance(data_object, data.SecondaryStructure):
+            default_keyword = "default_structure"
+        elif isinstance(data_object, data.Interactions):
+            default_keyword = "default_interactions"
+        elif isinstance(data_object, data.PDB):
+            default_keyword = "default_pdb"
+        else:
+            return
+        if overwrite or self.defaults[default_keyword] is None:
+            self.defaults[default_keyword] = data_keyword
 
     def filter_interactions(
             self, interactions, metric=None, cmap=None, normalization=None,
@@ -386,37 +287,42 @@ self.sample} Data keywords:
                 kwargs[each_type] = self.data[f"default_{each_type}"]
         interactions.filter(**kwargs)
 
-    def dance_filter(
-            self, fit_to='default_structure', positive_only=True, min_cd=15,
-            Statistic_ge=23, ss_only=True, **kwargs
-            ):
-        """Applies a standard filter to plot DANCE rings, pairs, and predicted
-        structures together.
-
-        Args:
-            positive_only (bool, optional): Remove negative correlations.
-                Defaults to True.
-            min_cd (int, optional): Filters rings by contact distance based
-                on predicted structures for *ALL* DANCE components.
-                Defaults to 15.
-            Statistic_ge (int, optional): Lower bound for MI.
-                Defaults to 23.
-            ss_only (bool, optional): Filters out rings with at least one leg
-                in a double stranded region based on that DANCE component.
-                Defaults to True.
-            **kwargs: additional arguments are used to filter "ringmap" data.
-        """
-        kwargs = {}
-        if positive_only:
-            kwargs["positive_only"] = True
-        if ss_only:
-            kwargs["ss_only"] = True
-        kwargs["Statistic_ge"] = Statistic_ge
-        ctlist = [dance.get_data("default_structure") for dance in self.dance]
-        for dance in self.dance:
-            dance_ct = dance.data["default_structure"]
-            fit_to = get_sequence(
-                sequence=fit_to, sample=dance, default='default_structure')
-            dance.data["ringmap"].filter(structure=dance_ct, **kwargs)
-            dance.data["ringmap"].mask_on_structure(ctlist, min_cd=min_cd)
-            dance.data["pairmap"].filter(structure=dance_ct, paired_only=True)
+    def print_data_keywords(self):
+        data_keywords={
+            'annotations': [],
+            'profiles': [],
+            'structures': [],
+            'interactions': [],
+            'pdbs': [],
+            'other': [],
+            'missing': []}
+        for data_keyword, data_object in self.data.items():
+            if isinstance(data_object, data.Annotation):
+                data_keywords['annotations'].append(data_keyword)
+            if isinstance(data_object, data.Profile):
+                data_keywords['profiles'].append(data_keyword)
+            if isinstance(data_object, data.SecondaryStructure):
+                data_keywords['structures'].append(data_keyword)
+            if isinstance(data_object, data.Interactions):
+                data_keywords['interactions'].append(data_keyword)
+            if isinstance(data_object, data.PDB):
+                data_keywords['pdbs'].append(data_keyword)
+            if data_object is None:
+                data_keywords['missing'].append(data_keyword)
+            else:
+                data_keywords['other'].append(data_keyword)
+        print(f"{self.sample} Data keywords:\n"
+              "  Annotations:\n"
+              f"    {'   '.join(data_keywords['annotations'])}\n"
+              "  Profiles:\n"
+              f"    {'   '.join(data_keywords['profiles'])}\n"
+              "  Structures:\n"
+              f"    {'   '.join(data_keywords['structures'])}\n"
+              "  Interactions:\n"
+              f"    {'   '.join(data_keywords['interactions'])}\n"
+              "  PDBs:\n"
+              f"    {'   '.join(data_keywords['pdbs'])}\n"
+              "  Other:\n"
+              f"    {'   '.join(data_keywords['other'])}\n"
+              "  Missing:"
+              f"    {'   '.join(data_keywords['missing'])}")
