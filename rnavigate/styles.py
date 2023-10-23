@@ -43,6 +43,7 @@ settings = {
     },
 }
 
+
 def update_copy(original_settings, user_settings):
     new_settings = dict()
     for k, v in original_settings.items():
@@ -58,6 +59,7 @@ def update_copy(original_settings, user_settings):
                 new_settings[k] = v
     return new_settings
 
+
 class Settings(dict):
     def __init__(self, user_settings):
         self.original_settings = update_copy(settings, {})
@@ -71,7 +73,7 @@ class Settings(dict):
 
 
 def set_defaults(context="paper", style="ticks", colors="default", dpi=140):
-    if colors == default:
+    if colors == "default":
         colors = [
             '#0092edff',  # Blue
             '#ff8300ff',  # Orange
