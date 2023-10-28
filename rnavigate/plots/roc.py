@@ -35,26 +35,27 @@ class ROC(plots.Plot):
     def get_rows_columns(self, rows=None, cols=None):
         return (2, 4)
 
-    def plot_data(self, structure, profile, label):
+    def plot_data(self, structure, profile, label, nts='AUCG'):
         self.i += 1
 
         metric = profile.metric
-        valid = ~np.isnan(profile.data[metric])
-        y = structure.ct[valid] == 0
+        valid = ~ profile.data[metric].isna()
+        y = structure.pair_nts[valid] == 0
         scores = profile.data.loc[valid, metric]
         tpr, fpr, _ = roc_curve(y, scores)
         auc_score = auc(tpr, fpr)
         self.main_ax.plot(tpr, fpr, label=f"{label}: AUC={auc_score:.2f}")
         self.main_ax.plot([0, 1], [0, 1], "k--")
 
-        axes = [self.a_ax, self.u_ax, self.c_ax, self.g_ax]
-        for ax, nt in zip(axes, 'AUCG'):
+        axes = {'A': self.a_ax, 'U': self.u_ax, 'C': self.c_ax, 'G': self.g_ax}
+        for nt in nts:
+            ax = axes[nt]
             ax.plot([0, 1], [0, 1], "k--")
             ax.set(title=nt,
                    aspect='equal')
             valid = ~np.isnan(profile.data[metric])
             valid &= profile.data["Sequence"] == nt
-            y = structure.ct[valid] == 0
+            y = structure.pair_nts[valid] == 0
             scores = profile.data.loc[valid, metric]
             tpr, fpr, _ = roc_curve(y, scores)
             auc_score = auc(tpr, fpr)
@@ -66,6 +67,6 @@ class ROC(plots.Plot):
                              ylabel="True Positive Rate",
                              xlabel="False Positive Rate",
                              aspect='equal')
-            for ax in axes:
+            for ax in axes.values():
                 ax.set(yticks=[], xticks=[])
                 ax.legend()

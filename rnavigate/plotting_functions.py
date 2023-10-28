@@ -1161,6 +1161,7 @@ def plot_roc(
         profile,
         # optional data display
         labels=None,
+        nts='AUCG',
         # optional plot display
         plot_kwargs=None
         ):
@@ -1183,6 +1184,9 @@ def plot_roc(
         labels (list of str)
             list containing Labels to be used in plot legends
             Defaults to sample.sample for each sample
+        nts (string)
+            which nucleotides to plot nucleotide-type ROC plots
+            defaults to 'AUCG'
 
     Optional plot display arguments:
         plot_kwargs (dictionary)
@@ -1203,7 +1207,7 @@ def plot_roc(
     plot = plots.ROC(parsed_args.num_samples, **plot_kwargs)
     for data_dict in parsed_args.data_dicts:
         data_dict = fit_data(data_dict, data_dict['structure'].null_alignment)
-        plot.plot_data(**data_dict)
+        plot.plot_data(**data_dict, nts=nts)
     plot.set_figure_size()
     return plot
 
