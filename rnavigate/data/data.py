@@ -264,9 +264,10 @@ class Data(Sequence):
 
     @property
     def colors(self):
-        return self.cmap.values_to_hexcolors(
-            np.ma.masked_invalid(self.data[self.color_column])
-            )
+        values = self.data[self.color_column]
+        if values.dtype.name == 'bool':
+            values = values.astype('int')
+        return self.cmap.values_to_hexcolors(np.ma.masked_invalid(values))
 
     def read_file(self, filepath, read_table_kw):
         """Convert data file to pandas dataframe and store as self.data
