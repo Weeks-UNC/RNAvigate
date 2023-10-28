@@ -112,6 +112,8 @@ def set_alignment(sequence1, sequence2, alignment1, alignment2):
     # Normalize sequences
     sequence1 = sequence1.upper().replace("T", "U")
     sequence2 = sequence2.upper().replace("T", "U")
+    hash1 = hash(sequence1)
+    hash2 = hash(sequence2)
     alignment1 = alignment1.upper().replace("T", "U")
     alignment2 = alignment2.upper().replace("T", "U")
 
@@ -125,23 +127,35 @@ def set_alignment(sequence1, sequence2, alignment1, alignment2):
 
     # Set up alignment dictionaries
     seq12 = {
-        sequence2: {
+        hash1: {
             "seqA": alignment1,
             "seqB": alignment2}}
     seq21 = {
-        sequence1: {
+        hash2: {
             "seqA": alignment2,
             "seqB": alignment1}}
 
     # Store dictionaries in _alignments_cache
-    if sequence1 not in _alignments_cache:
-        _alignments_cache[sequence1] = seq12
+    if hash1 not in _alignments_cache:
+        _alignments_cache[hash1] = seq12
     else:
-        _alignments_cache[sequence1].update(seq12)
-    if sequence2 not in _alignments_cache:
-        _alignments_cache[sequence2] = seq21
+        _alignments_cache[hash1].update(seq12)
+    if hash2 not in _alignments_cache:
+        _alignments_cache[hash2] = seq21
     else:
-        _alignments_cache[sequence2].update(seq21)
+        _alignments_cache[hash2].update(seq21)
+
+def lookup_alignment(sequence1, sequence2):
+    # Normalize sequences
+    sequence1 = sequence1.upper().replace("T", "U")
+    sequence2 = sequence2.upper().replace("T", "U")
+    hash1 = hash(sequence1)
+    hash2 = hash(sequence2)
+    try:
+        return _alignments_cache[hash1][hash2]
+    except KeyError:
+        return None
+
 
 class BaseAlignment(ABC):
     """Abstract base class for alignments
@@ -376,11 +390,11 @@ class SequenceAlignment(BaseAlignment):
             return (seq1, seq2)
         else:
             # look in _alignments_cache, if not found, do a pairwise alignment
-            try:
-                align1, align2 = _alignments_cache[seq1][seq2].values()
-            except KeyError:
+            alignments = lookup_alignment(seq1, seq2)
+            if alignments is None:
                 alignment = align.globalms(
-                    seq1, seq2, penalize_end_gaps=False, **self.align_kwargs
+                    seq1, seq2, penalize_end_gaps=False,
+                    one_alignment_only=True,**self.align_kwargs
                     )
                 set_alignment(
                     sequence1=seq1,
@@ -388,7 +402,8 @@ class SequenceAlignment(BaseAlignment):
                     alignment1=alignment[0].seqA,
                     alignment2=alignment[0].seqB
                 )
-                align1, align2 = _alignments_cache[seq1][seq2].values()
+                alignments = lookup_alignment(seq1, seq2)
+            align1, align2 = alignments['seqA'], alignments['seqB']
             return (align1, align2)
 
     def get_mapping(self):
@@ -553,11 +568,11 @@ class StructureAlignment(BaseAlignment):
         if seq1 == seq2:
             return (seq1, seq2)
         else:
-            try:
-                alignment1, alignment2 = _alignments_cache[seq1][seq2].values()
-            except KeyError:
-                alignment = align.globalds(seq1, seq2, structure_scoring_dict,
-                                        -12, -1, penalize_end_gaps=False)
+            alignments = lookup_alignment(seq1, seq2)
+            if alignments is None:
+                alignment = align.globalds(
+                    seq1, seq2, structure_scoring_dict, -12, -1,
+                    penalize_end_gaps=False, one_alignment_only=True)
                 alignment1 = alignment[0].seqA
                 alignment2 = alignment[0].seqB
                 set_alignment(
@@ -566,6 +581,7 @@ class StructureAlignment(BaseAlignment):
                     alignment1=alignment[0].seqA,
                     alignment2=alignment[0].seqB
                 )
+            alignment1, alignment2 = alignments['seqA'], alignments['seqB']
         # convert pseudo-amino acid alignments back into nucleotide alignments
         alignment1 = convert_sequence(aas=alignment1, nts=True, dbn=False)
         alignment2 = convert_sequence(aas=alignment2, nts=True, dbn=False)
