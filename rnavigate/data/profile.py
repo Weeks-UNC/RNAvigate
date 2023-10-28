@@ -162,7 +162,7 @@ class Profile(data.Data):
             normerr = None
         # calculate normalization factors, if appropriate
         if profile_factors is None:
-            profile_factors = {}
+            profile_factors = {nt: np.nan for nt in 'ACGU'}
             error_factors = {}
             methods_groups = {
                 'DMS': (self.norm_percentiles, ['AC', 'GU']),
@@ -300,7 +300,7 @@ class SHAPEMaP(Profile):
             sequence=None, metric='Norm_profile', metric_defaults=None,
             log=None,
             ):
-        self.read_lengths, self.mutations_per_read = self.read_log(log)
+        self.read_lengths, self.mutations_per_molecule = self.read_log(log)
         if metric_defaults is None:
             metric_defaults = {}
         metric_defaults = {
@@ -333,7 +333,7 @@ class SHAPEMaP(Profile):
                 norm_method=normalize,
                 )
 
-    def read_log_file(self, log):
+    def read_log(self, log):
         if log is None:
             return None, None
         with open(log, 'r') as f:
@@ -369,12 +369,12 @@ class SHAPEMaP(Profile):
             'Modified_read_length': modlength,
             'Untreated_read_length': untlength,
             })
-        mutations_per_read = pd.DataFrame({
+        mutations_per_molecule = pd.DataFrame({
                 'Mutation_count': np.arange(21),
                 'Modified_mutations_per_molecule': modmuts,
                 'Untreated_mutations_per_molecule': untmuts
             })
-        return read_lengths, mutations_per_read
+        return read_lengths, mutations_per_molecule
 
 
 class DanceMaP(SHAPEMaP):
