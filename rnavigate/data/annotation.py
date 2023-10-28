@@ -60,7 +60,7 @@ class Annotation(data.Sequence):
             raise ValueError(f"annotation_type not in {valid_types}")
 
     @classmethod
-    def from_boolean_array(self, values, window, sequence, annotation_type,
+    def from_boolean_array(cls, values, window, sequence, annotation_type,
                            name=None, color='blue'):
         annotations = []
         current_annotation = None
@@ -81,7 +81,7 @@ class Annotation(data.Sequence):
                     current_annotation = [start, stop]
         if annotation_type == 'spans':
             annotations.append(current_annotation)
-        return Annotation(
+        return cls(
             input_data=annotations, annotation_type=annotation_type,
             color=color, sequence=sequence, name=name)
 
