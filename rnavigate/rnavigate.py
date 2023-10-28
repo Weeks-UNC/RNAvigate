@@ -1,6 +1,5 @@
-import os.path
 from rnavigate import data
-from rnavigate.data_loading import create_data, get_sequence
+from rnavigate.data_loading import create_data
 
 class Sample:
     """Loads and organizes RNA structural data for use with plotting functions.
@@ -10,7 +9,7 @@ class Sample:
     types should be given a common data keyword so they can be easily compared.
     """
     def __init__(
-            self, sample, inherit=None, keep_inherited_defaults=False,
+            self, sample, inherit=None, keep_inherited_defaults=True,
             **data_keywords
             ):
         """Creates a Sample.
@@ -29,6 +28,7 @@ class Sample:
                 save time and memory on operations and large data structures.
             keep_inherited_defaults (True or False)
                 whether to keep inherited default keywords
+                defaults to True
 
         Data keywords:
             There are many built-in data keywords with different expectations
@@ -41,7 +41,7 @@ class Sample:
         self.inputs = {}
         self.data = {}
         self.defaults = {
-                'default_annotations': None,
+                'default_annotation': None,
                 'default_profile': None,
                 'default_structure': None,
                 'default_interactions': None,
@@ -49,23 +49,37 @@ class Sample:
                 }
 
         # inherit data from other Samples
-        if isinstance(inherit, Sample):
-            inherit = [inherit]
-        for inherit_sample in inherit[::-1]:
-            if isinstance(inherit, Sample):
-                self.data |= inherit_sample.data
-                self.inputs |= inherit_sample.inputs
-                if keep_inherited_defaults:
-                    self.defaults |= inherit_sample.defaults
-            else:
-                raise ValueError(
-                    "inherit only accepts rnav.Sample or list of rnav.Sample"
-                    )
+        self.inherit_data(
+            inherit=inherit,
+            keep_inherited_defaults=keep_inherited_defaults,
+            overwrite=False)
 
         # get data and store inputs for all data_keywords
         for data_keyword, inputs in data_keywords.items():
             self.set_data(data_keyword=data_keyword, inputs=inputs)
             self.set_as_default(data_keyword=data_keyword, overwrite=False)
+
+    def inherit_data(self, inherit, keep_inherited_defaults, overwrite):
+        if isinstance(inherit, (list, tuple)):
+            for inherit_sample in inherit[::-1]:
+                self.inherit_data(
+                    inherit_sample, keep_inherited_defaults, overwrite
+                    )
+        elif isinstance(inherit, Sample):
+            if overwrite:
+                self.data |= inherit.data
+                self.inputs |= inherit.inputs
+            else:
+                self.data = inherit.data | self.data
+                self.inputs = inherit.inputs | self.inputs
+            if keep_inherited_defaults and overwrite:
+                self.defaults |= inherit.defaults
+            elif keep_inherited_defaults:
+                self.defaults = inherit.defaults | self.defaults
+        elif inherit is not None:
+            raise ValueError(
+                "inherit only accepts rnav.Sample or list of rnav.Sample"
+                )
 
     def set_data(self, data_keyword, inputs, overwrite=False):
         """Add data to Sample using the given data keyword and inputs
@@ -223,12 +237,10 @@ class Sample:
         if interactions is None:
             return
         try:
-            interactions = self.get_data(interactions)
+            interactions = self.get_data(interactions, data.Interactions)
         except KeyError as exception:
             raise KeyError(
                 f'{interactions} is not in {self.sample}') from exception
-        if not isinstance(interactions, data.Interactions):
-            raise ValueError(f'{interactions} is not interactions data')
 
         if metric is None:
             metric = interactions.default_metric
@@ -246,11 +258,14 @@ class Sample:
         if values is not None:
             metric['values'] = values
         interactions.metric = metric
-        for each_type in ["profile", "structure"]:
-            if each_type in kwargs:
-                kwargs[each_type] = self.data[kwargs[each_type]]
-            elif f"default_{each_type}" in self.data.keys():
-                kwargs[each_type] = self.data[f"default_{each_type}"]
+        if 'profile' in kwargs:
+            kwargs['profile'] = self.data[kwargs['profile']]
+        else:
+            kwargs['profile'] = self.get_data(f"default_{'profile'}")
+        if 'structure' in kwargs:
+            kwargs['structure'] = self.data[kwargs['structure']]
+        else:
+            kwargs['structure'] = self.get_data(f"default_{'structure'}")
         interactions.filter(**kwargs)
 
     def print_data_keywords(self):
@@ -259,10 +274,10 @@ class Sample:
             'profiles': [],
             'structures': [],
             'interactions': [],
-            'pdbs': [],
-            'other': [],
-            'missing': []}
+            'pdbs': []}
         for data_keyword, data_object in self.data.items():
+            if data_keyword in self.defaults.values():
+                data_keyword += ' (default)'
             if isinstance(data_object, data.Annotation):
                 data_keywords['annotations'].append(data_keyword)
             if isinstance(data_object, data.Profile):
@@ -273,22 +288,7 @@ class Sample:
                 data_keywords['interactions'].append(data_keyword)
             if isinstance(data_object, data.PDB):
                 data_keywords['pdbs'].append(data_keyword)
-            if data_object is None:
-                data_keywords['missing'].append(data_keyword)
-            else:
-                data_keywords['other'].append(data_keyword)
-        print(f"{self.sample} Data keywords:\n"
-              "  Annotations:\n"
-              f"    {'   '.join(data_keywords['annotations'])}\n"
-              "  Profiles:\n"
-              f"    {'   '.join(data_keywords['profiles'])}\n"
-              "  Structures:\n"
-              f"    {'   '.join(data_keywords['structures'])}\n"
-              "  Interactions:\n"
-              f"    {'   '.join(data_keywords['interactions'])}\n"
-              "  PDBs:\n"
-              f"    {'   '.join(data_keywords['pdbs'])}\n"
-              "  Other:\n"
-              f"    {'   '.join(data_keywords['other'])}\n"
-              "  Missing:"
-              f"    {'   '.join(data_keywords['missing'])}")
+        print(f'{self.sample} data keywords:')
+        for k, v in data_keywords.items():
+            print(f'\n  {k}:')
+            print('    '+"\n    ".join(v))
