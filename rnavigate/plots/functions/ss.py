@@ -49,7 +49,7 @@ def plot_basepairs_ss(ax, structure, bp_style):
     x = structure.xcoordinates
     y = structure.ycoordinates
     zorder = styles.settings['ss']['basepairs']['zorder']
-    for pair in structure.pairList():
+    for pair in structure.get_pairs():
         x = structure.xcoordinates[[p-1 for p in pair]]
         y = structure.ycoordinates[[p-1 for p in pair]]
         xdist = x[1]-x[0]

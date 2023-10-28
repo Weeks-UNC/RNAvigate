@@ -114,14 +114,14 @@ class Interactions(data.Data):
             true_so_far = keep and (-1 not in [i, j])
             if paired_only and true_so_far:
                 for w in range(self.window):
-                    true_so_far = structure.ct[i+w-1] == j+self.window-w-1
+                    true_so_far = structure.pair_nts[i+w-1] == j+self.window-w-1
                     if not true_so_far:
                         break
             if (ss_only or ds_only) and true_so_far:
                 percentage = 0
                 for w in range(self.window):
-                    percentage += int(structure.ct[i-1+w] == 0)
-                    percentage += int(structure.ct[j-1+w] == 0)
+                    percentage += int(structure.pair_nts[i-1+w] == 0)
+                    percentage += int(structure.pair_nts[j-1+w] == 0)
                 percentage /= (self.window * 2)
                 if ss_only:
                     true_so_far = percentage > 0.501

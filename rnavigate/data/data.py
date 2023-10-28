@@ -106,7 +106,7 @@ class Sequence():
 
     def get_colors_from_structure(self, structure):
         cmap = ['darkOrange', 'darkOrchid', 'gray']
-        ct_colors = [cmap[int(pair == 0)] for pair in structure.ct]
+        ct_colors = [cmap[int(pair == 0)] for pair in structure.pair_nts]
         alignment = data.SequenceAlignment(structure, self)
         colors = alignment.map_values(ct_colors, fill='gray')
         colormap = data.ScalarMappable(

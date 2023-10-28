@@ -519,13 +519,13 @@ class StructureAlignment(BaseAlignment):
         if isinstance(sequence1, data.Sequence):
             sequence1 = sequence1.sequence
         if isinstance(structure1, data.SecondaryStructure):
-            structure1 = structure1.get_dbn()
+            structure1 = structure1.get_dotbracket()
         self.sequence1 = sequence1
         self.structure1 = structure1
         if isinstance(sequence2, data.Sequence):
             sequence2 = sequence2.sequence
         if isinstance(structure2, data.SecondaryStructure):
-            structure2 = structure2.get_dbn()
+            structure2 = structure2.get_dotbracket()
         self.sequence2 = sequence2
         self.structure2 = structure2
         self.alignment1, self.alignment2 = self.get_alignment()
