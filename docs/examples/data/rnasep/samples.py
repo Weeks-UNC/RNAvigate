@@ -35,39 +35,39 @@ common_data = rnav.Sample(
 example1 = rnav.Sample(
     sample="Example 1",
     inherit=common_data,
-    log=abspath("example1_shapemapper_log.txt"),
-    shapemap=abspath("example1_rnasep_profile.txt"),
+    shapemap={
+        'shapemap': abspath("example1_rnasep_profile.txt"),
+        'log': abspath("example1_shapemapper_log.txt")},
     pairmap=abspath("example1-rnasep-pairmap.txt"),
     ringmap=abspath("example1-rnasep.corrs"),
-    dance_prefix=abspath("example1_rnasep")
 )
 
 example2 = rnav.Sample(
     sample="Example 2",
     inherit=common_data,
-    log=abspath("example2_shapemapper_log.txt"),
-    shapemap=abspath("example2_rnasep_profile.txt"),
+    shapemap={
+        'shapemap': abspath("example2_rnasep_profile.txt"),
+        'log': abspath("example2_shapemapper_log.txt")},
     pairmap=abspath("example2-rnasep-pairmap.txt"),
     ringmap=abspath("example2-rnasep.corrs"),
-    dance_prefix=abspath("example2_rnasep")
 )
 
 example3 = rnav.Sample(
     sample="Example 3",
     inherit=common_data,
-    log=abspath("example3_shapemapper_log.txt"),
-    shapemap=abspath("example3_rnasep_profile.txt"),
+    shapemap={
+        'shapemap': abspath("example3_rnasep_profile.txt"),
+        'log': abspath("example3_shapemapper_log.txt")},
     pairmap=abspath("example3-rnasep-pairmap.txt"),
     ringmap=abspath("example3-rnasep.corrs"),
-    dance_prefix=abspath("example3_rnasep")
 )
 
 example4 = rnav.Sample(
     sample="Example 4",
     inherit=common_data,
-    log=abspath("example4_shapemapper_log.txt"),
-    shapemap=abspath("example4_rnasep_profile.txt"),
+    shapemap={
+        'shapemap': abspath("example4_rnasep_profile.txt"),
+        'log': abspath("example4_shapemapper_log.txt")},
     pairmap=abspath("example4-rnasep-pairmap.txt"),
     ringmap=abspath("example4-rnasep.corrs"),
-    dance_prefix=abspath("example4_rnasep")
 )
