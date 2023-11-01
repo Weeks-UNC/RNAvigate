@@ -6,8 +6,10 @@ from rnavigate import plots, styles
 
 
 class LinReg(plots.Plot):
-    def __init__(self, num_samples, scale='linear', regression='pearson'):
+    def __init__(self, num_samples, scale='linear', regression='pearson',
+                 kde=False, region='all'):
         super().__init__(num_samples)
+        self.region = region
         linreg_axes = []
         for row in range(num_samples-1):
             for col in range(row, num_samples-1):
@@ -16,6 +18,7 @@ class LinReg(plots.Plot):
         self.axes[0, 0].get_shared_y_axes().join(*linreg_axes)
         self.lims = [0, 0]
         self.scale = scale
+        self.kde = kde
         self.regression = {
             'pearson': stats.pearsonr,
             'spearman': stats.spearmanr}[regression]
@@ -45,25 +48,42 @@ class LinReg(plots.Plot):
 
     def plot_data(self, structure, profile, annotations, label,
                   column=None, colors="sequence"):
+        if self.region == 'all':
+            start, end = 1, profile.length
+        else:
+            start, end = self.region
         if column is None:
             column = profile.metric
         self.labels.append(label)
         colors, colormap = profile.get_colors(
-            colors, profile=profile, structure=structure
+            colors, profile=profile, structure=structure,
+            annotations=annotations,
             )
-        self.colors.append(colors)
+        self.colors.append(colors[start-1:end])
         self.add_colorbar_args(colormap)
-        self.profiles.append(profile.data[column].to_numpy(copy=True))
+        self.profiles.append(
+            profile.data[column].to_numpy(copy=True)[start-1:end]
+            )
         if len(self.profiles) == self.length:
+            for row in range(self.length-1):
+                for col in range(self.length-1):
+                    if row <= col:
+                        self.plot_regression(i=row, j=col)
             self.finalize()
 
     def finalize(self):
-        # plot the regressions
-        for row in range(self.length-1):
-            for col in range(self.length-1):
-                if row <= col:
-                    self.plot_regression(i=row, j=col)
-        # # change the plotting buffer for linear scale
+        # change the plotting buffer for linear scale
+        if self.scale == 'log' and self.kde:
+            # change the tick labels to 'fake' a log scale plot
+            ticks = []
+            for power in range(-5, 5):
+                power = 10**power
+                if self.lims[0] > power or power > self.lims[1]:
+                    continue
+                ticks.append(power)
+                # 10^n formatted tick labels
+            for i in range(len(self.axes)):
+                self.axes[i, i].set(xticks=ticks, yticks=ticks)
         if self.scale == 'linear':
             buffer = 0.05 * (self.lims[1] - self.lims[0])
             self.lims[0] -= buffer
@@ -109,34 +129,29 @@ class LinReg(plots.Plot):
             p1 = p1[notNans]
             p2 = p2[notNans]
             colors = colors[notNans]
-            gradient, _, _, _, _ = stats.linregress(np.log10(p2), np.log10(p1))
-            r_value, p_value = self.regression(np.log10(p2), np.log10(p1))
+            r_value, _ = self.regression(np.log10(p2), np.log10(p1))
         if self.scale == 'linear':
             notNans = ~np.isnan(p1) & ~np.isnan(p2)
             p1 = p1[notNans]
             p2 = p2[notNans]
             colors = colors[notNans]
-            gradient, _, _, _, _ = stats.linregress(p2, p1)
-            r_value, p_value = self.regression(p2, p1)
+            r_value, _ = self.regression(p2, p1)
         self.lims[0] = min([self.lims[0], min(p1), min(p2)])
         self.lims[1] = max([self.lims[1], max(p1), max(p2)])
-        ax.text(
-            0.1, 0.75,
-            f'R^2: {r_value**2:.2f}\nslope: {gradient:.2f}\np: {p_value:.4f}',
-            transform=ax.transAxes)
-        ax.scatter(p2, p1, c=colors, marker='.')
-        ax.set(xscale=self.scale,
-               yscale=self.scale)
-
-    def plot_kde(self, i):
-        if len(np.unique(self.colors[i])) > 5:
-            return
-        ax = self.axes[i, i]
-        profile = self.profiles[i]
-        label = self.labels[i]
-        valid = profile > 0
-        for color in np.unique(self.colors[i]):
-            group = self.colors[i] == color
-            sns.kdeplot(profile[group & valid], bw_adjust=0.6, shade=True,
-                        ax=ax, log_scale=(self.scale=='log'), color=color)
-        ax.annotate(label, (0.1, 0.9), xycoords="axes fraction")
+        ax.text(0.1, 0.95, f'r = {r_value:.2f}', transform=ax.transAxes,
+                ha='left', va='top',
+                bbox=dict(fc='white', alpha=0.5, ec='black'))
+        if self.kde:
+            if self.scale == 'log':
+                sns.kdeplot(
+                    ax=ax, x=p1, y=p2, fill=True, log_scale=True,
+                    levels=np.arange(1, 11)/10
+                    )
+            elif self.scale == 'linear':
+                sns.kdeplot(
+                    ax=ax, x=p1, y=p2, fill=True,
+                    levels=np.arange(1, 11)/10
+                    )
+        else:
+            ax.scatter(p2, p1, c=colors, marker='.')
+            ax.set(xscale=self.scale, yscale=self.scale)

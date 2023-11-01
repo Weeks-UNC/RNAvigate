@@ -1062,10 +1062,12 @@ def plot_linreg(
         annotations=None,
         # optional data display
         labels=None,
+        kde=False,
         scale='linear',
         regression='pearson',
         colors='sequence',
-        column='None',
+        column=None,
+        region='all',
         # optional plot display
         colorbars=True,
         plot_kwargs=None,
@@ -1098,6 +1100,8 @@ def plot_linreg(
         labels (list of str)
             list containing Labels to be used in plot legends
             Defaults to sample.sample for each sample
+        kde (True or False)
+            whether to plot kde (density) instead of a scatter plot
         scale ('linear' or 'log')
             'linear' performs regression on raw values, displays linear units
             'log' performs regression on log10(values), displays log10 units
@@ -1121,6 +1125,9 @@ def plot_linreg(
         column (string)
             column name of values from profile to use in regression
             Defaults to profile.metric
+        region (list of 2 integers)
+            start and end nucleotide positions to include. 1-indexed, inclusive
+            Defaults to [1, length of sequence]
 
     Optional plot display arguments:
         colorbars (True or False)
@@ -1144,8 +1151,10 @@ def plot_linreg(
         annotations=annotations
     )
     plot_kwargs = _parse_plot_kwargs(plot_kwargs, "rnavigate.plots.LinReg")
-    plot = plots.LinReg(num_samples=parsed_args.num_samples, scale=scale,
-                        regression=regression, **plot_kwargs)
+    plot = plots.LinReg(
+        num_samples=parsed_args.num_samples, scale=scale, regression=regression,
+        kde=kde, ,region=region, **plot_kwargs
+        )
     for data_dict in parsed_args.data_dicts:
         plot.plot_data(**data_dict, colors=colors, column=column)
     plot.set_figure_size()
