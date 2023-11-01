@@ -21,11 +21,13 @@ class Sample:
 
         Optional arguments:
             inherit (Sample or list of Samples)
-                Other Samples from which to inherit stored data. This does not
-                make additional copies of the data: i.e. operations that make
-                changes to inherited data change the original sample, and any
-                other samples that inherited that data. This can be useful to
-                save time and memory on operations and large data structures.
+                Data keywords and associated data from other samples become the
+                data keywords and associated data from this sample. This does
+                not make additional copies of the data: i.e. operations that
+                make changes to inherited data change the original sample, and
+                any other samples that inherited that data. This can be useful
+                to save time and memory on operations and large data structures
+                that are shared between samples.
             keep_inherited_defaults (True or False)
                 whether to keep inherited default keywords
                 defaults to True
