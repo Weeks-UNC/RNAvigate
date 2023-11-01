@@ -14,6 +14,8 @@ data_keyword_defaults = {
     "pairprob": {"data_class": data.PairingProbability,
                     "sequence": "default_profile"},
     "ss": {"data_class": data.SecondaryStructure},
+    "ss_pairs": {"data_class": data.SecondaryStructure.from_pairs_list,
+                 "sequence": _required},
     "pdb": {"data_class": data.PDB, "chain": _required},
     "allpossible": {"data_class": data.AllPossible, "sequence": _required},
     "motif": {"data_class": data.Motif, "name": _required,
@@ -88,7 +90,7 @@ def create_data(data_keyword, inputs, sample=None):
         data_keyword=first_key
         inputs["input_data"] = inputs.pop(first_key)
     else:
-        inputs = {'data_keyword': data_keyword, 'input_data': inputs}
+        inputs = {'input_data': inputs}
 
     # handle special cases
     if data_keyword == 'allpossible':
