@@ -124,37 +124,59 @@ def set_alignment(sequence1, sequence2, alignment1, alignment2):
         raise ValueError("Alignment 1 does not match sequence 1")
     if alignment2.replace("-", "") != sequence2:
         raise ValueError("Alignment 2 does not match sequence 2")
-
-    # Set up alignment dictionaries
-    seq12 = {
-        hash1: {
-            "seqA": alignment1,
-            "seqB": alignment2}}
-    seq21 = {
-        hash2: {
-            "seqA": alignment2,
-            "seqB": alignment1}}
-
     # Store dictionaries in _alignments_cache
-    if hash1 not in _alignments_cache:
-        _alignments_cache[hash1] = seq12
-    else:
-        _alignments_cache[hash1].update(seq12)
-    if hash2 not in _alignments_cache:
-        _alignments_cache[hash2] = seq21
-    else:
-        _alignments_cache[hash2].update(seq21)
+    if hash1 not in _alignments_cache and hash2 not in _alignments_cache:
+        _alignments_cache[hash1] = {
+            hash2: {
+                "seqA": alignment1,
+                "seqB": alignment2
+                }
+            }
+    elif hash1 in _alignments_cache:
+        _alignments_cache[hash1].update({
+            hash2: {
+                "seqA": alignment1,
+                "seqB": alignment2
+                }
+            })
+    elif hash2 in _alignments_cache:
+        _alignments_cache[hash2].update({
+            hash1: {
+                "seqA": alignment2,
+                "seqB": alignment1
+                }
+            })
 
 def lookup_alignment(sequence1, sequence2):
+    """look up a previously set alignment in the _alignments_cache
+    
+    Args:
+        sequence1 (string)
+            The first sequence to align
+        sequence2 (string)
+            The second sequence to be aligned to
+    
+    Returns:
+        if 
+    """
     # Normalize sequences
     sequence1 = sequence1.upper().replace("T", "U")
     sequence2 = sequence2.upper().replace("T", "U")
+    # create hash keys
     hash1 = hash(sequence1)
     hash2 = hash(sequence2)
+    # lookup and return alignment for sequence1 to sequence2
     try:
         return _alignments_cache[hash1][hash2]
     except KeyError:
-        return None
+        try:
+            inverse_alignment = _alignments_cache[hash2][hash1]
+            return {
+                'seqA': inverse_alignment['seqB'],
+                'seqB': inverse_alignment['seqA']
+                }
+        except KeyError:
+            return None
 
 
 class BaseAlignment(ABC):
