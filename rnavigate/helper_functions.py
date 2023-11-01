@@ -1,14 +1,15 @@
-from rnavigate import data, Sample, get_sequence
+from rnavigate import data, Sample
+from rnavigate.data_loading import get_sequence
 
 
 
 def _parse_plot_kwargs(plot_kwargs, plot):
-    error = ValueError("plot_kwargs must be a dictionary of keyword-arguments "
-                    f"to be passed to {plot}.")
     if plot_kwargs is None:
         plot_kwargs = {}
     elif not isinstance(plot_kwargs, dict):
-        raise error
+        raise ValueError(
+            "plot_kwargs must be a dictionary of keyword-arguments "
+            f"to be passed to {plot}.")
     return plot_kwargs
 
 
