@@ -1085,8 +1085,14 @@ class SecondaryStructure(data.Sequence):
             )
 
     ###########################################################################
-    # change coordinates
+    # edit other attributes
     ###########################################################################
+
+    def normalize_sequence(self, t_or_u='U', uppercase=True):
+        super().normalize_sequence(
+            t_or_u=t_or_u,
+            uppercase=uppercase)
+        self.data["Sequence"] = list(self.sequence)
 
     def transform_coordinates(
             self, flip=None, scale=None, center=None, rotate_degrees=None

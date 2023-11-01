@@ -20,6 +20,12 @@ class Profile(data.Data):
     def recreation_kwargs(self):
         return {}
 
+    def normalize_sequence(self, t_or_u='U', uppercase=True):
+        super().normalize_sequence(
+            t_or_u=t_or_u,
+            uppercase=uppercase)
+        self.data["Sequence"] = list(self.sequence)
+
     def get_aligned_data(self, alignment):
         dataframe = alignment.map_nucleotide_dataframe(self.data)
         return self.__class__(

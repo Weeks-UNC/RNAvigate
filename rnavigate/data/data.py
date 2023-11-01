@@ -59,6 +59,15 @@ class Sequence():
         """
         return len(self.sequence)
 
+    def normalize_sequence(self, t_or_u='U', uppercase=True):
+        seq = self.sequence
+        if uppercase:
+            seq = seq.upper()
+        if t_or_u.upper() == 'U':
+            seq = seq.replace('t', 'u').replace('T', 'U')
+        if t_or_u.upper() == 'T':
+            seq = seq.replace('u', 't').replace('U', 'T')
+
     def get_aligned_data(self, alignment):
         return Sequence(alignment.target_sequence)
 
