@@ -77,8 +77,8 @@ class SecondaryStructure(data.Sequence):
         self.distance_matrix = None
 
     @classmethod
-    def from_sequence(cls, sequence):
-        seq = data.Sequence(input_data=sequence)
+    def from_sequence(cls, input_data):
+        seq = data.Sequence(input_data=input_data)
         df = pd.DataFrame(
             data={'Nucleotide': np.arange(seq.length)+1,
                   'Sequence': list(seq.sequence),
@@ -93,7 +93,7 @@ class SecondaryStructure(data.Sequence):
         return cls(input_data=df)
 
     @classmethod
-    def from_pairs_list(cls, pairs, sequence):
+    def from_pairs_list(cls, input_data, sequence):
         """Creates a SecondaryStructure from a list of pairs and a sequence.
 
         Args:
@@ -101,7 +101,7 @@ class SecondaryStructure(data.Sequence):
             sequence (str): sequence string. e.g., "AUCGUGUCAUGCUA"
         """
         structure = cls.from_sequence(sequence)
-        structure.add_pairs(pairs)
+        structure.add_pairs(input_data)
         return structure
 
     ###########################################################################
