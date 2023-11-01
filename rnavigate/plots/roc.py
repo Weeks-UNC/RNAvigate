@@ -42,31 +42,45 @@ class ROC(plots.Plot):
         valid = ~ profile.data[metric].isna()
         y = structure.pair_nts[valid] == 0
         scores = profile.data.loc[valid, metric]
+        y = y.astype(int)
+        scores = scores.astype(float)
         tpr, fpr, _ = roc_curve(y, scores)
         auc_score = auc(tpr, fpr)
-        self.main_ax.plot(tpr, fpr, label=f"{label}: AUC={auc_score:.2f}")
+        self.main_ax.plot(tpr, fpr, label=f"{label}: {auc_score:.2f}")
         self.main_ax.plot([0, 1], [0, 1], "k--")
 
-        axes = {'A': self.a_ax, 'U': self.u_ax, 'C': self.c_ax, 'G': self.g_ax}
+        axes = {
+            'A': self.a_ax,
+            'U': self.u_ax,
+            'C': self.c_ax,
+            'G': self.g_ax
+            }
+        other_nts = {
+            'A': ['a', 'A'],
+            'U': ['u', 'U', 't', 'T'],
+            'C': ['c', 'C'],
+            'G': ['g', 'G']}
         for nt in nts:
             ax = axes[nt]
             ax.plot([0, 1], [0, 1], "k--")
             ax.set(title=nt,
                    aspect='equal')
             valid = ~np.isnan(profile.data[metric])
-            valid &= profile.data["Sequence"] == nt
+            valid &= profile.data["Sequence"].isin(other_nts[nt])
             y = structure.pair_nts[valid] == 0
-            scores = profile.data.loc[valid, metric]
+            scores = profile.data.loc[valid, metric].to_numpy()
+            y = y.astype(int)
+            scores = scores.astype(float)
             tpr, fpr, _ = roc_curve(y, scores)
             auc_score = auc(tpr, fpr)
-            ax.plot(tpr, fpr, label=f"AUC={auc_score:.2f}")
+            ax.plot(tpr, fpr, label=f"{auc_score:.2f}")
 
         if self.i == self.length:
-            self.main_ax.legend(loc=4)
+            self.main_ax.legend(title="Sample name: AUC", loc=4)
             self.main_ax.set(title="Receiver Operator Characteristic",
                              ylabel="True Positive Rate",
                              xlabel="False Positive Rate",
                              aspect='equal')
             for ax in axes.values():
                 ax.set(yticks=[], xticks=[])
-                ax.legend()
+                ax.legend(title="AUC")
