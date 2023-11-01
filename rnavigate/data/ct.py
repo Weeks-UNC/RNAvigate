@@ -514,10 +514,6 @@ class SecondaryStructure(data.Sequence):
             write_file.write(self.get_dotbracket())
 
     ###########################################################################
-    # Filtering: These permanently delete data.
-    ###########################################################################
-
-    ###########################################################################
     # retrieve structure components or alternative representations
     ###########################################################################
 
@@ -809,8 +805,8 @@ class SecondaryStructure(data.Sequence):
             pairs (list): 1-indexed list of paired residues.
                 e.g. [(1, 20), (2, 19)]
         """
-        # get a non-redundant list of pairs
-        pairs = list(set([tuple(sorted(pair)) for pair in pairs]))
+        # get a non-redundant list of non-zero pairs
+        pairs = list(set([tuple(sorted(p)) for p in pairs if 0 not in p]))
         # find conflicts within provided pairs
         unique, counts = np.unique(np.ravel(pairs), return_counts=True)
         conflicts = unique[counts > 1]
@@ -1061,7 +1057,7 @@ class SecondaryStructure(data.Sequence):
                 columns={"Nucleotide": "i", "Pair": "j"}
             ).sort_values(
                 by=['i', 'j']
-            )
+            ).astype({'Structure': "Int32"})
         return df
 
     def as_interactions(self, structure2=None):
@@ -1074,10 +1070,10 @@ class SecondaryStructure(data.Sequence):
                 defaults to None.
         """
         input_data = self.get_interactions_df()
-        if structure2 is not None:
-            # alignment = data.SequenceAlignment(self, structure2)
-            # structure2 = structure2.get_aligned_data(alignment)
+        if isinstance(structure2, SecondaryStructure):
             structure2 = structure2.get_interactions_df()
+        elif isinstance(structure2, list):
+            structure2 = [s.get_interactions_df() for s in structure2]
         return data.StructureInteractions(
             input_data=input_data,
             sequence=self.sequence,

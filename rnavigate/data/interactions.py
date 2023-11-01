@@ -937,17 +937,23 @@ class AllPossible(Interactions):
 
 
 class StructureInteractions(Interactions):
-    def __init__(self, input_data, sequence, structure2=None):
-        metric = "Structure"
-        metric_defaults = {
-            'Structure': {
-                'metric_column': 'Structure',
-                'cmap': 'grey',
-                'normalization': 'none',
-                'ticks': [],
-                'title': 'Base-pairs',
-                'extend': 'neither'}}
-        if structure2 is not None:
+    def __init__(
+            self, input_data, sequence, metric=None, metric_defaults=None,
+            structure2=None, window=1
+            ):
+        if all(arg is None for arg in [structure2, metric, metric_defaults]):
+            if metric is None:
+                metric = "Structure"
+            metric_defaults = {
+                'Structure': {
+                    'metric_column': 'Structure',
+                    'cmap': 'grey',
+                    'normalization': 'none',
+                    'ticks': [],
+                    'title': 'Base-pairs',
+                    'extend': 'neither'}
+                } | metric_defaults
+        if isinstance(structure2, pd.DataFrame):
             input_data = input_data.merge(
                 structure2,
                 how="outer",
@@ -961,20 +967,6 @@ class StructureInteractions(Interactions):
             input_data['Which_structure'].astype(int)
             metric = "Which_structure"
             metric_defaults = {
-                'Structure_left': {
-                    'metric_column': 'Structure_left',
-                    'cmap': 'grey',
-                    'normalization': 'none',
-                    'ticks': [],
-                    'title': 'Base-pairs',
-                    'extend': 'neither'},
-                'Structure_right': {
-                    'metric_column': 'Structure_right',
-                    'cmap': 'grey',
-                    'normalization': 'none',
-                    'ticks': [],
-                    'title': 'Base-pairs',
-                    'extend': 'neither'},
                 'Which_structure': {
                     'metric_column': 'Which_structure',
                     'cmap': [
@@ -993,4 +985,33 @@ class StructureInteractions(Interactions):
                         'second\nstructure'],
                 }
             }
+        if isinstance(structure2, list):
+            columns = ['Structure_1']
+            input_data = input_data.rename(columns={'Structure': 'Structure_1'})
+            total_structures = len(structure2)+1
+            for i, structure in enumerate(structure2):
+                col = f'Structure_{i+2}'
+                columns.append(col)
+                structure = structure.rename(columns={'Structure': col})
+                input_data = input_data.merge(
+                    structure,
+                    how='outer',
+                    on=['i', 'j']
+                )
+            input_data[columns] = input_data[columns].fillna(0)
+            input_data['Num_structures'] = input_data[columns].sum(
+                axis=1, numeric_only=True
+                )
+            metric = "Num_structures"
+            metric_defaults = {
+                'Num_structures': {
+                    'metric_column': 'Num_structures',
+                    'cmap': sns.color_palette('rainbow_r', total_structures),
+                    'normalization': 'none',
+                    'values': [],
+                    'title': 'Base-pairs by structure',
+                    'extend': 'neither',
+                    'ticks': [i for i in range(total_structures)]
+                    }
+                }
         super().__init__(input_data, sequence, metric, metric_defaults)
