@@ -13,8 +13,7 @@ import numpy as np
 from scipy import stats
 from statsmodels.stats.multitest import multipletests
 import matplotlib.pyplot as plt
-from rnavigate.data import Profile, Annotation
-from rnavigate.rnavigate import Sample
+from rnavigate import data, Sample
 
 __version__ = '0.1.0'
 __author__ = 'Seth D. Veenbaas'
@@ -22,32 +21,47 @@ __maintainer__ = 'Seth D. Veenbaas'
 __email__ = 'sethv@live.unc.edu'
 
 
-class FragMaP(Profile):
+class FragMaP(data.Profile):
     def __init__(
-            self, profile1, profile2, parameters, metric='Fragmap_profile',
-            metric_defaults=None,
+            self, input_data, parameters, metric='Fragmap_profile',
+            metric_defaults=None, read_table_kw=None, sequence=None
             ):
-        dataframe = self.get_dataframe(profile1, profile2, **parameters)
+        self.parameters=parameters
+        if isinstance(input_data, (list, tuple)) and len(input_data) == 2:
+            profile1, profile2 = input_data
+            input_data = self.get_dataframe(profile1, profile2, **parameters)
+        elif not isinstance(input_data, pd.DataFrame):
+            raise ValueError(
+                "Input data must be a list of 2 shapemap profiles or a "
+                "pre-initialized dataframe")
         if metric_defaults is None:
             metric_defaults = {}
         metric_defaults = {
             "Fragmap_profile": {
                 "metric_column": "Fragmap_profile",
                 "error_column": "Fragmap_err",
-                "color_column": "sites",
+                "color_column": "Site",
                 'cmap': ["grey", "green"],
                 'normalization': "none",
                 'values': None,
                 'extend': 'neither',
+                'alpha': 1.0,
                 'title': 'Frag-MaP sites',
-                'ticklabels': ["other", "called sites"],
+                'ticks': [0, 1],
+                'tick_labels': ["other", "sites"],
             }
             } | metric_defaults
         super().__init__(
-            input_data=dataframe,
+            input_data=input_data,
             metric=metric,
             metric_defaults=metric_defaults,
+            read_table_kw=read_table_kw,
+            sequence=sequence,
             )
+
+    @property
+    def recreation_kwargs(self):
+        return {'parameters': self.parameters}
 
     def get_dataframe(
             self, profile1, profile2, mutation_rate_threshold, depth_threshold,
@@ -171,7 +185,7 @@ class FragMaP(Profile):
 
 
     def get_annotation(self):
-        return Annotation(
+        return data.Annotation(
             input_data=self.data.loc[self.data['Site'], "Nucleotide"].to_list(),
             name='Frag-MaP sites',
             sequence=self.sequence,
@@ -195,9 +209,8 @@ class Fragmapper(Sample):
             }
         self.parameters |= parameters
         fragmap = FragMaP(
-            sample1.get_data(profile),
-            sample2.get_data(profile),
-            parameters=self.parameters
+            input_data=[sample1.get_data(profile), sample2.get_data(profile)],
+            parameters=self.parameters,
             )
         super().__init__(
             sample=f'FragMaP: {sample1.sample}/{sample2.sample}',
