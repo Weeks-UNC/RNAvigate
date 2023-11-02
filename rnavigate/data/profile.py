@@ -190,7 +190,7 @@ class Profile(data.Data):
         self.data[new_profile] = norm_profile
         # calculate the new errors, if appropriate
         if normerr is not None and error_factors is not None:
-            for i in ntorder:
+            for i in 'AUCG':
                 mask = [nt == i for nt in norm_sequence]
                 normerr[mask] += (error_factors[i] * profile_factors[i])**2
                 normerr[mask] = np.sqrt(normerr[mask])
