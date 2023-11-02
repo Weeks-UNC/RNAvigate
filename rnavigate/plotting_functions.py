@@ -1153,7 +1153,7 @@ def plot_linreg(
     plot_kwargs = _parse_plot_kwargs(plot_kwargs, "rnavigate.plots.LinReg")
     plot = plots.LinReg(
         num_samples=parsed_args.num_samples, scale=scale, regression=regression,
-        kde=kde, ,region=region, **plot_kwargs
+        kde=kde, region=region, **plot_kwargs
         )
     for data_dict in parsed_args.data_dicts:
         plot.plot_data(**data_dict, colors=colors, column=column)
