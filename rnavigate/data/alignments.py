@@ -325,7 +325,7 @@ class BaseAlignment(ABC):
         })
         new_dataframe = new_dataframe.merge(dataframe, 'left', position_column)
         new_dataframe[sequence_column] = list(self.target_sequence)
-        return dataframe.copy()
+        return new_dataframe
 
 
 class SequenceAlignment(BaseAlignment):
