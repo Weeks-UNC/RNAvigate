@@ -1,7 +1,8 @@
 import pandas as pd
 import numpy as np
-from rnavigate import data
 from types import FunctionType
+import xml.etree.ElementTree as xmlet
+from rnavigate import data
 
 
 class Profile(data.Data):
@@ -15,6 +16,28 @@ class Profile(data.Data):
             metric=metric,
             metric_defaults=metric_defaults,
             read_table_kw=read_table_kw)
+
+    @classmethod
+    def from_array(cls, input_data, sequence, **kwargs):
+        sequence = data.Sequence(sequence)
+        if len(input_data) != sequence.length:
+            message = (f"RNAVIGATE ERROR\n{'=' * 15}\n"
+                "\tinput array must be the same size as the input sequence"
+                "\n\n")
+            print(message)
+            raise ValueError(message)
+        if not all(isinstance(value, (int, float)) for value in input_data):
+            message = (f"RNAVIGATE ERROR\n{'=' * 15}\n"
+                "\tinput array must be all float or integer values"
+                "\n\n")
+            print(message)
+            raise ValueError(message)
+        df = pd.DataFrame({
+            'Nucleotide': [i for i in range(sequence.length)],
+            'Sequence': list(sequence.sequence),
+            'Profile': input_data
+        })
+        return cls(input_data=df, sequence=sequence, **kwargs)
 
     @property
     def recreation_kwargs(self):
@@ -34,6 +57,9 @@ class Profile(data.Data):
             metric_defaults=self.metric_defaults,
             sequence=alignment.target_sequence,
             **self.recreation_kwargs)
+
+    def copy(self):
+        return self.get_aligned_data(self.null_alignment)
 
     def get_plotting_dataframe(self):
         new_names = ["Nucleotide"]
@@ -338,6 +364,21 @@ class SHAPEMaP(Profile):
                 error_column="HQ_stderr", new_error="Norm_stderr",
                 norm_method=normalize,
                 )
+
+    @classmethod
+    def from_rnaframework(cls, input_data, normalize=None):
+        tree = xmlet.parse(input_data)
+        root = tree.getroot()
+        sequence = root.find("./transcript/sequence").text
+        sequence = [nt for nt in sequence if nt in "ATCG"]
+        reactivities = root.find("./transcript/reactivity").text
+        reactivities = [float(rx) for rx in reactivities.split(',')]
+        input_data = pd.DataFrame({
+            'Nucleotide': [n+1 for n in range(len(sequence))],
+            'Sequence': sequence,
+            "Norm_profile": reactivities})
+        profile = cls(input_data=input_data, normalize=normalize)
+        return profile
 
     def read_log(self, log):
         if log is None:
