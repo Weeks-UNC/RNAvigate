@@ -63,10 +63,13 @@ class ROC(plots.Plot):
         for nt in nts:
             ax = axes[nt]
             ax.plot([0, 1], [0, 1], "k--")
-            ax.set(title=nt,
-                   aspect='equal')
+            ax.set(title=nt, aspect='equal')
             valid = ~np.isnan(profile.data[metric])
             valid &= profile.data["Sequence"].isin(other_nts[nt])
+            if sum(valid) == 0:
+                print(f"RNAvigate warning: {profile} data is missing for {nt}")
+                ax.plot([], [], label="N/A")
+                continue
             y = structure.pair_nts[valid] == 0
             scores = profile.data.loc[valid, metric].to_numpy()
             y = y.astype(int)
