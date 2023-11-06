@@ -77,7 +77,9 @@ class Sample:
             if keep_inherited_defaults and overwrite:
                 self.defaults |= inherit.defaults
             elif keep_inherited_defaults:
-                self.defaults = inherit.defaults | self.defaults
+                for k, v in inherit.defaults.items():
+                    if self.defaults[k] is None:
+                        self.defaults[k] = v
         elif inherit is not None:
             raise ValueError(
                 "inherit only accepts rnav.Sample or list of rnav.Sample"
