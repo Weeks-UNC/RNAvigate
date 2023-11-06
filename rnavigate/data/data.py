@@ -9,7 +9,7 @@ from rnavigate import data
 
 
 class Sequence():
-    def __init__(self, input_data):
+    def __init__(self, input_data, name=None):
         """Constructs a Data object given a sequence string, fasta file, or
         dataframe containing a "Sequence" column.
 
@@ -18,6 +18,7 @@ class Sequence():
                 sequence string, fasta file, or a pandas dataframe containing
                 a "Sequence" column.
         """
+        self.name = name
         self.other_info = dict()
         if isinstance(input_data, str):
             if isfile(input_data):
@@ -29,6 +30,11 @@ class Sequence():
         elif isinstance(input_data, Sequence):
             self.sequence = input_data.sequence
         self.null_alignment = data.SequenceAlignment(self, self)
+
+    def __str__(self):
+        if self.name is None:
+            return 'seq-object'
+        return self.name
 
     def read_fasta(self, fasta):
         """Parse a fasta file for the first sequence. Store the sequence name
@@ -175,7 +181,7 @@ class Sequence():
 
 class Data(Sequence):
     def __init__(self, input_data, sequence, metric, metric_defaults,
-                 read_table_kw=None):
+                 read_table_kw=None, name=None):
         if read_table_kw is None:
             read_table_kw = {}
         # assign data
@@ -190,7 +196,7 @@ class Data(Sequence):
         # assign sequence
         if sequence is None:
             sequence = self.data
-        super().__init__(sequence)
+        super().__init__(sequence, name=name)
         # assign metrics
         self.metric_defaults = {
             'default': {
@@ -254,14 +260,16 @@ class Data(Sequence):
 
     @property
     def error_column(self):
-        return self._metric['error_column']
+        if self._metric['error_column'] in self.data.columns:
+            return self._metric['error_column']
+        print(f'Warning: {self} missing expected error column')
+        return None
 
     @property
     def color_column(self):
-        if self._metric['color_column'] is None:
-            return self._metric['metric_column']
-        else:
+        if self.metric['color_column'] in self.data.columns:
             return self._metric['color_column']
+        return self._metric['metric_column']
 
     @property
     def cmap(self):
