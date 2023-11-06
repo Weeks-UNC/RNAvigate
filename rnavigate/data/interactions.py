@@ -1001,7 +1001,7 @@ class StructureInteractions(Interactions):
             input_data[columns] = input_data[columns].fillna(0)
             input_data['Num_structures'] = input_data[columns].sum(
                 axis=1, numeric_only=True
-                )
+                ) - 1 # to index at 0 for coloring
             metric = "Num_structures"
             metric_defaults = {
                 'Num_structures': {
@@ -1011,7 +1011,8 @@ class StructureInteractions(Interactions):
                     'values': [],
                     'title': 'Base-pairs by structure',
                     'extend': 'neither',
-                    'ticks': [i for i in range(total_structures)]
+                    'ticks': [i for i in range(total_structures)],
+                    'tick_labels': [i+1 for i in range(total_structures)]
                     }
                 }
         super().__init__(input_data, sequence, metric, metric_defaults)
