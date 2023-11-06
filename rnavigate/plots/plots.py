@@ -38,6 +38,7 @@ class Plot(ABC):
         for colorbar in self.colorbars:
             plot.plot_data(colorbar)
         plot.set_figure_size()
+        return plot
 
     def get_rows_columns(self, rows=None, cols=None):
         has_rows = isinstance(rows, int)
