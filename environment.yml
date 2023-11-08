@@ -4,13 +4,11 @@ channels:
   - bioconda
   - defaults
 dependencies:
-  - python=3.11.0
+  - python=3.10.8
   - scipy
   - py3dmol
-  - matplotlib
   - seaborn
   - biopython
-  - numpy
   - pandas
   - scikit-learn
   - jupyter
