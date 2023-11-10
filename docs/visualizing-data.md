@@ -2,6 +2,7 @@ Visualizing data
 ================
 
 This is part 3 in the getting started with RNAvigate guide.
+
 1. [Installing RNAvigate](./installing-rnavigate.md)
 2. [Loading Data](./loading-data.md)
 3. [Visualizing data](./visualizing-data.md)

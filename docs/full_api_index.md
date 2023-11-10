@@ -69,7 +69,6 @@ Accessory functions and argument parsing
 - [deltashape](#deltashape)
 - [logcompare](#logcompare)
 - [lowss](#lowss)
-- RNPMapper - coming soon
 
 ---
 
@@ -86,21 +85,25 @@ This submodule contains the Sample class.
 - The high-level API is centered around the sample class, which parses and
   organizes data related to a single experiment on a single RNA.
 
-*print_data_keywords*: `help(rnav.Sample.print_data_keywords)`
-
-- Print the data keywords associated with this sample, organized by data type.
-
-*set_data*: `help(rnav.Sample.set_data)`
+*Sample.set_data*: `help(rnav.Sample.set_data)`
 
 - Create a new data keyword using similar syntax as Sample initialization.
 
-*get_data*: `help(rnav.Sample.get_data)`
+*Sample.get_data*: `help(rnav.Sample.get_data)`
 
 - retreive data from data keywords in a flexible way with informative errors.
 
-*filter_interactions*: `help(rnav.Sample.filter_interactions)`
+*Sample.set_as_default* `help(rnav.Sample.set_as_default)`
+
+- sets a data keyword as the default for that data class.
+
+*Sample.filter_interactions*: `help(rnav.Sample.filter_interactions)`
 
 - Applies filters and colorscheme to interactions data.
+
+*Sample.print_data_keywords*: `help(rnav.Sample.print_data_keywords)`
+
+- Print data keywords associated with this sample, organized by data class.
 
 ### plotting_functions
 
@@ -196,7 +199,7 @@ This submodule contains functions for parsing Sample data keyword arguments.
 
 *create_data* `help(rnav.data_loading.create_data)`
 
-- An admittedly convoluted function used to parse Sample data keyword arguments
+- Parse Sample data keywords and return a data object
 
 *get_sequence* `help(rnav.data_loading.get_sequence)`
 
@@ -211,7 +214,7 @@ way for plotting functions to interact with Samples.
 
 - Flexibly returns data which has been aligned to a target sequence
 
-*PlottingArgumentParser*: `help(rnav.helper_functions.PlottingArgumentParser)`
+**PlottingArgumentParser class**: `help(rnav.helper_functions.PlottingArgumentParser)`
 
 - Class for parsing arguments from plotting functions, returns organized,
   aligned data
