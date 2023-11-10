@@ -62,6 +62,19 @@ class Sample:
             self.set_as_default(data_keyword=data_keyword, overwrite=False)
 
     def inherit_data(self, inherit, keep_inherited_defaults, overwrite):
+        """retrieves and stores data and data keywords from other samples
+
+        Args:
+            inherit (RNAvigate Sample or list of Samples)
+                Other samples from which to inherit data and data keywords
+            keep_inherited_defaults (True or False)
+                Use default values from inherited samples
+            overwrite (True or False)
+                whether to overwrite any existing keywords
+
+        Raises:
+            ValueError: if inherit is not a Sample or list of Samples
+        """
         if isinstance(inherit, (list, tuple)):
             for inherit_sample in inherit[::-1]:
                 self.inherit_data(
@@ -119,7 +132,6 @@ class Sample:
                 the data keyword already exists and overwrite is False
             ValueError:
                 there was an issue parsing the data
-            
         """
         if (data_keyword in self.data) and not overwrite:
             raise ValueError(
@@ -188,6 +200,19 @@ class Sample:
         return data_obj
 
     def set_as_default(self, data_keyword, overwrite=True):
+        """Set the given data keyword as the default for its data class
+
+        It's data class is determined automatically. Only one default exists
+        per data class and per Sample object.
+
+        Required arguments:
+            data_keyword (string)
+                The data keyword to set as the default
+
+        Optional arguments:
+            overwrite (True or False)
+                whether to overwrite a pre-existing default data keyword
+        """
         data_object = self.data[data_keyword]
         if isinstance(data_object, data.Annotation):
             default_keyword = "default_annotation"

@@ -148,8 +148,9 @@ class Sequence():
                 Defaults to 'rainbow'.
             profile (Profile or subclass, optional): Data object containing
                 per-nucleotide information. Defaults to None.
-            structure (CT of subclass, optional): Data object containing secondary
-                structure information. Defaults to None.
+            structure (SecondaryStructure or subclass, optional): Data object
+                containing secondary structure information.
+                Defaults to None.
             annotations (list of Annotations or subclass, optional): list of
                 Data objects containing annotations. Defaults to None.
 

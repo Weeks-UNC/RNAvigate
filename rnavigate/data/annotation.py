@@ -6,7 +6,7 @@ from rnavigate import data
 
 class Annotation(data.Sequence):
     """Basic annotation class to store 1D features of an RNA sequence
-    
+
     Each feature type must be a seperate instance. Feature types include:
         a group of separted nucleotides (e.g. binding pocket)
         regions of interest (e.g. coding sequence, Alu elements)
@@ -52,24 +52,49 @@ class Annotation(data.Sequence):
         self.annotation_type = annotation_type
         if isinstance(input_data, pd.DataFrame):
             self.data = input_data
-        elif annotation_type in ['spans', 'primers']:
+        elif annotation_type in ["spans", "primers"]:
             self.data = self.from_spans(input_data)
-        elif annotation_type in ['sites', 'group']:
+        elif annotation_type in ["sites", "group"]:
             self.data = self.from_sites(input_data)
         else:
             raise ValueError(f"annotation_type not in {valid_types}")
 
     @classmethod
-    def from_boolean_array(cls, values, window, sequence, annotation_type,
-                           name=None, color='blue'):
+    def from_boolean_array(
+            cls, values, sequence, annotation_type, name,
+            color="blue", window=1,
+            ):
+        """Create an Annotation from an array of boolean values.
+
+        True values are used to create the Annotation.
+
+        Required arguments:
+            values (list of True or False)
+                the boolean array
+            sequence (string or rnav.data.Sequence)
+                the sequence of the Annotation
+            annotation_type ("spans", "sites", "primers", or "group")
+                the type of the new annotation
+                If "spans" or "primers", adjacent True values, or values within
+                window are collapse to a region.
+            name (string): a name for labelling the annotation.
+
+        Optional arguments:
+            color (string)
+                a color for plotting the annotation
+                Defaults to "blue"
+            window (integer)
+                a window around True values to include in the annotation
+                Defaults to 1
+        """
         annotations = []
         current_annotation = None
         pad = window // 2
         for i, value in enumerate(values):
             position = i + 1
-            if value and annotation_type in ['sites', 'group']:
+            if value and annotation_type in ["sites", "group"]:
                 annotations.append(position)
-            elif value and annotation_type == 'spans':
+            elif value and annotation_type == "spans":
                 start = max(1, position - pad)
                 stop = min(len(sequence), position + pad)
                 if current_annotation is None:
@@ -79,31 +104,32 @@ class Annotation(data.Sequence):
                 elif start > current_annotation[1]:
                     annotations.append(current_annotation)
                     current_annotation = [start, stop]
-        if annotation_type == 'spans':
+        if annotation_type == "spans":
             annotations.append(current_annotation)
         return cls(
             input_data=annotations, annotation_type=annotation_type,
             color=color, sequence=sequence, name=name)
 
     def from_spans(self, spans):
-        data_dict = {'start':[], 'end':[]}
+        """Create the self.data dataframe from a list of spans."""
+        data_dict = {"start": [], "end": []}
         for span in spans:
             if ((len(span) != 2)
                     and any(not isinstance(pos, int) for pos in span)):
                 raise ValueError(
-                    f'{self.annotation_type} must be a list of pairs of '
-                    f'integers:\n{spans}'
+                    f"{self.annotation_type} must be a list of pairs of "
+                    f"integers:\n{spans}"
                 )
             start, end = span
-            data_dict['start'].append(int(start))
-            data_dict['end'].append(int(end))
+            data_dict["start"].append(int(start))
+            data_dict["end"].append(int(end))
         return pd.DataFrame(data_dict)
 
     def from_sites(self, sites):
         if any(not isinstance(site, int) for site in sites):
             raise ValueError(
-                f'{self.annotation_type} must be a list of integers:\n{sites}')
-        return pd.DataFrame({'site': sites})
+                f"{self.annotation_type} must be a list of integers:\n{sites}")
+        return pd.DataFrame({"site": sites})
 
     def get_aligned_data(self, alignment):
         new_input_data = alignment.map_dataframe(self.data, self.data.columns)
@@ -125,18 +151,18 @@ class Annotation(data.Sequence):
         if self.annotation_type in ["spans", "primers"]:
             sites = []
             for _, row in self.data.iterrows():
-                sites.extend(list(range(row['start'], row['end']+1)))
+                sites.extend(list(range(row["start"], row["end"]+1)))
         elif self.annotation_type in ["sites", "group"]:
-            sites = list(self.data['site'].values)
+            sites = list(self.data["site"].values)
         return sites
 
     def get_subsequences(self, buffer=0):
         subsequences = []
-        if self.annotation_type in ['spans', 'primers']:
-            for _, (start, stop) in self.data[['start', 'stop']].iterrows():
+        if self.annotation_type in ["spans", "primers"]:
+            for _, (start, stop) in self.data[["start", "stop"]].iterrows():
                 subsequences.append(self.sequence[start-1-buffer:stop+buffer])
-        elif self.annotation_type in ['sites', 'groups']:
-            for _, (site) in self.data[['sites']].iterrows():
+        elif self.annotation_type in ["sites", "groups"]:
+            for _, (site) in self.data[["sites"]].iterrows():
                 subsequences.append(self.sequence[site-1-buffer:stop+buffer])
         return subsequences
 
@@ -152,6 +178,7 @@ class Annotation(data.Sequence):
 
 
 class Motif(Annotation):
+    """Automatically annotates the occurances of a sequence motif as spans."""
     def __init__(self, input_data, sequence,
                  name=None, color="blue"):
         """Creates a Motif annotation, which acts like a span Annotation, for
@@ -226,6 +253,7 @@ class Motif(Annotation):
 
 
 class ORFs(Annotation):
+    """Automatically annotations occurances of open-reading frames as spans."""
     def __init__(
             self, input_data, name=None, sequence=None, color="blue"
             ):
@@ -241,8 +269,8 @@ class ORFs(Annotation):
 
         Args:
             sequence (str): RNA nucleotide sequence
-            which (str): 'all' returns all spans, 'longest' returns longest span
-                defaults to 'all'
+            which (str): "all" returns all spans, "longest" returns the longest
+                defaults to "all"
 
         Returns:
             list of tuples: (start, end) position of each ORF
@@ -250,7 +278,7 @@ class ORFs(Annotation):
         """
         if isinstance(sequence, data.Sequence):
             sequence = sequence.sequence
-        sequence = sequence.upper().replace('T', 'U')
+        sequence = sequence.upper().replace("T", "U")
         spans = []
         stop_codons = "UAA|UAG|UGA"
         start_codon = "AUG"
@@ -258,7 +286,7 @@ class ORFs(Annotation):
         start_sites = [m.start()+1 for m in re.finditer(start_codon, sequence)]
         for start in start_sites:
             for stop in stop_sites:
-                if (stop - start)%3 == 2 and (start < stop):
+                if (stop - start) % 3 == 2 and start < stop:
                     spans.append([start, stop])
         if which == "all":
             return spans
@@ -274,10 +302,11 @@ class ORFs(Annotation):
             color=self.color,
             sequence=alignment.target_sequence)
 
+
 def domains(input_data, names, colors, sequence):
     return [
         Annotation(
-            input_data=[span], annotation_type='spans', name=name,
+            input_data=[span], annotation_type="spans", name=name,
             color=color, sequence=sequence,
             ) for span, name, color in zip(input_data, names, colors)
         ]
