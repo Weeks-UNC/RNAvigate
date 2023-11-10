@@ -1,117 +1,140 @@
-import matplotlib.pyplot as plt
-import seaborn as sns
-from difflib import SequenceMatcher
-from rnavigate.data import set_alignment
+"""This module contains the SequenceChecker used to inspect the sequences.
+
+Given a list of samples, we can inspect which data keywords belong to the
+samples, which sequences match up perfectly, and inspect the differences
+between sequences.
+"""
+import pandas as pd
+import numpy as np
+from rnavigate import data
+
 
 class SequenceChecker():
+    """Check the sequences stored in a list of samples.
+
+    Attributes:
+        samples: the list of samples
+        sequences: a list of all unique sequence strings stored in the list of
+            samples. These are converted to an all uppercase RNA alphabet.
+        keywords: a list of unique data keywords stored in the list of samples.
+    """
     def __init__(self, samples):
+        """Creates an instance of SequenceChecker given a list of samples
+
+        Arguments:
+            samples (list of rnav.Sample)
+                samples for which to compare data keywords and sequences.
+        """
         self.samples = samples
-        self.sequences = []
-        self.data_keywords = list(set([dkw  for sample in samples for dkw in sample.data]))
-        # 1 row per sequence, 1 column per data keyword, value==sequence # or N/A
-        self.sample_dkw_seq = []
-        # group each sample by sequence, print the sequence, sample names and data type
-        for sample in samples:
-            dkw_seq = []
-            for dkw in self.data_keywords:
+        self._keywords = []
+        self._sequences = []
+
+    @property
+    def keywords(self):
+        """A list of all unique data keywords across samples."""
+        return list(set([dkw for s in self.samples for dkw in s.data]))
+
+    @property
+    def sequences(self):
+        """A list of all unique sequences (uppercase RNA) across samples."""
+        sequences = []
+        for sample in self.samples:
+            for dkw in self.keywords:
                 if dkw not in sample.data:
-                    which_seq = 'N/A'
+                    continue
+                seq = sample.get_data(dkw).sequence
+                seq = seq.upper().replace("T", "U")
+                if seq not in self.sequences:
+                    sequences.append(seq)
+        return sequences
+
+    @property
+    def which_sequences(self):
+        """A DataFrame of sequence IDs (integers) for each data keyword."""
+        sequences = self.sequences
+        data_keywords = self.keywords
+        df = {key: [] for key in ["Sample"] + data_keywords}
+        for sample in self.samples:
+            df["Sample"].append(sample.sample)
+            for dkw in data_keywords:
+                if dkw not in sample.data:
+                    df[dkw].append(np.nan)
                 else:
                     seq = sample.get_data(dkw).sequence
-                    seq = seq.upper().replace('T', 'U')
-                    if seq not in self.sequences:
-                        self.sequences.append(seq)
-                    which_seq = self.sequences.index(seq)
-                dkw_seq.append(which_seq)
-            self.sample_dkw_seq.append(dkw_seq)
-        num_seq = range(len(self.sequences))
-        self.alignments = [[None for _ in num_seq] for _ in num_seq]
+                    seq = seq.upper().replace("T", "U")
+                    df[dkw].append(sequences.index(seq))
+        self.which_sequences = pd.DataFrame(df)
 
-    def plot_which_sequence(self):
-        colors = sns.color_palette("rainbow", len(self.sequences))
-        colors = {i: color for i, color in enumerate(colors)} | {'N/A': 'w'}
-        colors = [[colors[col] for col in row] for row in self.sample_dkw_seq]
-        num_samples = len(self.samples)
-        num_dkws = len(self.data_keywords)
-        fig, ax = plt.subplots(1, figsize=(1.5*num_dkws, 0.75*num_samples))
-        ax.table(
-            cellText=self.sample_dkw_seq,
-            cellColours=colors,
-            cellLoc='center',
-            bbox=[0, 0, 1, 1],
-            rowLabels=[sample.sample for sample in self.samples],
-            rowLoc='center',
-            colLabels=[f'"{dkw}"' for dkw in self.data_keywords],
-        )
-        ax.set(yticks=[], xticks=[])
-        return fig, ax
-
-    def get_alignments(self, which='all', print_format=None):
-        kwargs = {'print_format': print_format}
-        if which == 'all':
-            num = range(len(self.sequences))
-            return [self.get_alignments(which=(s1, s2), **kwargs
-                    ) for s1 in num for s2 in num if s1 < s2]
-        i, j = which
-        seq_match = self.alignments[i][j]
-        a = self.sequences[i].upper().replace('T', 'U')
-        b = self.sequences[j].upper().replace('T', 'U')
-        if seq_match is None:
-            seq_match = SequenceMatcher(a=a, b=b, autojunk=False)
-            self.alignments[i][j] = seq_match
-        if print_format is None:
-            return seq_match
-        elif print_format == 'cigar':
-            tags = {
-                'insert': 'I', 'delete': 'D', 'equal': '=', 'replace': 'X',
-            }
-            cigar = ''
-            for tag, i1, i2, j1, j2 in seq_match.get_opcodes():
-                if tag in ['equal', 'replace', 'delete']:
-                    length = i2-i1
-                elif tag == 'insert':
-                    length = j2-j1
-                cigar += f'{length}{tags[tag]}'
-            print(f'Sequence {i} to {j}:')
-            print(cigar)
-        elif print_format == "long":
-            print(f'Sequence {i} to {j}:')
-            for tag, i1, i2, j1, j2 in seq_match.get_opcodes():
-                s_a = a[i1:i2]
-                s_b = b[j1:j2]
-                if tag == 'equal':
-                    continue
-                elif tag == 'replace':
-                    s = f'{"mismatch":<9} {i1+1:>6} {s_a} --> {s_b}'
-                elif tag == 'delete':
-                    s = f'{"delete":<9} {i1+1:>6} {s_a}'
-                elif tag == 'insert':
-                    s = f'{"insert":<9} {i1+1:>6} {s_b}'
-                print(s)
+    def print_which_sequences(self):
+        """Print sequence ID (integer) for each data keyword and sample."""
+        which_sequences = self.which_sequences
+        for _, row in which_sequences.iterrows():
+            for column in which_sequences.columns:
+                if column == "Sample":
+                    print(row[column])
+                else:
+                    if np.isnan(row[column]):
+                        continue
+                    print(f"    '{column}': Sequence {row[column]}")
             print()
 
-    def set_as_default_alignments(self, which='all'):
-        if which == 'all':
-            for i in range(len(self.sequences)):
-                for j in range(len(self.sequences)):
-                    if i < j:
-                        self.set_as_default_alignments(which=(i, j))
+    def print_alignments(self, print_format="long", which="all"):
+        """Print alignments in the given format for sequence IDs provided.
+
+        Optional arguments:
+            print_format (string)
+                What format to print the alignments in:
+                "cigar" prints the cigar string
+                "short" prints the numbers of mismatches and indels
+                "long" prints the location and nucleotide identity of all
+                    mismatches, insertions and deletions.
+                Defaults to "long".
+            which (pair of integers)
+                two sequence IDs to compare.
+                Defaults to every pairwise comparison.
+        """
+        kwargs = {"print_format": print_format}
+        if which == "all":
+            num = range(len(self.sequences))
+            for s1 in num:
+                for s2 in num:
+                    if s1 < s2:
+                        self.print_alignments(which=(s1, s2), **kwargs)
             return
-        i, j = which
-        seq_match = self.get_alignments(which=(i, j))
-        alignment1, alignment2 = '', ''
-        sequence1 = self.sequences[i]
-        sequence2 = self.sequences[j]
-        for tag, i1, i2, j1, j2 in seq_match.get_opcodes():
-            s_a = sequence1[i1:i2]
-            s_b = sequence2[j1:j2]
-            if tag in ['equal', 'replace']:
-                alignment1 += s_a
-                alignment2 += s_b
-            elif tag == 'delete':
-                alignment1 += s_a
-                alignment2 += '-' * len(s_a)
-            elif tag == 'insert':
-                alignment1 += '-' * len(s_b)
-                alignment2 += s_b
-        set_alignment(sequence1, sequence2, alignment1, alignment2)
+        i, j = int(which[0]), int(which[1])
+        a = self.sequences[i]
+        b = self.sequences[j]
+        alignment = data.SequenceAlignment(sequence1=a, sequence2=b, full=True)
+        print(f"Sequence {i} to {j}:")
+        alignment.print(print_format=print_format)
+
+    def write_fasta(self, filename, which="all"):
+        """Write all unique sequences to a fasta file.
+
+        This is very useful for using external multiple sequence aligners such
+        as ClustalOmega.
+
+            1) go to https://www.ebi.ac.uk/Tools/msa/clustalo/
+            2) upload new fasta file
+            3) under STEP 2 output format, select Pearson/FASTA
+            4) click 'Submit'
+            5) wait for your alignment to finish
+            6) download the alignment fasta file
+            7) use rnav.data.set_alignments_from_pearsonfasta() to set the new
+               default alignments
+
+        Required arguments:
+            filename (string)
+                path to a new file to which fasta entries are written
+
+        Optional arguments:
+            which (list of integers)
+                Sequence IDs to write to file.
+        """
+        sequences = self.sequences
+        if which == "all":
+            which = range(len(sequences))
+        with open(filename, "w") as fasta:
+            for i in which:
+                fasta.write(f">Sequence_{i}\n")
+                fasta.write(f"{sequences[i]}\n")
