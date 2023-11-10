@@ -37,6 +37,7 @@ should be in parentheses, and parentheses should not be used elsewhere.
 (-) Means a feature or name was removed.
 (~) Means a behavior was altered.
 (fix) Means a bug was fixed
+(doc) Means only changes are to documentation
 
 For large changes, a longer message is needed. I don't use a specific format
 for this. It should be concise and clear, and describe how and why the changes
