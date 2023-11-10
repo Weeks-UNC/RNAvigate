@@ -268,7 +268,7 @@ class Data(Sequence):
 
     @property
     def color_column(self):
-        if self.metric['color_column'] in self.data.columns:
+        if self._metric['color_column'] in self.data.columns:
             return self._metric['color_column']
         return self._metric['metric_column']
 
