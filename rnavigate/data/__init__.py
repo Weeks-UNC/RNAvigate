@@ -20,7 +20,9 @@ from rnavigate.data.interactions import (
     PAIRMaP,
     PairingProbability,
     AllPossible,
-    StructureInteractions,
+    StructureAsInteractions,
+    StructureCompareMany,
+    StructureCompareTwo,
     )
 from rnavigate.data.pdb import PDB
 from rnavigate.data.profile import (
@@ -44,7 +46,8 @@ __all__ = [
     "ScalarMappable",
     # from interactions
     "Interactions", "SHAPEJuMP", "RINGMaP", "PAIRMaP", "PairingProbability",
-    "AllPossible", "StructureInteractions",
+    "AllPossible", "StructureAsInteractions", "StructureCompareMany",
+    "StructureCompareTwo",
     # from PDB
     "PDB",
     # from profile

@@ -1079,15 +1079,28 @@ class SecondaryStructure(data.Sequence):
                 defaults to None.
         """
         input_data = self.get_interactions_df()
-        if isinstance(structure2, SecondaryStructure):
+        if structure2 is None:
+            return data.StructureAsInteractions(
+                input_data=input_data,
+                sequence=self.sequence,
+                )
+        elif isinstance(structure2, SecondaryStructure):
             structure2 = structure2.get_interactions_df()
+            return data.StructureCompareTwo(
+                input_data=input_data,
+                sequence=self.sequence,
+                structure2=structure2
+            )
         elif isinstance(structure2, list):
             structure2 = [s.get_interactions_df() for s in structure2]
-        return data.StructureInteractions(
-            input_data=input_data,
-            sequence=self.sequence,
-            structure2=structure2
+            return data.StructureCompareMany(
+                input_data=input_data,
+                sequence=self.sequence,
+                structure2=structure2
             )
+        raise ValueError(
+            "structure2 must be a SecondaryStructure or list of "
+            "SecondaryStructures")
 
     ###########################################################################
     # edit other attributes

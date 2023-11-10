@@ -935,84 +935,103 @@ class AllPossible(Interactions):
             read_table_kw=read_table_kw,
             window=window)
 
+class StructureAsInteractions(Interactions):
+    def __init__(
+            self, input_data, sequence, metric=None, metric_defaults=None,
+            ):
+        if metric_defaults is None:
+            metric_defaults = {}
+        if metric is None:
+            metric = "Structure"
+        metric_defaults = {
+            'Structure': {
+                'metric_column': 'Structure',
+                'cmap': 'grey',
+                'normalization': 'none',
+                'ticks': [],
+                'title': 'Base-pairs',
+                'extend': 'neither'}
+            } | metric_defaults
+        super().__init__(input_data, sequence, metric, metric_defaults)
 
-class StructureInteractions(Interactions):
+
+class StructureCompareTwo(Interactions):
     def __init__(
             self, input_data, sequence, metric=None, metric_defaults=None,
             structure2=None, window=1
             ):
-        if all(arg is None for arg in [structure2, metric, metric_defaults]):
-            if metric is None:
-                metric = "Structure"
-            metric_defaults = {
-                'Structure': {
-                    'metric_column': 'Structure',
-                    'cmap': 'grey',
-                    'normalization': 'none',
-                    'ticks': [],
-                    'title': 'Base-pairs',
-                    'extend': 'neither'}
-                } | metric_defaults
-        if isinstance(structure2, pd.DataFrame):
-            input_data = input_data.merge(
-                structure2,
-                how="outer",
-                on=["i", "j"],
-                indicator="Which_structure",
-                suffixes=["_left", "_right"])
-            categories = {'both': 0, 'left_only': 1, 'right_only': 2}
-            input_data["Which_structure"] = [
-                categories[c] for c in input_data['Which_structure']
-                ]
-            input_data['Which_structure'].astype(int)
+        if metric is None:
             metric = "Which_structure"
-            metric_defaults = {
-                'Which_structure': {
-                    'metric_column': 'Which_structure',
-                    'cmap': [
-                        (150/255., 150/255., 150/255.), # shared
-                        (38/255., 202/255., 145/255.),  # left
-                        (153/255., 0.0, 1.0),           # right
-                    ],
-                    'normalization': 'none',
-                    'values': [],
-                    'title': 'Base-pairs by structure',
-                    'extend': 'neither',
-                    'ticks': [0, 1, 2],
-                    'tick_labels': [
-                        'common\npairs',
-                        'first\nstructure',
-                        'second\nstructure'],
-                }
+        if metric_defaults is None:
+            metric_defaults = {}
+        input_data = input_data.merge(
+            structure2,
+            how="outer",
+            on=["i", "j"],
+            indicator="Which_structure",
+            suffixes=["_left", "_right"])
+        categories = {'both': 0, 'left_only': 1, 'right_only': 2}
+        input_data["Which_structure"] = [
+            categories[c] for c in input_data['Which_structure']
+            ]
+        input_data['Which_structure'].astype(int)
+        metric_defaults = {
+            'Which_structure': {
+                'metric_column': 'Which_structure',
+                'cmap': [
+                    (150/255., 150/255., 150/255.), # shared
+                    (38/255., 202/255., 145/255.),  # left
+                    (153/255., 0.0, 1.0),           # right
+                ],
+                'normalization': 'none',
+                'values': [],
+                'title': 'Base-pairs by structure',
+                'extend': 'neither',
+                'ticks': [0, 1, 2],
+                'tick_labels': [
+                    'common\npairs',
+                    'first\nstructure',
+                    'second\nstructure'],
             }
-        if isinstance(structure2, list):
-            columns = ['Structure_1']
-            input_data = input_data.rename(columns={'Structure': 'Structure_1'})
-            total_structures = len(structure2)+1
-            for i, structure in enumerate(structure2):
-                col = f'Structure_{i+2}'
-                columns.append(col)
-                structure = structure.rename(columns={'Structure': col})
-                input_data = input_data.merge(
-                    structure,
-                    how='outer',
-                    on=['i', 'j']
-                )
-            input_data[columns] = input_data[columns].fillna(0)
-            input_data['Num_structures'] = input_data[columns].sum(
-                axis=1, numeric_only=True
-                ) - 1 # to index at 0 for coloring
+        } | metric_defaults
+        super().__init__(input_data, sequence, metric, metric_defaults)
+
+
+class StructureCompareMany(Interactions):
+    def __init__(
+            self, input_data, sequence, metric=None, metric_defaults=None,
+            structure2=None, window=1
+            ):
+        if metric is None:
             metric = "Num_structures"
-            metric_defaults = {
-                'Num_structures': {
-                    'metric_column': 'Num_structures',
-                    'cmap': sns.color_palette('rainbow_r', total_structures),
-                    'normalization': 'none',
-                    'values': [],
-                    'title': 'Base-pairs by structure',
-                    'extend': 'neither',
-                    'ticks': [i for i in range(total_structures)],
-                    'tick_labels': [i+1 for i in range(total_structures)]
-                    }
+        if metric_defaults is None:
+            metric_defaults = {}
+        columns = ['Structure_1']
+        input_data = input_data.rename(columns={'Structure': 'Structure_1'})
+        total_structures = len(structure2)+1
+        for i, structure in enumerate(structure2):
+            col = f'Structure_{i+2}'
+            columns.append(col)
+            structure = structure.rename(columns={'Structure': col})
+            input_data = input_data.merge(
+                structure,
+                how='outer',
+                on=['i', 'j']
+            )
+        input_data[columns] = input_data[columns].fillna(0)
+        input_data['Num_structures'] = input_data[columns].sum(
+            axis=1, numeric_only=True
+            ) - 1  # to index at 0 for coloring
+        metric_defaults = {
+            'Num_structures': {
+                'metric_column': 'Num_structures',
+                'cmap': sns.color_palette('rainbow_r', total_structures),
+                'normalization': 'none',
+                'values': [],
+                'title': 'Base-pairs by structure',
+                'extend': 'neither',
+                'ticks': [i for i in range(total_structures)],
+                'tick_labels': [i+1 for i in range(total_structures)]
                 }
+            } | metric_defaults
         super().__init__(input_data, sequence, metric, metric_defaults)
