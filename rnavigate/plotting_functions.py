@@ -1019,12 +1019,99 @@ def plot_circle(
         profile=None,
         # optional data display
         colors=None,
-        title=True,
         positions=20,
         gap=30,
         labels=None,
+        # optional plot display
         colorbars=True,
         plot_kwargs=None):
+    """Creates a figure containing a circle plot for each sample given.
+
+    Data that can be plotted on circle plots includes annotations (highlights
+    regions around the edge.Generates a multipanel secondary structure drawing with optional
+    coloring by per-nucleotide data and display of inter-nucleotide data and/or
+    sequence annotations. Each plot may display a unique sample and/or
+    inter-nucleotide data filtering scheme.
+
+    Required arguments:
+        samples (list of rnavigate Samples)
+            samples used to retrieve data
+        sequence (data or data keyword)
+            All data are mapped to this sequence before plotting
+
+    Optional data input arguments:
+        structure (data or data keyword)
+            Structure used to plot base-pairs on circle plot
+        structure2 (data or data keyword or list of either)
+            Structures to compare with Structure. Each base-pair is colored by
+            which structure contains it or how many structures contain it.
+        interactions (one of the formats below)
+            format 1 (data or data keyword)
+                Interactions to plot on cirle plot, no filtering
+            format 2 (dictionary)
+                e.g. {'interactions': format 1}
+                additional filtering options can be added to the dictionary
+            format 3 (list of format 2 dictionaries)
+                This format allows multiple filtering schemes to be applied,
+                each will be plotted on a seperate axis
+            Defaults to None
+        interactions2 (one of the formats below)
+            format 1 (data or data keyword)
+                Interactions to plot on circle plot, no filtering
+            format 2 (dictionary)
+                e.g. {'interactions': format 1}
+                additional filtering options can be added to the dictionary
+            Defaults to None
+        annotations (list of data or data keywords)
+            Annotations used to highlight regions or sites of interest
+            Defaults to [].
+        profile (data or data keyword)
+            Profile used for coloring if "profile" used in colors dictionary
+            Defaults to None
+
+    Optional data display arguments:
+        labels (list of str)
+            list containing Labels to be used in plot legends
+            Defaults to sample.sample for each sample
+        colors (dictionary)
+            a dictionary of element: value pairs that determines how colors
+            will be applied to each plot element and if that element is plotted
+            only the elements you wish to change need to be included
+            Defaults to {'sequence': None, 'nucleotides': 'sequence'}
+            value options and what the colors represent:
+                None: don't plot this elelement
+                'sequence': nucleotide identity
+                'position': position in sequence
+                'annotations': sequence annotations
+                'profile': per-nucleotide data from profile
+                    profile argument must be provided
+                'structure': base-pairing status
+                matplotlib color: all positions plotted in this color
+                array of colors: a different color for each position
+                    must be the same length as structure
+            'sequence' may also use 'contrast' which automatically chooses
+                white or black, which ever contrasts better with 'nucleotide'
+                color
+        positions (integer)
+            positions in this increment will be labeled
+            Defaults to None
+        gap (float)
+            Width of gap between 5' and 3' end in degrees
+            Defaults to 30
+
+    Optional plot display arguments:
+        colorbars (True or False)
+            Whether to plot color scales for all plot elements
+            Defaults to True
+        plot_kwargs (dictionary)
+            Keyword-arguments passed to matplotlib.pyplot.subplots
+            Defaults to {}.
+
+    Returns:
+        rnavigate.plots.Circle plot: object containing matplotlib figure and axes
+            with additional plotting and file saving methods
+    """
+
     parsed_args = PlottingArgumentParser(
         samples=samples,
         labels=labels,
@@ -1043,7 +1130,7 @@ def plot_circle(
     for data_dict in parsed_args.data_dicts:
         data_dict = fit_data(data_dict, data_dict['sequence'].null_alignment)
         plot.plot_data(
-            **data_dict, colors=colors, title=title, positions=positions,
+            **data_dict, colors=colors, positions=positions,
             gap=gap
             )
     plot.set_figure_size()

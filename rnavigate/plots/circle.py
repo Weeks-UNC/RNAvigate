@@ -36,7 +36,7 @@ class Circle(plots.Plot):
     def plot_data(
             self, sequence, structure=None, structure2=None, interactions=None,
             interactions2=None, profile=None, annotations=None, label=None,
-            colors=None, title=True, positions=20, gap=30):
+            colors=None, positions=20, gap=30):
         if annotations is None:
             annotations = []
         seq_circle = data.SequenceCircle(sequence, gap=gap)
@@ -80,8 +80,7 @@ class Circle(plots.Plot):
             self.add_colorbar_args(interactions2.cmap)
         for annotation in annotations:
             plots.plot_annotation_circle(ax, seq_circle, annotation)
-        if title:
-            ax.set_title(label)
+        ax.set_title(label)
         tick_set = seq_circle.data.query(
             f'Nucleotide % {positions} == 0 '
             f'| Nucleotide in [1, {seq_circle.length}]')
