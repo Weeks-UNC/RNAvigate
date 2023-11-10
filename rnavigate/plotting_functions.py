@@ -91,6 +91,7 @@ def plot_skyline(
         domains=None,
         # optional data display
         labels=None,
+        nt_ticks=(20, 5),
         columns=None,
         errors=None,
         annotations_mode='track',
@@ -123,6 +124,10 @@ def plot_skyline(
         labels (list of str)
             list containing Labels to be used in plot legends
             Defaults to sample.sample for each sample
+        nt_ticks (tuple of two integers)
+            first integer is the gap between major tick marks
+            second integer is the gap between minor tick marks
+            defaults to (20, 5)
         columns (string or list of strings)
             columns names of values from profile to plot
             Defaults to profile.metric
@@ -164,8 +169,8 @@ def plot_skyline(
         )
     for data_dict in parsed_args.data_dicts:
         plot.plot_data(
-            **data_dict, columns=columns, errors=errors,
-            annotations_mode=annotations_mode, seqbar=seqbar
+            **data_dict, columns=columns, errors=errors, nt_ticks=nt_ticks,
+            annotations_mode=annotations_mode, seqbar=seqbar,
             )
     plot.set_figure_size()
     plot.plot_colorbars()
@@ -182,6 +187,7 @@ def plot_profile(
         domains=None,
         # optional data display
         labels=None,
+        nt_ticks=(20, 5),
         column=None,
         plot_error=True,
         annotations_mode='track',
@@ -215,6 +221,10 @@ def plot_profile(
         labels (list of strings)
             list containing Labels to be used in plot legends
             Defaults to sample.sample for each sample
+        nt_ticks (tuple of two integers)
+            first integer is the gap between major tick marks
+            second integer is the gap between minor tick marks
+            defaults to (20, 5)
         column (string)
             column name of values from profile to plot
             Defaults to profile.metric
@@ -259,7 +269,7 @@ def plot_profile(
     for data_dict in parsed_args.data_dicts:
         plot.plot_data(
             **data_dict, column=column, plot_error=plot_error, seqbar=seqbar,
-            annotations_mode=annotations_mode
+            annotations_mode=annotations_mode, nt_ticks=nt_ticks,
             )
     plot.set_figure_size()
     if colorbars:
@@ -319,6 +329,7 @@ def plot_arcs(
         domains=None,
         # optional data display
         labels=None,
+        nt_ticks=(20, 5),
         profile_scale_factor=1,
         plot_error=False,
         annotation_mode='track',
@@ -378,6 +389,10 @@ def plot_arcs(
         labels (list of str)
             list containing Labels to be used in plot legends
             Defaults to sample.sample for each sample
+        nt_ticks (tuple of two integers)
+            first integer is the gap between major tick marks
+            second integer is the gap between minor tick marks
+            defaults to (20, 5)
         profile_scale_factor (number)
             small profile values will be hard to see
             large profile values will overwhelm the plot
@@ -441,9 +456,12 @@ def plot_arcs(
         region=region, **plot_kwargs)
     # loop through samples and interactions, adding each as a new axis
     for data_dict in parsed_args.data_dicts:
-        plot.plot_data(**data_dict, sequence=sequence, title=title, panels=panels,
-        plot_error=plot_error, annotation_mode=annotation_mode, seqbar=seqbar,
-        profile_scale_factor=profile_scale_factor)
+        plot.plot_data(
+            **data_dict, sequence=sequence, title=title, panels=panels,
+            plot_error=plot_error, annotation_mode=annotation_mode,
+            seqbar=seqbar, profile_scale_factor=profile_scale_factor,
+            nt_ticks=nt_ticks,
+            )
     plot.set_figure_size()
     if colorbars:
         plot.plot_colorbars()
@@ -601,7 +619,7 @@ def plot_ss(
         # optional data display
         labels=None,
         colors=None,
-        positions=None,
+        nt_ticks=None,
         bp_style='dotted',
         # optional plot display
         colorbars=True,
@@ -670,9 +688,9 @@ def plot_ss(
                          'nucleotides': 'sequence',
                          'structure': 'grey',
                          'basepairs': 'grey'}
-        positions (integer)
-            positions in this increment will be labeled
-            Defaults to None
+        nt_ticks (integer)
+            gap between major tick marks
+            defaults to None (no position labels)
         bp_style ('dotted', 'line', or 'conventional')
             'dotted' plots basepairs as a dotted line
             'line' plots basepairs as a solid line
@@ -708,7 +726,7 @@ def plot_ss(
     for data_dict in parsed_args.data_dicts:
         data_dict = fit_data(data_dict, data_dict['structure'].null_alignment)
         plot.plot_data(
-            **data_dict, colors=colors, positions=positions, bp_style=bp_style
+            **data_dict, colors=colors, nt_ticks=nt_ticks, bp_style=bp_style
             )
     plot.set_figure_size()
     if colorbars:
@@ -1019,7 +1037,7 @@ def plot_circle(
         profile=None,
         # optional data display
         colors=None,
-        positions=20,
+        nt_ticks=(20, 5),
         gap=30,
         labels=None,
         # optional plot display
@@ -1092,9 +1110,10 @@ def plot_circle(
             'sequence' may also use 'contrast' which automatically chooses
                 white or black, which ever contrasts better with 'nucleotide'
                 color
-        positions (integer)
-            positions in this increment will be labeled
-            Defaults to None
+        nt_ticks (tuple of two integers)
+            first integer is the gap between major tick marks
+            second integer is the gap between minor tick marks
+            defaults to (20, 5)
         gap (float)
             Width of gap between 5' and 3' end in degrees
             Defaults to 30
@@ -1130,7 +1149,7 @@ def plot_circle(
     for data_dict in parsed_args.data_dicts:
         data_dict = fit_data(data_dict, data_dict['sequence'].null_alignment)
         plot.plot_data(
-            **data_dict, colors=colors, positions=positions,
+            **data_dict, colors=colors, nt_ticks=nt_ticks,
             gap=gap
             )
     plot.set_figure_size()
@@ -1385,7 +1404,6 @@ def plot_disthist(
         rnavigate.plots.DistHist: object containing matplotlib figure and axes
             with additional plotting and file saving methods
     """
-    # TODO: seperate args for structures and pdbs
     parsed_args = PlottingArgumentParser(
         samples=samples,
         labels=labels,

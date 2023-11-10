@@ -1,6 +1,8 @@
+"""Contains PlottingArgumentParser for plotting_functions.py and fit_data for
+retreiving aligned data objects"""
+
 from rnavigate import data, Sample
 from rnavigate.data_loading import get_sequence
-
 
 
 def _parse_plot_kwargs(plot_kwargs, plot):
@@ -57,13 +59,13 @@ class PlottingArgumentParser():
             elif key == "annotations":
                 data_dict[key] = self._parse_annotations(value)
         self.data_dicts = []
-        classes = { # in order of approximate usage
+        classes = {
+            # in order of approximate usage
             'profile': data.Profile,
             'annotations': data.Annotation,
-            'structure': data.SecondaryStructure,
-            # 'interactions': data.Interactions,
+            'structure': (data.SecondaryStructure, data.PDB),
+            # 'interactions': data.Interactions, # _parse_interactions instead
             'domains': list,
-            'pdb': data.PDB,
         }
         for sample, label in zip(self.samples, self.labels):
             this_data_dict = {"label": label}
@@ -128,7 +130,7 @@ class PlottingArgumentParser():
 
     def _parse_annotations(self, annotations):
         error = ValueError(
-            "annotations must be a list of data keywords or Annotation objects.")
+            "annotations must be a list containing data keywords or objects")
         if annotations is None:
             return []
         if isinstance(annotations, list):

@@ -6,11 +6,11 @@ from rnavigate import data, plots
 
 
 def get_contrasting_colors(colors):
-    contrasting = ['k'] * len(colors)
+    contrasting = ["k"] * len(colors)
     for i, color in enumerate(colors):
         r, g, b = mp_colors.to_rgb(color)
         if (r*0.299 + g*0.587 + b*0.114) < 175/256:
-            contrasting[i] = 'w'
+            contrasting[i] = "w"
     return np.array(contrasting)
 
 
@@ -39,16 +39,27 @@ def clip_spines(ax, spines):
         ax.spines[spine].set_bounds((min(ticks), max(ticks)))
 
 
-def set_x_ticks(ax, sequence, major=20, minor=5):
+def get_nt_ticks(sequence, region, gap):
     if isinstance(sequence, data.Sequence):
         sequence = sequence.sequence
-    #TODO: skip if '-' not in sequence
+    start, end = region
     positions = np.array([i+1 for i, nt in enumerate(sequence) if nt != '-'])
-    major_labels = np.arange(major, len(positions)+1, major)
-    minor_labels = np.arange(minor, len(positions)+1, minor)
-    ax.set_xticks(positions[major_labels-1])
-    ax.set_xticklabels(major_labels)
-    ax.set_xticks(positions[minor_labels-1], minor=True)
+    idx = ((
+        np.greater_equal(positions, start) & np.less_equal(positions, end)
+        ) & (
+        np.equal(positions % gap, 0) | np.equal(positions, region[0])
+        ))
+    return np.nonzero(idx)[0]+1, positions[idx]
+
+
+def set_nt_ticks(ax, sequence, region, major, minor):
+    ticks, labels = get_nt_ticks(sequence, region, major)
+    ax.set_xticks(ticks=ticks)
+    ax.set_xticklabels(labels=labels)
+    ax.set_xticks(
+        minor=True,
+        ticks=get_nt_ticks(sequence, region, minor)[0]
+    )
 
 
 def box_xtick_labels(ax):
@@ -59,8 +70,9 @@ def box_xtick_labels(ax):
                         "boxstyle": "round,pad=0.1,rounding_size=0.2"})
 
 
-def plot_sequence_alignment(ax, alignment, labels, top=5, bottom=-5,
-                            ytrans="data"):
+def plot_sequence_alignment(
+        ax, alignment, labels, top=5, bottom=-5, ytrans="data"
+        ):
     al1 = alignment.alignment1
     al2 = alignment.alignment2
     height = (top-bottom)/3
@@ -71,13 +83,13 @@ def plot_sequence_alignment(ax, alignment, labels, top=5, bottom=-5,
         ax, sequence=al2, yvalue=top, height=height, ytrans=ytrans,
         verticalalignment='top'
         )
-    set_x_ticks(ax=ax, sequence=al1)
+    set_nt_ticks(ax=ax, sequence=al1, region=(1, len(al1)), major=20, minor=5)
     ax.set_xlabel(labels[0], loc='left')
     ax.spines["bottom"].set(position=(ytrans, bottom), visible=False)
     ax2 = ax.twiny()
     ax2.set(xlim=ax.get_xlim())
-    ax2.spines["top"].set(position=(ytrans,top), visible=False)
-    set_x_ticks(ax=ax2, sequence=al2)
+    ax2.spines["top"].set(position=(ytrans, top), visible=False)
+    set_nt_ticks(ax=ax2, sequence=al2, region=(1, len(al2)), major=20, minor=5)
     ax2.set_xlabel(labels[1], loc='left')
 
     for spine in ["top", "bottom", "left", "right"]:
@@ -120,8 +132,9 @@ def plot_interactions_arcs(ax, interactions, panel, yvalue=0, region='all'):
         )
 
 
-def plot_profile_bars(ax, profile, scale_factor=1, plot_error=True, bottom=0,
-                 region='all'):
+def plot_profile_bars(
+        ax, profile, scale_factor=1, plot_error=True, bottom=0, region='all'
+        ):
     if region == 'all':
         region = [1, profile.length]
     mn, mx = region
@@ -163,6 +176,8 @@ def plot_profile_skyline(ax, profile, label, columns, errors):
             )
         if error is not None:
             ax.fill_between(
-                x, values[column]-values[error], values[column]-values[error],
+                values["Nucleotide"],
+                values[column]-values[error],
+                values[column]-values[error],
                 step='mid', color=lines[0].get_color(), alpha=0.25, lw=0
                 )

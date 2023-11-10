@@ -27,7 +27,7 @@ class SS(plots.Plot):
 
     def plot_data(self, structure, interactions=None, interactions2=None,
                   profile=None, annotations=None, label='', colors=None,
-                  positions=None, bp_style="dotted"):
+                  nt_ticks=None, bp_style="dotted"):
         if annotations is None:
             annotations = []
         ax = self.get_ax()
@@ -45,7 +45,7 @@ class SS(plots.Plot):
             elif colors[key] is None:
                 continue
             colors[key], colormap = structure.get_colors(
-                colors[key], profile=profile,structure=structure,
+                colors[key], profile=profile, structure=structure,
                 annotations=annotations
                 )
             self.add_colorbar_args(colormap)
@@ -63,8 +63,8 @@ class SS(plots.Plot):
             plots.plot_structure_ss(ax, structure, colors['structure'])
         if colors['basepairs'] is not None:
             plots.plot_basepairs_ss(ax, structure, bp_style)
-        if positions is not None:
-            plots.plot_positions_ss(ax, structure, positions)
+        if nt_ticks is not None:
+            plots.plot_positions_ss(ax, structure, nt_ticks)
         if interactions is not None:
             plots.plot_interactions_ss(ax, structure, interactions)
             self.add_colorbar_args(interactions.cmap)

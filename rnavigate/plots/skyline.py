@@ -38,7 +38,7 @@ class Skyline(plots.Plot):
     def plot_data(
             self, profile, annotations=None, domains=None, label=None,
             columns=None, seqbar=True, errors=None,
-            annotations_mode="track"
+            annotations_mode="track", nt_ticks=(20, 5),
             ):
         if columns is None:
             columns = profile.metric
@@ -82,15 +82,15 @@ class Skyline(plots.Plot):
                 ylabel = columns.replace("_", " ")
             self.set_labels(ax=ax, ylabel=ylabel, axis_title=None,
                             legend_title=None)
-            self.set_axis(ax)
+            self.set_axis(ax=ax, sequence=profile, nt_ticks=nt_ticks)
 
-    def set_axis(self, ax, xticks=20, xticks_minor=5):
+    def set_axis(self, ax, sequence, nt_ticks):
         xlim = self.region
         ax.set_xlim([xlim[0] - 0.5, xlim[1] + 0.5])
-        xrange = range(xlim[0], xlim[1]+1)
-        ax.set_xticks([x for x in xrange if (x % xticks) == 0])
-        ax.set_xticks([x for x in xrange if (x % xticks_minor) == 0],
-                      minor=True)
+        plots.set_nt_ticks(
+            ax=ax, sequence=sequence, region=self.region,
+            major=nt_ticks[0], minor=nt_ticks[1],
+            )
         ax.spines['bottom'].set(position=('axes', self.track_height * -1),
                                 visible=False)
         ax.spines['left'].set_visible(False)

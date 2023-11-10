@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.patches as mp_patches
 import matplotlib.collections as mp_collections
 from scipy.spatial.distance import cdist
-from rnavigate import styles, data
+from rnavigate import styles, data, plots
 
 
 # Secondary structure diagram ploting functions
@@ -135,13 +135,16 @@ def plot_nucleotides_ss(ax, structure, colors):
     ax.scatter(x, y, c=colors, **styles.settings['ss']['nucleotides'])
 
 
-def plot_positions_ss(ax, structure, spacing=20):
+def plot_positions_ss(ax, structure, xticks=20):
     xs = structure.xcoordinates
     ys = structure.ycoordinates
     thetas = np.pi/32 * np.arange(64)
     x_shift = np.sin(thetas)
     y_shift = np.cos(thetas)
-    for nt in range(spacing-1, structure.length, spacing):
+    ticks, labels = plots.get_nt_ticks(
+        sequence=structure.sequence, region=(1, structure.length), gap=xticks
+        )
+    for nt, label in zip(ticks - 1, labels):
         x_nt = xs[nt]
         y_nt = ys[nt]
         x_pos = xs[nt] + (x_shift * 1.5)
@@ -159,7 +162,7 @@ def plot_positions_ss(ax, structure, spacing=20):
         y_label = y_pos[which_pos]
         bbox = dict(boxstyle="round", fc="w", ec="w", pad=0.1)
         ax.plot([x_nt, x_label], [y_nt, y_label], color='k', lw=1)
-        ax.text(x_label, y_label, str(nt+1), ha='center', va='center',
+        ax.text(x_label, y_label, label, ha='center', va='center',
                 bbox=bbox, **styles.settings['ss']['positions'])
 
 

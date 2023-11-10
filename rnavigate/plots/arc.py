@@ -20,7 +20,7 @@ class AP(plots.Plot):
             interactions2=None, profile=None, annotations=None, domains=None,
             label='', ax=None, seqbar=True, title=True, panels=None,
             annotation_mode="track", track_height=None, profile_scale_factor=1,
-            plot_error=False,
+            plot_error=False, nt_ticks=(20, 5),
             ):
         ax = self.get_ax(ax)
         if panels is None:
@@ -104,30 +104,34 @@ class AP(plots.Plot):
         if not self.track_labels:
             yticks, ylabels = [], []
         self.set_axis(
-            ax=ax, track_height=track_height, yticks=yticks, ylabels=ylabels,
+            ax=ax, sequence=sequence.sequence, track_height=track_height,
+            nt_ticks=nt_ticks, yticks=yticks, ylabels=ylabels,
             )
         if title:
             ax.set_title(label)
         self.i += 1
 
-    def set_axis(self, ax, track_height=0, xticks=20, xticks_minor=10,
-                 max_height=300, yticks=None, ylabels=None):
-        def get_ticks(x, mn, mx):
-            return [tick for tick in range(x, mx+1, x) if mn <= tick <= mx]
-
+    def set_axis(
+            self, ax, sequence, track_height=0, nt_ticks=(20, 5), max_height=300,
+            yticks=None, ylabels=None
+            ):
         ax.spines['left'].set_color('none')
         ax.spines['right'].set_color('none')
         ax.spines['bottom'].set(position=('data', 0), visible=False)
         ax.spines['top'].set_color('none')
         height = min(max_height, self.nt_length/2)
         mn, mx = self.region
-        ax.set(xlim=(mn - 0.5, mx + 0.5),
-               ylim=(-height-1, height+1+track_height),
-               xticks=get_ticks(xticks, mn, mx),
-               yticks=yticks,
-               yticklabels=ylabels,
-               axisbelow=False)
-        ax.set_xticks(get_ticks(xticks_minor, mn, mx), minor=True)
+        ax.set(
+            xlim=(mn - 0.5, mx + 0.5),
+            ylim=(-height-1, height+1+track_height),
+            yticks=yticks,
+            yticklabels=ylabels,
+            axisbelow=False
+            )
+        plots.set_nt_ticks(
+            ax=ax, sequence=sequence, region=self.region,
+            major=nt_ticks[0], minor=nt_ticks[1],
+            )
         for label in ax.get_xticklabels():
             label.set_bbox({
                 "facecolor": "white",

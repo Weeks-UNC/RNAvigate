@@ -1,6 +1,7 @@
 import seaborn as sns
 from rnavigate import plots, styles
 
+
 class Profile(plots.Plot):
     def __init__(self, num_samples, nt_length, region="all", **kwargs):
         if region == "all":
@@ -21,8 +22,11 @@ class Profile(plots.Plot):
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
 
-    def plot_data(self, profile, annotations, domains, label, plot_error=True,
-                  column=None, seqbar=True, annotations_mode='track'):
+    def plot_data(
+            self, profile, annotations, domains, label,
+            plot_error=True, column=None, seqbar=True,
+            annotations_mode="track", xticks=(20, 5),
+            ):
         ax = self.get_ax()
         if column is not None:
             profile.metric = column
@@ -34,7 +38,7 @@ class Profile(plots.Plot):
 
         track_unit = 0.03
         annotations_track = 2 * track_unit * len(annotations)
-        annotations_track *= annotations_mode == 'track'
+        annotations_track *= annotations_mode == "track"
         domains_track = 3 * track_unit * (domains is not None)
         sequence_track = track_unit * seqbar
         self.track_height = sequence_track + annotations_track + domains_track
@@ -42,7 +46,7 @@ class Profile(plots.Plot):
             plots.plot_sequence_track(
                 ax=ax, sequence=profile.sequence,
                 yvalue=self.track_height * -1, height=sequence_track,
-                region=self.region, ytrans='axes')
+                region=self.region, ytrans="axes")
             self.add_colorbar_args(styles.get_nt_cmap())
         if domains is not None:
             for domain in domains:
@@ -50,19 +54,19 @@ class Profile(plots.Plot):
                     ax=ax, spans=domain,
                     yvalue=sequence_track - self.track_height,
                     height=domains_track, region=self.region,
-                    ytrans='axes')
+                    ytrans="axes")
         for i, annotation in enumerate(annotations):
             plots.plot_annotation_track(
                 ax=ax, annotation=annotation, mode=annotations_mode,
                 yvalue=(sequence_track + domains_track
                         - self.track_height + (i+0.5) * (4 * track_unit)),
-                height=2*track_unit, ytrans='axes', region=self.region,
+                height=2*track_unit, ytrans="axes", region=self.region,
                 )
 
         self.i += 1
         ylabel = column.replace("_", " ")
         self.set_labels(ax=ax, ylabel=ylabel, axis_title=label)
-        self.set_axis(ax)
+        self.set_axis(ax=ax, sequence=profile.sequence, xticks=xticks)
 
     def set_figure_size(
             self, fig=None, ax=None, rows=None, cols=None, height_ax_rel=None,
@@ -80,16 +84,16 @@ class Profile(plots.Plot):
             left_in=left_in, right_in=right_in
             )
 
-    def set_axis(self, ax, xticks=20, xticks_minor=5):
+    def set_axis(self, ax, sequence, xticks=(20, 5)):
         xlim = self.region
         ax.set_xlim([xlim[0] - 0.5, xlim[1] + 0.5])
-        xrange = range(xlim[0], xlim[1]+1)
-        ax.set_xticks([x for x in xrange if (x % xticks) == 0])
-        ax.set_xticks([x for x in xrange if (x % xticks_minor) == 0],
-                      minor=True)
-        ax.spines['bottom'].set(position=('axes', self.track_height * -1),
+        plots.set_nt_ticks(
+            ax=ax, sequence=sequence, region=self.region, major=xticks[0],
+            minor=xticks[1],
+            )
+        ax.spines["bottom"].set(position=("axes", self.track_height * -1),
                                 visible=False)
-        ax.spines['left'].set_visible(False)
-        ax.grid(axis='y', visible=True)
-        ax.tick_params(axis='y', length=0, grid_alpha=0.4)
+        ax.spines["left"].set_visible(False)
+        ax.grid(axis="y", visible=True)
+        ax.tick_params(axis="y", length=0, grid_alpha=0.4)
         sns.despine(ax=ax, bottom=True, left=True)
