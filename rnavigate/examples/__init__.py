@@ -59,13 +59,13 @@ rrna_fragmap_dir = example_dir / "rrna_fragmap"
 tpp = rnav.Sample(
     sample="TPP in-vitro DMS-MaP",
     pdb={
-        "filepath": tpp_dir / "2gdi.pdb",
+        "pdb": str(tpp_dir / "2gdi.pdb"),
         "chain": "X"
     },
-    ss=tpp_dir / "TPP-2GDI.nsd",
-    dmsmap=tpp_dir / "DMS_TPP_profile.txt",
-    ringmap=tpp_dir / "DMS_TPP_rings.txt",
-    pairprob=tpp_dir / "TPP-dms-bp.dp",
+    ss=str(tpp_dir / "TPP-2GDI.nsd"),
+    dmsmap=str(tpp_dir / "DMS_TPP_profile.txt"),
+    ringmap=str(tpp_dir / "DMS_TPP_rings.txt"),
+    pairprob=str(tpp_dir / "TPP-dms-bp.dp"),
     )
 
 ###############################################################################
@@ -75,18 +75,18 @@ tpp = rnav.Sample(
 rnasep_common = rnav.Sample(
     sample="common data",
     pdb={
-        "pdb": rnasep_dir / "3dhsCrystal_PlusLoops.pdb",
+        "pdb": str(rnasep_dir / "3dhsCrystal_PlusLoops.pdb"),
         "chain": "A",
         },
     shapejump={
-        "shapejump": rnasep_dir / "example-rnasep-deletions.txt",
-        "sequence": rnasep_dir / "RNaseP-noSC.fasta",
+        "shapejump": str(rnasep_dir / "example-rnasep-deletions.txt"),
+        "sequence": str(rnasep_dir / "RNaseP-noSC.fasta"),
         },
-    ss_ct={"ss": rnasep_dir / "RNaseP.ct"},
-    ss_pdb={"ss": rnasep_dir / "RC_CRYSTAL_STRUCTURE.xrna"},
+    ss_ct={"ss": str(rnasep_dir / "RNaseP.ct")},
+    ss_pdb={"ss": str(rnasep_dir / "RC_CRYSTAL_STRUCTURE.xrna")},
     pairprob={
-        "pairprob": rnasep_dir / "rnasep.dp",
-        "sequence": rnasep_dir / "RNaseP-withSC.fasta",
+        "pairprob": str(rnasep_dir / "rnasep.dp"),
+        "sequence": str(rnasep_dir / "RNaseP-withSC.fasta"),
         },
 )
 
@@ -94,44 +94,44 @@ rnasep_1 = rnav.Sample(
     sample="Example 1",
     inherit=rnasep_common,
     shapemap={
-        "shapemap": rnasep_dir / "example1_rnasep_profile.txt",
-        "log": rnasep_dir / "example1_shapemapper_log.txt",
+        "shapemap": str(rnasep_dir / "example1_rnasep_profile.txt"),
+        "log": str(rnasep_dir / "example1_shapemapper_log.txt"),
         },
-    pairmap=rnasep_dir / "example1-rnasep-pairmap.txt",
-    ringmap=rnasep_dir / "example1-rnasep.corrs",
+    pairmap=str(rnasep_dir / "example1-rnasep-pairmap.txt"),
+    ringmap=str(rnasep_dir / "example1-rnasep.corrs"),
 )
 
 rnasep_2 = rnav.Sample(
     sample="Example 2",
     inherit=rnasep_common,
     shapemap={
-        "shapemap": rnasep_dir / "example2_rnasep_profile.txt",
-        "log": rnasep_dir / "example2_shapemapper_log.txt",
+        "shapemap": str(rnasep_dir / "example2_rnasep_profile.txt"),
+        "log": str(rnasep_dir / "example2_shapemapper_log.txt"),
         },
-    pairmap=rnasep_dir / "example2-rnasep-pairmap.txt",
-    ringmap=rnasep_dir / "example2-rnasep.corrs",
+    pairmap=str(rnasep_dir / "example2-rnasep-pairmap.txt"),
+    ringmap=str(rnasep_dir / "example2-rnasep.corrs"),
 )
 
 rnasep_3 = rnav.Sample(
     sample="Example 3",
     inherit=rnasep_common,
     shapemap={
-        "shapemap": rnasep_dir / "example3_rnasep_profile.txt",
-        "log": rnasep_dir / "example3_shapemapper_log.txt",
+        "shapemap": str(rnasep_dir / "example3_rnasep_profile.txt"),
+        "log": str(rnasep_dir / "example3_shapemapper_log.txt"),
         },
-    pairmap=rnasep_dir / "example3-rnasep-pairmap.txt",
-    ringmap=rnasep_dir / "example3-rnasep.corrs",
+    pairmap=str(rnasep_dir / "example3-rnasep-pairmap.txt"),
+    ringmap=str(rnasep_dir / "example3-rnasep.corrs"),
 )
 
 rnasep_4 = rnav.Sample(
     sample="Example 4",
     inherit=rnasep_common,
     shapemap={
-        "shapemap": rnasep_dir / "example4_rnasep_profile.txt",
-        "log": rnasep_dir / "example4_shapemapper_log.txt",
+        "shapemap": str(rnasep_dir / "example4_rnasep_profile.txt"),
+        "log": str(rnasep_dir / "example4_shapemapper_log.txt"),
         },
-    pairmap=rnasep_dir / "example4-rnasep-pairmap.txt",
-    ringmap=rnasep_dir / "example4-rnasep.corrs",
+    pairmap=str(rnasep_dir / "example4-rnasep-pairmap.txt"),
+    ringmap=str(rnasep_dir / "example4-rnasep.corrs"),
 )
 
 ###############################################################################
@@ -140,8 +140,8 @@ rnasep_4 = rnav.Sample(
 
 rmrp = rnav.Sample(
     sample="RMRP in-vitro DMS-MaP",
-    rnpmap=rmrp_dir / "RMRP-RNPMaP-Example_RESULTS.csv",
-    ss=rmrp_dir / "hs-RMRP.nsd",
+    rnpmap=str(rmrp_dir / "RMRP-RNPMaP-Example_RESULTS.csv"),
+    ss=str(rmrp_dir / "hs-RMRP.nsd"),
 )
 
 __all__ = [
