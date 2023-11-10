@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 ###############################################################################
-#  SecondaryStructure code comes from CT object in RNAtools2.py and Superfold
+#  SecondaryStructure code originally based on RNAtools.py
 #      Main contributors:
 #           Gregg Rice
 #           Anthony Mustoe
@@ -22,17 +22,26 @@ from rnavigate import data
 class SecondaryStructure(data.Sequence):
     """Base class for secondary structures.
 
-    Args:
-        Data (class): Parent class
+    Parent classes:
+        rnav.data.Data(rnav.data.Sequence)
 
     Attributes:
-        input_data (str | pandas.DataFrame): structure file or dataframe
+        data (str | pandas.DataFrame): dataframe storing base-pairs
+            One row for every nucleotide position
+            Required columns:
+                "Nucleotide"   the nucleotide position
+                "Sequence"     the nucleotide letter
+                "Pair"         the nucleotide position of the base-pair
+                               0 indicates a single stranded nucleotide
+            Optional columns:
+                "X_coordinate" the x position of the nucleotide in the drawing
+                "Y_coordinate" the y position of the nucleotide in the drawing
         sequence (str): sequence string
-        num (numpy.array): nucleotide positions
-        ct (numpy.array): paired nucleotide for each nucleotide position
+        nts (numpy.array): "Nucleotide" column of data
+        pair_nts (numpy.array): "Pair" column of data
         header (str): header information from CT file
-        xcoordinates (numpy array): x-coordinate of each nucleotide
-        ycoordinates (numpy array): y-coordinate of each nucleotide
+        xcoordinates (numpy array): "X_coordinate" column of data
+        ycoordinates (numpy array): "X_coordinate" column of data
     """
 
     ###########################################################################
