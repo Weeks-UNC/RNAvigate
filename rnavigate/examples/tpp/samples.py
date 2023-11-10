@@ -9,18 +9,14 @@ def abspath(filepath):
     """convert a filepath in this directory to an absolute path"""
     return os.path.join(rnasep_dir, filepath)
 
-common_data = rnav.Sample(
+example = rnav.Sample(
+    sample="Example 1",
     pdb={
         "filepath": abspath("2gdi.pdb"),
         "chain": "X"
     },
-    ss=abspath("TPP-2GDI.nsd")
-)
-
-example1 = rnav.Sample(
-    sample="Example 1",
-    inherit=common_data,
+    ss=abspath("TPP-2GDI.nsd"),
     shapemap=abspath("DMS_TPP_profile.txt"),
     ringmap=abspath("DMS_TPP_rings.txt"),
     pairprob=abspath("TPP-dms-bp.dp")
-)
+    )
