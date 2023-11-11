@@ -4,8 +4,10 @@ import matplotlib.patches as mp_patches
 from rnavigate import styles
 
 # 1-dimensional x-axis tracks
-def plot_sequence_track(ax, sequence, yvalue=-0.05, height=0.05, ytrans="data",
-        verticalalignment='bottom', region="all"):
+def plot_sequence_track(
+        ax, sequence, yvalue=-0.05, height=0.05, ytrans="data",
+        verticalalignment='bottom', region="all",
+        ):
     style = styles.settings['sequence_bar']
     ymin, ymax = ax.get_ylim()
     if ytrans == "axes":
@@ -54,7 +56,7 @@ def plot_annotation_track(
         height = (ymax - ymin) * height
     color = annotation.color
     modes = ["track", "bar"]
-    
+
     def plot_track(*s, alpha=1):
         start, end = min(s)-0.5, max(s)+0.5
         if mode == "track":
@@ -65,7 +67,6 @@ def plot_annotation_track(
         elif mode == 'bar' and len(s) == 2:
             ax.axvspan(start-0.5, end+0.5, fc=color, ec="none", alpha=0.1)
         elif mode == 'bar' and len(s) == 1:
-            print(start)
             ax.axvline(start+0.5, color=color, ls=":")
 
     assert mode in modes, f"annotation mode must be one of: {modes}"
