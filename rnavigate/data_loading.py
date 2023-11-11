@@ -6,6 +6,7 @@ _required = object()
 data_keyword_defaults = {
     "sequence": {"data_class": data.Sequence},
     "shapemap": {"data_class": data.SHAPEMaP},
+    "shapemap_rnaframework": {"data_class": data.SHAPEMaP.from_rnaframework},
     "dmsmap": {"data_class": data.SHAPEMaP, "normalize": "DMS"},
     "dancemap": {"data_class": data.DanceMaP, "component": _required},
     "rnpmap": {"data_class": data.RNPMaP},
