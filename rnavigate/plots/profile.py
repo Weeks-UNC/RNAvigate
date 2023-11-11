@@ -25,7 +25,7 @@ class Profile(plots.Plot):
     def plot_data(
             self, profile, annotations, domains, label,
             plot_error=True, column=None, seqbar=True,
-            annotations_mode="track", xticks=(20, 5),
+            annotations_mode="track", nt_ticks=(20, 5),
             ):
         ax = self.get_ax()
         if column is not None:
@@ -66,7 +66,7 @@ class Profile(plots.Plot):
         self.i += 1
         ylabel = column.replace("_", " ")
         self.set_labels(ax=ax, ylabel=ylabel, axis_title=label)
-        self.set_axis(ax=ax, sequence=profile.sequence, xticks=xticks)
+        self.set_axis(ax=ax, sequence=profile.sequence, nt_ticks=nt_ticks)
 
     def set_figure_size(
             self, fig=None, ax=None, rows=None, cols=None, height_ax_rel=None,
@@ -84,12 +84,12 @@ class Profile(plots.Plot):
             left_in=left_in, right_in=right_in
             )
 
-    def set_axis(self, ax, sequence, xticks=(20, 5)):
+    def set_axis(self, ax, sequence, nt_ticks=(20, 5)):
         xlim = self.region
         ax.set_xlim([xlim[0] - 0.5, xlim[1] + 0.5])
         plots.set_nt_ticks(
-            ax=ax, sequence=sequence, region=self.region, major=xticks[0],
-            minor=xticks[1],
+            ax=ax, sequence=sequence, region=self.region, major=nt_ticks[0],
+            minor=nt_ticks[1],
             )
         ax.spines["bottom"].set(position=("axes", self.track_height * -1),
                                 visible=False)
