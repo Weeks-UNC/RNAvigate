@@ -144,7 +144,7 @@ def plot_positions_ss(ax, structure, xticks=20):
     ticks, labels = plots.get_nt_ticks(
         sequence=structure.sequence, region=(1, structure.length), gap=xticks
         )
-    for nt, label in zip(ticks - 1, labels):
+    for nt, label in zip([t-1 for t in ticks], labels):
         x_nt = xs[nt]
         y_nt = ys[nt]
         x_pos = xs[nt] + (x_shift * 1.5)
