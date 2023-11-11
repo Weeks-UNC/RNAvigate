@@ -36,5 +36,7 @@ nav:
 
 plugins:
   - mkdocs-jupyter
+      execute: True
+      kernel_name: RNAvigate_v1.0.0
 
 theme: readthedocs
