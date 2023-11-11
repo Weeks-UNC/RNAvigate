@@ -68,9 +68,9 @@ associated with a single sample.
 | :----------: | :---------: | :----------: | :--------------: | :----------------: | :-----: |
 | [sequence][] | [sites][]   | [profile][]  | [interactions][] | [ss][]             | [pdb][] |
 |              | [spans][]   | [shapemap][] | [ringmap][]      |                    |         |
-|              | [group][]   | [dancemap][] | [pairmap][]      |                    |         |
-|              | [primers][] | [rnpmap][]   | [shapejump][]    |                    |         |
-|              | [motif][]   |              | [pairprob][]     |                    |         |
+|              | [group][]   | [dmsmap][]   | [pairmap][]      |                    |         |
+|              | [primers][] | [dancemap][] | [shapejump][]    |                    |         |
+|              | [motif][]   | [rnpmap][]   | [pairprob][]     |                    |         |
 |              | [orfs][]    |              | [allpossible][]  |                    |         |
 |              | [domains][] |              |                  |                    |         |
 
@@ -164,6 +164,22 @@ back to [standard data keywords][]
 ### shapemap
 
 SHAPE, DMS, or other reagent per-nucleotide reactivities
+
+Two similar data keywords are `dmsmap`, which first applies DMS-MaP
+normalization ([publication](https://doi.org/10.1073/pnas.1905491116)), and
+`shapemap_rnaframework`, which accepts an RNAframework xml file. One caveat to
+the RNAframework file is that it contains normalized reactivities, but not
+errors or raw data.
+
+```python
+dmsmap="path/to/shapemap_profile.txt"
+```
+
+is equivalent to
+
+```python
+dmsmap={'shapemap': "shapemap_profile.txt", "normalize": "DMS"}
+```
 
 [ShapeMapper2 software][]
 
@@ -993,7 +1009,7 @@ the The provided value should be a boolean (`True` or `False`)
 [domains]: #domains
 [profile]: #profile
 [shapemap]: #shapemap
-[dmsmap]: #dmsmap
+[dmsmap]: #shapemap
 [dancemap]: #dancemap
 [rnpmap]: #rnpmap
 [interactions]: #interactions
