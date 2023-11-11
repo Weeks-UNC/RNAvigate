@@ -41,7 +41,7 @@ class FragMaP(data.Profile):
                 "metric_column": "Fragmap_profile",
                 "error_column": "Fragmap_err",
                 "color_column": "Site",
-                'cmap': ["grey", "green"],
+                'cmap': ["lightgrey", "limegreen"],
                 'normalization': "none",
                 'values': None,
                 'extend': 'neither',
@@ -237,7 +237,7 @@ class Fragmapper(Sample):
                           representing a nucleotide not filtered out in the
                           fragmapper pipeline.
         """
-        fig, ax = plt.subplots(1, 1, figsize=(7, 7))
+        fig, ax = plt.subplots(1, 1, figsize=(4, 4))
 
         columns = [f'{column}_1', f'{column}_2']
         scatter_data = self.data["fragmap"].data
@@ -246,7 +246,7 @@ class Fragmapper(Sample):
         non_sites = scatter_data[~scatter_data['Site']]
 
         for _, (nt, y, x) in sites[['Nucleotide']+columns].iterrows():
-            ax.text(x, y, int(nt), fontsize=12)
+            ax.text(x, y, int(nt))
 
         ax.scatter(
             x=non_sites[columns[1]],
@@ -259,9 +259,9 @@ class Fragmapper(Sample):
             s=25, alpha=1
             )
 
-        ax.set_xlabel(f'{self.sample2.sample} {column}', fontsize=14)
-        ax.set_ylabel(f'{self.sample1.sample} {column}', fontsize=14)
+        ax.set_xlabel(f'{self.sample2.sample} {column}')
+        ax.set_ylabel(f'{self.sample1.sample} {column}')
 
-        plt.legend(['Uncalled Nucleotides', 'Frag-MaP Sites'], fontsize=12)
+        plt.legend(['Uncalled Nucleotides', 'Frag-MaP Sites'])
 
         return fig, ax
