@@ -319,5 +319,7 @@ class Sample:
                 data_keywords['pdbs'].append(data_keyword)
         print(f'{self.sample} data keywords:')
         for k, v in data_keywords.items():
-            print(f'\n  {k}:')
-            print('    '+"\n    ".join(v))
+            print(f'  {k}:')
+            for dkw in v:
+                print(f"    {dkw}")
+        print()
