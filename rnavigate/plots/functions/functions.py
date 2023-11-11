@@ -43,13 +43,17 @@ def get_nt_ticks(sequence, region, gap):
     if isinstance(sequence, data.Sequence):
         sequence = sequence.sequence
     start, end = region
-    positions = np.array([i+1 for i, nt in enumerate(sequence) if nt != '-'])
-    idx = ((
-        np.greater_equal(positions, start) & np.less_equal(positions, end)
-        ) & (
-        np.equal(positions % gap, 0) | np.equal(positions, region[0])
-        ))
-    return np.nonzero(idx)[0]+1, positions[idx]
+    labels = []
+    ticks = []
+    pos = 0
+    for i, nt in enumerate(sequence):
+        valid = nt != '-'
+        if valid:
+            pos += 1
+        if valid & (pos % gap == 0 or pos == 1) and start <= pos <= end:
+            labels.append(pos)
+            ticks.append(i+1)
+    return ticks, labels
 
 
 def set_nt_ticks(ax, sequence, region, major, minor):
