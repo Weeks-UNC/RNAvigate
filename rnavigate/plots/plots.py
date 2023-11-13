@@ -34,7 +34,7 @@ class Plot(ABC):
         rows = len(self.colorbars)
         if rows == 0:
             return (None, None)
-        plot = ColorBar(rows)
+        plot = ColorBar(rows, rows=rows)
         for colorbar in self.colorbars:
             plot.plot_data(colorbar)
         plot.set_figure_size()
@@ -201,7 +201,7 @@ class ColorBar(Plot):
             self, fig=None, ax=None, rows=None, cols=None,
             height_ax_rel=None, width_ax_rel=None,
             width_ax_in=3, height_ax_in=0.1,
-            height_gap_in=0.5, width_gap_in=0.5,
+            height_gap_in=0.75, width_gap_in=0.5,
             top_in=None, bottom_in=None, left_in=None, right_in=None):
         return super().set_figure_size(
             fig, ax, rows, cols, height_ax_rel, width_ax_rel, width_ax_in,
