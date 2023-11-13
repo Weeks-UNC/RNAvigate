@@ -487,11 +487,14 @@ class SequenceAlignment(BaseAlignment):
 
     def __repr__(self):
         """a nice text only representation of an alignment"""
-        a = "".join([
-            "X" if n1 != n2 else " "
-            for n1, n2 in zip(self.alignment1, self.alignment2)
-            ])
-        return f"alignment:\n\t{self.alignment1}\n\t{a}\n\t{self.alignment2}\n"
+        al1, al2 = self.alignment1, self.alignment2
+        misses = "".join([" ", "X"][i != j] for i, j in zip(al1, al2))
+        position = "".join(f"{n:<20}" for n in range(1, len(al1), 20))
+        return ("alignment:\n"
+                f"    {position}\n"
+                f"    {al1}\n"
+                f"    {misses}\n"
+                f"    {al2}\n")
 
     def print(self, print_format="full"):
         """Print the alignment in a human-readable format.
@@ -505,7 +508,6 @@ class SequenceAlignment(BaseAlignment):
                 "short": total number of matches, mismatches, and indels
                 Defaults to "full".
         """
-        print("printing alignments")
         if print_format == "full":
             print(self)
         elif print_format == "cigar":
@@ -556,8 +558,8 @@ class SequenceAlignment(BaseAlignment):
             - tags["deletions"]
             - tags["insertions"]
             )
-        for key, value in tags:
-            print(f"    {key}: {value}")
+        for key in ["matches", "mismatches", "deletions", "insertions"]:
+            print(f"    {key:<10} {tags[key]}")
         print()
 
     def print_all_changes(self):
@@ -577,9 +579,12 @@ class SequenceAlignment(BaseAlignment):
         alignment1 = np.array(list(self.alignment1))
         alignment2 = np.array(list(self.alignment2))
         current_tag = ""
-        start = 0
+        current_start = 0
+        this_pos = 0
         seq1, seq2 = "", ""
-        for i, (nt1, nt2) in enumerate(zip(alignment1, alignment2)):
+        for nt1, nt2 in zip(alignment1, alignment2):
+            if nt1 != "-":
+                this_pos += 1
             if nt1 == nt2:
                 this_tag = "match"
             elif nt1 == "-":
@@ -590,16 +595,17 @@ class SequenceAlignment(BaseAlignment):
                 this_tag = "mismatch"
             if current_tag == "":
                 current_tag = this_tag
-                start = i+1
+                current_start = this_pos
                 seq1, seq2 = nt1, nt2
             elif current_tag == this_tag:
                 seq1 += nt1
                 seq2 += nt2
             elif current_tag != this_tag:
-                print_line(current_tag, start, seq1, seq2)
+                print_line(current_tag, current_start, seq1, seq2)
                 current_tag = this_tag
+                current_start = this_pos
                 seq1, seq2 = nt1, nt2
-        print_line(current_tag, start, seq1, seq2)
+        print_line(current_tag, current_start, seq1, seq2)
         print()
 
     def get_inverse_alignment(self):
@@ -619,29 +625,28 @@ class SequenceAlignment(BaseAlignment):
         if seq1 == seq2:
             return (seq1, seq2)
         # check for sequences that differ only at dashes
-        array1 = np.array(list(seq1))
-        array2 = np.array(list(seq2))
-        if len(array1) == len(array2):
-            matches = sum(array1 == array2 | array1 == "-" | array2 == "-")
-            if matches == len(array1):
+        a1 = np.array(list(seq1))
+        a2 = np.array(list(seq2))
+        if len(a1) == len(a2):
+            matches = sum((a1 == a2) | (a1 == "-") | (a2 == "-"))
+            if matches == len(a1):
                 return (seq1, seq2)
-        else:
-            # look in _alignments_cache, if not found, do a pairwise alignment
-            alignments = lookup_alignment(seq1, seq2)
-            if alignments is None:
-                alignment = align.globalms(
-                    seq1, seq2, penalize_end_gaps=False,
-                    one_alignment_only=True, **self.align_kwargs
-                    )
-                set_alignment(
-                    sequence1=seq1,
-                    sequence2=seq2,
-                    alignment1=alignment[0].seqA,
-                    alignment2=alignment[0].seqB
+        # if not already set, do a pairwise alignment and set
+        alignments = lookup_alignment(seq1, seq2)
+        if alignments is None:
+            alignment = align.globalms(
+                seq1, seq2, penalize_end_gaps=False,
+                one_alignment_only=True, **self.align_kwargs
                 )
-                alignments = lookup_alignment(seq1, seq2)
-            align1, align2 = alignments["seqA"], alignments["seqB"]
-            return (align1, align2)
+            set_alignment(
+                sequence1=seq1,
+                sequence2=seq2,
+                alignment1=alignment[0].seqA,
+                alignment2=alignment[0].seqB
+            )
+            alignments = lookup_alignment(seq1, seq2)
+        align1, align2 = alignments["seqA"], alignments["seqB"]
+        return (align1, align2)
 
     def get_mapping(self):
         """Calculates a mapping from starting sequence to target sequence.
