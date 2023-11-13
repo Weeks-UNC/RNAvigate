@@ -144,6 +144,40 @@ rmrp = rnav.Sample(
     ss=str(rmrp_dir / "hs-RMRP.nsd"),
 )
 
+###############################################################################
+# RNase MRP
+###############################################################################
+
+common_data = rnav.Sample(
+    "6HA1 - LSU",
+    sequence=str(rrna_fragmap_dir / "6HA1_LSU.fasta"),
+    pdb={"pdb": str(rrna_fragmap_dir / "6HA1_LSU.pdb"),
+         "sequence": "sequence",
+         "chain": "A"},
+    ss=str(rrna_fragmap_dir / "6HA1_LSU.json"),
+)
+common_data.data["ss"].transform_coordinates(rotate_degrees=180)
+
+quinaxoline = rnav.Sample(
+    sample="rRNA quinaxoline",
+    inherit=common_data,
+    shapemap=str(rrna_fragmap_dir / "2_QN_DMSO_subtracted_LSU_profile.txt"),
+)
+
+linezolid = rnav.Sample(
+    sample="rRNA linezolid",
+    inherit=common_data,
+    shapemap=str(rrna_fragmap_dir / "2_ZLD_DMSO_subtracted_LSU_profile.txt"),
+)
+
+methyl = rnav.Sample(
+    sample="rRNA methyl",
+    inherit=common_data,
+    shapemap=str(
+        rrna_fragmap_dir / "2_Methyl_DMSO_subtracted_LSU_profile.txt"
+        ),
+)
+
 __all__ = [
     "tpp",
     "rnasep_common",
@@ -151,5 +185,8 @@ __all__ = [
     "rnasep_2",
     "rnasep_3",
     "rnasep_4",
-    "rmrp"
+    "rmrp",
+    "quinaxoline",
+    "linezolid",
+    "methyl",
 ]
