@@ -1006,22 +1006,25 @@ class StructureCompareMany(Interactions):
             metric = "Num_structures"
         if metric_defaults is None:
             metric_defaults = {}
-        columns = ['Structure_1']
-        input_data = input_data.rename(columns={'Structure': 'Structure_1'})
-        total_structures = len(structure2)+1
-        for i, structure in enumerate(structure2):
-            col = f'Structure_{i+2}'
-            columns.append(col)
-            structure = structure.rename(columns={'Structure': col})
-            input_data = input_data.merge(
-                structure,
-                how='outer',
-                on=['i', 'j']
-            )
-        input_data[columns] = input_data[columns].fillna(0)
-        input_data['Num_structures'] = input_data[columns].sum(
-            axis=1, numeric_only=True
-            ) - 1  # to index at 0 for coloring
+        if structure2 is None:
+            total_structures = input_data["Num_structures"].max()
+        else:
+            columns = ['Structure_1']
+            input_data = input_data.rename(columns={'Structure': 'Structure_1'})
+            total_structures = len(structure2)+1
+            for i, structure in enumerate(structure2):
+                col = f'Structure_{i+2}'
+                columns.append(col)
+                structure = structure.rename(columns={'Structure': col})
+                input_data = input_data.merge(
+                    structure,
+                    how='outer',
+                    on=['i', 'j']
+                )
+            input_data[columns] = input_data[columns].fillna(0)
+            input_data['Num_structures'] = input_data[columns].sum(
+                axis=1, numeric_only=True
+                ) - 1  # to index at 0 for coloring
         metric_defaults = {
             'Num_structures': {
                 'metric_column': 'Num_structures',
