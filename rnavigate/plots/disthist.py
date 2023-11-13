@@ -1,3 +1,4 @@
+import numpy as np
 from rnavigate import plots
 
 
@@ -65,7 +66,7 @@ class DistHist(plots.Plot):
         dists = []
         for i in range(len(matrix)-6):
             for j in range(i+6, len(matrix)):
-                if matrix[i, j] != 1000:
+                if not np.isnan(matrix[i, j]):
                     dists.append(matrix.item(i, j))
         ax.hist(dists, bins=range(0, int(max(dists))+5, 5),
                 histtype="step", color="0.5", label="All distances")
