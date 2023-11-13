@@ -593,7 +593,7 @@ def plot_arcs_compare(
         labels.append(data_dict.pop('label'))
         data_dict = fit_data(data_dict, alignment)
         plot.plot_data(
-            ax=0, sequence=None, track_height=6, label='', seqbar=False,
+            ax=0, sequence=seq, track_height=6, label='', seqbar=False,
             panels=panels, **data_dict, plot_error=plot_error,
             profile_scale_factor=profile_scale_factor,
             )
@@ -1426,5 +1426,59 @@ def plot_disthist(
     # loop through samples and interactions, adding each as a new axis
     for data_dict in parsed_args.data_dicts:
         plot.plot_data(**data_dict, ax=ax, atom=atom)
+    plot.set_figure_size()
+    return plot
+
+
+def plot_ntdist(
+        # required
+        samples,
+        profile,
+        # optional data display
+        labels=None,
+        column=None,
+        # optional plot display
+        plot_kwargs=None
+        ):
+    """Plots the distributions of values at A, U, C, and G.
+
+    Calculates the kernel density estimate (KDE) for each nucleobase and plots
+    them on one axis per sample.
+
+    Required arguments:
+        samples (list of rnavigate Samples)
+            samples used to retrieve data
+        profile (data or data keyword)
+            per-nucleotide data to plot per-nt-identity distributions
+
+    Optional data display arguments:
+        labels (list of str)
+            list containing Labels to be used in plot legends
+            Defaults to sample.sample for each sample
+        column (string)
+            which column of data to use for KDE
+            defaults to 'AUCG'
+
+    Optional plot display arguments:
+        plot_kwargs (dictionary)
+            Keyword-arguments passed to matplotlib.pyplot.subplots
+            Defaults to {}
+
+    Returns:
+        rnavigate.plots.NucleotideDistribution
+            object containing matplotlib figure and axes with additional
+            plotting and file saving methods
+    """
+    parsed_args = PlottingArgumentParser(
+        samples=samples,
+        labels=labels,
+        profile=profile,
+    )
+    plot_kwargs = _parse_plot_kwargs(
+        plot_kwargs, "rnavigate.plots.NucleotideDistribution"
+        )
+    plot = plots.NucleotideDistribution(parsed_args.num_samples, **plot_kwargs)
+    for data_dict in parsed_args.data_dicts:
+        plot.plot_data(**data_dict, column=column)
     plot.set_figure_size()
     return plot

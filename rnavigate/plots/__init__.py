@@ -13,3 +13,4 @@ from rnavigate.plots.roc import *
 from rnavigate.plots.alignment import *
 from rnavigate.plots.profile import *
 from rnavigate.plots.functions import *
+from rnavigate.plots.ntdist import NucleotideDistribution
