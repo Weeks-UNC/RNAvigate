@@ -51,11 +51,11 @@ def create_data(data_keyword, inputs, sample=None):
 
     Optional arguments:
         sample (rnavigate.Sample)
-            Requried only if inputs is a dictionary containing a 'sequence' key
+            Requried only if inputs is a dictionary containing a "sequence" key
             with a value that is a standard data keyword
-                {'sequence': 'data_keyword'}
+                {"sequence": "data_keyword"}
                     is replaced with:
-                {'sequence': sample.get_data('data_keyword').sequence}
+                {"sequence": sample.get_data("data_keyword").sequence}
             Defaults to None.
 
     Returns: new RNAvigate data object
@@ -73,43 +73,47 @@ def create_data(data_keyword, inputs, sample=None):
 
             create_data(
                 data_keyword="arbitrary_string",
-                inputs={'sequence': 'my_sequence.fa'}
+                inputs={"sequence": "my_sequence.fa"}
                 )
 
         Returns: rnavigate.data.Sequence(input_data="my_sequence.fa")
     """
+    if sample is not None:
+        label = f"{sample.sample} ({data_keyword})"
+    else:
+        label = data_keyword
     # if given existing rnavigate.data object return
     if isinstance(inputs, data.Sequence):
         return inputs
 
-    # data_keyword='A', inputs='B'
+    # data_keyword="A", inputs="B"
     # OR
-    # data_keyword='arbitrary', inputs={'A': 'B', etc.}
+    # data_keyword="arbitrary", inputs={"A": "B", etc.}
     # becomes
-    # data_keyword='A', inputs={'input_data': 'B', etc.}
+    # data_keyword="A", inputs={"input_data": "B", etc.}
     if isinstance(inputs, dict):
         first_key = list(inputs.keys())[0]
         data_keyword=first_key
         inputs["input_data"] = inputs.pop(first_key)
     else:
-        inputs = {'input_data': inputs}
+        inputs = {"input_data": inputs}
 
     # handle special cases
-    if data_keyword == 'allpossible':
-        inputs['sequence'] = inputs.pop('input_data')
-    elif data_keyword in ['sites', 'spans', 'primers', 'group']:
-        inputs['annotation_type'] = data_keyword
+    if data_keyword == "allpossible":
+        inputs["sequence"] = inputs.pop("input_data")
+    elif data_keyword in ["sites", "spans", "primers", "group"]:
+        inputs["annotation_type"] = data_keyword
 
     # retrieve defaults for given data_class
     try:
         inputs = data_keyword_defaults[data_keyword] | inputs
-        data_constructor = inputs.pop('data_class')
+        data_constructor = inputs.pop("data_class")
     except KeyError as exception:
         raise KeyError(
             f"{data_keyword} is not a valid data keyword.") from exception
 
     # get sequence from another object if appropriate
-    if 'sequence' in inputs:
+    if "sequence" in inputs:
         inputs["sequence"] = get_sequence(inputs["sequence"], sample)
 
     # check if any required arguments are not provided
@@ -124,7 +128,10 @@ def create_data(data_keyword, inputs, sample=None):
 
     # instantiate and return the data class
     try:
-        return data_constructor(**inputs)
+        data_obj = data_constructor(**inputs)
+        if isinstance(data_obj, data.Sequence):
+            data_obj.name = label
+        return data_obj
     except BaseException as exception:
         raise ValueError(
             f"data_keyword={data_keyword}\ninputs={inputs}"
@@ -164,4 +171,4 @@ def get_sequence(sequence, sample=None, default=None):
     if isinstance(sequence, str) and all([nt.upper() in "AUCGT." for nt in sequence]):
         return data.Sequence(sequence)
     else:
-        raise ValueError(f'Cannot find sequence from "{sequence}"')
+        raise ValueError(f"Cannot find sequence from ({sequence})")
