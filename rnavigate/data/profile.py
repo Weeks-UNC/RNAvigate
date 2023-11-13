@@ -21,15 +21,18 @@ class Profile(data.Data):
     def from_array(cls, input_data, sequence, **kwargs):
         sequence = data.Sequence(sequence)
         if len(input_data) != sequence.length:
-            message = (f"RNAVIGATE ERROR\n{'=' * 15}\n"
-                "\tinput array must be the same size as the input sequence"
-                "\n\n")
+            message = (
+                "RNAVIGATE ERROR\n"
+                "===============\n"
+                "\tinput array must be the same size as the input sequence\n"
+                )
             print(message)
             raise ValueError(message)
         if not all(isinstance(value, (int, float)) for value in input_data):
-            message = (f"RNAVIGATE ERROR\n{'=' * 15}\n"
-                "\tinput array must be all float or integer values"
-                "\n\n")
+            message = (
+                "RNAVIGATE ERROR\n"
+                "===============\n"
+                "\tinput array must be all float or integer values\n")
             print(message)
             raise ValueError(message)
         df = pd.DataFrame({
@@ -134,19 +137,26 @@ class Profile(data.Data):
             new_error=None, norm_method=None, nt_groups=None,
             profile_factors=None, **norm_kwargs
             ):
-        """normalize the values in the given values and errors columns. Stores
-        values in column of self.data dataframe.
+        """Normalize values in a column, and store in a new column.
 
-        Args:
-            profile_column (str, optional): column name of values to normalize
+        By default, performs ShapeMapper2 boxplot normalization on self.metric
+        and stores the result as "Norm_profile".
+
+        Optional arguments:
+            profile_column (string)
+                column name of values to normalize
                 Defaults to self.metric
-            new_profile (str, optional): column name of new normalized values
+            new_profile (string)
+                column name of new normalized values
                 Defaults to "Norm_profile"
-            error_column (str, optional): column name of error values to propagate
+            error_column (string)
+                column name of error values to propagate
                 Defaults to self.error_column
-            new_error (str, optional): column name of new propagated error values
+            new_error (string)
+                column name of new propagated error values
                 Defaults to "Norm_error"
-            norm_method (str, optional): normalization method to use.
+            norm_method (string)
+                normalization method to use.
                 "DMS" uses self.norm_percentile and nt_groups=['AC', 'UG']
                     scales the median of 90th to 95th percentiles to 1
                     As and Cs are normalized seperately from Us and Gs
@@ -160,15 +170,17 @@ class Profile(data.Data):
                     scales the median of 90th to 95th percentiles to 1
                     scales nucleotides together unless specified with nt_groups
                 Defaults to "boxplot": the default normalization of ShapeMapper
-            nt_groups (list of str, optional): A list of nucleotides to group
+            nt_groups (list of strings)
+                A list of nucleotides to group
                 e.g. ['AUCG'] groups all nts together
                      ['AC', 'UG'] groups As with Cs and Us with Gs
                      ['A', 'C', 'U', 'G'] scales each nt seperately
-                     Default depends on norm_method
-            profile_factors (dict, optional): a scaling factor (float) for each
-                nucleotide: keys must be 'A', 'C', 'U', 'G'
+                Default depends on norm_method
+            profile_factors (dictionary)
+                a scaling factor (float) for each nucleotide. keys must be:
+                    'A', 'C', 'U', 'G'
                 Note: using this argument overrides any calculation of scaling
-                Defaults to None.
+                Defaults to None
             **norm_kwargs: these are passed to the norm_method function
 
         Returns:
@@ -195,7 +207,7 @@ class Profile(data.Data):
         # calculate normalization factors, if appropriate
         if profile_factors is None:
             profile_factors = {nt: np.nan for nt in 'ACGU'}
-            error_factors = {}
+            error_factors = {nt: np.nan for nt in 'ACGU'}
             methods_groups = {
                 'DMS': (self.norm_percentiles, ['AC', 'GU']),
                 'eDMS': (self.norm_eDMS, ['A', 'C', 'G', 'U']),
