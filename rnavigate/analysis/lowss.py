@@ -112,12 +112,14 @@ class LowSS(Sample):
             maximum_shape = self.median_shape
         entropies = self.data['entropy'].data['Windowed_entropy']
         shapes = self.data['shapemap'].data['Windowed_profile']
-        is_lowss = entropies < maximum_entropy & shapes < maximum_shape
+        is_lowss = (entropies < maximum_entropy) & (shapes < maximum_shape)
         self.set_data(
-            overwrite_keyword=True, data_keyword='lowSS',
+            overwrite=True,
+            data_keyword='lowSS',
             inputs=data.Annotation.from_boolean_array(
-                values=is_lowss, window=1, annotation_type='spans',
-                color="grey", sequence=self.data['structure'].sequence
+                values=is_lowss, window=self.window, annotation_type='spans',
+                color="grey", sequence=self.data['structure'].sequence,
+                name="lowSS",
                 ),
             )
 
