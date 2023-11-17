@@ -84,6 +84,7 @@ rnasep_common = rnav.Sample(
         },
     ss_ct={"ss": str(rnasep_dir / "RNaseP.ct")},
     ss_pdb={"ss": str(rnasep_dir / "RC_CRYSTAL_STRUCTURE.xrna")},
+    ss_lit={"ss": str(rnasep_dir / "RNaseP-lit-like.nsd")},
     pairprob={
         "pairprob": str(rnasep_dir / "rnasep.dp"),
         "sequence": str(rnasep_dir / "RNaseP-withSC.fasta"),
