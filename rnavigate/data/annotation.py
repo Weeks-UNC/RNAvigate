@@ -218,6 +218,7 @@ class Motif(Annotation):
         Returns:
             _type_: _description_
         """
+        sequence = data.normalize_sequence(sequence=sequence)
         nuc_codes = {
             "A": "A",
             "T": "T",

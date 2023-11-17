@@ -20,6 +20,7 @@ from rnavigate import analysis
 from rnavigate import data
 from rnavigate import plots
 from rnavigate import styles
+from rnavigate import transcriptomics
 
 __version__ = "1.0.0"
 __author__ = "Patrick S. Irving"
@@ -48,4 +49,5 @@ __all__ = [
     "data",
     "plots",
     "styles",
+    "transcriptomics",
 ]

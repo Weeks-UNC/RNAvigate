@@ -290,11 +290,17 @@ class Sample:
         if 'profile' in kwargs:
             kwargs['profile'] = self.data[kwargs['profile']]
         else:
-            kwargs['profile'] = self.get_data(f"default_{'profile'}")
+            try:
+                kwargs['profile'] = self.get_data(f"default_{'profile'}")
+            except ValueError:
+                kwargs["profile"] = None
         if 'structure' in kwargs:
             kwargs['structure'] = self.data[kwargs['structure']]
         else:
-            kwargs['structure'] = self.get_data(f"default_{'structure'}")
+            try:
+                kwargs['structure'] = self.get_data(f"default_{'structure'}")
+            except ValueError:
+                kwargs["structure"] = None
         interactions.filter(**kwargs)
 
     def print_data_keywords(self):
