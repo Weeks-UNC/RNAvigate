@@ -119,8 +119,8 @@ class LinReg(plots.Plot):
 
     def plot_regression(self, i, j):
         ax = self.axes[i, j]
-        p1 = self.profiles[i]
-        p2 = self.profiles[j+1]
+        p1 = self.profiles[j+1]
+        p2 = self.profiles[i]
         colors = self.colors[i]
 
         # ax.plot([0, 1], [0, 1], color='black')
