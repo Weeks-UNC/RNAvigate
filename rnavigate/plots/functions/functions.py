@@ -50,7 +50,7 @@ def get_nt_ticks(sequence, region, gap):
         valid = nt != '-'
         if valid:
             pos += 1
-        if valid & (pos % gap == 0 or pos == 1) and start <= pos <= end:
+        if valid & (pos % gap == 0 or pos == start) and start <= pos <= end:
             labels.append(pos)
             ticks.append(i+1)
     return ticks, labels
