@@ -1,4 +1,4 @@
-from rnavigate.data.data import Sequence, Data
+from rnavigate.data.data import Sequence, Data, normalize_sequence
 from rnavigate.data.secondary_structure import (
     SecondaryStructure,
     SequenceCircle,

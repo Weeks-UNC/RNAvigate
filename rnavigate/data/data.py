@@ -7,6 +7,39 @@ from rnavigate import styles
 from rnavigate import data
 
 
+def normalize_sequence(sequence, t_or_u='U', uppercase=True):
+    """Returns sequence as all uppercase nucleotides and/or corrects T or U.
+
+    Required arguments:
+        sequence (string or RNAvigate Sequence)
+            The sequence string
+            If given an RNAvigate Sequence, the sequence string is retrieved
+
+    Optional arguments:
+        t_or_u ("T", "U", or False)
+            "T" converts "U"s to "T"s
+            "U" converts "T"s to "U"s
+            False does nothing
+            Defaults to "U"
+        uppercase (True or False)
+            Whether to make sequence all uppercase
+            Defaults to True
+
+    Returns:
+        string: the cleaned-up sequence string
+    """
+    if isinstance(sequence, Sequence):
+        sequence = sequence.sequence
+    if uppercase:
+        sequence = sequence.upper()
+    if not t_or_u:
+        pass
+    elif t_or_u.upper() == 'U':
+        sequence = sequence.replace('t', 'u').replace('T', 'U')
+    elif t_or_u.upper() == 'T':
+        sequence = sequence.replace('u', 't').replace('U', 'T')
+    return sequence
+
 
 class Sequence():
     def __init__(self, input_data, name=None):
@@ -66,13 +99,21 @@ class Sequence():
         return len(self.sequence)
 
     def normalize_sequence(self, t_or_u='U', uppercase=True):
-        seq = self.sequence
-        if uppercase:
-            seq = seq.upper()
-        if t_or_u.upper() == 'U':
-            seq = seq.replace('t', 'u').replace('T', 'U')
-        if t_or_u.upper() == 'T':
-            seq = seq.replace('u', 't').replace('U', 'T')
+        """Converts sequence to all uppercase nucleotides and corrects T or U.
+
+        Optional arguments:
+            t_or_u ("T", "U", or False)
+                "T" converts "U"s to "T"s
+                "U" converts "T"s to "U"s
+                False does nothing.
+                Defaults to "U"
+            uppercase (True or False)
+                Whether to make sequence all uppercase
+                Defaults to True
+        """
+        self.sequence = normalize_sequence(
+            self, t_or_u=t_or_u, uppercase=uppercase
+            )
 
     def get_aligned_data(self, alignment):
         return Sequence(alignment.target_sequence)
