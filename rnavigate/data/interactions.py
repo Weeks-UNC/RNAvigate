@@ -276,6 +276,9 @@ class Interactions(data.Data):
         """Resets the mask to all True (removes previous filters)"""
         self.data['mask'] = np.ones(len(self.data), dtype=bool)
 
+    def copy(self):
+        return self.get_aligned_data(self.null_alignment)
+
     def get_aligned_data(self, alignment):
         """Get a new copy of the data with i and j mapped to new positions
         using an alignment. Interactions in which i or j does not map are
@@ -938,11 +941,16 @@ class AllPossible(Interactions):
 class StructureAsInteractions(Interactions):
     def __init__(
             self, input_data, sequence, metric=None, metric_defaults=None,
+            window=1,
             ):
         if metric_defaults is None:
             metric_defaults = {}
         if metric is None:
             metric = "Structure"
+        if isinstance(input_data, pd.DataFrame):
+            pass
+        elif isinstance(input_data, data.SecondaryStructure):
+            input_data = input_data.get_interactions_df()
         metric_defaults = {
             'Structure': {
                 'metric_column': 'Structure',
@@ -958,23 +966,27 @@ class StructureAsInteractions(Interactions):
 class StructureCompareTwo(Interactions):
     def __init__(
             self, input_data, sequence, metric=None, metric_defaults=None,
-            structure2=None, window=1
+            window=1,
             ):
         if metric is None:
             metric = "Which_structure"
         if metric_defaults is None:
             metric_defaults = {}
-        input_data = input_data.merge(
-            structure2,
-            how="outer",
-            on=["i", "j"],
-            indicator="Which_structure",
-            suffixes=["_left", "_right"])
-        categories = {'both': 0, 'left_only': 1, 'right_only': 2}
-        input_data["Which_structure"] = [
-            categories[c] for c in input_data['Which_structure']
-            ]
-        input_data['Which_structure'].astype(int)
+        if isinstance(input_data, pd.DataFrame):
+            pass
+        elif isinstance(input_data, list) and len(input_data)==2:
+            ss1, ss2 = [ss.get_interactions_df() for ss in input_data]
+            input_data = ss1.merge(
+                ss2,
+                how="outer",
+                on=["i", "j"],
+                indicator="Which_structure",
+                suffixes=["_left", "_right"])
+            categories = {'both': 0, 'left_only': 1, 'right_only': 2}
+            input_data["Which_structure"] = [
+                categories[c] for c in input_data['Which_structure']
+                ]
+            input_data['Which_structure'].astype(int)
         metric_defaults = {
             'Which_structure': {
                 'metric_column': 'Which_structure',
@@ -996,23 +1008,24 @@ class StructureCompareTwo(Interactions):
         } | metric_defaults
         super().__init__(input_data, sequence, metric, metric_defaults)
 
-
 class StructureCompareMany(Interactions):
     def __init__(
             self, input_data, sequence, metric=None, metric_defaults=None,
-            structure2=None, window=1
+            window=1,
             ):
         if metric is None:
             metric = "Num_structures"
         if metric_defaults is None:
             metric_defaults = {}
-        if structure2 is None:
-            total_structures = input_data["Num_structures"].max()
-        else:
+        if isinstance(input_data, pd.DataFrame):
+            pass
+        elif isinstance(input_data, list) and len(input_data) >= 2:
+            input_data = [ss.get_interactions_df() for ss in input_data]
+            other_structures = input_data[1:]
+            input_data = input_data[0]
             columns = ['Structure_1']
             input_data = input_data.rename(columns={'Structure': 'Structure_1'})
-            total_structures = len(structure2)+1
-            for i, structure in enumerate(structure2):
+            for i, structure in enumerate(other_structures):
                 col = f'Structure_{i+2}'
                 columns.append(col)
                 structure = structure.rename(columns={'Structure': col})
@@ -1025,6 +1038,7 @@ class StructureCompareMany(Interactions):
             input_data['Num_structures'] = input_data[columns].sum(
                 axis=1, numeric_only=True
                 ) - 1  # to index at 0 for coloring
+        total_structures = input_data["Num_structures"].max() + 1
         metric_defaults = {
             'Num_structures': {
                 'metric_column': 'Num_structures',
