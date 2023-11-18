@@ -1,0 +1,44 @@
+{{! RNAvigate Docstring Template }}
+{{summaryPlaceholder}}
+
+{{summaryPlaceholder}}
+{{#argsExist}}
+
+Required arguments:
+{{#args}}
+    {{var}} ({{typePlaceholder}})
+        {{descriptionPlaceholder}}
+{{/args}}
+{{/argsExist}}
+{{#kwargsExist}}
+
+Optional arguments:
+{{#kwargs}}
+    {{var}} ({{typePlaceholder}})
+        {{descriptionPlaceholder}}
+        Defaults to {{&default}}
+{{/kwargs}}
+{{/kwargsExist}}
+{{#exceptionsExist}}
+
+Raises:
+{{#exceptions}}
+    {{type}}
+        {{descriptionPlaceholder}}
+{{/exceptions}}
+{{/exceptionsExist}}
+{{#returnsExist}}
+
+Returns:
+{{#returns}}
+    {{typePlaceholder}}
+        {{descriptionPlaceholder}}
+{{/returns}}
+{{/returnsExist}}
+{{#yieldsExist}}
+
+Yields:
+{{#yields}}
+    {{typePlaceholder}}: {{descriptionPlaceholder}}
+{{/yields}}
+{{/yieldsExist}}

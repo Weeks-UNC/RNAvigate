@@ -1,3 +1,7 @@
 # Ignores notebooks when describing language breakdown of repo.
 *.ipynb linguist-documentation
 *.html linguist-documentation
+# Prevents weird tracking issues across platforms
+* text=auto eol=lf
+*.{cmd,[cC][mM][dD]} text eol=crlf
+*.{bat,[bB][aA][tT]} text eol=crlf

@@ -5,10 +5,9 @@ nav:
 - Getting started:
   - 'Installation': 'installing-rnavigate.md'
   - 'Loading data': 'loading-data.md'
-  - 'Visualizing data': 'visualizing-data.md'
-  - 'Basic examples': 'examples/one_sample.ipynb'
+  - 'Visualizing data': 'visualizing-data.ipynb'
 - Plotting options:
-  - 'Alignments': 'plot-options/alignment-plots.md'
+  - 'Alignments': 'plot-options/alignment.ipynb'
   - 'Skylines': 'plot-options/skyline-plots.md'
   - 'Profiles': 'plot-options/profile-plots.md'
   - 'Arcs': 'plot-options/arc-plots.md'
@@ -32,11 +31,20 @@ nav:
   - 'Loading custom data': 'guides/loading-custom-data.md'
 - Glossary: glossary.md
 - Publications: publications.md
+- Code Reference: reference/
 - Change log: changelog.md
 
 plugins:
-  - mkdocs-jupyter
+  - mkdocs-jupyter:
       execute: True
-      kernel_name: RNAvigate_v1.0.0
+      kernel_name: Python3
+  - search
+  - gen-files:
+      scripts:
+      - docs/gen_ref_pages.py
+  - literate-nav:
+      nav_file: SUMMARY.md
+  - mkdocstrings
+
 
 theme: readthedocs
