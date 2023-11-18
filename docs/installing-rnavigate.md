@@ -9,7 +9,8 @@ This is part 1 in the getting started with RNAvigate guide.
 
 Sections:
 
-- [Anaconda installation](#anaconda-installation)
+- [Docker installation](#docker-installation) (recommended for personal use)
+- [Anaconda installation](#anaconda-installation) (recommended for HPC clusters)
 - [Manual installation](#manual-installation)
 - [UNC Longleaf installation](#unc-longleaf-installation)
 - [Updating RNAvigate](#updating-rnavigate)
@@ -34,10 +35,10 @@ cd RNAvigate_v1.0.0
 
 **Create a conda enviroment using the included env.yaml file.**
 
-This step can take a long time, be patient.
+This step can take a long time, be patient. Grab a coffee.
 
 ```bash
-conda env create -f env.yaml
+conda env create -f environment.yml
 ```
 
 **Activate the new conda environment.**
@@ -52,7 +53,25 @@ conda develop .
 python -m ipykernel install --user --name=RNAvigate_v1.0.0
 ```
 
-7. To test installation, open and run one of the example notebooks.
+**Test the installation by running an example notebook.**
+
+```base
+jupyter notebook ./docs/examples/
+```
+
+Open a notebook and click "Kernel", "restart and run all".
+
+If RNAvigate fails to import, add this code to the very top of the notebook.
+Replace `/path/to/RNAvigate/` with the location of the RNAvigate directory on your system, then rerun the cell.
+
+```python
+import sys
+sys.path.append('/path/to/RNAvigate/')
+```
+
+This is an issue with `conda develop .` If you know of a solution, please let
+me know on Github issues. I'm trying to avoid adding directly to system path,
+so that different versions of RNAvigate work in different notebooks.
 
 ---
 

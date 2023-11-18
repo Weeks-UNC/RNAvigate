@@ -588,7 +588,7 @@ plot_annotation_circle
 get_contrasting_colors
 adjust_spines
 clip_spines
-set_x_ticks
+set_nt_ticks
 box_xtick_labels
 plot_sequence_alignment
 plot_interactions_arcs

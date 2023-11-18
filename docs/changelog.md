@@ -1,9 +1,10 @@
 Version history
 ===============
 
-1.0.0 (October 2023)
+1.0.0-alpha (November 2023)
 
-This version is a large refactoring of version 0.2.0.
+This version is a large departure from v0.2.0, while trying to maintain a
+familiar interface.
 
 If you're coming from version 0.2.0, there are many syntax changes. In order to
 preserve the functionality of your old notebooks, do not pull these changes to
@@ -13,7 +14,7 @@ your existing RNAvigate folder. Instead, follow the [installation][] guide.
 
 NOTES:
 
-- Argument names are fewer, more intuitive and standardized:
+- Argument names are fewer, clearer, and more standardized:
 
 | new names                     | old names                                             |
 | :---------------------------: | ----------------------------------------------------- |
@@ -23,8 +24,9 @@ NOTES:
 | colors                        | nt_color, color, colormap, etc.                       |
 | input_data                    | dataframe, filepath                                   |
 | metric_defaults               | column, err_column, color_column, cmap, norm, min_max |
-| read_table_kw                 | read_csv_kw, sep                                      |
 
+- SequenceChecker analysis adds tools to quickly compare sequences.
+- Multiple sequence alignment is partially implemented.
 - All arguments are explicitly named for high level functions (no more kwargs)
 - Removed these standard data keywords:
   - log: log files can now be passed during ShapeMaP profile creation
@@ -61,6 +63,9 @@ NOTES:
   - undercase nucleotides in sequences are preserved
   - figure size in inches is more reasonable for exporting images and svgs
   - figure size scaling is standardized and correctly calculated for all plots
+  - nt_ticks parameter defines major and minor tick marks
+    - always includes the first nucleotide
+    - skips over indels in the sequence
 - secondary structure diagrams changes:
   - position labels look much nicer
   - axis margins are standardized to 2 data units for all size RNAs
@@ -68,6 +73,11 @@ NOTES:
   - removed KDE plots
   - simplified and improved readability
   - scale options (linear or log) and regression options (Pearson or Spearman)
+- Added plot_ntdist, which plots reactivity distributions by nucleotide.
+- The following analyses have been refactored:
+  - DeltaSHAPE, fragmapper, lowSS
+  - (not stable) AUROC, LogDiff
+
 
 ---
 

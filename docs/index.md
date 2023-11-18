@@ -69,8 +69,8 @@ rnav.plotting_function(
 ## Questions, requests, and issues
 
 Use [GitHub issues](https://github.com/Weeks-UNC/RNAvigate/issues) to request
-new features, to report bugs, or to ask questions. This feedback is very
-useful for improving RNAvigate for everybody!
+new features, to report bugs or unexpected behavior, or to ask questions. This
+feedback is very useful for improving RNAvigate for everybody!
 
 In most cases, RNAvigate can be efficiently expanded to accept new data file
 formats. Reach out using the issues link above to request support for a new

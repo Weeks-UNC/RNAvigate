@@ -130,6 +130,10 @@ docstring styles to be as helpful as possible to non-python coders. They are
 most important for the high-level API in rnavigate.py and plotting_functions.py
 but I rather like them and am transitioning to using them every where.
 
+In the main directory, there is an autodocstring.mustache file that can be used
+with VScode's autodocstring extension to automatically generate the correct
+formatting.
+
 ### Modules
 
 This section pretty much the same as the Google style.

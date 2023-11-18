@@ -7,10 +7,17 @@ This is part 2 in the getting started with RNAvigate guide.
 2. [Loading Data](./loading-data.md)
 3. [Visualizing data](./visualizing-data.md)
 
-RNAvigate is built around `rnav.Sample`, which defines and organizes the data
-that are associated with an experimental sample or RNA. Creating a `Sample` and
-providing data files will load and store the data contained within. This step
-allows access to all of the visualization and analysis tools RNAvigate offers.
+Sections:
+
+- [introduction](#introduction)
+- [rnavigate.Sample call signature](#call-signature)
+- [data keywords](#data-keywords)
+
+## Introduction
+
+RNAvigate is built around `rnav.Sample`, which defines and organizes the data that are associated with an experimental sample or RNA.
+Creating a `Sample` and providing data files will load and store this data.
+This step allows access to all of the visualization and analysis tools RNAvigate offers.
 
 Here is how to create a sample:
 
@@ -23,19 +30,98 @@ my_sample = rnav.Sample(         # create a new sample
 ```
 
 Our new variable `my_sample`, now contains the data loaded from `my_data.txt`.
-The `data_keyword` used here is not a real data keyword. Data keywords are used
-to tell RNAvigate how to parse the data file, and for plotting functions, how
-to access the data. `rnav.Sample` can accept any number of data keyword
-arguments, thus organizing all of the data related to an experimental sample.
+The `data_keyword` used here is not a real data keyword.
+Data keywords tell RNAvigate how to parse and access the data in the input file.
+`rnav.Sample` can accept any number of data keyword arguments.
+This allows flexible organization for all of the data related to a sample.
 
-Sections:
+[Skip to data keywords](#data-keywords)
 
-- [data keywords](#data-keywords)
-- [other optional arguments](#other-optional-arguments)
+## Call signature
+
+Besides data keyword arguments, there are two other optional arguments to know.
+Here is the call signature for `rnav.Sample`:
+
+```python
+rnav.Sample(
+    sample,
+    inherit=None,
+    keep_inherited_defaults=False,
+    **data_keywords)
+```
+
+### Required arguments
+
+#### `sample`
+
+type: string
+
+This string should be succinct, but uniquely describe the sample.
+It is used mainly when plotting, as a label for data that came from this sample.
+
+### Optional arguments
+
+#### `inherit`
+
+- type: `None` or `rnavigate.Sample`
+- default: `None`
+
+If another `rnav.Sample` is provided, the created sample will inherit all data keywords from the provided sample.
+
+These data are shared, i.e. any change to one sample applies to the other.
+This sharing saves on memory and computation time for large data sets.
+
+Example usage:
+
+```python
+shared_data = rnav.Sample(
+    name='shared data',
+    keyword1='big_structure.pdb')
+
+sample1 = rnav.Sample(
+    name='knockout',
+    inherit=shared_data,
+    keyword2='sample1-data.txt')
+
+sample2 = rnav.Sample(
+    name='control',
+    inherit=shared_data,
+    keyword2='sample2-data.txt')
+```
+
+`sample1` and `sample2` now share the data stored in `keyword1`.
+
+Another way to do this is to pass the data from `shared_data` directly to a data keyword.
+
+```python
+sample1 = rnav.Sample(
+    name='knockout',
+    keyword1='big_structure.pdb',
+    keyword2='sample1-data.txt')
+
+sample2 = rnav.Sample(
+    name='control',
+    keyword1=sample1.get_data("keyword1"),
+    keyword2='sample2-data.txt')
+```
+
+#### `keep_inherited_defaults`
+
+- type: `True` or `False`
+- default: `False`
+
+If set to `True`, default keywords from `inherit` will be kept.
+
+Every sample can have default keywords for each of the data classes:
+- annotations
+- structure (secondary structures)
+- pdb (3D structures)
+- profile (per-nucleotide measurements)
+- interactions (inter-nucleotide measurements)
 
 ---
 
-## Data keywords
+## `**data_keywords`
 
 Data keywords perform two major functions in RNAvigate. When loading data, they
 tell RNAvigate how to parse that data. When plotting data or performing
@@ -59,7 +145,7 @@ plot = rnav.plot_skyline(
 ```
 
 Data keywords can either be a standard keyword or an arbitrary one. Arbitrary
-data keywords are useful for when multiple data sources of the same kind are
+data keywords are useful when multiple data sources of the same kind are
 associated with a single sample.
 
 ### Standard data keywords
@@ -165,11 +251,15 @@ back to [standard data keywords][]
 
 SHAPE, DMS, or other reagent per-nucleotide reactivities
 
-Two similar data keywords are `dmsmap`, which first applies DMS-MaP
-normalization ([publication](https://doi.org/10.1073/pnas.1905491116)), and
-`shapemap_rnaframework`, which accepts an RNAframework xml file. One caveat to
-the RNAframework file is that it contains normalized reactivities, but not
-errors or raw data.
+- [ShapeMapper2 software][]
+
+Two similar data keywords:
+- `dmsmap` applies DMS-MaP normalization to profile when loaded
+  - ([publication](https://doi.org/10.1073/pnas.1905491116))
+- `shapemap_rnaframework` accepts an RNAframework xml file.
+  - RNAframework files do not contain error estimates or raw data.
+  - [RNAframework software][]
+
 
 ```python
 dmsmap="path/to/shapemap_profile.txt"
@@ -181,7 +271,6 @@ is equivalent to
 dmsmap={'shapemap': "shapemap_profile.txt", "normalize": "DMS"}
 ```
 
-[ShapeMapper2 software][]
 
 example uses:
 
@@ -226,9 +315,9 @@ typical optional input example:
 ```python
 my_sample = rnav.Sample(
     sample="example",
-    dmsmap={
+    shapemap={
         "shapemap": "shapemap_profile.txt",
-        "normalize": "dms",
+        "log": "shapemap_log.txt",
     }
 )
 ```
@@ -931,72 +1020,6 @@ back to [standard data keywords][]
 
 ---
 
-## Other optional arguments
-
-Besides data keyword arguments, there are two other optional arguments to know.
-Here is the call signature for `rnav.Sample`:
-
-```python
-rnav.Sample(
-    sample,
-    inherit=None,
-    keep_inherited_defaults=False,
-    **data_keywords)
-```
-
-### inherit
-
-This value defaults to `None`. If another `rnav.Sample` is provide, the created
-sample will inherit all of the data keywords from the provided sample.
-
-These data are shared: any change to one sample applies to the other. This
-sharing saves on memory and computation time for large data sets.
-
-Example:
-
-```python
-shared_data = rnav.Sample(
-    name='shared data',
-    keyword1='big_structure.pdb')
-
-sample1 = rnav.Sample(
-    name='knockout sample',
-    inherit=shared_data,
-    keyword2='sample1-data.txt')
-
-sample2 = rnav.Sample(
-    name='knockout sample',
-    inherit=shared_data,
-    keyword2='sample2-data.txt')
-```
-
-`sample1` and `sample2` now share the data stored in `keyword1`. Another way to
-achieve the same result is to pass the data object directly to a data keyword,
-but this can get cumbersome if there is a lot of shared data.
-
-```python
-sample1 = rnav.Sample(
-    name='knockout sample',
-    inherit=shared_data,
-    keyword1='big_structure.pdb',
-    keyword2='sample1-data.txt')
-
-sample2 = rnav.Sample(
-    name='knockout sample',
-    inherit=shared_data,
-    keyword1=sample1.get_data("keyword1"),
-    keyword2='sample2-data.txt')
-```
-
-### keep_inherited_defaults
-
-This value defaults to `False`. If set to `True`, default keywords from
-`inherit` will be kept. Each sample has default keywords for each of
-the The provided value should be a boolean (`True` or `False`)
-
-[customizing profiles][]
-[customizing interactions][]
-[filtering guide][]
 
 [standard data keywords]: #standard-data-keywords
 [sequence]: #sequence
@@ -1022,6 +1045,7 @@ the The provided value should be a boolean (`True` or `False`)
 [pdb]: #pdb
 [RNPMapper software]: https://github.com/Weeks-UNC/RNP-MaP
 [ShapeMapper2 software]: https://github.com/Weeks-UNC/shapemapper2
+[RNAframework software]: https://github.com/dincarnato/RNAFramework
 [DanceMapper software]: https://github.com/MustoeLab/DanceMapper
 [RingMapper software]: https://github.com/Weeks-UNC/RingMapper
 [PairMapper software]: https://github.com/Weeks-UNC/RingMapper
