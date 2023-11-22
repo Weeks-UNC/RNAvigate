@@ -155,7 +155,8 @@ class Sequence():
                 colors[site-1] = annotation.color
         colormap = data.ScalarMappable(
             cmap=cmap, normalization='none', values=None, extend='neither',
-            title='Annotations', alpha=1, ticks=list(range(len(annotations))),
+            title='Annotations', alpha=1,
+            ticks=list(range(len(annotations)+1)),
             tick_labels=tick_labels,
             )
         return colors, colormap
