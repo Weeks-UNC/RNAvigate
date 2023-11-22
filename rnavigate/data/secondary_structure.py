@@ -48,7 +48,10 @@ class SecondaryStructure(data.Sequence):
     # Initialization methods
     ###########################################################################
 
-    def __init__(self, input_data, extension=None, autoscale=True, **kwargs):
+    def __init__(
+            self, input_data, extension=None, autoscale=True, name=None,
+            **kwargs
+            ):
         """Creates a SecondaryStructure object from a given file or dataframe.
 
         Args:
@@ -80,7 +83,7 @@ class SecondaryStructure(data.Sequence):
             }[extension]
             self.filepath = input_data
             self.data = read_file(**kwargs)
-        super().__init__(self.data)
+        super().__init__(input_data=self.data, name=name)
         if 'X_coordinate' in self.data.columns and autoscale is True:
             self.transform_coordinates(scale=1, center=(0,0))
         self.distance_matrix = None
@@ -1056,7 +1059,11 @@ class SecondaryStructure(data.Sequence):
         df.loc[mask, 'Pair'] = alignment.map_positions(
             df.loc[mask, "Pair"].values
             )
-        return SecondaryStructure(input_data=df, autoscale=False)
+        return SecondaryStructure(
+            input_data=df,
+            autoscale=False,
+            name=self.name,
+            )
 
     def get_interactions_df(self):
         mask = self.data.eval("Pair != 0 & Pair > Nucleotide")
@@ -1066,7 +1073,9 @@ class SecondaryStructure(data.Sequence):
                 columns={"Nucleotide": "i", "Pair": "j"}
             ).sort_values(
                 by=['i', 'j']
-            ).astype({'Structure': "Int32"})
+            ).astype(
+                {'Structure': "Int32"}
+            ).reset_index(drop=True)
         return df
 
     def as_interactions(self, structure2=None):
@@ -1233,7 +1242,7 @@ class StructureCoordinates():
 
 class SequenceCircle(SecondaryStructure):
     def __init__(
-            self, input_data, gap=30, **kwargs
+            self, input_data, gap=30, name=None, **kwargs
             ):
         length = input_data.length
         df = pd.DataFrame({
@@ -1249,5 +1258,9 @@ class SequenceCircle(SecondaryStructure):
         theta = theta_between * np.arange(length) + theta_start
         df['Theta'] = theta
         super().__init__(
-            input_data=df, extension=None, autoscale=False, **kwargs
+            input_data=df,
+            extension=None,
+            autoscale=False,
+            name=name,
+            **kwargs
             )

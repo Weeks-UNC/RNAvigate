@@ -8,7 +8,7 @@ from rnavigate import data
 
 class Interactions(data.Data):
     def __init__(self, input_data, sequence, metric, metric_defaults,
-                 read_table_kw=None, window=1):
+                 read_table_kw=None, window=1, name=None):
         """Given a dataframe or a data file, construct the interactions object
 
         Args:
@@ -40,7 +40,10 @@ class Interactions(data.Data):
             sequence=sequence,
             metric=metric,
             metric_defaults=metric_defaults,
-            read_table_kw=read_table_kw)
+            read_table_kw=read_table_kw,
+            name=name,
+            )
+        self.data = self.data.astype({"i": "int", "j": "int"})
         self.reset_mask()
 
     def mask_on_sequence(self, compliment_only=None, nts=None,
@@ -276,23 +279,44 @@ class Interactions(data.Data):
         """Resets the mask to all True (removes previous filters)"""
         self.data['mask'] = np.ones(len(self.data), dtype=bool)
 
-    def copy(self):
-        return self.get_aligned_data(self.null_alignment)
+    def copy(self, apply_filter=False):
+        """Returns a deep copy of the Interactions.
 
-    def get_aligned_data(self, alignment):
+        Optional arguments:
+            apply_filter (True or False)
+                whether to remove masked rows
+                Defaults to False
+
+        Returns:
+            rnavigate.data.Interactions
+                The same subclass as the original object
+        """
+        return self.get_aligned_data(
+            alignment=self.null_alignment,
+            apply_filter=apply_filter
+            )
+
+    def get_aligned_data(
+            self, alignment, apply_filter=True
+            ):
         """Get a new copy of the data with i and j mapped to new positions
         using an alignment. Interactions in which i or j does not map are
         dropped.
         """
+        if apply_filter:
+            dataframe = self.data[self.data["mask"]].reset_index(drop=True)
+        else:
+            dataframe = self.data
         new_data = alignment.map_dataframe(
-            dataframe = self.data[self.data['mask']],
+            dataframe=dataframe,
             position_columns=['i', 'j'])
         return self.__class__(
             input_data=new_data,
             sequence=alignment.target_sequence,
             metric=self._metric,
             metric_defaults=self.metric_defaults,
-            window=self.window)
+            window=self.window,
+            name=self.name)
 
     def update_mask(self, mask):
         """Given a new masking array, the mask is updated
@@ -567,8 +591,10 @@ class Interactions(data.Data):
 
 
 class SHAPEJuMP(Interactions):
-    def __init__(self, input_data, sequence=None, metric='Percentile',
-                 metric_defaults=None, read_table_kw=None, window=1):
+    def __init__(
+            self, input_data, sequence=None, metric='Percentile',
+            metric_defaults=None, read_table_kw=None, window=1, name=None
+            ):
         """Constructs an Interactions object from SHAPEJuMP data"""
         if metric_defaults is None:
             metric_defaults = {}
@@ -594,7 +620,8 @@ class SHAPEJuMP(Interactions):
             metric=metric,
             metric_defaults=metric_defaults,
             read_table_kw=read_table_kw,
-            window=1)
+            window=window,
+            name=name)
 
     def read_file(self, input_data, read_table_kw=None):
         """Parses a deletions.txt file and stores data as a dataframe at
@@ -613,8 +640,10 @@ class SHAPEJuMP(Interactions):
 
 
 class RINGMaP(Interactions):
-    def __init__(self, input_data, sequence=None, metric='Statistic',
-                 metric_defaults=None, read_table_kw=None, window=1):
+    def __init__(
+            self, input_data, sequence=None, metric='Statistic',
+            metric_defaults=None, read_table_kw=None, window=1, name=None,
+            ):
         if metric_defaults is None:
             metric_defaults = {}
         metric_defaults = {
@@ -639,7 +668,9 @@ class RINGMaP(Interactions):
             metric=metric,
             metric_defaults=metric_defaults,
             read_table_kw=read_table_kw,
-            window=window)
+            window=window,
+            name=name,
+            )
 
     def read_file(self, filepath, read_table_kw=None):
         """Parses a correlations file and stores data as a dataframe at
@@ -701,8 +732,10 @@ class RINGMaP(Interactions):
 
 
 class PAIRMaP(RINGMaP):
-    def __init__(self, input_data, sequence=None, metric='Class',
-                 metric_defaults=None, read_table_kw=None, window=1):
+    def __init__(
+            self, input_data, sequence=None, metric='Class',
+            metric_defaults=None, read_table_kw=None, window=1, name=None,
+            ):
         if metric_defaults is None:
             metric_defaults = {}
         metric_defaults = {
@@ -725,7 +758,9 @@ class PAIRMaP(RINGMaP):
             metric=metric,
             metric_defaults=metric_defaults,
             read_table_kw=read_table_kw,
-            window=window)
+            window=window,
+            name=name,
+            )
 
     def read_file(self, filepath, read_table_kw=None):
         """Parses a pairmap.txt file and stores data as a dataframe at
@@ -785,8 +820,10 @@ class PAIRMaP(RINGMaP):
 
 
 class PairingProbability(Interactions):
-    def __init__(self, input_data, sequence=None, metric='Probability',
-                 metric_defaults=None, read_table_kw=None, window=1):
+    def __init__(
+            self, input_data, sequence=None, metric='Probability',
+            metric_defaults=None, read_table_kw=None, window=1, name=None,
+            ):
         """Constructs Interactions data from a pairing probability text file
         containing i, j, and -log10(P) values. Can be obtained using partition
         and ProbabilityPlot functions from RNAStructure (Matthews Lab).
@@ -831,7 +868,9 @@ class PairingProbability(Interactions):
             metric=metric,
             metric_defaults=metric_defaults,
             read_table_kw=read_table_kw,
-            window=window)
+            window=window,
+            name=name,
+            )
 
     def read_file(self, filepath, read_table_kw=None):
         """Parses a pairing probability text file to create a DataFrame
@@ -905,8 +944,9 @@ class PairingProbability(Interactions):
 
 
 class AllPossible(Interactions):
-    def __init__(self, sequence, metric='data', input_data=None,
-                 metric_defaults=None, read_table_kw=None, window=1):
+    def __init__(
+            self, sequence, metric='data', input_data=None,
+            metric_defaults=None, read_table_kw=None, window=1, name=None):
         if isinstance(sequence, data.Sequence):
             sequence = sequence.sequence
         if metric_defaults is None:
@@ -936,12 +976,15 @@ class AllPossible(Interactions):
             metric=metric,
             metric_defaults=metric_defaults,
             read_table_kw=read_table_kw,
-            window=window)
+            window=window,
+            name=name,
+            )
+
 
 class StructureAsInteractions(Interactions):
     def __init__(
             self, input_data, sequence, metric=None, metric_defaults=None,
-            window=1,
+            window=1, name=None,
             ):
         if metric_defaults is None:
             metric_defaults = {}
@@ -960,13 +1003,20 @@ class StructureAsInteractions(Interactions):
                 'title': 'Base-pairs',
                 'extend': 'neither'}
             } | metric_defaults
-        super().__init__(input_data, sequence, metric, metric_defaults)
+        super().__init__(
+            input_data=input_data,
+            sequence=sequence,
+            metric=metric,
+            metric_defaults=metric_defaults,
+            window=window,
+            name=name,
+            )
 
 
 class StructureCompareTwo(Interactions):
     def __init__(
             self, input_data, sequence, metric=None, metric_defaults=None,
-            window=1,
+            window=1, name=None,
             ):
         if metric is None:
             metric = "Which_structure"
@@ -974,7 +1024,7 @@ class StructureCompareTwo(Interactions):
             metric_defaults = {}
         if isinstance(input_data, pd.DataFrame):
             pass
-        elif isinstance(input_data, list) and len(input_data)==2:
+        elif isinstance(input_data, list) and len(input_data) == 2:
             ss1, ss2 = [ss.get_interactions_df() for ss in input_data]
             input_data = ss1.merge(
                 ss2,
@@ -987,6 +1037,7 @@ class StructureCompareTwo(Interactions):
                 categories[c] for c in input_data['Which_structure']
                 ]
             input_data['Which_structure'].astype(int)
+            input_data = input_data.reset_index(drop=True)
         metric_defaults = {
             'Which_structure': {
                 'metric_column': 'Which_structure',
@@ -1006,12 +1057,20 @@ class StructureCompareTwo(Interactions):
                     'second\nstructure'],
             }
         } | metric_defaults
-        super().__init__(input_data, sequence, metric, metric_defaults)
+        super().__init__(
+            input_data=input_data,
+            sequence=sequence,
+            metric=metric,
+            metric_defaults=metric_defaults,
+            window=window,
+            name=name,
+            )
+
 
 class StructureCompareMany(Interactions):
     def __init__(
             self, input_data, sequence, metric=None, metric_defaults=None,
-            window=1,
+            window=1, name=None,
             ):
         if metric is None:
             metric = "Num_structures"
@@ -1038,6 +1097,7 @@ class StructureCompareMany(Interactions):
             input_data['Num_structures'] = input_data[columns].sum(
                 axis=1, numeric_only=True
                 ) - 1  # to index at 0 for coloring
+            input_data = input_data.reset_index(drop=True)
         total_structures = input_data["Num_structures"].max() + 1
         metric_defaults = {
             'Num_structures': {
@@ -1051,4 +1111,11 @@ class StructureCompareMany(Interactions):
                 'tick_labels': [i+1 for i in range(total_structures)]
                 }
             } | metric_defaults
-        super().__init__(input_data, sequence, metric, metric_defaults)
+        super().__init__(
+            input_data=input_data,
+            sequence=sequence,
+            metric=metric,
+            metric_defaults=metric_defaults,
+            window=window,
+            name=name,
+            )

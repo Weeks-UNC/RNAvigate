@@ -6,8 +6,9 @@ from rnavigate import data
 
 
 class Profile(data.Data):
-    def __init__(self, input_data, metric='default', metric_defaults=None,
-                 read_table_kw=None, sequence=None):
+    def __init__(
+            self, input_data, metric='default', metric_defaults=None,
+            read_table_kw=None, sequence=None, name=None):
         if metric_defaults is None:
             metric_defaults = {}
         super().__init__(
@@ -15,7 +16,9 @@ class Profile(data.Data):
             sequence=sequence,
             metric=metric,
             metric_defaults=metric_defaults,
-            read_table_kw=read_table_kw)
+            read_table_kw=read_table_kw,
+            name=name,
+            )
 
     @classmethod
     def from_array(cls, input_data, sequence, **kwargs):
@@ -59,6 +62,7 @@ class Profile(data.Data):
             metric=self._metric,
             metric_defaults=self.metric_defaults,
             sequence=alignment.target_sequence,
+            name=self.name,
             **self.recreation_kwargs)
 
     def copy(self):
@@ -342,7 +346,7 @@ class SHAPEMaP(Profile):
     def __init__(
             self, input_data, normalize=None, read_table_kw=None,
             sequence=None, metric='Norm_profile', metric_defaults=None,
-            log=None,
+            log=None, name=None,
             ):
         self.read_lengths, self.mutations_per_molecule = self.read_log(log)
         if metric_defaults is None:
@@ -365,11 +369,14 @@ class SHAPEMaP(Profile):
                           "Norm_stderr", "Sequence"],
                 "na_values": "-999"}
 
-        super().__init__(input_data=input_data,
-                         read_table_kw=read_table_kw,
-                         sequence=sequence,
-                         metric=metric,
-                         metric_defaults=metric_defaults)
+        super().__init__(
+            input_data=input_data,
+            read_table_kw=read_table_kw,
+            sequence=sequence,
+            metric=metric,
+            metric_defaults=metric_defaults,
+            name=name,
+            )
         if normalize is not None:
             self.normalize(
                 profile_column="HQ_profile", new_profile="Norm_profile",
@@ -437,14 +444,20 @@ class SHAPEMaP(Profile):
 
 
 class DanceMaP(SHAPEMaP):
-    def __init__(self, input_data, component, read_table_kw=None,
-                 sequence=None, metric='Norm_profile', metric_defaults=None):
+    def __init__(
+            self, input_data, component, read_table_kw=None,
+            sequence=None, metric='Norm_profile', metric_defaults=None,
+            name=None,
+            ):
         self.component = component
-        super().__init__(input_data=input_data,
-                         read_table_kw=read_table_kw,
-                         sequence=sequence,
-                         metric=metric,
-                         metric_defaults=metric_defaults)
+        super().__init__(
+            input_data=input_data,
+            read_table_kw=read_table_kw,
+            sequence=sequence,
+            metric=metric,
+            metric_defaults=metric_defaults,
+            name=name,
+            )
 
     @property
     def recreation_kwargs(self):
@@ -481,8 +494,10 @@ class DanceMaP(SHAPEMaP):
 
 
 class RNPMaP(Profile):
-    def __init__(self, input_data, read_table_kw=None, sequence=None,
-                 metric="NormedP", metric_defaults=None):
+    def __init__(
+            self, input_data, read_table_kw=None, sequence=None,
+            metric="NormedP", metric_defaults=None, name=None,
+            ):
         if metric_defaults is None:
             metric_defaults = {}
         if read_table_kw is None:
@@ -498,15 +513,21 @@ class RNPMaP(Profile):
         read_table_kw = {
             'sep': ','
             } | read_table_kw
-        super().__init__(input_data=input_data,
-                         read_table_kw=read_table_kw,
-                         sequence=sequence,
-                         metric=metric,
-                         metric_defaults=metric_defaults)
+        super().__init__(
+            input_data=input_data,
+            read_table_kw=read_table_kw,
+            sequence=sequence,
+            metric=metric,
+            metric_defaults=metric_defaults,
+            name=name,
+            )
 
 
 class DeltaProfile(Profile):
-    def __init__(self, profile1, profile2, metric=None, metric_defaults=None):
+    def __init__(
+            self, profile1, profile2, metric=None, metric_defaults=None,
+            name=None,
+            ):
         if metric is None:
             metric = profile1.metric
 
@@ -531,4 +552,5 @@ class DeltaProfile(Profile):
             input_data=new_data,
             sequence=profile1.sequence,
             metric="Delta_profile",
-            metric_defaults=metric_defaults)
+            metric_defaults=metric_defaults,
+            name=name)

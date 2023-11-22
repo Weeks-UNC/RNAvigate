@@ -43,9 +43,8 @@ class Annotation(data.Sequence):
                 displaying this annotation on plots.
                 Defaults to "blue".
         """
-        self.name = name
+        super().__init__(sequence, name=name)
         self.color = color
-        super().__init__(sequence)
 
         # make sure input data matches expected format
         valid_types = ["sites", "spans", "group", "primers"]
@@ -179,8 +178,9 @@ class Annotation(data.Sequence):
 
 class Motif(Annotation):
     """Automatically annotates the occurances of a sequence motif as spans."""
-    def __init__(self, input_data, sequence,
-                 name=None, color="blue"):
+    def __init__(
+            self, input_data, sequence, name=None, color="blue"
+            ):
         """Creates a Motif annotation, which acts like a span Annotation, for
         highlighting a sequence motif of interest, given with conventional
         nucleotide codes. e.g. "DRACH"

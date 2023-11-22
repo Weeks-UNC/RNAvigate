@@ -40,7 +40,7 @@ class PDB(data.Sequence):
             keys are atom identifiers, values are the pairwise atom distance
             matrices between residues. These are only stored if computed.
     """
-    def __init__(self, input_data, chain, sequence=None):
+    def __init__(self, input_data, chain, sequence=None, name=None):
         """Construct PDB object based on an input PDB or CIF file.
 
         Required arguments:
@@ -59,7 +59,7 @@ class PDB(data.Sequence):
         self.chain = chain
         if sequence is None:
             sequence = self.get_sequence(input_data)
-        super().__init__(sequence)
+        super().__init__(sequence, name=name)
         self.read_pdb(input_data)
         self.path = input_data
         self.distance_matrix = {}
