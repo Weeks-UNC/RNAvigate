@@ -129,7 +129,7 @@ def create_data(data_keyword, inputs, sample=None):
     # instantiate and return the data class
     try:
         data_obj = data_constructor(**inputs)
-        if isinstance(data_obj, data.Sequence):
+        if isinstance(data_obj, data.Sequence) and data_obj.name is None:
             data_obj.name = label
         return data_obj
     except BaseException as exception:
