@@ -1,6 +1,8 @@
 Welcome to RNAvigate docs!
 ==========================
 
+![demo plots](./images/gallery.png)
+
 [Github](https://github.com/Weeks-UNC/RNAvigate) | [Publications](publications.md)
 
 - [What is it and who is it for?](#what-is-it-and-who-is-it-for)
@@ -14,7 +16,6 @@ Getting started
 2. [Loading data files](loading-data.md)
 3. [Visualizing data](visualizing-data.md)
 
-![demo plots](./images/demo_plots.png)
 
 ## What is it and who is it for?
 

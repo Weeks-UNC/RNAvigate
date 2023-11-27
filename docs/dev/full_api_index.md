@@ -81,88 +81,63 @@ The main directory of RNAvigate contains the high-level API.
 This submodule contains the Sample class.
 
 **Sample class**: `help(rnav.Sample)`
-
 - The high-level API is centered around the sample class, which parses and
   organizes data related to a single experiment on a single RNA.
-
-*Sample.set_data*: `help(rnav.Sample.set_data)`
-
-- Create a new data keyword using similar syntax as Sample initialization.
-
-*Sample.get_data*: `help(rnav.Sample.get_data)`
-
-- retreive data from data keywords in a flexible way with informative errors.
-
-*Sample.set_as_default* `help(rnav.Sample.set_as_default)`
-
-- sets a data keyword as the default for that data class.
-
-*Sample.filter_interactions*: `help(rnav.Sample.filter_interactions)`
-
-- Applies filters and colorscheme to interactions data.
-
-*Sample.print_data_keywords*: `help(rnav.Sample.print_data_keywords)`
-
-- Print data keywords associated with this sample, organized by data class.
+- *Sample.set_data*: `help(rnav.Sample.set_data)`
+  - Create a new data keyword using similar syntax as Sample initialization.
+- *Sample.get_data*: `help(rnav.Sample.get_data)`
+  - retreive data from data keywords in a flexible way with informative errors.
+- *Sample.set_as_default* `help(rnav.Sample.set_as_default)`
+  - sets a data keyword as the default for that data class.
+- *Sample.filter_interactions*: `help(rnav.Sample.filter_interactions)`
+  - Applies filters and colorscheme to interactions data.
+- *Sample.print_data_keywords*: `help(rnav.Sample.print_data_keywords)`
+  - Print data keywords associated with this sample, organized by data class.
 
 ### plotting_functions
 
 This submodule contains all of the high-level plotting API.
 
 *plot_qc*: `help(rnav.plot_qc)`
-
 - Plots quality control metrics from a ShapeMapper run
 
 *plot_shapemapper*: `help(rnav.plot_shapemapper)`
-
 - Plots the standard ShapeMapper 3-panel figure
 
 *plot_skyline*: `help(rnav.plot_skyline)`
-
 - Plots per-nucleotide data as a stepped line graph for easy comparison
 
 *plot_profile*: `help(rnav.plot_profile)`,
-
 - Plots per-nucleotide data as a colored bar graph
 
 *plot_alignemnt*: `help(rnav.plot_alignemnt)`
-
 - Plots the alignment used to compare datasets with differing sequences
 
 *plot_arcs*: `help(rnav.plot_arcs)`
-
 - Plots inter-nucleotide data or secondary structures as arcs
 
 *plot_arcs_compare*: `help(rnav.plot_arcs_compare)`
-
 - Plots two samples on the same arc plot for easy comparison
 
 *plot_ss*: `help(rnav.plot_ss)`,
-
 - Plots data on a secondary structure diagram
 
 *plot_mol*: `help(rnav.plot_mol)`
-
 - Renders an interactive 3D molecule with overlayed data
 
 *plot_heatmap*: `help(rnav.plot_heatmap)`
-
 - Plots inter-nucleotide data as a heatmap, overlaying structure distances
 
 *plot_circle*: `help(rnav.plot_circle)`
-
 - Plots inter-nucleotide data as arcs along a circle
 
 *plot_linreg*: `help(rnav.plot_linreg)`
-
 - Performs pair-wise linear regressions and plots a scatter plot with results
 
 *plot_roc*: `help(rnav.plot_roc)`,
-
 - Plots Receiver Operator Characteristic and area under the curve
 
 *plot_disthist*: `help(rnav.plot_disthist)`
-
 - Plots 3D or contact distance distributions for inter-nucleotide data
 
 ### styles
@@ -170,23 +145,18 @@ This submodule contains all of the high-level plotting API.
 This submodule contains global style settings and methods for changing them.
 
 *settings* `print(rnav.settings)`
-
 - A dictionary of global style settings.
 
 **Settings class** `help(rnav.Settings)`
-
 - A context class to temporarily change style settings.
 
 *set_defaults* `help(rnav.set_defaults)`
-
 - Sets matplotlib and seaborn defaults: dpi, color palette, context, and style
 
 *get_nt_color* `help(rnav.get_nt_color)`
-
 - Given a single nucleotide, returns the color.
 
 *get_nt_cmap* `help(rnav.get_nt_cmap)`
-
 - Returns the ScalarMappable for nucleotide coloring.
 
 ### data_loading
@@ -194,15 +164,12 @@ This submodule contains global style settings and methods for changing them.
 This submodule contains functions for parsing Sample data keyword arguments.
 
 *data_keyword_defaults* `print(rnav.data_loading.data_keyword_defaults)`
-
 - A dictionary of standard data keywords with associated class and arguments
 
 *create_data* `help(rnav.data_loading.create_data)`
-
 - Parse Sample data keywords and return a data object
 
 *get_sequence* `help(rnav.data_loading.get_sequence)`
-
 - Flexibly creates or retrieves an `rnav.data.Sequence`
 
 ### helper_functions
@@ -211,11 +178,9 @@ This submodule contains the PlottingArgumentParser, which is a standardized
 way for plotting functions to interact with Samples.
 
 *fit_data*: `help(rnav.helper_functions.fit_data)`
-
 - Flexibly returns data which has been aligned to a target sequence
 
 **PlottingArgumentParser class**: `help(rnav.helper_functions.PlottingArgumentParser)`
-
 - Class for parsing arguments from plotting functions, returns organized,
   aligned data
 
@@ -241,101 +206,60 @@ representing data.
 This submodule contains all of the code for aligning data between sequences.
 
 *convert_sequence*: `help(rnav.data.convert_sequence)`
-
 - Converts a sequence and dot-bracket notation to pseudo-amino acid sequence
   and vice versa (for secondary structure alignment)
 
 *structure_scoring_dict*: `help(rnav.data.structure_scoring_dict)`
-
 - Dictionary of alignment scores for structural alignments
 
 *set_alignment*: `help(rnav.data.set_alignment)`
-
 - Sets an alignment as the default for comparing the given sequences.
 
 **BaseAlignment class**: `help(rnav.data.BaseAlignment)`
-
 - An abstract base class for other alignment classes
-
-*get_mapping*: `help(rnav.data.BaseAlignment.get_mapping)`
-
-- Returns an indexing map, i.e. `new_index = map[old_index]`
-
-*get_target_sequence*: `help(rnav.data.BaseAlignment.get_target_sequence)`
-
-- Returns sequence 1 string mapped to the indices of the sequence 2
-
-*map_values*: `help(rnav.data.BaseAlignment.map_values)`
-
-- Takes a list (1 per position in sequence 1) and returns the aligned list
-
-*map_indices*: `help(rnav.data.BaseAlignment.map_indices)`
-
-- Takes a list of indices from sequence 1 and returns the aligned indices
-
-*map_positions*: `help(rnav.data.BaseAlignment.map_positions)`
-
-- Takes a list of positions from sequence 1 and returns the aligned positions
-
-*map_dataframe*: `help(rnav.data.BaseAlignment.map_dataframe)`
-
-- Takes a dataframe with indexing columns and returns the aligned dataframe
-
+- *get_mapping*: `help(rnav.data.BaseAlignment.get_mapping)`
+  - Returns an indexing map, i.e. `new_index = map[old_index]`
+- *get_target_sequence*: `help(rnav.data.BaseAlignment.get_target_sequence)`
+  - Returns sequence 1 string mapped to the indices of the sequence 2
+- *map_values*: `help(rnav.data.BaseAlignment.map_values)`
+  - Takes a list (1 per position in sequence 1) and returns the aligned list
+- *map_indices*: `help(rnav.data.BaseAlignment.map_indices)`
+  - Takes a list of indices from sequence 1 and returns the aligned indices
+- *map_positions*: `help(rnav.data.BaseAlignment.map_positions)`
+  - Takes a list of positions from sequence 1 and returns the aligned positions
+- *map_dataframe*: `help(rnav.data.BaseAlignment.map_dataframe)`
+  - Takes a dataframe with indexing columns and returns the aligned dataframe
 *map_nucleotide_dataframe*: `help(rnav.data.BaseAlignment.map_nucleotide_dataframe)`
-
-- Takes a per-nucleotide dataframe and returns the aligned dataframe
-
-*get_inverse_alignment*: `help(rnav.data.BaseAlignment.get_inverse_alignment)`
-
-- Reverses the current alignment, i.e. seq1 -> seq2, becomes seq2 -> seq1
+  - Takes a per-nucleotide dataframe and returns the aligned dataframe
+- *get_inverse_alignment*: `help(rnav.data.BaseAlignment.get_inverse_alignment)`
+  - Reverses the current alignment, i.e. seq1 -> seq2, becomes seq2 -> seq1
 
 **SequenceAlignment class**: `help(rnav.data.SequenceAlignment)`
-
 - A class for performing sequence alignment, uses default alignment if set
-
-*get_inverse_alignment*: `help(rnav.data.SequenceAlignment.get_inverse_alignment)`
-
-- Reverses the current alignment, i.e. seq1 -> seq2, becomes seq2 -> seq1
-
-*get_alignment*: `help(rnav.data.SequenceAlignment.get_alignment)`
-
-- Performs sequence alignment, or retreives a default alignment
-
-*get_mapping*: `help(rnav.data.SequenceAlignment.get_mapping)`
-
-- Returns an indexing map, i.e. `new_index = map[old_index]`
+- *get_inverse_alignment*: `help(rnav.data.SequenceAlignment.get_inverse_alignment)`
+  - Reverses the current alignment, i.e. seq1 -> seq2, becomes seq2 -> seq1
+- *get_alignment*: `help(rnav.data.SequenceAlignment.get_alignment)`
+  - Performs sequence alignment, or retreives a default alignment
+- *get_mapping*: `help(rnav.data.SequenceAlignment.get_mapping)`
+  - Returns an indexing map, i.e. `new_index = map[old_index]`
 
 **StructureAlignment class**: `help(rnav.data.StructureAlignment)`
-
 - A class for performing secondary structure alignments
-
-*get_inverse_alignment*: `help(rnav.data.StructureAlignment.get_inverse_alignment)`
-
-- Reverses the current alignment, i.e. seq1 -> seq2, becomes seq2 -> seq1
-
-*get_alignment*: `help(rnav.data.StructureAlignment.get_alignment)`
-
-- Performs a secondary structure alignment using psuedo-amino acid sequences
-
-*get_mapping*: `help(rnav.data.StructureAlignment.get_mapping)`
-
-- Returns an indexing map, i.e. `new_index = map[old_index]`
-
-*set_as_default_alignment*: `help(rnav.data.StructureAlignment.set_as_default_alignment)`
-
-- Sets the structure alignment as the default alignment for these sequences
+- *get_inverse_alignment*: `help(rnav.data.StructureAlignment.get_inverse_alignment)`
+  - Reverses the current alignment, i.e. seq1 -> seq2, becomes seq2 -> seq1
+- *get_alignment*: `help(rnav.data.StructureAlignment.get_alignment)`
+  - Performs a secondary structure alignment using psuedo-amino acid sequences
+- *get_mapping*: `help(rnav.data.StructureAlignment.get_mapping)`
+  - Returns an indexing map, i.e. `new_index = map[old_index]`
+- *set_as_default_alignment*: `help(rnav.data.StructureAlignment.set_as_default_alignment)`
+  - Sets the structure alignment as the default alignment for these sequences
 
 **AlignmentChain class**: `help(rnav.data.AlignmentChain)`
-
 - Combines a list of alignments serially, i.e. 1->2 and 2->3, becomes 1->3
-
-*get_mapping*: `help(rnav.data.AlignmentChain.get_mapping)`
-
-- Returns an indexing map, i.e. `new_index = map[old_index]`
-
-*get_inverse_alignment*: `help(rnav.data.AlignmentChain.get_inverse_alignment)`
-
-- Reverses the current alignment, i.e. seq1 -> seq2, becomes seq2 -> seq1
+- *get_mapping*: `help(rnav.data.AlignmentChain.get_mapping)`
+  - Returns an indexing map, i.e. `new_index = map[old_index]`
+- *get_inverse_alignment*: `help(rnav.data.AlignmentChain.get_inverse_alignment)`
+  - Reverses the current alignment, i.e. seq1 -> seq2, becomes seq2 -> seq1
 
 ### annotation
 
@@ -343,53 +267,32 @@ This submodule contains all of the code for representing and manipulating
 sequence annotations.
 
 **Annotation class**: `help(rnav.data.Annotation)`
-
 - A class for storing sites or spans of interest, primer binding sites, and
   nucleotide groups
-
-*from_boolean_array*: `help(rnav.data.Annotation.from_boolean_array)`
-
-- Create an annotation from a list of boolean values
-
-*from_spans*: `help(rnav.data.Annotation.from_spans)`
-
-- Returns a spans dataframe from a list of spans
-
-*from_sites*: `help(rnav.data.Annotation.from_sites)`
-
-- Returns a sites dataframe from a list of sites
-
-*get_aligned_data*: `help(rnav.data.Annotation.get_aligned_data)`
-
-- Returns a new annotation with annotation positions aligned to a new sequence
-
-*get_subsequences*: `help(rnav.data.Annotation.get_subsequences)`
-
-- Returns a list of subsequences for each annotation
+- *from_boolean_array*: `help(rnav.data.Annotation.from_boolean_array)`
+  - Create an annotation from a list of boolean values
+- *from_spans*: `help(rnav.data.Annotation.from_spans)`
+  - Returns a spans dataframe from a list of spans
+- *from_sites*: `help(rnav.data.Annotation.from_sites)`
+  - Returns a sites dataframe from a list of sites
+- *get_aligned_data*: `help(rnav.data.Annotation.get_aligned_data)`
+  - Returns a new annotation with annotation positions aligned to a new sequence
+- *get_subsequences*: `help(rnav.data.Annotation.get_subsequences)`
+  - Returns a list of subsequences for each annotation
 
 **Motif class**: `help(rnav.data.Motif)`
-
 - A class for storing locations of a motif within a sequence
-
-*get_spans_from_motif*: `help(rnav.data.Motif.get_spans_from_motif)`
-
-- Returns a list of spans given a motif
-
-*get_aligned_data*: `help(rnav.data.Motif.get_aligned_data)`
-
-- Returns a new annotation with locations of the motif in a new sequence
+- *get_spans_from_motif*: `help(rnav.data.Motif.get_spans_from_motif)`
+  - Returns a list of spans given a motif
+- *get_aligned_data*: `help(rnav.data.Motif.get_aligned_data)`
+  - Returns a new annotation with locations of the motif in a new sequence
 
 **ORFs**: `help(rnav.data.ORFs)`
-
 - A class for storing locations of open reading frames
-
-*get_spans_from_orf*: `help(rnav.data.ORFs.get_spans_from_orf)`
-
-- Returns a list of spans that are potential open reading frames
-
-*get_aligned_data*: `help(rnav.data.ORFs.get_aligned_data)`
-
-- Returns the annotation of open reading frames for a new sequence
+- *get_spans_from_orf*: `help(rnav.data.ORFs.get_spans_from_orf)`
+  - Returns a list of spans that are potential open reading frames
+- *get_aligned_data*: `help(rnav.data.ORFs.get_aligned_data)`
+  - Returns the annotation of open reading frames for a new sequence
 
 *domains*: `help(rnav.data.domains)`
 
@@ -397,63 +300,67 @@ sequence annotations.
 
 ### colors
 
-ScalarMappable
-is_equivalent_to
-values_to_hexcolors
-get_norm
-get_cmap
+**ScalarMappable**: `help(rnav.data.ScalarMappable)
+- *is_equivalent_to*: `help(rnav.data.ScalarMappable.is_equivalent_to)
+  - Test if this object is equivalent to another rnav.ScalarMappable
+- *values_to_hexcolors*: `help(rnav.data.ScalarMappable.values_to_hexcolors)
+  - Returns an array of hex color strings given an array of values
+- *get_norm*: `help(rnav.data.ScalarMappable.get_norm)
+  - Returns the matplotlib Normalize object based on a string shortcut value
+- *get_cmap*: `help(rnav.data.ScalarMappable.get_cmap)
+  - Returns a cmap given a cmap name, list of color names, or single color name
 
 ### ct
 
-SecondaryStructure
-nts
-pair_nts
-ycoordinates
-xcoordinates
-read_ct
-read_varna
-read_xrna
-read_cte
-read_nsd
-read_dotbracket
-read_r2dt
-read_forna
-write_sto
-writeRNAstructureSeq
-write_ct
-write_cte
-get_dotbracket
-get_human_dotbracket
-break_noncanonical_pairs
-break_singleton_pairs
-get_pairs
-get_paired_nts
-get_unpaired_nts
-get_junction_nts
-add_pairs
-from_pairs_list
-get_masked_ct
-get_nonredundant_ct
-get_distance_matrix
-contact_distance
-get_helices
-fill_mismatches
-extractPK
-compute_ppv_sens
-copy
-get_aligned_data
-get_interactions_df
-as_interactions
-transform_coordinates
+*SecondaryStructure*: `help(rnav.data..SecondaryStructure)
+*nts*: `help(rnav.data.SecondaryStructure.nts)
+*pair_nts*: `help(rnav.data.SecondaryStructure.pair_nts)
+*ycoordinates*: `help(rnav.data.SecondaryStructure.ycoordinates)
+*xcoordinates*: `help(rnav.data.SecondaryStructure.xcoordinates)
+*read_ct*: `help(rnav.data.SecondaryStructure.read_ct)
+*read_varna*: `help(rnav.data.SecondaryStructure.read_varna)
+*read_xrna*: `help(rnav.data.SecondaryStructure.read_xrna)
+*read_cte*: `help(rnav.data.SecondaryStructure.read_cte)
+*read_nsd*: `help(rnav.data.SecondaryStructure.read_nsd)
+*read_dotbracket*: `help(rnav.data.SecondaryStructure.read_dotbracket)
+*read_r2dt*: `help(rnav.data.SecondaryStructure.read_r2dt)
+*read_forna*: `help(rnav.data.SecondaryStructure.read_forna)
+*write_sto*: `help(rnav.data.SecondaryStructure.write_sto)
+*writeRNAstructureSeq*: `help(rnav.data.SecondaryStructure.writeRNAstructureSeq)
+*write_ct*: `help(rnav.data.SecondaryStructure.write_ct)
+*write_cte*: `help(rnav.data.SecondaryStructure.write_cte)
+*get_dotbracket*: `help(rnav.data.SecondaryStructure.get_dotbracket)
+*get_human_dotbracket*: `help(rnav.data.SecondaryStructure.get_human_dotbracket)
+*break_noncanonical_pairs*: `help(rnav.data.SecondaryStructure.break_noncanonical_pairs)
+*break_singleton_pairs*: `help(rnav.data.SecondaryStructure.break_singleton_pairs)
+*get_pairs*: `help(rnav.data.SecondaryStructure.get_pairs)
+*get_paired_nts*: `help(rnav.data.SecondaryStructure.get_paired_nts)
+*get_unpaired_nts*: `help(rnav.data.SecondaryStructure.get_unpaired_nts)
+*get_junction_nts*: `help(rnav.data.SecondaryStructure.get_junction_nts)
+*add_pairs*: `help(rnav.data.SecondaryStructure.add_pairs)
+*from_pairs_list*: `help(rnav.data.SecondaryStructure.from_pairs_list)
+*get_masked_ct*: `help(rnav.data.SecondaryStructure.get_masked_ct)
+*get_nonredundant_ct*: `help(rnav.data.SecondaryStructure.get_nonredundant_ct)
+*get_distance_matrix*: `help(rnav.data.SecondaryStructure.get_distance_matrix)
+*contact_distance*: `help(rnav.data.SecondaryStructure.contact_distance)
+*get_helices*: `help(rnav.data.SecondaryStructure.get_helices)
+*fill_mismatches*: `help(rnav.data.SecondaryStructure.fill_mismatches)
+*extractPK*: `help(rnav.data.SecondaryStructure.extractPK)
+*compute_ppv_sens*: `help(rnav.data.SecondaryStructure.compute_ppv_sens)
+*copy*: `help(rnav.data.SecondaryStructure.copy)
+*get_aligned_data*: `help(rnav.data.SecondaryStructure.get_aligned_data)
+*get_interactions_df*: `help(rnav.data.SecondaryStructure.get_interactions_df)
+*as_interactions*: `help(rnav.data.SecondaryStructure.as_interactions)
+*transform_coordinates*: `help(rnav.data.SecondaryStructure.transform_coordinates)
 
-StructureCoordinates
-get_center_point
-scale
-flip
-center
-rotate
+*StructureCoordinates*: `help(rnav.data.StructureCoordinates)
+*get_center_point*: `help(rnav.data.StructureCoordinates.get_center_point)
+*scale*: `help(rnav.data.StructureCoordinates.scale)
+*flip*: `help(rnav.data.StructureCoordinates.flip)
+*center*: `help(rnav.data.StructureCoordinates.center)
+*rotate*: `help(rnav.data.StructureCoordinates.rotate)
 
-SequenceCircle
+*SequenceCircle*: `help(rnav.data.SequenceCircle)
 
 ### data
 
