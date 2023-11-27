@@ -1011,7 +1011,7 @@ class SecondaryStructure(data.Sequence):
         Returns:
             float, float, tuple: sensitivity, PPV, (TP, TP+FP, TP+FN)
         """
-        if len(self.pair_nts) == len(structure2.pair_nts):
+        if len(self.pair_nts) != len(structure2.pair_nts):
             raise ValueError('sequence lengths must be the same')
         trues = sum(self.pair_nts != 0) / 2
         positives = sum(structure2.pair_nts != 0) / 2
