@@ -46,8 +46,7 @@ class Interactions(data.Data):
         self.data = self.data.astype({"i": "int", "j": "int"})
         self.reset_mask()
 
-    def mask_on_sequence(self, compliment_only=None, nts=None,
-                         return_mask=False):
+    def mask_on_sequence(self, compliment_only=None, nts=None):
         """Mask interactions based on sequence content
 
         Args:
@@ -55,11 +54,9 @@ class Interactions(data.Data):
                 complimentary
             nts (str): require that all nucleotides in i and j windows are in
                 nts
-            return_mask (bool, optional): whether to return the mask instead of
-                updating the current filter. Defaults to False.
 
         Returns:
-            numpy array: the mask array (only if return_mask==True)
+            numpy array: the masking boolean array
         """
         mask = []
         compliment = {"A": "UT", "U": "AG", "T": "AG", "G": "CU", "C": "G"}
@@ -73,14 +70,13 @@ class Interactions(data.Data):
                 if nts is not None:
                     keep.append(i_nt in nts and j_nt in nts)
             mask.append(all(keep))
-        if return_mask:
-            return mask
-        else:
-            self.update_mask(mask)
+        self.update_mask(mask)
+        return mask
 
-    def mask_on_structure(self, structure, min_cd=None, max_cd=None,
-                          ss_only=False, ds_only=False, paired_only=False,
-                          return_mask=False):
+    def mask_on_structure(
+            self, structure, min_cd=None, max_cd=None, ss_only=False,
+            ds_only=False, paired_only=False,
+            ):
         """Mask interactions based on secondary structure
 
         Args:
@@ -97,11 +93,9 @@ class Interactions(data.Data):
                 stranded. Defaults to False.
             paired_only (bool, optional): whether to require that i and j are
                 base paired. Defaults to False.
-            return_mask (bool, optional): whether to return the new mask array
-                instead of updating the current filter. Defaults to False.
 
         Returns:
-            numpy array: the mask array (only if return_mask==True)
+            numpy array: the masking boolean array
         """
         if isinstance(structure, list):
             for each in structure:
@@ -141,14 +135,12 @@ class Interactions(data.Data):
                 if max_cd is not None:
                     true_so_far = cd <= max_cd
             mask[idx] &= true_so_far
-        if return_mask:
-            return mask
-        else:
-            self.update_mask(mask)
+        self.update_mask(mask)
+        return mask
 
     def mask_on_profile(
             self, profile, min_profile=None, max_profile=None,
-            return_mask=False):
+            ):
         """Masks interactions based on per-nucleotide information. Positions
         that are not mapped to profile or are np.nan values in profile are not
         masked.
@@ -160,11 +152,9 @@ class Interactions(data.Data):
                 value. Defaults to None.
             max_profile (float, optional): maximum allowable per-nucleotide
                 value. Defaults to None.
-            return_mask (bool, optional): whether to return mask instead of
-                updating the filter. Defaults to False.
 
         Returns:
-            numpy array: the mask array (only if return_mask==True)
+            numpy array: the mask array
         """
         mapping = data.SequenceAlignment(self, profile).mapping
         norm_prof = profile.data["Norm_profile"]
@@ -183,13 +173,10 @@ class Interactions(data.Data):
                     keep_ij &= (prof_i <= max_profile) | np.isnan(prof_i)
                     keep_ij &= (prof_j <= max_profile) | np.isnan(prof_j)
             mask[idx] &= keep_ij
-        if return_mask:
-            return mask
-        else:
-            self.update_mask(mask)
+        self.update_mask(mask)
+        return mask
 
-    def mask_on_position(
-            self, exclude=None, isolate=None, return_mask=False):
+    def mask_on_position(self, exclude=None, isolate=None):
         """Masks interactions based on position in sequence
 
         Args:
@@ -197,11 +184,9 @@ class Interactions(data.Data):
                 exclude if i or j is in list
             isolate (list of int, optional): a list of nucleotide positions to
                 isolate if i and j are not in list
-            return_mask (bool, optional): whether to return mask instead of
-                updating the filter. Defaults to False.
 
         Returns:
-            numpy array: the mask array (only if return_mask==True)
+            numpy array: the masking boolean array
         """
         mask = np.full(len(self.data), True)
         for index, (i, j) in self.data[["i", "j"]].iterrows():
@@ -211,23 +196,18 @@ class Interactions(data.Data):
             if isolate is not None:
                 if (i not in isolate) and (j not in isolate):
                     mask[index] = False
-        if return_mask:
-            return mask
-        else:
-            self.update_mask(mask)
+        self.update_mask(mask)
+        return mask
 
-    def mask_on_distance(
-            self, max_dist=None, min_dist=None, return_mask=False):
+    def mask_on_distance(self, max_dist=None, min_dist=None):
         """Mask interactions based on their primary sequence distance (j-i).
 
         Args:
             max_dist (int): maximum allowable distance
             min_dist (int): minimum allowable distance
-            return_mask (bool, optional): whether to return mask instead of
-                updating the filter. Defaults to False.
 
         Returns:
-            numpy array: the mask array (only if return_mask==True)
+            numpy array: the masking boolean array
         """
         primary_distances = self.data.eval("i - j").abs()
         mask = self.data["mask"]
@@ -235,12 +215,10 @@ class Interactions(data.Data):
             mask &= primary_distances >= min_dist
         if max_dist is not None:
             mask &= primary_distances <= max_dist
-        if return_mask:
-            return mask
-        else:
-            self.update_mask(mask)
+        self.update_mask(mask)
+        return mask
 
-    def mask_on_values(self, return_mask=False, **kwargs):
+    def mask_on_values(self, **kwargs):
         """Mask interactions on values in self.data. Each keyword should have
         the format "column_operator" where column is a valid column name of
         the dataframe and operator is one of:
@@ -275,10 +253,8 @@ class Interactions(data.Data):
                     print(f"{key}={value} is not a valid filter.")
             else:
                 print(f"{key}={value} is not a valid filter.")
-        if return_mask:
-            return mask
-        else:
-            self.update_mask(mask)
+        self.update_mask(mask)
+        return mask
 
     def reset_mask(self):
         """Resets the mask to all True (removes previous filters)"""
@@ -332,7 +308,7 @@ class Interactions(data.Data):
         self.data["mask"] = self.data["mask"] & mask
 
     def count_filter(self, **kwargs):
-        mask = self.filter(return_mask=True, **kwargs)
+        mask = self.filter(**kwargs)
         return sum(mask)
 
     def filter(
@@ -349,7 +325,6 @@ class Interactions(data.Data):
             isolate_nts=None,
             # others
             resolve_conflicts=None,
-            return_mask=False,
             **kwargs):
         """Convenience function that applies the above filters simultaneously.
 
@@ -417,55 +392,45 @@ class Interactions(data.Data):
             return
         if reset_filter:
             self.reset_mask()
+        mask = np.full(len(self.data), True)
         if filters_are_on(exclude_nts, isolate_nts):
-            self.mask_on_position(
+            mask &= self.mask_on_position(
                 exclude=exclude_nts,
-                isolate=isolate_nts,
-                return_mask=return_mask)
+                isolate=isolate_nts)
         if filters_are_on(max_distance, min_distance):
-            self.mask_on_on_distance(
+            mask &= self.mask_on_on_distance(
                 max_dist=max_distance,
-                min_dist=min_distance,
-                return_mask=return_mask)
+                min_dist=min_distance)
         if filters_are_on(min_profile, max_profile):
-            self.mask_on_profile(
+            mask &= self.mask_on_profile(
                 profile=profile,
                 min_profile=min_profile,
-                max_profile=max_profile,
-                return_mask=return_mask)
+                max_profile=max_profile)
         if filters_are_on(min_cd, max_cd, ss_only, ds_only, paired_only):
-            self.mask_on_structure(
+            mask &= self.mask_on_structure(
                 structure=structure,
                 min_cd=min_cd, max_cd=max_cd,
                 ss_only=ss_only, ds_only=ds_only,
-                paired_only=paired_only,
-                return_mask=return_mask)
+                paired_only=paired_only)
         if filters_are_on(compliments_only, nts):
-            self.mask_on_sequence(
+            mask &= self.mask_on_sequence(
                 compliment_only=compliments_only,
-                nts=nts,
-                return_mask=return_mask)
-        kwargs = self.data_specific_filter(
-            return_mask=return_mask,
-            **kwargs)
-        self.mask_on_values(
-                return_mask=return_mask,
-                **kwargs)
+                nts=nts)
+        kwargs, data_specific_mask = self.data_specific_filter(**kwargs)
+        mask &= data_specific_mask
+        mask &= self.mask_on_values(**kwargs)
         if resolve_conflicts is not None:
-            self.resolve_conflicts(
-                metric=resolve_conflicts,
-                return_mask=return_mask)
-        if return_mask:
-            return mask
+            mask &= self.resolve_conflicts(metric=resolve_conflicts)
+        return mask
 
-    def data_specific_filter(self, return_mask=False, **kwargs):
+    def data_specific_filter(self, **kwargs):
         """Does nothing for the base Interactions class, can be overwritten in
         subclasses.
 
         Returns:
             dict: dictionary of keyword argument pairs
         """
-        return kwargs
+        return kwargs, np.full(len(self.data), True)
 
     def get_ij_colors(self):
         """Gets i, j, and colors lists for plotting interactions. i and j are
@@ -548,7 +513,7 @@ class Interactions(data.Data):
                 distances += distance_matrix[io, jo] / pairs
         self.data["Distance"] = distances
 
-    def resolve_conflicts(self, metric=None, return_mask=False):
+    def resolve_conflicts(self, metric=None):
         """Resolves conflicting windows using the Maximal Weighted Independent
         Set. The weights are taken from the metric value. The graph is first
         broken into components to speed up the identification of the MWIS. Then
@@ -642,9 +607,8 @@ class Interactions(data.Data):
         # set these indices to true and update the original mask
         new_mask = np.zeros(len(self.data), dtype=bool)
         new_mask[max_set] = True
-        if return_mask:
-            return new_mask
         self.update_mask(new_mask)
+        return new_mask
 
 
 class SHAPEJuMP(Interactions):
@@ -750,8 +714,7 @@ class RINGMaP(Interactions):
         return dataframe
 
     def data_specific_filter(
-            self, positive_only=False, negative_only=False, return_mask=False,
-            **kwargs
+            self, positive_only=False, negative_only=False, **kwargs
             ):
         """Adds filters for "Sign" column to parent filter() function
 
@@ -764,11 +727,13 @@ class RINGMaP(Interactions):
         Returns:
             dict: any additional keyword-argument pairs are returned
         """
+        mask = np.full(len(self.data), True)
         if positive_only:
-            self.update_mask(self.data["Sign"] == 1)
+            mask &= self.data["Sign"] == 1
         if negative_only:
-            self.update_mask(self.data["Sign"] == -1)
-        return kwargs
+            mask &= self.data["Sign"] == -1
+        self.update_mask(mask)
+        return kwargs, mask
 
     def get_sorted_data(self):
         """Overwrites parent get_normalized_ij_data. Uses these values instead:
@@ -838,7 +803,7 @@ class PAIRMaP(RINGMaP):
         dataframe['Sign'] = 1
         return dataframe
 
-    def data_specific_filter(self, all_pairs=False, return_mask=False, **kwargs):
+    def data_specific_filter(self, all_pairs=False, **kwargs):
         """Used by Interactions.filter(). By default, non-primary and
         -secondary pairs are removed. all_pairs=True changes this behavior.
 
@@ -849,9 +814,11 @@ class PAIRMaP(RINGMaP):
         Returns:
             dict: remaining kwargs are passed back to Interactions.filter()
         """
+        mask = np.full(len(self.data), True)
         if not all_pairs:
-            self.update_mask(self.data["Class"] != 0)
-        return kwargs
+            mask &= self.data["Class"] != 0
+        self.update_mask(mask)
+        return kwargs, mask
 
     def get_sorted_data(self):
         """Same as parent function, unless metric is set to "Class", in which
@@ -991,15 +958,16 @@ class PairingProbability(Interactions):
                     'alpha': 1
             }})
 
-    def data_specific_filter(self, return_mask=False, **kwargs):
+    def data_specific_filter(self, **kwargs):
         """Used by parent filter function. By default, filters out pairs with
         probability less that 3%
 
         Returns:
             dict: keyword arguments are passed back to Interactions.filter()
         """
-        self.update_mask(self.data["Probability"] >= 0.03)
-        return kwargs
+        mask = self.data["Probability"] >= 0.03
+        self.update_mask(mask)
+        return kwargs, mask
 
 
 class AllPossible(Interactions):
