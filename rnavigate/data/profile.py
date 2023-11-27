@@ -240,6 +240,28 @@ class Profile(data.Data):
             self.data[new_error] = normerr
         return profile_factors
 
+    def winsorize(self, column, lower_bound=None, upper_bound=None):
+        """Winsorize the data between bounds.
+
+        If either bound is set to None, one-sided Winsorization is performed.
+
+        Required arguments:
+            column (string)
+                the column of data to be winsorized
+            lower_bound (Number or None)
+                Data below this value is set to this value.
+                If None, no lower bound is applied.
+            upper_bound (Number or None)
+                Data above this value is set to this value.
+                If None, no upper bound is applied.
+        """
+        if lower_bound is not None:
+            below_idx = self.data[column] < lower_bound
+            self.data.loc[below_idx, column] = lower_bound
+        if upper_bound is not None:
+            above_idx = self.data[column] > upper_bound
+            self.data.loc[above_idx, column] = upper_bound
+
     def normalize_external(self, profiles, **kwargs):
         """normalize reactivities using other profiles to normfactors.
 
@@ -303,13 +325,13 @@ class Profile(data.Data):
         if len(values)<10:
             return np.nan, np.nan
         bounds = np.percentile(values, [90., 95.])
-        mask = (values >= bounds[0]) & (values<bounds[1])
+        mask = (values >= bounds[0]) & (values < bounds[1])
         normset = values[mask]
         # compute the norm the standard way
         n1 = np.mean(normset)
         try:
             # compute the norm only considering reactive nts
-            n2 = np.percentile(values[values>0.001], 75.)
+            n2 = np.percentile(values[values > 0.001], 75.)
         except IndexError:
             n2 = 0
         factor = max(n1,n2)
@@ -319,7 +341,9 @@ class Profile(data.Data):
         error_factor = np.std(normset) / np.sqrt(len(normset))
         return factor, error_factor
 
-    def norm_percentiles(self, values, lower_bound=90, upper_bound=99):
+    def norm_percentiles(
+            self, values, lower_bound=90, upper_bound=99, median_or_mean="mean"
+            ):
         """Calculates profile scaling factors and error propagation by scaling
         the median between upper and lower bound percentiles to 1.
 
@@ -333,11 +357,15 @@ class Profile(data.Data):
         Returns:
             (float, float): scaling factor and error propagation factor
         """
+        if median_or_mean == "mean":
+            factor_function = np.mean
+        elif median_or_mean == "median":
+            factor_function = np.median
         finite_values = values[np.isfinite(values)]
         bounds = np.percentile(finite_values, [lower_bound, upper_bound])
         mask = (finite_values >= bounds[0]) & (finite_values <= bounds[1])
         normset = finite_values[mask]
-        factor = np.mean(normset)
+        factor = factor_function(normset)
         error_factor = np.std(normset) / np.sqrt(len(normset))
         return factor, error_factor
 
