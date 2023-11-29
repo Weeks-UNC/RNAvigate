@@ -37,11 +37,10 @@ nav:
   - 'Change log': 'dev/changelog.md'
 
 plugins:
+  - search
   - mkdocs-jupyter:
       execute: True
       kernel_name: Python3
-  - search
-  - mkdocstrings
 
 
 theme: readthedocs
