@@ -24,7 +24,7 @@ __email__ = 'sethv@live.unc.edu'
 class FragMaP(data.Profile):
     def __init__(
             self, input_data, parameters, metric='Fragmap_profile',
-            metric_defaults=None, read_table_kw=None, sequence=None
+            metric_defaults=None, read_table_kw=None, sequence=None, name=None,
             ):
         self.parameters=parameters
         if isinstance(input_data, (list, tuple)) and len(input_data) == 2:
@@ -57,6 +57,7 @@ class FragMaP(data.Profile):
             metric_defaults=metric_defaults,
             read_table_kw=read_table_kw,
             sequence=sequence,
+            name=name,
             )
 
     @property

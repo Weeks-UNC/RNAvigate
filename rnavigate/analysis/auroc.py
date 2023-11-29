@@ -12,9 +12,13 @@ class WindowedAUROC():
     Below, an arc plot displays the secondary structure and per-nucleotide
     profile.
 
+    Citation:
+    Lan, T.C.T., Allan, M.F., Malsick, L.E. et al. Secondary structural
+        ensembles of the SARS-CoV-2 RNA genome in infected cells. Nat Commun
+        13, 1128 (2022). https://doi.org/10.1038/s41467-022-28603-2
+
     Methods:
         __init__: Computes the AUROC array and AUROC median.
-            By default, calls plot_auroc.
         plot_auroc: Displays the AUROC analysis over the given region.
             Returns Plot object
 
@@ -29,20 +33,21 @@ class WindowedAUROC():
         median_auroc: the median of the auroc array
     """
 
-    def __init__(self, sample, pad=40, region=None, profile="profile",
-                 structure="default_structure", show=True):
+    def __init__(self, sample, window=81, profile="default_profile",
+                 structure="default_structure"):
         """Compute the AUROC for all windows. AUROC is a measure of how well a
         reactivity profile predicts paired vs. unpaired nucleotide status.
 
         Args:
             sample (rnav.Sample): Your rnavigate sample
-            pad (int, optional): number of nucleotides on either side of a
-                position to include in window
-                Defaults to 40 (window=81).
-            region (list of int: length 2, optional): Passed to self.plot_auroc
-                Defaults to [1, RNA length].
-            show (bool, optional): Creates a plot by calling self.plot_auroc.
-                Defaults to True.
+            window (int, optional): number of nucleotides to include in window
+                Defaults to 81.
+            profile (str, optional): data keyword of provided sample pointing
+                to a profile.
+                Defaults to "default_profile"
+            structure (str, optional): data keyword of provided sample pointing
+                to a secondary structure.
+                Defaults to "default_structure"
         """
         # ensure sample contains profile and structure data
         for data in [profile, structure]:
@@ -53,19 +58,20 @@ class WindowedAUROC():
         self.structure = sample.get_data(structure)
         self.profile = sample.get_data(profile)
         self.sequence = self.structure.sequence
-        self.window = pad * 2 + 1
+        self.window = window
         self.nt_length = self.structure.length
 
         # get Norm_profile array and structure array
         profile = self.profile.data["Norm_profile"].values
-        paired_nts = self.structure.ct
+        pair_nts = self.structure.pair_nts
 
         # for each possible window: compute auroc and populate array
         self.auroc = np.full(len(profile), np.nan)
+        pad = window // 2
         for i in range(pad, len(profile)-pad):
             # get profile and structure values within window
             win_profile = profile[i-pad:i+pad+1]
-            win_ct = paired_nts[i-pad:i+pad+1]
+            win_ct = pair_nts[i-pad:i+pad+1]
             # ignore positions where profile is nan
             valid = ~np.isnan(win_profile)
             # y: classification (paired or unpaired)
@@ -79,9 +85,6 @@ class WindowedAUROC():
             self.auroc[i] = auc(tpr, fpr)
 
         self.auroc_median = np.nanmedian(self.auroc)
-
-        if show:
-            self.plot_auroc(region=region)
 
     def plot_auroc(self, region=None):
         """Plot the result of the windowed AUROC analysis, with arc plot of

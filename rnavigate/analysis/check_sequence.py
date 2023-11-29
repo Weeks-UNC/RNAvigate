@@ -33,6 +33,7 @@ class SequenceChecker():
         self.which_sequences = self.get_which_sequences()
 
     def reset(self):
+        """Reset keywords and sequences from sample list in case of changes."""
         self.keywords = self.get_keywords()
         self.sequences = self.get_sequences()
         self.which_sequences = self.get_which_sequences()
@@ -78,7 +79,7 @@ class SequenceChecker():
                 else:
                     if np.isnan(row[column]):
                         continue
-                    print(f"        {column:<10} {row[column]}")
+                    print(f"        {column:<10} {int(row[column])}")
         print()
 
     def print_alignments(self, print_format="long", which="all"):

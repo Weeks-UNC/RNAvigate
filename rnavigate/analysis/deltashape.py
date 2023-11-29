@@ -170,7 +170,7 @@ class DeltaSHAPEProfile(data.Profile):
     """Profile data class for performing deltaSHAPE analysis"""
     def __init__(
             self, input_data, metric="Smooth_diff", metric_defaults=None,
-            sequence=None, **kwargs
+            sequence=None, name=None, **kwargs
             ):
         """Create the deltaSHAPE Profile
 
@@ -211,6 +211,7 @@ class DeltaSHAPEProfile(data.Profile):
             metric=metric,
             metric_defaults=metric_defaults,
             sequence=sequence,
+            name=name,
             **kwargs
             )
 
