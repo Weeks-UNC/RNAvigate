@@ -1,19 +1,22 @@
-name: RNAvigate_v1.0.0
+name: RNAvigate
 channels:
   - conda-forge
   - bioconda
   - defaults
 dependencies:
-  - python=3.10.8
-  - scipy
-  - py3dmol
-  - jupyter
-  - seaborn
-  - biopython
-  - pandas
-  - ipykernel
-  - scikit-learn
+  - biopython=1.78
+  - ipykernel=6.6.0
+  - jupyter=1.0.0
+  - numpy=1.20.1
+  - openpyxl=3.1.2
+  - pandas=1.4.4
+  - py3dmol=2.0.0.post2
+  - python=3.9.2
+  - scikit-learn=1.0.2
+  - scipy=1.6.2
+  - seaborn=0.13.0
   - requests
   - mkdocs >= 1.2.2
   - mkdocs-jupyter >= 0.21.0
-  - mkdocstrings
+  - pip:
+    - "git+https://github.com/Weeks-UNC/RNAvigate.git"
