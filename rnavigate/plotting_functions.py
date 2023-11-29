@@ -6,6 +6,24 @@ from rnavigate.helper_functions import PlottingArgumentParser, _parse_plot_kwarg
 from rnavigate.data_loading import get_sequence
 
 
+__all__ = [
+    "plot_qc",
+    "plot_shapemapper",
+    "plot_skyline",
+    "plot_profile",
+    "plot_alignment",
+    "plot_arcs",
+    "plot_arcs_compare",
+    "plot_ss",
+    "plot_mol",
+    "plot_heatmap",
+    "plot_circle",
+    "plot_linreg",
+    "plot_roc",
+    "plot_disthist",
+    "plot_ntdist",
+    ]
+
 def plot_qc(
         # required
         samples,

@@ -6,6 +6,15 @@ from rnavigate import data
 # STYLE SHEET
 ###############################################################################
 
+__all__ = [
+    "update_copy",
+    "Settings",
+    "set_defaults",
+    "get_nt_color",
+    "get_nt_cmap",
+    "apply_style",
+    ]
+
 settings = {
     'sequence_bar': 'alphabet', # 'bars'
     'sequence_colors': 'rnavigate', # 'old'

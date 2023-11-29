@@ -5,6 +5,8 @@ from rnavigate import data, Sample
 from rnavigate.data_loading import get_sequence
 
 
+__all__ = ["fit_data", "PlottingArgumentParser"]
+
 def _parse_plot_kwargs(plot_kwargs, plot):
     if plot_kwargs is None:
         plot_kwargs = {}
