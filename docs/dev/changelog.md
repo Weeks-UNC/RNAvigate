@@ -10,7 +10,7 @@ If you're coming from version 0.2.0, there are many syntax changes. In order to
 preserve the functionality of your old notebooks, do not pull these changes to
 your existing RNAvigate folder. Instead, follow the [installation][] guide.
 
-[installation]: ./installing-rnavigate.md
+[installation]: ../installing-rnavigate.md
 
 NOTES:
 

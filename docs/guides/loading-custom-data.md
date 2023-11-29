@@ -3,11 +3,7 @@ Loading custom data
 
 After creating an `rnav.Sample` object and loading data using the standard
 method (see [loading data](../loading-data.md)), adding additional data is
-straightforward and very flexible using the `rnav.Sample.set_data()` method.
-
-One common example is with annotations. It is common to want multiple
-annotations of the same type, but with different colors/names, associated with
-a sample object.
+is accomplished using the `rnav.Sample.set_data()` method.
 
 Here, we call the `set_data` method with the required keywords and generic
 values, these will be discussed further below. `sample` is a hypothetical

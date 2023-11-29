@@ -3,17 +3,59 @@ Installing RNAvigate
 
 This is part 1 in the getting started with RNAvigate guide.
 
-1. [Installing RNAvigate](./installing-rnavigate.md)
-2. [Loading Data](./loading-data.md)
-3. [Visualizing data](./visualizing-data.md)
+1. **Installing RNAvigate**
+2. Loading Data
+3. Visualizing data
 
-Sections:
+Choose one of the installation options below:
 
 - [Docker installation](#docker-installation) (recommended for personal use)
 - [Anaconda installation](#anaconda-installation) (recommended for HPC clusters)
 - [Manual installation](#manual-installation)
 - [UNC Longleaf installation](#unc-longleaf-installation)
-- [Updating RNAvigate](#updating-rnavigate)
+
+---
+
+Docker installation
+-------------------
+
+To install RNAvigate locally, this is the best option.
+
+1. download and install [Docker Desktop][].
+
+[Docker Desktop]: https://www.docker.com/products/docker-desktop/
+
+2. Open Docker Desktop. In the top search bar, type "psirving/rnavigate",
+   and click "run". Expand the "Optional settings" drop-down menu, and enter
+   the following options:
+
+- Container name: RNAvigate
+- Host port: 8888
+- Volumes:
+  - Host path: use the (...) button to choose a directory.
+  - Container path: /home/jovyan/work
+
+The choice of "Host path" is important. RNAvigate will *only* have access to this directory.
+Choose a high level directory that includes data files you wish to work on, but not too high.
+For example, your home directory is perhaps not appropriate.
+A good choice for me would be my "weeks_lab" directory, where I do all of my lab related work.
+
+3. Click "run" again. This will take you to a terminal, at the end of which you should see something like this:
+
+```text
+YYYY-MM-DD HH:MM:SS     To access the notebook, open this file in a browser:
+YYYY-MM-DD HH:MM:SS         file:///home/jovyan/.local/share/jupyter/runtime/nbserver-7-open.html
+YYYY-MM-DD HH:MM:SS     Or copy and paste one of these URLs:
+YYYY-MM-DD HH:MM:SS         http://12ab34de56fg:8888/?token=01234567890abcdefghijklmnopqrstuvwxyz01234567890
+YYYY-MM-DD HH:MM:SS      or http://127.0.0.1:8888/?token=01234567890abcdefghijklmnopqrstuvwxyz01234567890
+```
+
+4. Click on any of these links, or copy them into a browser, to open up Jupyter Notebook and get to work!
+
+5. To stop the session, go back to Docker Desktop, and click the stop button in the upper-right.
+
+6. To restart this session, go the "Containers" menu, click "start" on the RNAvigate container.
+   Next to that button, click (...) -> "view details" and go back to step 4.
 
 ---
 

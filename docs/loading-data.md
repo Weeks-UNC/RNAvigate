@@ -3,9 +3,9 @@ Loading data
 
 This is part 2 in the getting started with RNAvigate guide.
 
-1. [Installing RNAvigate](./installing-rnavigate.md)
-2. [Loading Data](./loading-data.md)
-3. [Visualizing data](./visualizing-data.md)
+1. Installing RNAvigate
+2. **Loading Data**
+3. Visualizing data
 
 Sections:
 
