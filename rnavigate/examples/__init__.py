@@ -42,15 +42,19 @@ plot = rnav.plot_arcs(
     )
 """
 
-from pathlib import Path
+from importlib import resources
 import rnavigate as rnav
+from . import (
+    rmrp as rmrp_dir,
+    rnasep as rnasep_dir,
+    rrna_fragmap as rrna_fragmap_dir,
+    tpp as tpp_dir,
+    )
 
-
-example_dir = Path(__file__).parent.absolute()
-tpp_dir = example_dir / "tpp"
-rnasep_dir = example_dir / "rnasep"
-rmrp_dir = example_dir / "rmrp"
-rrna_fragmap_dir = example_dir / "rrna_fragmap"
+rmrp_dir = resources.files(rmrp_dir)
+rnasep_dir = resources.files(rnasep_dir)
+rrna_fragmap_dir = resources.files(rrna_fragmap_dir)
+tpp_dir = resources.files(tpp_dir)
 
 ###############################################################################
 # TPP Riboswitch
