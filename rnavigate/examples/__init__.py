@@ -41,6 +41,19 @@ plot = rnav.plot_arcs(
     interactions="ringmap",
     )
 """
+from importlib import resources
+from rnavigate.examples import (
+    rmrp as rmrp_dir,
+    rnasep as rnasep_dir,
+    rrna_fragmap as rrna_fragmap_dir,
+    tpp as tpp_dir,
+    )
+
+rmrp_dir = resources.files(rmrp_dir)
+rnasep_dir = resources.files(rnasep_dir)
+rrna_fragmap_dir = resources.files(rrna_fragmap_dir)
+tpp_dir = resources.files(tpp_dir)
+
 from rnavigate.examples.examples import (
     tpp,
     rnasep_1,

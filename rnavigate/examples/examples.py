@@ -1,16 +1,6 @@
 from importlib import resources
 import rnavigate as rnav
-from rnavigate.examples import (
-    rmrp as rmrp_dir,
-    rnasep as rnasep_dir,
-    rrna_fragmap as rrna_fragmap_dir,
-    tpp as tpp_dir,
-    )
-
-rmrp_dir = resources.files(rmrp_dir)
-rnasep_dir = resources.files(rnasep_dir)
-rrna_fragmap_dir = resources.files(rrna_fragmap_dir)
-tpp_dir = resources.files(tpp_dir)
+from rnavigate.examples import rmrp_dir, rnasep_dir, rrna_fragmap_dir, tpp_dir
 
 ###############################################################################
 # TPP Riboswitch
