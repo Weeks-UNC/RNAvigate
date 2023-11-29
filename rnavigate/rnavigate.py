@@ -1,5 +1,8 @@
+"""The RNAvigate Sample object for parsing, assigning, and organizing data."""
+
 from rnavigate import data
 from rnavigate.data_loading import create_data
+
 
 class Sample:
     """Loads and organizes RNA structural data for use with plotting functions.
@@ -43,11 +46,11 @@ class Sample:
         self.inputs = {}
         self.data = {}
         self.defaults = {
-                'default_annotation': None,
-                'default_profile': None,
-                'default_structure': None,
-                'default_interactions': None,
-                'default_pdb': None
+                "default_annotation": None,
+                "default_profile": None,
+                "default_structure": None,
+                "default_interactions": None,
+                "default_pdb": None
                 }
 
         # inherit data from other Samples
@@ -105,15 +108,15 @@ class Sample:
         during Sample initialization:
 
             my_sample = rnavigate.Sample(
-                sample='name',
+                sample="name",
                 data_keyword=inputs)
 
             is equivalent to:
 
             my_sample = rnavigate.Sample(
-                sample='name')
+                sample="name")
             my_sample.add_data(
-                'data_keyword', inputs)
+                "data_keyword", inputs)
 
         Required arguments:
             data_keyword (string)
@@ -247,19 +250,19 @@ class Sample:
             cmap (str | list, optional):
                 sets the interactions colormap, used to color interactions
                 according to metric values.
-            normalization (str, optional): 
-                `'norm'`: extreme values in colormap are given to the extreme
+            normalization (str, optional):
+                `"norm"`: extreme values in colormap are given to the extreme
                     values of interactions metric data
-                `'bins'`: data are colored according to which bin they fall into
+                `"bins"`: data are colored according to which bin they fall in
                     `values` defines bins (list, length = 2 less than cmap)
-                `'min_max'`: extreme values in cmap are given to values beyond
+                `"min_max"`: extreme values in cmap are given to values beyond
                     minimum and maximum, defined by `values`
             values:
                 behavior depends on normalization
-                `'norm'`: values are not needed
-                `'bins'`: list of floats containing the boundaries between bins
+                `"norm"`: values are not needed
+                `"bins"`: list of floats containing the boundaries between bins
                     One fewer than the number of categories
-                `'min_max'`: list of floats containing the minimum and maximum
+                `"min_max"`: list of floats containing the minimum and maximum
             **kwargs: Other arguments are passed to interactions.filter()
         """
         # check for valid interactions data
@@ -269,63 +272,64 @@ class Sample:
             interactions = self.get_data(interactions, data.Interactions)
         except KeyError as exception:
             raise KeyError(
-                f'{interactions} is not in {self.sample}') from exception
+                f"{interactions} is not in {self.sample}") from exception
 
         if metric is None:
             metric = interactions.default_metric
         elif metric.startswith("Distance"):
-            if len(metric.split('_')) == 2:
-                metric, atom = metric.split('_')
+            if len(metric.split("_")) == 2:
+                metric, atom = metric.split("_")
             else:
                 atom = "O2'"
             interactions.set_3d_distances(self.get_data("default_pdb"), atom)
-        metric = {'metric_column': metric}
+        metric = {"metric_column": metric}
         if cmap is not None:
-            metric['cmap'] = cmap
+            metric["cmap"] = cmap
         if normalization is not None:
-            metric['normalization'] = normalization
+            metric["normalization"] = normalization
         if values is not None:
-            metric['values'] = values
+            metric["values"] = values
         interactions.metric = metric
-        if 'profile' in kwargs:
-            kwargs['profile'] = self.data[kwargs['profile']]
+        if "profile" in kwargs:
+            kwargs["profile"] = self.data[kwargs["profile"]]
         else:
             try:
-                kwargs['profile'] = self.get_data(f"default_{'profile'}")
+                kwargs["profile"] = self.get_data("default_profile")
             except ValueError:
                 kwargs["profile"] = None
-        if 'structure' in kwargs:
-            kwargs['structure'] = self.data[kwargs['structure']]
+        if "structure" in kwargs:
+            kwargs["structure"] = self.data[kwargs["structure"]]
         else:
             try:
-                kwargs['structure'] = self.get_data(f"default_{'structure'}")
+                kwargs["structure"] = self.get_data("default_structure")
             except ValueError:
                 kwargs["structure"] = None
         interactions.filter(**kwargs)
 
     def print_data_keywords(self):
-        data_keywords={
-            'annotations': [],
-            'profiles': [],
-            'structures': [],
-            'interactions': [],
-            'pdbs': []}
+        """Print a nicely formatted, organized list of data keywords."""
+        data_keywords = {
+            "annotations": [],
+            "profiles": [],
+            "structures": [],
+            "interactions": [],
+            "pdbs": []}
         for data_keyword, data_object in self.data.items():
             if data_keyword in self.defaults.values():
-                data_keyword += ' (default)'
+                data_keyword += " (default)"
             if isinstance(data_object, data.Annotation):
-                data_keywords['annotations'].append(data_keyword)
+                data_keywords["annotations"].append(data_keyword)
             if isinstance(data_object, data.Profile):
-                data_keywords['profiles'].append(data_keyword)
+                data_keywords["profiles"].append(data_keyword)
             if isinstance(data_object, data.SecondaryStructure):
-                data_keywords['structures'].append(data_keyword)
+                data_keywords["structures"].append(data_keyword)
             if isinstance(data_object, data.Interactions):
-                data_keywords['interactions'].append(data_keyword)
+                data_keywords["interactions"].append(data_keyword)
             if isinstance(data_object, data.PDB):
-                data_keywords['pdbs'].append(data_keyword)
-        print(f'{self.sample} data keywords:')
+                data_keywords["pdbs"].append(data_keyword)
+        print(f"{self.sample} data keywords:")
         for k, v in data_keywords.items():
-            print(f'  {k}:')
+            print(f"  {k}:")
             for dkw in v:
                 print(f"    {dkw}")
         print()

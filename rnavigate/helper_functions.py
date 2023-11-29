@@ -7,6 +7,7 @@ from rnavigate.data_loading import get_sequence
 
 __all__ = ["fit_data", "PlottingArgumentParser"]
 
+
 def _parse_plot_kwargs(plot_kwargs, plot):
     if plot_kwargs is None:
         plot_kwargs = {}
@@ -46,6 +47,11 @@ def fit_data(data_object, alignment):
 
 
 class PlottingArgumentParser():
+    """Parse arguments for high-level plotting functions.
+
+    Given samples list and data keywords, returns a dictionary of data objects
+    for each sample, optionally aligned to a target sequence.
+    """
     def __init__(self, samples, labels, alignment=None, **data_dict):
         self.samples = self._parse_samples(samples)
         self.labels = self._parse_labels(labels)
@@ -63,11 +69,11 @@ class PlottingArgumentParser():
         self.data_dicts = []
         classes = {
             # in order of approximate usage
-            'profile': data.Profile,
-            'annotations': data.Annotation,
-            'structure': (data.SecondaryStructure, data.PDB),
-            # 'interactions': data.Interactions, # _parse_interactions instead
-            'domains': list,
+            "profile": data.Profile,
+            "annotations": data.Annotation,
+            "structure": (data.SecondaryStructure, data.PDB),
+            # "interactions": data.Interactions, # _parse_interactions instead
+            "domains": list,
         }
         for sample, label in zip(self.samples, self.labels):
             this_data_dict = {"label": label}
@@ -120,6 +126,7 @@ class PlottingArgumentParser():
         return samples
 
     def _parse_labels(self, labels):
+        """Ensures the value of labels is a list, same length as samples."""
         error = ValueError("labels must be a list of strings of length equal "
                            "to length of sample list.")
         if labels is None:
@@ -131,6 +138,17 @@ class PlottingArgumentParser():
         return labels
 
     def _parse_annotations(self, annotations):
+        """Ensures the value of annotations is a list.
+
+        Required arguments:
+            annotations (None, list of str or rnav.data.Annotations)
+                None is converted to []
+                a single string or data object is enclosed in a list
+
+        Returns:
+            list
+                a list of annotations data or data keywords (or empty)
+        """
         error = ValueError(
             "annotations must be a list containing data keywords or objects")
         if annotations is None:
@@ -145,14 +163,36 @@ class PlottingArgumentParser():
         raise error
 
     def _parse_interactions(self, interactions, return_list=True):
-        error = ValueError("""
-            interactions must follow one of the following formats:
-            format 1: a data keyword or data object
-            format 2: dictionary containing format 1:
-                        {'interactions': format 1, 'filter': True}
-            format 3: list of format 2 dictionaries:
-                        [format 2, format 2]
-            """)
+        """Ensure interactions is the expected format.
+
+        interactions must follow one of the following formats:
+        format 1: a data keyword or data object
+        format 2: dictionary containing format 1:
+                    {'interactions': format 1, 'filter': True}
+        format 3 (if return_list is True): list of format 2 dictionaries:
+                    [format 2, format 2]
+        1 is converted to 2 if return_list is False.
+        1 and 2 are converted to 3 if return_list is True.
+
+        Required arguments:
+            interactions (format 1, 2, or 3)
+
+        Optional arguments:
+            return_list (bool)
+                Whether to return format 3, otherwise returns format 2
+                Defaults to True
+
+        Returns:
+            dict (format 2 if return_list is False)
+            list (format 3 if return_list is True)
+        """
+        error = ValueError(
+            "interactions must follow one of the following formats:\n"
+            "format 1: a data keyword or data object\n"
+            "format 2: dictionary containing format 1:\n"
+            "            {'interactions': format 1, 'filter': True}\n"
+            "format 3: list of format 2 dictionaries:\n"
+            "            [format 2, format 2]\n")
         if interactions is None:
             if return_list:
                 return [{"interactions": None}]

@@ -1,3 +1,5 @@
+"""Parsing function for rnavigate.Sample data_keywords."""
+
 import os
 from rnavigate import data
 
@@ -17,27 +19,28 @@ data_keyword_defaults = {
     "pairmap": {"data_class": data.PAIRMaP, "sequence": "default_profile"},
     "shapejump": {"data_class": data.SHAPEJuMP, "sequence": _required},
     "pairprob": {"data_class": data.PairingProbability,
-                    "sequence": "default_profile"},
+                 "sequence": "default_profile"},
     "ss": {"data_class": data.SecondaryStructure},
     "ss_pairs": {"data_class": data.SecondaryStructure.from_pairs_list,
                  "sequence": _required},
     "pdb": {"data_class": data.PDB, "chain": _required},
     "allpossible": {"data_class": data.AllPossible, "sequence": _required},
     "motif": {"data_class": data.Motif, "name": _required,
-                "sequence": _required, "color": _required},
+              "sequence": _required, "color": _required},
     "orfs": {"data_class": data.ORFs, "name": _required,
-                "sequence": _required, "color": _required},
+             "sequence": _required, "color": _required},
     "spans": {"data_class": data.Annotation, "name": _required,
-                "sequence": _required, "color": _required},
+              "sequence": _required, "color": _required},
     "sites": {"data_class": data.Annotation, "name": _required,
-                "sequence": _required, "color": _required},
+              "sequence": _required, "color": _required},
     "group": {"data_class": data.Annotation, "name": _required,
-                "sequence": _required, "color": _required},
+              "sequence": _required, "color": _required},
     "primers": {"data_class": data.Annotation, "name": _required,
                 "sequence": _required, "color": _required},
     "domains": {"data_class": data.domains, "sequence": _required,
                 "colors": _required, "names": _required},
     }
+
 
 def create_data(data_keyword, inputs, sample=None):
     """Convenience function for creating rnavigate.data objects. This function
@@ -96,7 +99,7 @@ def create_data(data_keyword, inputs, sample=None):
     # data_keyword="A", inputs={"input_data": "B", etc.}
     if isinstance(inputs, dict):
         first_key = list(inputs.keys())[0]
-        data_keyword=first_key
+        data_keyword = first_key
         inputs["input_data"] = inputs.pop(first_key)
     else:
         inputs = {"input_data": inputs}
@@ -165,13 +168,14 @@ def get_sequence(sequence, sample=None, default=None):
         sequence = default
     try:
         sequence = sample.get_data(sequence)
-    except:
+    except ValueError:
         pass
     if isinstance(sequence, data.Sequence):
         return sequence
     if isinstance(sequence, str) and os.path.isfile(sequence):
         return data.Sequence(sequence)
-    if isinstance(sequence, str) and all([nt.upper() in "AUCGT." for nt in sequence]):
+    if (isinstance(sequence, str)
+            and all([nt.upper() in "AUCGT.-" for nt in sequence])):
         return data.Sequence(sequence)
     else:
         raise ValueError(f"Cannot find sequence from ({sequence})")

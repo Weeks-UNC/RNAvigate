@@ -2,7 +2,11 @@
 
 from rnavigate import plots
 from rnavigate import data
-from rnavigate.helper_functions import PlottingArgumentParser, _parse_plot_kwargs, fit_data
+from rnavigate.helper_functions import (
+    PlottingArgumentParser,
+    _parse_plot_kwargs,
+    fit_data,
+    )
 from rnavigate.data_loading import get_sequence
 
 
@@ -23,6 +27,7 @@ __all__ = [
     "plot_disthist",
     "plot_ntdist",
     ]
+
 
 def plot_qc(
         # required
@@ -112,7 +117,7 @@ def plot_skyline(
         nt_ticks=(20, 5),
         columns=None,
         errors=None,
-        annotations_mode='track',
+        annotations_mode="track",
         seqbar=True,
         region="all",
         # optional plot display
@@ -152,10 +157,10 @@ def plot_skyline(
         errors (string or list of strings)
             column names of error values for plotting error bars
             Defaults to None (no error bars)
-        annotations_mode ('track' or 'bars')
-            'track' will highlight annotations along the x-axis
-            'bars' will use a vertical transparent bar over the plot
-            Defaults to 'track'
+        annotations_mode ("track" or "bars")
+            "track" will highlight annotations along the x-axis
+            "bars" will use a vertical transparent bar over the plot
+            Defaults to "track"
         seqbar (True or False)
             whether to display the sequence along the x-axis
             Defaults to True
@@ -208,7 +213,7 @@ def plot_profile(
         nt_ticks=(20, 5),
         column=None,
         plot_error=True,
-        annotations_mode='track',
+        annotations_mode="track",
         seqbar=True,
         region="all",
         # optional plot display
@@ -249,10 +254,10 @@ def plot_profile(
         plot_error (True or False)
             Whether to plot error bars, values are determined by profile.metric
             Defaults to True
-        annotations_mode ('track' or 'bars')
-            'track' will highlight annotations along the x-axis
-            'bars' will use a vertical transparent bar over the plot
-            Defaults to 'track'
+        annotations_mode ("track" or "bars")
+            "track" will highlight annotations along the x-axis
+            "bars" will use a vertical transparent bar over the plot
+            Defaults to "track"
         seqbar (True or False)
             whether to display the sequence along the x-axis
             Defaults to True
@@ -350,7 +355,7 @@ def plot_arcs(
         nt_ticks=(20, 5),
         profile_scale_factor=1,
         plot_error=False,
-        annotation_mode='track',
+        annotation_mode="track",
         panels=None,
         seqbar=True,
         region="all",
@@ -380,7 +385,7 @@ def plot_arcs(
             format 1 (data or data keyword)
                 Interactions to plot as arcs, no filtering performed
             format 2 (dictionary)
-                e.g. {'interactions': format 1}
+                e.g. {"interactions": format 1}
                 additional filtering options can be added to the dictionary
             format 3 (list of format 2 dictionaries)
                 This format allows multiple filtering schemes to be applied,
@@ -390,7 +395,7 @@ def plot_arcs(
             format 1 (data or data keyword)
                 Interactions to plot as arcs, no filtering performed
             format 2 (dictionary)
-                e.g. {'interactions': format 1}
+                e.g. {"interactions": format 1}
                 additional filtering options can be added to the dictionary
             Defaults to None
         profile (data or data keyword)
@@ -419,18 +424,18 @@ def plot_arcs(
         plot_error (True or False)
             Whether to plot error bars, values are determined by profile.metric
             Defaults to False
-        annotation_mode ('track' or 'bars')
-            'track' will highlight annotations along the x-axis
-            'bars' will use a vertical transparent bar over the plot
-            Defaults to 'track'
+        annotation_mode ("track" or "bars")
+            "track" will highlight annotations along the x-axis
+            "bars" will use a vertical transparent bar over the plot
+            Defaults to "track"
         panels (dictionary)
-            a dictionary of whether plot elements are displayed on the 'top'
-            (above x-axis) or 'bottom' (below x-axis)
+            a dictionary of whether plot elements are displayed on the "top"
+            (above x-axis) or "bottom" (below x-axis)
             Only the values you wish to change from the default are needed
-            defaults to {'interactions': 'bottom',
-                         'interactions2': 'bottom',
-                         'structure': 'top',
-                         'profile': 'top'}
+            defaults to {"interactions": "bottom",
+                         "interactions2": "bottom",
+                         "structure": "top",
+                         "profile": "top"}
         seqbar (True or False)
             whether to display the sequence along the x-axis
             Defaults to True
@@ -468,7 +473,7 @@ def plot_arcs(
     plot_kwargs = _parse_plot_kwargs(plot_kwargs, "rnavigate.plots.AP")
     parsed_args.update_rows_cols(plot_kwargs)
     # initialize plot
-    plot = plots.AP( # TODO: plots should take alignments instead of region + length
+    plot = plots.AP(
         num_samples=parsed_args.num_samples,
         nt_length=sequence.length,
         region=region, **plot_kwargs)
@@ -530,7 +535,7 @@ def plot_arcs_compare(
             format 1 (data or data keyword)
                 Interactions to plot as arcs, no filtering performed
             format 2 (dictionary)
-                e.g. {'interactions': format 1}
+                e.g. {"interactions": format 1}
                 additional filtering options can be added to the dictionary
             format 3 (list of format 2 dictionaries)
                 This format allows multiple filtering schemes to be applied,
@@ -540,7 +545,7 @@ def plot_arcs_compare(
             format 1 (data or data keyword)
                 Interactions to plot as arcs, no filtering performed
             format 2 (dictionary)
-                e.g. {'interactions': format 1}
+                e.g. {"interactions": format 1}
                 additional filtering options can be added to the dictionary
             Defaults to None
         profile (data or data keyword)
@@ -597,21 +602,25 @@ def plot_arcs_compare(
         )
     # loop through samples and filters, adding each as a new axis
     labels = []
-    for data_dict, seq, panel in zip(parsed_args.data_dicts, [1, 2], ["top", "bottom"]):
+    for data_dict, seq, panel in zip(
+            parsed_args.data_dicts,
+            [1, 2],
+            ["top", "bottom"]
+            ):
         if seq == 1:
             seq, other_seq = seq1, seq2
         else:
             seq, other_seq = seq2, seq1
         alignment = data.SequenceAlignment(seq, other_seq, full=True)
         panels = {
-            'structure': panel, 
-            'interactions': panel,
-            'interactions2': panel,
-            'profile': panel}
-        labels.append(data_dict.pop('label'))
+            "structure": panel,
+            "interactions": panel,
+            "interactions2": panel,
+            "profile": panel}
+        labels.append(data_dict.pop("label"))
         data_dict = fit_data(data_dict, alignment)
         plot.plot_data(
-            ax=0, sequence=seq, track_height=6, label='', seqbar=False,
+            ax=0, sequence=seq, track_height=6, label="", seqbar=False,
             panels=panels, **data_dict, plot_error=plot_error,
             profile_scale_factor=profile_scale_factor,
             )
@@ -638,7 +647,7 @@ def plot_ss(
         labels=None,
         colors=None,
         nt_ticks=None,
-        bp_style='dotted',
+        bp_style="dotted",
         # optional plot display
         colorbars=True,
         plot_kwargs=None,
@@ -666,7 +675,7 @@ def plot_ss(
             format 1 (data or data keyword)
                 Interactions to plot on secondary structure, no filtering
             format 2 (dictionary)
-                e.g. {'interactions': format 1}
+                e.g. {"interactions": format 1}
                 additional filtering options can be added to the dictionary
             format 3 (list of format 2 dictionaries)
                 This format allows multiple filtering schemes to be applied,
@@ -676,7 +685,7 @@ def plot_ss(
             format 1 (data or data keyword)
                 Interactions to plot on secondary structure, no filtering
             format 2 (dictionary)
-                e.g. {'interactions': format 1}
+                e.g. {"interactions": format 1}
                 additional filtering options can be added to the dictionary
             Defaults to None
 
@@ -689,31 +698,31 @@ def plot_ss(
             will be applied to each plot element and if that element is plotted
             only the elements you wish to change need to be included
             value options and what the colors represent:
-                None: don't plot this elelement
-                'sequence': nucleotide identity
-                'position': position in sequence
-                'annotations': sequence annotations
-                'profile': per-nucleotide data from profile
+                None: don"t plot this elelement
+                "sequence": nucleotide identity
+                "position": position in sequence
+                "annotations": sequence annotations
+                "profile": per-nucleotide data from profile
                     profile argument must be provided
-                'structure': base-pairing status
+                "structure": base-pairing status
                 matplotlib color: all positions plotted in this color
                 array of colors: a different color for each position
                     must be the same length as structure
-            'sequence' may also use 'contrast' which automatically chooses
-                white or black, which ever contrasts better with 'nucleotide'
+            "sequence" may also use "contrast" which automatically chooses
+                white or black, which ever contrasts better with "nucleotide"
                 color
-            Defaults to {'sequence': None,
-                         'nucleotides': 'sequence',
-                         'structure': 'grey',
-                         'basepairs': 'grey'}
+            Defaults to {"sequence": None,
+                         "nucleotides": "sequence",
+                         "structure": "grey",
+                         "basepairs": "grey"}
         nt_ticks (integer)
             gap between major tick marks
             defaults to None (no position labels)
-        bp_style ('dotted', 'line', or 'conventional')
-            'dotted' plots basepairs as a dotted line
-            'line' plots basepairs as a solid line
-            'conventional' plots basepairs using Leontis-Westhof conventions
-                for canonical and wobble pairs ('G-A' plotted as solid dot)
+        bp_style ("dotted", "line", or "conventional")
+            "dotted" plots basepairs as a dotted line
+            "line" plots basepairs as a solid line
+            "conventional" plots basepairs using Leontis-Westhof conventions
+                for canonical and wobble pairs ("G-A" plotted as solid dot)
 
     Optional plot display arguments:
         colorbars (True or False)
@@ -742,7 +751,7 @@ def plot_ss(
     plot = plots.SS(num_samples=parsed_args.num_samples, **plot_kwargs)
     # loop through samples and filters, adding each as a new axis
     for data_dict in parsed_args.data_dicts:
-        data_dict = fit_data(data_dict, data_dict['structure'].null_alignment)
+        data_dict = fit_data(data_dict, data_dict["structure"].null_alignment)
         plot.plot_data(
             **data_dict, colors=colors, nt_ticks=nt_ticks, bp_style=bp_style
             )
@@ -761,9 +770,9 @@ def plot_mol(
         interactions=None,
         # optional data display
         labels=None,
-        style='cartoon',
+        style="cartoon",
         hide_cylinders=False,
-        colors='grey',
+        colors="grey",
         atom="O2'",
         rotation=None,
         orientation=None,
@@ -799,7 +808,7 @@ def plot_mol(
             format 1 (data or data keyword)
                 Interactions to plot on molecule, no filtering performed
             format 2 (dictionary)
-                e.g. {'interactions': format 1}
+                e.g. {"interactions": format 1}
                 additional filtering options can be added to the dictionary
             format 3 (list of format 2 dictionaries)
                 This format allows multiple filtering schemes to be applied,
@@ -810,34 +819,34 @@ def plot_mol(
         labels (list of str)
             list containing Labels to be used in plot titles
             Defaults to sample.sample for each sample
-        style ('cartoon', 'cross', 'line', 'sphere' or 'stick')
+        style ("cartoon", "cross", "line", "sphere" or "stick")
             sets the py3Dmol style for drawing the molecule
-            Defaults to 'cartoon'
+            Defaults to "cartoon"
         hide_cylinders (True or False)
             whether to hide nucleotide cylinders (only shows backbone ribbon)
             Defaults to False
         colors (string or list)
             value options and what the colors represent:
-                'sequence': nucleotide identity
-                'position': position in sequence
-                'annotations': sequence annotations
-                'profile': per-nucleotide data from profile
+                "sequence": nucleotide identity
+                "position": position in sequence
+                "annotations": sequence annotations
+                "profile": per-nucleotide data from profile
                     profile argument must be provided
-                'structure': base-pairing status
+                "structure": base-pairing status
                 matplotlib color: all positions plotted in this color
                 array of colors: a different color for each position
                     must be the same length as structure
-            Defaults to 'grey'
+            Defaults to "grey"
         atom (string or dictionary)
             which atoms to draw interactions between
             for DMS reactive atoms (N1 for A and G, N3 for U and C) use "DMS"
             use a dictionary to specify a different atom for each nucleotide
-                e.g. "DMS" == {'A': 'N1', 'G': 'N1', 'U': 'N3', 'C': 'N3'}
+                e.g. "DMS" == {"A": "N1", "G": "N1", "U": "N3", "C": "N3"}
             Defaults to "O2'"
         rotation (dictionary)
             axis-degrees pairs for setting the starting orientation of the
             molecule, only the axes to be rotated are needed
-            e.g. {'x': 180} flips the molecule on the x-axis
+            e.g. {"x": 180} flips the molecule on the x-axis
             Defaults to None
         orientation (list of floats)
             set the precise starting orientation
@@ -929,7 +938,7 @@ def plot_heatmap(
         # optional data display
         labels=None,
         levels=None,
-        interpolation='nearest',
+        interpolation="nearest",
         atom="O2'",
         plot_type="heatmap",
         weights=None,
@@ -956,7 +965,7 @@ def plot_heatmap(
             format 1 (data or data keyword)
                 Interactions to plot as a heatmap, no filtering performed
             format 2 (dictionary)
-                e.g. {'interactions': format 1}
+                e.g. {"interactions": format 1}
                 additional filtering options can be added to the dictionary
             format 3 (list of format 2 dictionaries)
                 This format allows multiple filtering schemes to be applied,
@@ -984,14 +993,14 @@ def plot_heatmap(
                 Defaults to [20]
         interpolation (string)
             one of matplotlib's interpolations for heatmap (used with imshow)
-            'nearest' works well for shorter RNAs (under 300 nt)
-            'none' works well for longer RNAs (over 1200 nt)
+            "nearest" works well for shorter RNAs (under 300 nt)
+            "none" works well for longer RNAs (over 1200 nt)
             defaults to None (uses default)
         atom (string or dictionary)
             from which atoms to calculate distances
             for DMS reactive atoms (N1 for A and G, N3 for U and C) use "DMS"
             use a dictionary to specify a different atom for each nucleotide
-                e.g. "DMS" == {'A': 'N1', 'G': 'N1', 'U': 'N3', 'C': 'N3'}
+                e.g. "DMS" == {"A": "N1", "G": "N1", "U": "N3", "C": "N3"}
             Defaults to "O2'"
         plot_type ("heatmap" or "kde")
             how to plot interactions data
@@ -1041,7 +1050,7 @@ def plot_heatmap(
     plot.set_figure_size()
     return plot
 
-# TODO: refactor to match profile, arcs, skyline, ss, then update docstring
+
 def plot_circle(
         # required
         samples,
@@ -1064,10 +1073,10 @@ def plot_circle(
     """Creates a figure containing a circle plot for each sample given.
 
     Data that can be plotted on circle plots includes annotations (highlights
-    regions around the edge.Generates a multipanel secondary structure drawing with optional
-    coloring by per-nucleotide data and display of inter-nucleotide data and/or
-    sequence annotations. Each plot may display a unique sample and/or
-    inter-nucleotide data filtering scheme.
+    regions around the edge.Generates a multipanel secondary structure drawing
+    with optional coloring by per-nucleotide data and display of inter-
+    nucleotide data and/or sequence annotations. Each plot may display a unique
+    sample and/or inter-nucleotide data filtering scheme.
 
     Required arguments:
         samples (list of rnavigate Samples)
@@ -1085,7 +1094,7 @@ def plot_circle(
             format 1 (data or data keyword)
                 Interactions to plot on cirle plot, no filtering
             format 2 (dictionary)
-                e.g. {'interactions': format 1}
+                e.g. {"interactions": format 1}
                 additional filtering options can be added to the dictionary
             format 3 (list of format 2 dictionaries)
                 This format allows multiple filtering schemes to be applied,
@@ -1095,7 +1104,7 @@ def plot_circle(
             format 1 (data or data keyword)
                 Interactions to plot on circle plot, no filtering
             format 2 (dictionary)
-                e.g. {'interactions': format 1}
+                e.g. {"interactions": format 1}
                 additional filtering options can be added to the dictionary
             Defaults to None
         annotations (list of data or data keywords)
@@ -1113,20 +1122,20 @@ def plot_circle(
             a dictionary of element: value pairs that determines how colors
             will be applied to each plot element and if that element is plotted
             only the elements you wish to change need to be included
-            Defaults to {'sequence': None, 'nucleotides': 'sequence'}
+            Defaults to {"sequence": None, "nucleotides": "sequence"}
             value options and what the colors represent:
                 None: don't plot this elelement
-                'sequence': nucleotide identity
-                'position': position in sequence
-                'annotations': sequence annotations
-                'profile': per-nucleotide data from profile
+                "sequence": nucleotide identity
+                "position": position in sequence
+                "annotations": sequence annotations
+                "profile": per-nucleotide data from profile
                     profile argument must be provided
-                'structure': base-pairing status
+                "structure": base-pairing status
                 matplotlib color: all positions plotted in this color
                 array of colors: a different color for each position
                     must be the same length as structure
-            'sequence' may also use 'contrast' which automatically chooses
-                white or black, which ever contrasts better with 'nucleotide'
+            "sequence" may also use "contrast" which automatically chooses
+                white or black, which ever contrasts better with "nucleotide"
                 color
         nt_ticks (tuple of two integers)
             first integer is the gap between major tick marks
@@ -1145,8 +1154,8 @@ def plot_circle(
             Defaults to {}.
 
     Returns:
-        rnavigate.plots.Circle plot: object containing matplotlib figure and axes
-            with additional plotting and file saving methods
+        rnavigate.plots.Circle plot: object containing matplotlib figure and
+            axes with additional plotting and file saving methods
     """
 
     parsed_args = PlottingArgumentParser(
@@ -1165,7 +1174,7 @@ def plot_circle(
     plot = plots.Circle(num_samples=parsed_args.num_samples, **plot_kwargs)
     # loop through samples and interactions, adding each as a new axis
     for data_dict in parsed_args.data_dicts:
-        data_dict = fit_data(data_dict, data_dict['sequence'].null_alignment)
+        data_dict = fit_data(data_dict, data_dict["sequence"].null_alignment)
         plot.plot_data(
             **data_dict, colors=colors, nt_ticks=nt_ticks,
             gap=gap
@@ -1187,11 +1196,11 @@ def plot_linreg(
         # optional data display
         labels=None,
         kde=False,
-        scale='linear',
-        regression='pearson',
-        colors='sequence',
+        scale="linear",
+        regression="pearson",
+        colors="sequence",
         column=None,
-        region='all',
+        region="all",
         # optional plot display
         colorbars=True,
         plot_kwargs=None,
@@ -1226,26 +1235,26 @@ def plot_linreg(
             Defaults to sample.sample for each sample
         kde (True or False)
             whether to plot kde (density) instead of a scatter plot
-        scale ('linear' or 'log')
-            'linear' performs regression on raw values, displays linear units
-            'log' performs regression on log10(values), displays log10 units
-            Defaults to 'linear'
-        regression ('pearson' or 'spearman')
-            'pearson' calculates Pearson R-squared (standard)
-            'spearman' calculates Spearman R-squared (rank-order)
-            Defaults to 'pearson'
+        scale ("linear" or "log")
+            "linear" performs regression on raw values, displays linear units
+            "log" performs regression on log10(values), displays log10 units
+            Defaults to "linear"
+        regression ("pearson" or "spearman")
+            "pearson" calculates Pearson R-squared (standard)
+            "spearman" calculates Spearman R-squared (rank-order)
+            Defaults to "pearson"
         colors (string or list)
             value options and what the colors represent:
-                'sequence': nucleotide identity
-                'position': position in sequence
-                'annotations': sequence annotations
-                'profile': per-nucleotide data from profile
+                "sequence": nucleotide identity
+                "position": position in sequence
+                "annotations": sequence annotations
+                "profile": per-nucleotide data from profile
                     profile argument must be provided
-                'structure': base-pairing status
+                "structure": base-pairing status
                 matplotlib color: all positions plotted in this color
                 array of colors: a different color for each position
                     must be the same length as structure
-            Defaults to 'sequence'
+            Defaults to "sequence"
         column (string)
             column name of values from profile to use in regression
             Defaults to profile.metric
@@ -1276,8 +1285,8 @@ def plot_linreg(
     )
     plot_kwargs = _parse_plot_kwargs(plot_kwargs, "rnavigate.plots.LinReg")
     plot = plots.LinReg(
-        num_samples=parsed_args.num_samples, scale=scale, regression=regression,
-        kde=kde, region=region, **plot_kwargs
+        num_samples=parsed_args.num_samples, scale=scale,
+        regression=regression, kde=kde, region=region, **plot_kwargs,
         )
     for data_dict in parsed_args.data_dicts:
         plot.plot_data(**data_dict, colors=colors, column=column)
@@ -1294,7 +1303,7 @@ def plot_roc(
         profile,
         # optional data display
         labels=None,
-        nts='AUCG',
+        nts="AUCG",
         # optional plot display
         plot_kwargs=None
         ):
@@ -1319,7 +1328,7 @@ def plot_roc(
             Defaults to sample.sample for each sample
         nts (string)
             which nucleotides to plot nucleotide-type ROC plots
-            defaults to 'AUCG'
+            defaults to "AUCG"
 
     Optional plot display arguments:
         plot_kwargs (dictionary)
@@ -1339,7 +1348,7 @@ def plot_roc(
     plot_kwargs = _parse_plot_kwargs(plot_kwargs, "rnavigate.plots.ROC")
     plot = plots.ROC(parsed_args.num_samples, **plot_kwargs)
     for data_dict in parsed_args.data_dicts:
-        data_dict = fit_data(data_dict, data_dict['structure'].null_alignment)
+        data_dict = fit_data(data_dict, data_dict["structure"].null_alignment)
         plot.plot_data(**data_dict, nts=nts)
     plot.set_figure_size()
     return plot
@@ -1362,7 +1371,7 @@ def plot_disthist(
         plot_kwargs=None
         ):
     """Calculates 3D distance of nucleotides in inter-nucleotide data and plots
-    the distribution of these distances. Compares this to a 'background'
+    the distribution of these distances. Compares this to a "background"
     distribution consisting of either all pairwise distances in structure, or
     those defined by bg_interactions and bg_interactions_filter
 
@@ -1377,7 +1386,7 @@ def plot_disthist(
             format 1 (data or data keyword)
                 Interactions used to calculate distance histogram, no filtering
             format 2 (dictionary)
-                e.g. {'interactions': format 1}
+                e.g. {"interactions": format 1}
                 additional filtering options can be added to the dictionary
             format 3 (list of format 2 dictionaries)
                 This format allows multiple filtering schemes to be applied,
@@ -1390,7 +1399,7 @@ def plot_disthist(
                 Interactions to calculate background distance histogram, no
                 filtering is performed
             format 2 (dictionary)
-                e.g. {'interactions': format 1}
+                e.g. {"interactions": format 1}
                 additional filtering options can be added to the dictionary
             if not provided, background distance histogram is calculated from
             all pairwise distances in structure
@@ -1404,7 +1413,7 @@ def plot_disthist(
             from which atoms to calculate distances
             for DMS reactive atoms (N1 for A and G, N3 for U and C) use "DMS"
             use a dictionary to specify a different atom for each nucleotide
-                e.g. "DMS" == {'A': 'N1', 'G': 'N1', 'U': 'N3', 'C': 'N3'}
+                e.g. "DMS" == {"A": "N1", "G": "N1", "U": "N3", "C": "N3"}
             Defaults to "O2'"
 
     Optional plot display arguments:
@@ -1475,7 +1484,7 @@ def plot_ntdist(
             Defaults to sample.sample for each sample
         column (string)
             which column of data to use for KDE
-            defaults to 'AUCG'
+            defaults to "AUCG"
 
     Optional plot display arguments:
         plot_kwargs (dictionary)

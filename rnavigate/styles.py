@@ -1,3 +1,4 @@
+"""Contains global plot display settings."""
 from functools import wraps
 import matplotlib as mpl
 import seaborn as sns
@@ -16,44 +17,60 @@ __all__ = [
     ]
 
 settings = {
-    'sequence_bar': 'alphabet', # 'bars'
-    'sequence_colors': 'rnavigate', # 'old'
-    'ss': {
-        'structure': {
-            'linewidth': 1,
-            'zorder': 2},
-        'interactions': {
-            'linewidth': 3,
-            'alpha': None,
-            'zorder': 15},
-        'spans': {
-            'linewidth': 10,
-            'alpha': 0.4,
-            'zorder': 5},
-        'sites': {
-            'marker': 'o',
-            'edgecolor': 'none',
-            's': 10**2,
-            'alpha': 0.4,
-            'zorder': 5},
-        'basepairs': {
-            'zorder': 0},
-        'nucleotides': {
-            'marker': 'o',
-            'edgecolor': 'none',
-            's': 5**2,
-            'zorder': 10},
-        'sequence': {
-            'linewidth': 0.3,
-            's': 3**2,
-            'zorder': 20},
-        'positions': {
-            'zorder': 25},
+    "sequence_bar": "alphabet",  # "bars"
+    "sequence_colors": "rnavigate",  # "old"
+    "ss": {
+        "structure": {
+            "linewidth": 1,
+            "zorder": 2},
+        "interactions": {
+            "linewidth": 3,
+            "alpha": None,
+            "zorder": 15},
+        "spans": {
+            "linewidth": 10,
+            "alpha": 0.4,
+            "zorder": 5},
+        "sites": {
+            "marker": "o",
+            "edgecolor": "none",
+            "s": 10**2,
+            "alpha": 0.4,
+            "zorder": 5},
+        "basepairs": {
+            "zorder": 0},
+        "nucleotides": {
+            "marker": "o",
+            "edgecolor": "none",
+            "s": 5**2,
+            "zorder": 10},
+        "sequence": {
+            "linewidth": 0.3,
+            "s": 3**2,
+            "zorder": 20},
+        "positions": {
+            "zorder": 25},
     },
 }
 
 
 def update_copy(original_settings, user_settings):
+    """Returns a recursively updated copy of the og settings with new settings
+
+    _summary_
+
+    Required arguments:
+        original_settings (dict)
+            a default settings dictionary, usually rnav.settings
+        user_settings (dict)
+            a dictionary with only the fields from the original_settings that
+            are to be changed
+
+    Returns:
+        dict
+            the original_settings dictionary with the new_settings dictionary
+            values updated (recursively)
+    """
     new_settings = dict()
     for k, v in original_settings.items():
         if isinstance(v, dict):
@@ -82,26 +99,62 @@ class Settings(dict):
 
 
 def set_defaults(context="paper", style="ticks", colors="default", dpi=140):
+    """Set or reset the major global style settings.
+
+    _summary_
+
+    Optional arguments:
+        context (str)
+            Passed to seaborn.set_context
+            Defaults to "paper"
+        style (str)
+            Passed to seaborn.set_style
+            Defaults to "ticks"
+        colors (str)
+            Passed to seaborn.set_palette
+            Defaults to "default"
+        dpi (int)
+            Sets the dots-per-inch for inline and exported images
+            Defaults to 140
+    """
     if colors == "default":
         colors = [
-            '#0092edff',  # Blue
-            '#ff8300ff',  # Orange
-            '#a100ffff',  # Purple
-            '#edc600ff',  # Yellow
-            '#ff48e9ff',  # Pink
-            '#3fd125ff',  # Green
+            "#0092edff",  # Blue
+            "#ff8300ff",  # Orange
+            "#a100ffff",  # Purple
+            "#edc600ff",  # Yellow
+            "#ff48e9ff",  # Pink
+            "#3fd125ff",  # Green
         ]
     sns.set_context(context)
     sns.set_style(style)
     sns.set_palette(colors)
     mpl.rcParams["font.sans-serif"].insert(0, "Arial")
-    mpl.rcParams['figure.dpi'] = dpi
-    mpl.rcParams["svg.fonttype"] = 'none'
+    mpl.rcParams["figure.dpi"] = dpi
+    mpl.rcParams["svg.fonttype"] = "none"
 
 
 def get_nt_color(nt, colors=None):
+    """Get the RNAvigate color for a given nucleotide.
+
+    Invalid nucleotides are set to gray
+
+    Required arguments:
+        nt (str)
+            a nucleotide letter
+
+    Optional arguments:
+        colors ("rnavigate" or "old")
+            "rnavigate" uses default colors in rnav.settings["sequence_colors"]
+            "old" uses traditional red, yellow, blue, green for "AUCG"
+            Defaults to None
+
+    Returns:
+        _type_
+            _description_
+    """
     if colors is None:
-        colors = settings['sequence_colors']
+        colors = settings["sequence_colors"]
     try:
         return {"old": {"A": "#f20000",  # red
                         "U": "#f28f00",  # yellow
@@ -118,9 +171,9 @@ def get_nt_color(nt, colors=None):
 
 def get_nt_cmap():
     return data.ScalarMappable(
-        cmap=[get_nt_color(nt) for nt in 'AUGC'],
-        normalization='none', values=None, title="sequence",
-        tick_labels=['A', 'U', 'G', 'C'])
+        cmap=[get_nt_color(nt) for nt in "AUGC"],
+        normalization="none", values=None, title="sequence",
+        tick_labels=["A", "U", "G", "C"])
 
 
 def apply_style(style_dict):
@@ -139,12 +192,12 @@ sm = {"font.family": "sans-serif",
       # use TrueType fonts when exporting PDFs
       # (embeds most fonts - this is especially
       #  useful when opening in Adobe Illustrator)
-      'xtick.direction': 'out',
-      'ytick.direction': 'out',
-      'legend.fontsize': 14,
-      'grid.color': ".8",
-      'grid.linestyle': '-',
-      'grid.linewidth': 1}
+      "xtick.direction": "out",
+      "ytick.direction": "out",
+      "legend.fontsize": 14,
+      "grid.color": ".8",
+      "grid.linestyle": "-",
+      "grid.linewidth": 1}
 
 rx_color = "red"
 bg_color = "blue"

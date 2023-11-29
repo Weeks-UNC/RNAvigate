@@ -1,3 +1,10 @@
+"""RNA visualization and graphical analysis toolset
+RNA vi                g         a        t    e
+
+A Jupyter-compatible toolset for the exploration of RNA structure and chemical
+probing data.
+"""
+
 from rnavigate.rnavigate import Sample
 from rnavigate.plotting_functions import (
     plot_alignment,
