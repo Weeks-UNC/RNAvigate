@@ -40,7 +40,7 @@ plugins:
   - search
   - mkdocs-jupyter:
       execute: True
-      kernel_name: RNAvigate
+      kernel_name: Python3
 
 
 theme: readthedocs
