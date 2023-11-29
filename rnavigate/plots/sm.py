@@ -1,10 +1,10 @@
 import numpy as np
-from .plots import Plot
+from rnavigate import plots
 from matplotlib.patches import Rectangle
-from ..styles import rx_color, bg_color, dc_color, apply_style, sm
+from rnavigate.styles import rx_color, bg_color, dc_color
 
 
-class SM(Plot):
+class SM(plots.Plot):
     def __init__(self, nt_length, region=None,
                  panels=["profile", "rates", "depth"]):
         if region is None:
@@ -13,19 +13,11 @@ class SM(Plot):
         super().__init__(len(panels), len(panels), cols=1)
         self.panels = panels
 
-    @property
-    def axis_dimensions(self):
-        return {
-            "yscale": None,
-            "xscale": 0.1,
-            "width_ax": None,
-            "height_ax": 6}
-
     def set_figure_size(self, fig=None, ax=None,
                         rows=None, cols=None,
-                        height_ax_rel=None, width_ax_rel=0.1,
-                        width_ax_in=None, height_ax_in=6,
-                        height_gap_in=1, width_gap_in=0.5,
+                        height_ax_rel=None, width_ax_rel=0.03,
+                        width_ax_in=None, height_ax_in=2,
+                        height_gap_in=0.5, width_gap_in=0.5,
                         top_in=1, bottom_in=0.5,
                         left_in=0.5, right_in=0.5):
         super().set_figure_size(fig=fig, ax=ax, rows=rows, cols=cols,
@@ -38,19 +30,10 @@ class SM(Plot):
                                 bottom_in=bottom_in, left_in=left_in,
                                 right_in=right_in)
 
-    def get_figsize(self):
-        left_inches = 0.9
-        right_inches = 0.4
-        ax_width = self.nt_length * 0.1
-        fig_height = 6
-        fig_width = max(7, ax_width + left_inches + right_inches)
-        return (fig_width*self.columns, fig_height*self.rows)
-
-    @apply_style(sm)
     def plot_data(self, profile, label):
         """Creates a figure with the three classic Shapemapper plots.
         """
-        self.fig.suptitle(label, fontsize=30)
+        self.fig.suptitle(label)
         for i, plot in enumerate(self.panels):
             ax = self.get_ax(i)
             plot_func = {"profile": self.plot_sm_profile,
@@ -58,31 +41,31 @@ class SM(Plot):
                          "depth": self.plot_sm_depth
                          }[plot]
             plot_func(ax, profile)
+        self.axes[-1, 0].set_xlabel("Nucleotide position")
 
     def plot_sm_profile(self, ax, profile):
-        """Plots classic ShapeMapper normalized reactivity on the given axis
+        """Plots classic ShapeMapper normalized reactivity on the given ax
 
         Args:
-            axis (pyplot axis): axis on which to add plot
+            ax (pyplot ax): ax on which to add plot
         """
-        yMin, ymax = (-0.5, 4)
+        ymin, ymax = (-0.5, 4)
         near_black = (0, 0, 1 / 255.0)
         orange_thresh = 0.4
         red_thresh = 0.85
-        colors = profile.get_colors("profile", profile=profile)
+        colors, _ = profile.get_colors("profile", profile=profile)
         sample = profile.data["Norm_profile"].copy()
         sample[np.isnan(sample)] = -1
         ax.bar(profile.data['Nucleotide'], sample, align="center",
                width=1.05, color=colors, edgecolor=colors,
                linewidth=0.0, yerr=profile.data['Norm_stderr'],
                ecolor=near_black, capsize=1)
-        ax.set_title("Normalized Profile", fontsize=16)
-        ax.set_ylim(yMin, ymax)
+        ax.set_title("Normalized Profile")
+        ax.set_ylim(ymin, ymax)
         ax.set_xlim(1, profile.length)
         ax.yaxis.grid(True)
         ax.set_axisbelow(True)
-        ax.set_xlabel("Nucleotide", fontsize=14, labelpad=0)
-        ax.set_ylabel("Shape Reactivity", fontsize=14)
+        ax.set_ylabel("Shape Reactivity")
         # add a SHAPE colorbar to the vertical ax
         # uses a little transformation magic to place correctly
         inv = ax.transData.inverted()
@@ -113,11 +96,7 @@ class SM(Plot):
         ax.get_yaxis().tick_left()
         ax.tick_params(axis='y', which='minor', left=False)
         ax.minorticks_on()
-
-        yticks = ax.get_yticks()
-        stripped_ticks = [str(int(val)) for val in yticks]
-        ax.set(yticks=yticks,
-               yticklabels=stripped_ticks)
+        ax.set(yticks=[0, 1, 2, 3, 4])
 
         for line in ax.get_yticklines():
             line.set_markersize(6)
@@ -131,14 +110,14 @@ class SM(Plot):
             line.set_markersize(5)
             line.set_markeredgewidth(1)
 
-        # put nuc sequence below axis
-        self.add_sequence(ax, profile.sequence, yvalue=0.01)
+        # put nuc sequence below ax
+        plots.plot_sequence_track(ax, profile.sequence, yvalue=0, ytrans='axes')
 
     def plot_sm_depth(self, ax, profile):
-        """Plots classic ShapeMapper read depth on the given axis
+        """Plots classic ShapeMapper read depth on the given ax
 
         Args:
-            axis (pyplot axis): axis on which to add plot
+            ax (pyplot ax): ax on which to add plot
         """
         sample = profile.data
         ax.plot(sample['Nucleotide'], sample['Modified_read_depth'],
@@ -148,7 +127,8 @@ class SM(Plot):
         ax.plot(sample['Nucleotide'], sample['Denatured_read_depth'],
                 linewidth=1.5, color=dc_color, alpha=1.0, label="Denatured")
         ax.set_xlim(1, profile.length)
-        ax.legend(loc=2, borderpad=0.8, handletextpad=0.2, framealpha=0.75)
+        ax.legend(title="Effective depth\nin lighter colors",
+                  loc=2, borderpad=0.8, handletextpad=0.2, framealpha=0.75)
         ax.plot(sample['Nucleotide'], sample['Modified_effective_depth'],
                 linewidth=1.0, color=rx_color, alpha=0.3)
         ax.plot(sample['Nucleotide'], sample['Untreated_effective_depth'],
@@ -157,9 +137,6 @@ class SM(Plot):
                 linewidth=1.0, color=dc_color, alpha=0.3)
         xmin, xmax, ymin, ymax = ax.axis()
         ax.set_ylim(0, ymax)
-        ax.set_xlabel("Nucleotide\n" +
-                      "NOTE: effective read depths shown in lighter colors",
-                      fontsize=14, labelpad=0)
         ax.minorticks_on()
         ax.tick_params(axis='y', which='minor', left=False)
         yticks = [int(y) for y in ax.get_yticks()]
@@ -176,16 +153,16 @@ class SM(Plot):
             line.set_markeredgewidth(1)
         ax.yaxis.grid(True)
         ax.set_axisbelow(True)
-        ax.set_ylabel("Read depth", fontsize=14)
+        ax.set_ylabel("Read depth")
         # tried to make an offset, smaller font note about effective depths,
         # but couldn't get positioning/transforms to work properly.
         # For now just putting in xaxis label
 
     def plot_sm_rates(self, ax, profile):
-        """Plots classic ShapeMapper mutation rates on the given axis
+        """Plots classic ShapeMapper mutation rates on the given ax
 
         Args:
-            axis (pyplot axis): axis on which to add plot
+            ax (pyplot ax): ax on which to add plot
         """
         sample = profile.data
         # choose a decent range for ax, excluding high-background positions
@@ -203,8 +180,7 @@ class SM(Plot):
         dc_err = sample['Denatured_rate'] / sample['Denatured_effective_depth']
         dc_upper = sample['Denatured_rate'] + dc_err
         dc_lower = sample['Denatured_rate'] - dc_err
-        ax.set_xlabel("Nucleotide", fontsize=14)
-        ax.set_ylabel("Mutation rate (%)", fontsize=14)
+        ax.set_ylabel("Mutation rate (%)")
         ax.plot(sample['Nucleotide'], sample['Modified_rate'], zorder=3,
                 color=rx_color, linewidth=1.5, label='Modified')
         ax.plot(sample['Nucleotide'], sample['Untreated_rate'], zorder=2,

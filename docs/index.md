@@ -1,65 +1,91 @@
 Welcome to RNAvigate docs!
 ==========================
 
-**RNA vi**sualization and **g**raphical **a**nalysis **t**ools**e**t
+![demo plots](./images/gallery.png)
 
-[Github](https://github.com/Weeks-UNC/RNAvigate) | [Publication](publications.md)
+[Github](https://github.com/Weeks-UNC/RNAvigate) | [Publications](publications.md)
 
-RNAvigate is a plotting and analysis framework for diverse RNA structure data.
-It provides an easy interface for quickly producing visualizations for
-data analysis and exploration within Jupyter Notebooks or python scripts.
-RNAvigate is designed to be simple to install and use with minimal knowledge of
-python or command line tools.
+- [What is it and who is it for?](#what-is-it-and-who-is-it-for)
+- [What problem does it solve?](#what-problem-does-it-solve)
+- [Workflow overview](#workflow-overview)
+- [Questions, requests, and issues](#questions-requests-and-issues)
 
 Getting started
----------------
 
 1. [Installing RNAvigate](installing-rnavigate.md)
 2. [Loading data files](loading-data.md)
-3. [Visualizing data](visualizing-data.md)
+3. [Visualizing data](visualizing_data.ipynb)
 
-Very brief overview
--------------------
 
-1. open a Jupyter notebook and import RNAvigate
+## What is it and who is it for?
+
+RNAvigate is an RNA structure and chemical probing data exploration toolset
+built for RNA bench scientists. It is designed to be simple to learn, to accept
+many input data formats, and to provide useful tools, common analyses, and
+visualizations for the RNA structure community.
+
+## What problem does it solve?
+
+Many tools and scripts exist to analyze RNA structure data via the command line
+or through GUI interfaces. These types of tools are generally not well suited
+for rapid data exploration because of the additional overhead of managing and
+organizing intermediate data files, or of clicking through to reproduce an
+analysis.
+
+Interactive programming with Jupyter notebooks offers an elegant solution to
+this problem and most data scientists utilize these notebooks for
+reproducible data exploration, analysis, and figure creation. However, these
+notebooks require fluency in data science programming. RNAvigate solves this by
+providing a simple to understand interface that implements many of the common
+analyses and visualizations utilized by the RNA structure community.
+
+## Workflow overview
+
+1) Search databases or perform experiments and data pre-processing to
+   obtain data file inputs for RNAvigate.
+
+2) Create an `rnavigate.Sample` and load data by assigning file names to
+   **data keywords**.
 
 ```python
 import rnavigate as rnav
-```
 
-2. Create samples by providing data file inputs with data keywords
-
-```python
 sample_name = rnav.Sample(
-    data_keyword="input_file.txt"
+    data_keyword="input_file.txt",
 )
 ```
 
-3. Create visualizations by providing plotting functions with sample names and
-   data keywords.
+3) Create `rnavigate.plots` by providing `rnavigate.Sample` names and
+   **data keywords** to plotting functions.
 
 ```python
 rnav.plotting_function(
-    samples=[sample_name]
-    plotting_keyword="data_keyword"
+    samples=[sample_name],
+    plotting_keyword="data_keyword",
 )
 ```
 
-Bugs, requests, and questions
------------------------------
+## Questions, requests, and issues
 
-Use [GitHub issues](https://github.com/Weeks-UNC/RNAvigate/issues) to request
-new features, to report bugs, and to ask questions. This feedback is extremely
-useful for improving RNAvigate, so please don't be shy!
+Use [GitHub issues](https://github.com/Weeks-UNC/RNAvigate/issues), liberally,
+to request new features, to report bugs or unexpected behavior, or simply to
+ask questions. The future development directions of RNAvigate will be based
+largely on this feedback.
 
-In most cases, RNAvigate can be very efficiently expanded to accept new data
-file formats. To request a new format, submit a GitHub issue with an example
-file, file format specification, and example visualizations if they exist.
-For more information on the broad categories of data that RNAvigate is
-well-suited for see [data types](data-types.md).
+In almost all cases, RNAvigate can be easily expanded to accept new data file
+formats. Use the link above to request support for a new format or a new visual
+language (like the red-orange-black-grey scale for structure probing
+reactivity), include an example file and/or example visualization. For more
+information on the broad categories of data that are well-suited for inclusion,
+see [data types](data-types.md).
 
-Developers
-----------
+## Developers
 
-Please [contact me](mailto:psirving@email.unc.edu) if you are interested in
+[Contact me](mailto:psirving@email.unc.edu) if you are interested in
 helping to improve RNAvigate or in using RNAvigate in your own projects.
+
+These developer resources are works-in-progress.
+
+- [Change log](dev/changelog.md)
+- [Full API](dev/full_api.md)
+- [Developer's style guide](dev/style_guide.md)

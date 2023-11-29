@@ -1,7 +1,8 @@
-from .plots import Plot, adjust_spines
+from rnavigate import plots, styles
+import seaborn as sns
 
 
-class Skyline(Plot):
+class Skyline(plots.Plot):
     def __init__(self, num_samples, nt_length, region="all", **kwargs):
         if region == "all":
             self.nt_length = nt_length
@@ -9,26 +10,24 @@ class Skyline(Plot):
         else:
             self.nt_length = region[1] - region[0] + 1
             self.region = region
-        super().__init__(num_samples, **kwargs)
+        super().__init__(num_samples=num_samples, **kwargs)
         self.ax = self.axes[0, 0]
-        self.pass_through = ["columns", "seqbar", "errorbars"]
+        self.track_height = 0
 
-    def set_figure_size(self, fig=None, ax=None,
-                        rows=None, cols=None,
-                        height_ax_rel=None, width_ax_rel=0.1,
-                        width_ax_in=None, height_ax_in=6,
-                        height_gap_in=1, width_gap_in=0.5,
-                        top_in=1, bottom_in=0.5,
-                        left_in=0.5, right_in=0.5):
-        super().set_figure_size(fig=fig, ax=ax, rows=rows, cols=cols,
-                                height_ax_rel=height_ax_rel,
-                                width_ax_rel=width_ax_rel,
-                                width_ax_in=width_ax_in,
-                                height_ax_in=height_ax_in,
-                                height_gap_in=height_gap_in,
-                                width_gap_in=width_gap_in, top_in=top_in,
-                                bottom_in=bottom_in, left_in=left_in,
-                                right_in=right_in)
+    def set_figure_size(
+            self, fig=None, ax=None, rows=None, cols=None, height_ax_rel=None,
+            width_ax_rel=0.03, width_ax_in=None, height_ax_in=2,
+            height_gap_in=1, width_gap_in=0.5, top_in=1, bottom_in=1,
+            left_in=1, right_in=1
+            ):
+        super().set_figure_size(
+            fig=fig, ax=ax, rows=rows, cols=cols, height_ax_rel=height_ax_rel,
+            width_ax_rel=width_ax_rel, width_ax_in=width_ax_in,
+            height_ax_in=height_ax_in, height_gap_in=height_gap_in,
+            width_gap_in=width_gap_in, top_in=top_in,
+            bottom_in=bottom_in+2*self.track_height,
+            left_in=left_in, right_in=right_in
+            )
 
     def get_rows_columns(self, rows=None, cols=None):
         return (1, 1)
@@ -36,13 +35,44 @@ class Skyline(Plot):
     def get_ax(self, i=None):
         return self.ax
 
-    def plot_data(self, profile, annotations, label,
-                  columns="Reactivity_profile", seqbar=True, errorbars=None):
+    def plot_data(
+            self, profile, annotations=None, domains=None, label=None,
+            columns=None, seqbar=True, errors=None,
+            annotations_mode="track", nt_ticks=(20, 5),
+            ):
+        if columns is None:
+            columns = profile.metric
+        track_unit = 0.03
+        annotations_track = 2 * track_unit * len(annotations)
+        annotations_track *= annotations_mode == 'track'
+        domains_track = 3 * track_unit * (domains is not None)
+        sequence_track = track_unit * seqbar
+        self.track_height = sequence_track + annotations_track + domains_track
+
         ax = self.get_ax()
-        annotations = [annotation.fitted for annotation in annotations]
-        self.plot_profile(ax, profile, label, columns, errorbars)
-        if seqbar and (self.i == 0):
-            self.add_sequence(ax, profile.sequence)
+        plots.plot_profile_skyline(ax, profile, label, columns, errors)
+        if self.i == 0:
+            if seqbar:
+                plots.plot_sequence_track(
+                    ax=ax, sequence=profile.sequence,
+                    yvalue=self.track_height * -1, height=sequence_track,
+                    region=self.region, ytrans='axes')
+                self.add_colorbar_args(styles.get_nt_cmap())
+            if domains is not None:
+                for domain in domains:
+                    plots.plot_domain_track(
+                        ax=ax, spans=domain,
+                        yvalue=sequence_track - self.track_height,
+                        height=domains_track, region=self.region,
+                        ytrans='axes')
+            for i, annotation in enumerate(annotations):
+                plots.plot_annotation_track(
+                    ax=ax, annotation=annotation, mode=annotations_mode,
+                    yvalue=(sequence_track + domains_track
+                            - self.track_height + (i+0.5) * (2 * track_unit)),
+                    height=2*track_unit, ytrans='axes', region=self.region,
+                    )
+
         self.i += 1
         if self.i == self.length:
             if isinstance(columns, list):
@@ -52,30 +82,21 @@ class Skyline(Plot):
                 ylabel = columns.replace("_", " ")
             self.set_labels(ax=ax, ylabel=ylabel, axis_title=None,
                             legend_title=None)
-            for annotation in annotations:
-                self.plot_annotation(ax=ax, annotation=annotation)
-            self.set_axis(ax)
+            self.set_axis(ax=ax, sequence=profile, nt_ticks=nt_ticks)
 
-    def get_figsize(self):
-        left_inches = 0.9
-        right_inches = 0.4
-        ax_width = self.nt_length * 0.1
-        fig_height = 6
-        fig_width = max(7, ax_width + left_inches + right_inches)
-        return (fig_width, fig_height)
-
-    def set_axis(self, ax, xticks=20, xticks_minor=5):
+    def set_axis(self, ax, sequence, nt_ticks):
         xlim = self.region
         ax.set_xlim([xlim[0] - 0.5, xlim[1] + 0.5])
-        xrange = range(xlim[0], xlim[1]+1)
-        ax.set_xticks([x for x in xrange if (x % xticks) == 0])
-        ax.set_xticks([x for x in xrange if (x % xticks_minor) == 0],
-                      minor=True)
-        ax.spines['bottom'].set_visible(False)
+        plots.set_nt_ticks(
+            ax=ax, sequence=sequence, region=self.region,
+            major=nt_ticks[0], minor=nt_ticks[1],
+            )
+        ax.spines['bottom'].set(position=('axes', self.track_height * -1),
+                                visible=False)
         ax.spines['left'].set_visible(False)
         ax.grid(axis='y', visible=True)
         ax.tick_params(axis='y', length=0, grid_alpha=0.4)
-        adjust_spines(ax, ["left", "bottom"])
+        sns.despine(ax=ax, bottom=True, left=True)
 
     def set_labels(self, ax, axis_title="Raw Reactivity Profile",
                    legend_title="Samples", xlabel="Nucleotide Position",
@@ -85,96 +106,3 @@ class Skyline(Plot):
         ax.set_ylabel(ylabel)
         ax.legend(title=legend_title, labelcolor="linecolor", frameon=False,
                   handlelength=0)
-
-    def plot_profile(self, ax, profile, label, columns, errorbars):
-        data = profile.get_plotting_dataframe(all_columns=True)
-        if isinstance(columns, list):
-            for column in columns:
-                ax.plot(data["Nucleotide"], data[column],
-                        label=f"{label}: {column.replace('_', ' ')}",
-                        drawstyle="steps-mid")
-        elif isinstance(columns, str):
-            x = data["Nucleotide"]
-            profile_values = data[columns]
-            ax.plot(x, profile_values, label=label, drawstyle="steps-mid")
-            if errorbars is not None:
-                stderr = data[errorbars]
-                ax.fill_between(x, profile_values-stderr,
-                                profile_values+stderr, step='mid',
-                                color='C'+str(self.i), alpha=0.25, lw=0)
-
-    def plot_annotation(self, ax, annotation, mode="vbar"):
-        color = annotation.color
-        a_type = annotation.annotation_type
-        if a_type in ["primers", "spans"]:
-            for start, end in annotation[:]:
-                if start > end:
-                    start, end = end, start
-                ax.axvspan(start-0.5, end+0.5,
-                           fc=color, ec="none", alpha=0.1)
-        if a_type == "sites":
-            for site in annotation[:]:
-                ax.axvline(site, color=color, ls=":")
-
-
-class Profile(Skyline):
-    def __init__(self, num_samples, nt_length, region="all", **kwargs):
-        super().__init__(num_samples, nt_length, region, sharey=True, **kwargs)
-        self.pass_through = ["plot_errors", "column", "seqbar", "error_column"]
-        self.axes[0, 0].set_ylim(-0.5, 4.5)
-
-    def get_ax(self, i=None):
-        return super(Skyline, self).get_ax(i)
-
-    def get_rows_columns(self, rows=None, cols=None):
-        return super(Skyline, self).get_rows_columns(rows, cols=1)
-
-    def set_labels(self, ax, axis_title="Reactivity Profile",
-                   xlabel="Nucleotide Position", ylabel="Reactivity"):
-        ax.set_title(axis_title, loc="left")
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel(ylabel)
-
-    def plot_data(self, seq, profile, annotations, label, plot_errors=True,
-                  column=None, seqbar=True, error_column=None):
-        ax = self.get_ax()
-        if column is None:
-            column = profile.default_column
-        annotations = [annotation.fitted for annotation in annotations]
-        self.plot_profile(ax=ax, profile=profile, column=column,
-                          error_column=error_column, plot_errors=plot_errors)
-        if seqbar:
-            self.add_sequence(ax, seq.sequence)
-        self.i += 1
-        ylabel = column.replace("_", " ")
-        self.set_labels(ax=ax, ylabel=ylabel, axis_title=label)
-        for annotation in annotations:
-            self.plot_annotation(ax=ax, annotation=annotation)
-        self.set_axis(ax)
-
-    def plot_profile(self, ax, profile, column, error_column, plot_errors):
-        data = profile.get_plotting_dataframe(column=column,
-                                              err_column=error_column)
-        values = data["Values"]
-        colormap = data["Colors"]
-        nts = data["Nucleotide"]
-        mn, mx = self.region
-        if plot_errors and ("Errors" in data.columns):
-            yerr = data["Errors"]
-            ax.bar(nts[mn-1:mx], values[mn-1:mx], align="center",
-                   width=1, color=colormap[mn-1:mx],
-                   edgecolor=colormap[mn-1:mx], linewidth=0.0,
-                   yerr=yerr[mn-1:mx], ecolor=(0, 0, 1 / 255.0), capsize=1)
-        else:
-            ax.bar(nts[mn-1:mx], values[mn-1:mx], align="center",
-                   width=1, color=colormap[mn-1:mx],
-                   edgecolor=colormap[mn-1:mx], linewidth=0.0)
-
-    def set_figure_size(self, fig=None, ax=None, rows=None, cols=None,
-                        height_ax_rel=None, width_ax_rel=0.1, width_ax_in=None,
-                        height_ax_in=3, height_gap_in=1.5, width_gap_in=0.5,
-                        top_in=1, bottom_in=0.5, left_in=0.5, right_in=0.5):
-        return super().set_figure_size(fig, ax, rows, cols, height_ax_rel,
-                                       width_ax_rel, width_ax_in, height_ax_in,
-                                       height_gap_in, width_gap_in, top_in,
-                                       bottom_in, left_in, right_in)

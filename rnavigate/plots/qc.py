@@ -1,11 +1,10 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from .plots import Plot
+from rnavigate import plots
 
 
-class QC(Plot):
+class QC(plots.Plot):
 
     def __init__(self, num_samples):
         super().__init__(num_samples)
@@ -54,13 +53,12 @@ class QC(Plot):
         self.ax_read_unt.set_xticklabels(xticklabels, rotation=45)
         self.ax_read_mod.set_xticklabels(xticklabels, rotation=45)
         self.profiles = []
-        plt.tight_layout()
 
     def set_figure_size(self, fig=None, ax=None,
                         rows=None, cols=None,
                         height_ax_rel=None, width_ax_rel=None,
-                        width_ax_in=7, height_ax_in=7,
-                        height_gap_in=1, width_gap_in=0.5,
+                        width_ax_in=2, height_ax_in=2,
+                        height_gap_in=1, width_gap_in=1,
                         top_in=1, bottom_in=0.5,
                         left_in=0.5, right_in=0.5):
         super().set_figure_size(fig=fig, ax=ax, rows=rows, cols=cols,
@@ -79,15 +77,9 @@ class QC(Plot):
         else:
             return (2, 4)
 
-    def get_figsize(self):
-        if self.length == 1:
-            return (30, 10)
-        else:
-            return (40, 20)
-
-    def plot_data(self, log, profile, label):
-        self.plot_MutsPerMol(log, label)
-        self.plot_ReadLength(log, label)
+    def plot_data(self, profile, label):
+        self.plot_mutations_per_molecule(profile=profile, label=label)
+        self.plot_read_lengths(profile=profile, label=label)
         self.profiles.append(profile)
         self.i += 1
         if self.i == self.length:
@@ -99,14 +91,18 @@ class QC(Plot):
                 labels = [label]
             self.make_boxplot(labels)
 
-    def plot_MutsPerMol(self, log, label, upper_limit=12):
-        x = log.data.loc[:upper_limit, 'Mutation_count']
-        y1 = log.data.loc[:upper_limit, 'Modified_mutations_per_molecule']
+    def plot_mutations_per_molecule(self, profile, label, upper_limit=12):
+        df = profile.mutations_per_molecule
+        if df is None:
+            raise ValueError("profile is missing QC data from log file")
+        x = df.loc[:upper_limit, 'Mutation_count']
+        y1 = df.loc[:upper_limit, 'Modified_mutations_per_molecule']
         self.ax_muts_mod.plot(x, y1, label=label)
-        y2 = log.data.loc[:upper_limit, 'Untreated_mutations_per_molecule']
+        y2 = df.loc[:upper_limit, 'Untreated_mutations_per_molecule']
         self.ax_muts_unt.plot(x, y2, label=label)
 
-    def plot_ReadLength(self, log, label, upper_limit=12):
+    def plot_read_lengths(self, profile, label, upper_limit=12):
+        df = profile.read_lengths
         if self.length == 1:
             width = 0.4
             x1 = np.arange(upper_limit) - 0.6 + width
@@ -115,9 +111,9 @@ class QC(Plot):
             width = 0.8/self.length
             x1 = np.arange(upper_limit) - 0.4 - (width/2) + (width*self.i)
             x2 = x1
-        y1 = log.data.loc[:upper_limit-1, 'Modified_read_length']
+        y1 = df.loc[:upper_limit-1, 'Modified_read_length']
         self.ax_read_mod.bar(x1, y1, width, label=label)
-        y2 = log.data.loc[:upper_limit-1, 'Untreated_read_length']
+        y2 = df.loc[:upper_limit-1, 'Untreated_read_length']
         self.ax_read_unt.bar(x2, y2, width, label=label)
 
     def make_boxplot(self, labels):

@@ -1,263 +1,210 @@
+"""annotations.py contains Annotations and subclasses."""
 import re
-from .data import Data
+import pandas as pd
+from rnavigate import data
 
 
-def is_list_of_ints(my_list, length=None):
-    """Checks if the list is a 1-D list of integers. If length is provided,
-    also checks that the list has this length. For confirming that annotations
-    lists have the correct format.
+class Annotation(data.Sequence):
+    """Basic annotation class to store 1D features of an RNA sequence
 
-    Args:
-        my_list (list): a list to check for formatting
-        length (int, optional): if provided, checks that len(list)==length.
-            Defaults to None.
+    Each feature type must be a seperate instance. Feature types include:
+        a group of separted nucleotides (e.g. binding pocket)
+        regions of interest (e.g. coding sequence, Alu elements)
+        sites of interest (e.g. m6A locations)
+        primer binding sites.
 
-    Returns:
-        bool: whether my_list matches the format (or is an empty list)
-    """
-    if isinstance(my_list, list):
-        if length is not None and (len(my_list) != length):
-            return False
-        for elem in my_list:
-            if not isinstance(elem, int):
-                return False
-        return True
-    else:
-        return False
-
-
-def is_list_of_lists_of_ints(my_list, length=None):
-    """Checks if inputted list is a 2-D list of lists of integers. If length is
-    provided, checks if inner-most lists have the given length. For confirming
-    that annotations lists have the correct format.
-
-    Args:
-        my_list (list): a list to check for formatting
-        length (int, optional): if provided, checks that each inner list has
-            this length. Defaults to None.
-
-    Returns:
-        bool: whether my_list matches the format (or is an empty list)
-    """
-    if isinstance(my_list, list):
-        return all(is_list_of_ints(elem, length) for elem in my_list)
-    else:
-        return False
-
-
-class Annotation(Data):
-    def __init__(self,
-                 name=None,
-                 datatype="annotation",
-                 filepath="",
-                 fasta=None,
-                 sequence=None,
-                 annotation_type=None,
-                 sites=None,
-                 spans=None,
-                 groups=None,
-                 primers=None,
-                 annotations=None,
-                 color="blue"):
-        """Base annotation class to store 1D features of an RNA. This can
-        include groups of separted nucleotides (e.g. binding pocket), spans of
-        nucleotides (e.g. coding sequence, Alu elements), list of sites (e.g.
-        m6A locations) or primer binding sites.
+    Attributes:
+        data (Pandas DataFrame): stores the list of sites or regions
+        name (string): the label for this annotation for use on plots
+        color (valid matplotlib color): color to represent annotation on plots
+        sequence (string): the reference sequence string
+        """
+    def __init__(self, input_data, annotation_type,
+                 sequence, name=None, color="blue"):
+        """Create an annotation from a list of sites or regions.
 
         Args:
-            name (str, optional): Name of annotation.
-                Defaults to None.
-            datatype (str, optional): annotation datatype.
-                Defaults to "annotation".
-            filepath (str, optional): path to file containing annotations.
-                Defaults to "".
-            fasta (str, optional): path to fasta file containing one sequence.
-                Defaults to None.
-            sequence (str, optional): Nucleotide sequence.
-                Defaults to None.
-            sites (list of int, optional): 1-indexed location of sites of
-                interest within sequence or fasta.
-                Defaults to None.
-            spans (list of pairs, optional): 1-indexed locations of spans
-                of interest within sequence or fasta.
-                e.g. [[1, 10], [20, 30]] is two spans, 1 to 10 and 20 to 30.
-                Defaults to None.
-            groups (list of lists, optional): 1-indexed locations of groups of
-                sites of interest.
-                Defaults to None.
-            primers (list of pairs, optional): Similar to spans above,
-                but reverse primers are reverse ordered.
-                e.g. [[1, 10], [30, 20]] forward 1 to 10, reverse 30 to 20.
-                Defaults to None.
-            annotations (list, optional): catchall for the above list formats.
+            input_data (list):
                 List will be treated according to annotation_type argument.
-                Defaults to None.
-            annotation_type (str, optional): "groups", "sites", "spans", or
-                "primers". Must match the type used above. Required for
-                annotations argument to be correctly parsed.
+                Expected behaviors for each value of annotation_type:
+                "sites" or "group": 1-indexed location of sites of interest
+                "spans": 1-indexed, inclusive locations of spans of interest
+                    e.g. [[1, 10], [20, 30]] is two spans, 1 to 10 and 20 to 30
+                "primers": Similar to spans, but 5'/3' direction is preserved.
+                    e.g. [[1, 10], [30, 20]] forward 1 to 10, reverse 30 to 20
+            annotation_type (str):
+                "group", "sites", "spans", or "primers".
+            sequence (str | pandas.DataFrame):
+                Nucleotide sequence, path to fasta file, or dataframe
+                containing a "Sequence" column.
+            name (str, optional): Name of annotation.
                 Defaults to None.
             color (matplotlib color-like, optional): Color to be used for
                 displaying this annotation on plots.
                 Defaults to "blue".
         """
-        self.name = name
+        super().__init__(sequence, name=name)
         self.color = color
-        self.datatype = datatype
-        super().__init__(filepath=fasta, sequence=sequence)
 
-        # make sure whichever list is stored matches expected format
-        if (annotations is not None) and (annotation_type is not None):
-            self.annotation_type = annotation_type
-            if self.annotation_type == "sites":
-                sites = annotations
-            elif self.annotation_type == "spans":
-                spans = annotations
-            elif self.annotation_type == "primers":
-                primers = annotations
-            elif self.annotation_type == "groups":
-                groups = annotations
-        elif (annotations is not None) and (annotation_type is None):
-            raise ValueError("annotation requires annotation_type")
-
-        if sites is not None:
-            if not is_list_of_ints(sites):
-                raise ValueError(f"sites must be a list of integers:\n{sites}")
-            self.annotation_type = "sites"
-            self._list = sites
-        if spans is not None:
-            if not is_list_of_lists_of_ints(spans, length=2):
-                raise ValueError("spans format is must be a list of lists "
-                                 f"containing 2 integers:\n{spans}")
-            self.annotation_type = "spans"
-            self._list = spans
-        if primers is not None:
-            if not is_list_of_lists_of_ints(primers, length=2):
-                raise ValueError("primers format is must be a list of lists "
-                                 f"containing 2 integers:\n{primers}")
-            self.annotation_type = "primers"
-            self._list = primers
-        if groups is not None:
-            for group in groups:
-                if not set(group.keys()) == set(["sites", "colors"]):
-                    raise ValueError("Groups must have 'sites' and 'colors'")
-                if not is_list_of_ints(group["sites"]):
-                    raise ValueError("'sites' must be a list of lists")
-            self.annotation_type = "groups"
-            self._list = groups
-
-    def fit_to(self, fit_to, store=True):
-        """Creates a new Annotation, stored as self.fitted, which maps the
-        indices to a new sequence. For sites and groups, deleted nucleotides
-        will be dropped. For spans and primers, a deletion/insertion within a
-        region will shrink/expand the annotated region, respectively. If either
-        end of a region is deleted, that region is dropped. For different
-        behavior, create a new annotation for the target sequence.
-
-        Args:
-            fit_to (rnavigate.data.Data): A data object containing a sequence.
-            store (bool, optional): whether to store result as self.fitted, if
-                False, returns the value instead.
-        """
-        am = self.get_alignment_map(fit_to=fit_to)
-
-        def recursive_fit_to(indices):
-            # given nested list of indices, returns same shape with indices
-            # mapped to fit_to sequence
-            new_list = []
-            for idx in indices:
-                if isinstance(idx, list):
-                    new_list.append(recursive_fit_to(idx))
-                elif isinstance(idx, int):
-                    new_idx = int(am[idx-1]+1)
-                    if new_idx != 0:
-                        new_list.append(int(am[idx-1]+1))
-            return new_list
-
-        if self.annotation_type == "groups":
-            new_list = [{"sites": recursive_fit_to(d["sites"]),
-                        "color": d["color"]} for d in self._list]
+        # make sure input data matches expected format
+        valid_types = ["sites", "spans", "group", "primers"]
+        self.annotation_type = annotation_type
+        if isinstance(input_data, pd.DataFrame):
+            self.data = input_data
+        elif annotation_type in ["spans", "primers"]:
+            self.data = self.from_spans(input_data)
+        elif annotation_type in ["sites", "group"]:
+            self.data = self.from_sites(input_data)
         else:
-            new_list = recursive_fit_to(self._list)
-        if self.annotation_type in ["spans", "primers"]:
-            new_list = [x for x in new_list if len(x) == 2]
+            raise ValueError(f"annotation_type not in {valid_types}")
 
-        fitted = Annotation(
+    @classmethod
+    def from_boolean_array(
+            cls, values, sequence, annotation_type, name,
+            color="blue", window=1,
+            ):
+        """Create an Annotation from an array of boolean values.
+
+        True values are used to create the Annotation.
+
+        Required arguments:
+            values (list of True or False)
+                the boolean array
+            sequence (string or rnav.data.Sequence)
+                the sequence of the Annotation
+            annotation_type ("spans", "sites", "primers", or "group")
+                the type of the new annotation
+                If "spans" or "primers", adjacent True values, or values within
+                window are collapse to a region.
+            name (string): a name for labelling the annotation.
+
+        Optional arguments:
+            color (string)
+                a color for plotting the annotation
+                Defaults to "blue"
+            window (integer)
+                a window around True values to include in the annotation
+                Defaults to 1
+        """
+        annotations = []
+        current_annotation = None
+        pad = window // 2
+        for i, value in enumerate(values):
+            position = i + 1
+            if value and annotation_type in ["sites", "group"]:
+                annotations.append(position)
+            elif value and annotation_type == "spans":
+                start = max(1, position - pad)
+                stop = min(len(sequence), position + pad)
+                if current_annotation is None:
+                    current_annotation = [start, stop]
+                elif start <= current_annotation[1]+1:
+                    current_annotation[1] = stop
+                elif start > current_annotation[1]:
+                    annotations.append(current_annotation)
+                    current_annotation = [start, stop]
+        if annotation_type == "spans":
+            annotations.append(current_annotation)
+        return cls(
+            input_data=annotations, annotation_type=annotation_type,
+            color=color, sequence=sequence, name=name)
+
+    def from_spans(self, spans):
+        """Create the self.data dataframe from a list of spans."""
+        data_dict = {"start": [], "end": []}
+        for span in spans:
+            if ((len(span) != 2)
+                    and any(not isinstance(pos, int) for pos in span)):
+                raise ValueError(
+                    f"{self.annotation_type} must be a list of pairs of "
+                    f"integers:\n{spans}"
+                )
+            start, end = span
+            data_dict["start"].append(int(start))
+            data_dict["end"].append(int(end))
+        return pd.DataFrame(data_dict)
+
+    def from_sites(self, sites):
+        if any(not isinstance(site, int) for site in sites):
+            raise ValueError(
+                f"{self.annotation_type} must be a list of integers:\n{sites}")
+        return pd.DataFrame({"site": sites})
+
+    def get_aligned_data(self, alignment):
+        new_input_data = alignment.map_dataframe(self.data, self.data.columns)
+        return Annotation(
             name=self.name,
             color=self.color,
-            sequence=fit_to,
+            sequence=alignment.target_sequence,
             annotation_type=self.annotation_type,
-            annotations=new_list)
-        if store:
-            self.fitted = fitted
-        else:
-            return fitted
+            input_data=new_input_data,
+        )
 
-    def get_sites_colors(self, fit_to=None):
+    def get_sites(self):
         """Returns a list of nucleotide positions and colors based on these
-        sequence annotations. If a fit_to data object is provided, annotations
-        are first fitted using self.fit_to()
+        sequence annotations.
 
         Returns:
             tuple: a list of nucleotide positions and a list of colors
         """
-        if fit_to is not None:
-            return self.fit_to(fit_to, store=False).get_sites_colors()
-        sites = []
-        colors = []
         if self.annotation_type in ["spans", "primers"]:
-            for start, stop in self._list:
-                if start > stop:
-                    start, stop = stop, start
-                for nt in range(start, stop + 1):
-                    sites.append(nt)
-                    colors.append(self.color)
-        elif self.annotation_type == "sites":
-            for site in self._list:
-                sites.append(site)
-                colors.append(self.color)
-        elif self.annotation_type == "groups":
-            for group in self._list:
-                colors.extend([group["color"]] * len(group["sites"]))
-                sites.extend[group["sites"]]
-        return sites, colors
+            sites = []
+            for _, row in self.data.iterrows():
+                sites.extend(list(range(row["start"], row["end"]+1)))
+        elif self.annotation_type in ["sites", "group"]:
+            sites = list(self.data["site"].values)
+        return sites
 
-    def __getitem__(self, i):
-        return self._list[i]
+    def get_subsequences(self, buffer=0):
+        subsequences = []
+        if self.annotation_type in ["spans", "primers"]:
+            for _, (start, stop) in self.data[["start", "stop"]].iterrows():
+                subsequences.append(self.sequence[start-1-buffer:stop+buffer])
+        elif self.annotation_type in ["sites", "groups"]:
+            for _, (site) in self.data[["sites"]].iterrows():
+                subsequences.append(self.sequence[site-1-buffer:stop+buffer])
+        return subsequences
+
+    def __getitem__(self, idx):
+        return self.data.loc[idx]
+
+    def __iter__(self):
+        for _, row in self.data.iterrows():
+            yield row
 
     def __len__(self):
         return len(self._list)
 
 
 class Motif(Annotation):
-    def __init__(self,
-                 name=None,
-                 filepath="",
-                 fasta=None,
-                 sequence=None,
-                 motif=None,
-                 color="blue"):
+    """Automatically annotates the occurances of a sequence motif as spans."""
+    def __init__(
+            self, input_data, sequence, name=None, color="blue"
+            ):
         """Creates a Motif annotation, which acts like a span Annotation, for
         highlighting a sequence motif of interest, given with conventional
         nucleotide codes. e.g. "DRACH"
 
         Args:
-            name (str, optional): name of this annotation.
-                Defaults to None.
-            filepath(str, optional): Defaults to "".
-            fasta (str, optional): path to fasta file containing sequence.
-                Defaults to None.
-            sequence (str, optional): sequence to be searched.
+            sequence (str | pandas.DataFrame):
+                sequence to be searched.
                 Defaults to None.
             motif (str, optional): sequence motif to be searched for.
+                Defaults to None.
+            name (str, optional): name of this annotation.
                 Defaults to None.
             color (str, optional): color used to display these motif locations.
                 Defaults to "blue".
         """
-        self.motif = motif
-        span_list = self.get_spans_from_motif(sequence, motif)
-        super().__init__(name=name, fasta=fasta, sequence=sequence,
-                         annotation_type='spans',
-                         spans=span_list, color=color)
+        self.motif = input_data
+        span_list = self.get_spans_from_motif(sequence, input_data)
+        super().__init__(
+            name=name,
+            sequence=sequence,
+            annotation_type="spans",
+            input_data=span_list,
+            color=color,
+        )
 
     def get_spans_from_motif(self, sequence, motif):
         """Returns a list of spans [[start, end], [start, end]] for each
@@ -271,64 +218,96 @@ class Motif(Annotation):
         Returns:
             _type_: _description_
         """
-        nuc_codes = {"A": "A", "T": "T", "U": "U", "G": "G", "C": "C",
-                     "B": "[CGTU]", "D": "[ATUG]", "H": "[ATUC]", "V": "[ACG]",
-                     "W": "[ATU]", "S": "[CG]",  # strong and weak
-                     "M": "[AC]", "K": "[GTU]",  # amino and ketone
-                     "R": "[AG]", "Y": "[CTU]",  # purine and pyrimidine
-                     "N": "[ATUGC]"}  # any nuc
-        re_pattern = ''.join([nuc_codes[n] for n in motif])
+        sequence = data.normalize_sequence(sequence=sequence)
+        nuc_codes = {
+            "A": "A",
+            "T": "T",
+            "U": "U",
+            "G": "G",
+            "C": "C",
+            "B": "[CGTU]",
+            "D": "[ATUG]",
+            "H": "[ATUC]",
+            "V": "[ACG]",
+            "W": "[ATU]",
+            "S": "[CG]",  # strong and weak
+            "M": "[AC]",
+            "K": "[GTU]",  # amino and ketone
+            "R": "[AG]",
+            "Y": "[CTU]",  # purine and pyrimidine
+            "N": "[ATUGC]",
+        }  # any nuc
+        re_pattern = "".join([nuc_codes[n] for n in motif])
         spans = []
         for match in re.finditer(re_pattern, sequence):
             start, end = match.span()
-            spans.append([start+1, end])
+            spans.append([start + 1, end])
         return spans
 
-    def fit_to(self, fit_to, store=True):
-        """Creates a new annotation, stored as self.fitted. Fit_to sequence is
-        searched for motif matches
-
-        Args:
-            fit_to (Data object): data containing new sequence to be fitted
-            store (bool, optional): If True, new annotations are stored as
-                self.fitted. Else, new annotations are returned.
-                Defaults to True."""
-        fitted = Motif(
+    def get_aligned_data(self, alignment):
+        return Motif(
+            input_data=self.motif,
             name=self.name,
             color=self.color,
-            sequence=fit_to.sequence,
-            motif=self.motif,
-        )
-        if store:
-            self.fitted = fitted
-        else:
-            return fitted
+            sequence=alignment.target_sequence,
+            )
 
 
 class ORFs(Annotation):
-    def __init__(self,
-                 name=None,
-                 filepath=None,
-                 fasta=None,
-                 sequence=None,
-                 color="blue"):
-        span_list = self.get_spans_from_orf(sequence)
-        super().__init__(name=name, fasta=fasta, sequence=sequence,
-                         annotation_type='spans',
-                         spans=span_list, color=color)
+    """Automatically annotations occurances of open-reading frames as spans."""
+    def __init__(
+            self, input_data, name=None, sequence=None, color="blue"
+            ):
+        self.input_data = input_data
+        span_list = self.get_spans_from_orf(sequence, which=input_data)
+        super().__init__(
+            name=name, sequence=sequence, annotation_type="spans",
+            input_data=span_list, color=color,
+            )
 
-    def get_spans_from_orf(self, sequence):
+    def get_spans_from_orf(self, sequence, which="all"):
+        """Given a sequence string, returns spans for specified ORFs
+
+        Args:
+            sequence (str): RNA nucleotide sequence
+            which (str): "all" returns all spans, "longest" returns the longest
+                defaults to "all"
+
+        Returns:
+            list of tuples: (start, end) position of each ORF
+                1-indexed, inclusive
+        """
+        if isinstance(sequence, data.Sequence):
+            sequence = sequence.sequence
+        sequence = sequence.upper().replace("T", "U")
         spans = []
         stop_codons = "UAA|UAG|UGA"
-        stop_sites = []
-        for match in re.finditer(stop_codons, sequence):
-            stop_sites.append(match.span()[1])
         start_codon = "AUG"
-        start_sites = []
-        for match in re.finditer(start_codon, sequence):
-            start_sites.append(match.span()[0]+1)
+        stop_sites = [m.end() for m in re.finditer(stop_codons, sequence)]
+        start_sites = [m.start()+1 for m in re.finditer(start_codon, sequence)]
         for start in start_sites:
             for stop in stop_sites:
-                if ((stop-start) % 3 == 2) and (start < stop):
+                if (stop - start) % 3 == 2 and start < stop:
                     spans.append([start, stop])
-        return spans
+        if which == "all":
+            return spans
+        if which == "longest":
+            lengths = [end-start for start, end in spans]
+            index = lengths.index(max(lengths))
+            return [spans[index]]
+
+    def get_aligned_data(self, alignment):
+        return ORFs(
+            input_data=self.input_data,
+            name=self.name,
+            color=self.color,
+            sequence=alignment.target_sequence)
+
+
+def domains(input_data, names, colors, sequence):
+    return [
+        Annotation(
+            input_data=[span], annotation_type="spans", name=name,
+            color=color, sequence=sequence,
+            ) for span, name, color in zip(input_data, names, colors)
+        ]

@@ -5,36 +5,48 @@ nav:
 - Getting started:
   - 'Installation': 'installing-rnavigate.md'
   - 'Loading data': 'loading-data.md'
-  - 'Visualizing data': 'visualizing-data.md'
-  - 'Basic examples': 'examples/one_sample.ipynb'
+  - 'Visualizing data': 'visualizing_data.ipynb'
 - Plotting options:
-  - 'Alignment plots': 'plot-options/alignment-plots.md'
-  - 'Skyline plots': 'plot-options/skyline-plots.md'
-  - 'Profile plots': 'plot-options/profile-plots.md'
-  - 'Arc plots': 'plot-options/arc-plots.md'
-  - 'Arc compare plots': 'plot-options/arc-compare-plots.md'
-  - 'Circle plots': 'plot-options/circle-plots.md'
-  - 'Secondary structures': 'plot-options/ss-plots.md'
-  - 'Interactive 3D plots': 'plot-options/mol-plots.md'
-  - 'Shapemapper2 QC plots': 'plot-options/qc-plots.md'
-  - 'Shapemapper2 Profiles': 'plot-options/sm-plots.md'
-  - 'Distance distributions': 'plot-options/disthist-plots.md'
-  - 'Heatmap and Contours': 'plot-options/heatmap-plots.md'
-  - 'Linear regressions': 'plot-options/linreg-plots.md'
-  - 'Receiver operator characteristic': 'plot-options/roc-plots.md'
+  - 'Alignments': 'plot_options/alignment.ipynb'
+  - 'Skylines': 'plot_options/skyline.ipynb'
+  - 'Profiles': 'plot_options/profile.ipynb'
+  - 'Arcs': 'plot_options/arc.ipynb'
+  - 'Arcs comparison': 'plot_options/arc_compare.ipynb'
+  - 'Circles': 'plot_options/circle.ipynb'
+  - 'Secondary structures': 'plot_options/ss.ipynb'
+  - 'Interactive 3D plots': 'plot_options/mol.ipynb'
+  - 'Shapemapper2 QC': 'plot_options/qc.ipynb'
+  - 'Shapemapper2 Profiles': 'plot_options/shapemapper.ipynb'
+  - 'Distance distributions': 'plot_options/disthist.ipynb'
+  - 'Heatmap and Contours': 'plot_options/heatmap.ipynb'
+  - 'Linear regressions': 'plot_options/linreg.ipynb'
+  - 'Receiver operator characteristic': 'plot_options/roc.ipynb'
 - Analysis options:
   - 'Area under ROC curve': 'analysis-options/auroc.md'
-  - 'DeltaSHAPE': 'analysis-options/deltashape.md'
+  - 'DeltaSHAPE': 'analysis-options/deltashape.ipynb'
   - 'Log profile comparison': 'analysis-options/logcompare.md'
   - 'Low SHAPE, low Shannon entropy': 'analysis-options/lowss.md'
+  - 'FragMapper': 'analysis-options/fragmapper.ipynb'
 - Guides:
   - 'Interactions filtering': 'guides/filters.md'
   - 'Loading custom data': 'guides/loading-custom-data.md'
-- Glossary: glossary.md
-- Publications: publications.md
-- Change log: changelog.md
+- General:
+  - 'Glossary': 'glossary.md'
+  - 'Publications': 'publications.md'
+  - 'Code Reference': 'dev/full_api.md'
+  - 'Change log': 'dev/changelog.md'
 
 plugins:
-  - mkdocs-jupyter
+  - mkdocs-jupyter:
+      execute: True
+      kernel_name: Python3
+  - search
+  # - gen-files:
+  #     scripts:
+  #     - scripts/gen_ref_pages.py
+  - literate-nav:
+      nav_file: SUMMARY.md
+  - mkdocstrings
+
 
 theme: readthedocs

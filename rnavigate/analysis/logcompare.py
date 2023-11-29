@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize_scalar
-from ..plots import Plot
+from rnavigate.plots import Plot
 
 
 class LogCompare():
@@ -131,8 +131,8 @@ class LogCompare():
             profile = self.rescale(profile, profile1)
             profiles.append(profile)
         stacked = np.vstack(profiles)
-        avgprofile = np.nanmean(stacked, axis=0)
-        stderr = np.std(stacked, axis=0)
+        avgprofile = np.nanmean(stacked, ax=0)
+        stderr = np.std(stacked, ax=0)
         self.groups[group] = {self.data: avgprofile,
                               "stderr": stderr,
                               "stacked": stacked,
@@ -161,17 +161,15 @@ class LogCompare():
         ax.set_ylabel('ln(Mod/BG)')
         Plot.add_sequence(self, ax=ax, sequence=seq)
 
-        # TODO: there is probably a numpy function for this.
         # calculate mean difference and standard error for z-scores
         stack1 = stack1+10
         rescale_dms = self.rescale(stack1, stack2)
         stack1 = rescale_dms
         diff = stack2-stack1
-        meandiff = np.nanmean(diff, axis=0)
-        std_err = np.std(diff, axis=0)
+        meandiff = np.nanmean(diff, ax=0)
+        std_err = np.std(diff, ax=0)
         # compute z-scores
         z_scores = meandiff/std_err
-        # TODO: there is a matplotlib function for this
         # normalize to 0-1 (values > 5 = 1, values < -5 = 0)
         z_scores = (z_scores + 5) / 10
         z_scores[z_scores > 1] = 1

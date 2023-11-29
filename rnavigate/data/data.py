@@ -1,102 +1,73 @@
-from Bio.pairwise2 import align
+from os.path import isfile
 import Bio.SeqIO
 import numpy as np
-import matplotlib.pyplot as plt
+import pandas as pd
 import matplotlib.colors as mpc
-from ..styles import get_nt_color
-
-_alignments_cache = {}
-_globalms_params = {
-    "match": 1,
-    "mismatch": 0,
-    "open": -5,
-    "extend": -0.1}
+from rnavigate import styles
+from rnavigate import data
 
 
-def set_alignment(sequence1, sequence2, alignment1, alignment2):
-    """Add an alignment. When objects with these sequences are aligned for
-    visualization, this alignment is used instead of an automated pairwise
-    sequence alignment. Alignment 1 and 2 must have matching lengths.
-    e.g.:
-        sequence1="AUCGAUCGGUACAUGUGAUGUAC"
-        sequence2="AUCGAUCGAGCGUCAUGACGUCGAUGUACGUAC"
-        alignment1="AAGCUUCG---------GUACAUGCAAGAUGUAC"
-        alignment2="AUCGAUCGAGCUGCUGUGUAC---------GUAC"
-                     |mm|   | indel |    | indel |
+def normalize_sequence(sequence, t_or_u='U', uppercase=True):
+    """Returns sequence as all uppercase nucleotides and/or corrects T or U.
 
-    Args:
-        sequence1 (str): the first sequence
-        sequence2 (str): the second sequence
-        alignment1 (str): first sequence, plus dashes indicating indels
-        alignment2 (str): second sequence, plus dashes indicating indels
+    Required arguments:
+        sequence (string or RNAvigate Sequence)
+            The sequence string
+            If given an RNAvigate Sequence, the sequence string is retrieved
+
+    Optional arguments:
+        t_or_u ("T", "U", or False)
+            "T" converts "U"s to "T"s
+            "U" converts "T"s to "U"s
+            False does nothing
+            Defaults to "U"
+        uppercase (True or False)
+            Whether to make sequence all uppercase
+            Defaults to True
+
+    Returns:
+        string: the cleaned-up sequence string
     """
-    # Normalize sequences
-    sequence1 = sequence1.upper().replace("T", "U")
-    sequence2 = sequence2.upper().replace("T", "U")
-    alignment1 = alignment1.upper().replace("T", "U")
-    alignment2 = alignment2.upper().replace("T", "U")
-
-    # Check for consistency
-    if len(alignment1) != len(alignment2):
-        raise ValueError("Alignment 1 and 2 must having matching length.")
-    if alignment1.replace("-", "") != sequence1:
-        raise ValueError("Alignment 1 does not match sequence 1")
-    if alignment2.replace("-", "") != sequence2:
-        raise ValueError("Alignment 2 does not match sequence 2")
-
-    # Set up alignment dictionaries
-    seq12 = {
-        sequence2.upper().replace("T", "U"): {
-            "seqA": alignment1,
-            "seqB": alignment2}}
-    seq21 = {
-        sequence1.upper().replace("T", "U"): {
-            "seqA": alignment2,
-            "seqB": alignment1}}
-
-    # Store dictionaries in _alignments_cache
-    if sequence1 not in _alignments_cache.keys():
-        _alignments_cache[sequence1] = seq12
-    else:
-        _alignments_cache[sequence1].update(seq12)
-    if sequence2 not in _alignments_cache.keys():
-        _alignments_cache[sequence2] = seq21
-    else:
-        _alignments_cache[sequence2].update(seq21)
+    if isinstance(sequence, Sequence):
+        sequence = sequence.sequence
+    if uppercase:
+        sequence = sequence.upper()
+    if not t_or_u:
+        pass
+    elif t_or_u.upper() == 'U':
+        sequence = sequence.replace('t', 'u').replace('T', 'U')
+    elif t_or_u.upper() == 'T':
+        sequence = sequence.replace('u', 't').replace('U', 'T')
+    return sequence
 
 
-def get_pairs_sens_PPV(self, ct="ct"):
-    "Returns sensitivity and PPV for pair data to the ct structure"
-    import pmanalysis as pma
-    pm = pma.PairMap(self.paths["pairs"])
-    ct = getattr(self, ct).copy()
-    ct.filterNC()
-    ct.filterSingleton()
-    p, s = pm.ppvsens_duplex(ct, ptype=1, exact=False)
-    return p, s
-
-
-class Data():
-    def __init__(self, sequence=None, filepath=None, dataframe=None):
+class Sequence():
+    def __init__(self, input_data, name=None):
         """Constructs a Data object given a sequence string, fasta file, or
         dataframe containing a "Sequence" column.
 
         Args:
-            sequence (str, optional): sequence string. Defaults to None.
-            filepath (str, optional): path to fasta file. Defaults to None.
-            dataframe (pandas DataFrame, optional): must contain a "Sequence"
-                column. Defaults to None.
+            sequence (str | pandas.DataFrame):
+                sequence string, fasta file, or a pandas dataframe containing
+                a "Sequence" column.
         """
-        if sequence is not None:
-            self.sequence = sequence
-        elif filepath is not None:
-            self.read_fasta(filepath)
-        elif dataframe is not None:
-            self.get_seq_from_data(dataframe)
-        else:
-            print(f"{self.datatype} initialized without sequence.")
-        if not hasattr(self, "datatype"):
-            self.datatype = "data"
+        self.name = name
+        self.other_info = dict()
+        if isinstance(input_data, str):
+            if isfile(input_data):
+                self.sequence = self.read_fasta(input_data)
+            else:
+                self.sequence = input_data
+        elif isinstance(input_data, pd.DataFrame):
+            self.sequence = self.get_seq_from_dataframe(input_data)
+        elif isinstance(input_data, Sequence):
+            self.sequence = input_data.sequence
+        self.null_alignment = data.SequenceAlignment(self, self)
+
+    def __str__(self):
+        if self.name is None:
+            return 'seq-object'
+        return self.name
 
     def read_fasta(self, fasta):
         """Parse a fasta file for the first sequence. Store the sequence name
@@ -105,18 +76,18 @@ class Data():
         Args:
             fasta (str): path to fasta file
         """
-        fasta = list(Bio.SeqIO.parse(open(fasta), 'fasta'))
-        self.sequence = str(fasta[0].seq).upper().replace("T", "U")
-        self.gene = fasta[0].id
+        with open(fasta, 'r') as file:
+            fasta = list(Bio.SeqIO.parse(file, 'fasta'))
+        return str(fasta[0].seq).replace("T", "U")
 
-    def get_seq_from_data(self, dataframe):
+    def get_seq_from_dataframe(self, dataframe):
         """Parse a dataframe for the sequence string, store as self.sequence.
 
         Args:
             dataframe (pandas DataFrame): must contain a "Sequence" column
         """
         sequence = ''.join(dataframe["Sequence"].values)
-        self.sequence = sequence.upper().replace("T", "U")
+        return sequence.replace("T", "U").replace("t", "u")
 
     @property
     def length(self):
@@ -127,103 +98,83 @@ class Data():
         """
         return len(self.sequence)
 
-    def get_cmap(self, cmap):
-        """Given a matplotlib color, list of colors, or colormap name, return
-        a colormap object
+    def normalize_sequence(self, t_or_u='U', uppercase=True):
+        """Converts sequence to all uppercase nucleotides and corrects T or U.
 
-        Args:
-            cmap (str | tuple | float | list): A valid mpl color, list of valid
-                colors or a valid colormap name
-
-        Returns:
-            matplotlib colormap: listed colormap matching the input
+        Optional arguments:
+            t_or_u ("T", "U", or False)
+                "T" converts "U"s to "T"s
+                "U" converts "T"s to "U"s
+                False does nothing.
+                Defaults to "U"
+            uppercase (True or False)
+                Whether to make sequence all uppercase
+                Defaults to True
         """
-        if mpc.is_color_like(cmap):
-            cmap = mpc.ListedColormap([cmap])
-        elif (isinstance(cmap, list)
-              and all(mpc.is_color_like(c) for c in cmap)):
-            cmap = mpc.ListedColormap(cmap)
-        else:
-            assert cmap in plt.colormaps(), ("cmap must be one of: valid mpl "
-                                             "color, list of mpl colors, or "
-                                             "mpl colormap."
-                                             + str(cmap))
-        cmap = plt.get_cmap(cmap)
-        return cmap
+        self.sequence = normalize_sequence(
+            self, t_or_u=t_or_u, uppercase=uppercase
+            )
 
-    def get_alignment_map(self, fit_to, full=False, return_alignment=False):
-        """Get an array to assist in repositioning data to the fit_to
-        sequence. old_index (1-based) is mapped to new_index (1-based) thusly:
-            new_index = alignment_map[old_index - 1] -1
-        If full is False, new_index is a position within fit_to sequence
-            deleted positions are dropped (new_idx == 0)
-        If full is True, new_index is a position within the alignment of these
-            two sequences. No positions are dropped.
+    def get_aligned_data(self, alignment):
+        return Sequence(alignment.target_sequence)
 
-        Args:
-            fit_to (Data or subclass): Data object to fit new positions to
-            full (bool, optional): Whether to drop deletions from the new index
-                Defaults to False.
-            return_alignment (bool, optional): whether to return the alignment
-                instead of the alignment map. Defaults to False.
+    def get_colors_from_sequence(self):
+        colors = np.array([styles.get_nt_color(nt) for nt in self.sequence])
+        colormap = data.ScalarMappable(
+            cmap=[styles.get_nt_color(nt) for nt in 'AUGC'],
+            normalization='none', values=None, extend='neither',
+            title='Nucleotide identity', alpha=1, ticks=[0, 1, 2, 3],
+            tick_labels=['A', 'U', 'G', 'C']
+            )
+        return colors, colormap
 
-        Returns:
-            numpy array: a mapping of old positions to new positions
-        """
-        # Normalize sequences
-        seq1 = self.sequence.upper().replace("T", "U")
-        seq2 = fit_to.sequence.upper().replace("T", "U")
-        # if periods are included, remove them from seq2 so that predefined
-        # alignment is correctly used. seq2 to final map will get us to the
-        # position in seq 2 including the periods.
-        seq2_to_final_map = np.where([nt != '.' for nt in seq2])[0]
-        seq2 = seq2.replace('.', '')
-        # Check if sequences match
-        if seq1 == seq2:
-            if return_alignment:
-                return (seq1, seq2, seq1, seq2)
-            else:
-                return seq2_to_final_map
-        else:
-            # look in _alignments_cache, if not found, do a pairwise alignment
-            try:
-                align1, align2 = _alignments_cache[seq1][seq2].values()
-            except KeyError:
-                alignment = align.globalms(seq1, seq2,
-                                           penalize_end_gaps=False,
-                                           **_globalms_params)
-                set_alignment(
-                    sequence1=seq1,
-                    sequence2=seq2,
-                    alignment1=alignment[0].seqA,
-                    alignment2=alignment[0].seqB
-                )
-                align1, align2 = _alignments_cache[seq1][seq2].values()
-        # skip creating alignment_map if return_alignment
-        if return_alignment:
-            return (seq1, seq2, align1, align2)
-        # get an index map from sequence 1 to the full alignment
-        seq1_to_align = np.where([nt != '-' for nt in align1])[0]
-        # if we want a map to a position in the full alignment, this is it.
-        if full:
-            i = len(align1)
-            return seq1_to_align, i
-        # extra steps to get to sequence 2 positions
-        else:
-            # positions that are removed when plotting on sequence 2
-            align_mask = np.array([nt != '-' for nt in align2])
-            # an index map from the full alignment to position in sequence 2
-            align_to_seq2 = np.full(len(align2), -1)
-            align_to_seq2[align_mask] = np.arange(len(seq2))
-            # an index map from sequence 1 to sequence 2 positions
-            seq1_to_seq2 = align_to_seq2[seq1_to_align]
-            # an index map to the original sequence 2 if it contained periods
-            keepers = seq1_to_seq2[seq1_to_seq2 != -1]
-            seq1_to_seq2[seq1_to_seq2 != -1] = seq2_to_final_map[keepers]
-            return seq1_to_seq2
+    def get_colors_from_positions(self, pos_cmap='rainbow'):
+        colormap = data.ScalarMappable(
+            cmap=pos_cmap, normalization='min_max', values=[1, self.length],
+            extend='neither', title='Nucleotide position', alpha=1
+            )
+        colors = colormap.values_to_hexcolors(np.arange(self.length))
+        return colors, colormap
 
-    def get_colors(self, source, nt_colors='new', pos_cmap='rainbow',
-                   profile=None, ct=None, annotations=None):
+    def get_colors_from_profile(self, profile):
+        alignment = data.SequenceAlignment(profile, self)
+        colors = alignment.map_values(profile.colors, fill="#808080")
+        colormap = profile.cmap
+        return colors, colormap
+
+    def get_colors_from_annotations(self, annotations):
+        colors = np.full(self.length, 'gray', dtype='<U16')
+        cmap = ['gray']
+        tick_labels = ['other']
+        for annotation in annotations:
+            cmap.append(annotation.color)
+            tick_labels.append(annotation.name)
+            annotation = annotation.get_aligned_data(
+                data.SequenceAlignment(annotation, self))
+            for site in annotation.get_sites():
+                colors[site-1] = annotation.color
+        colormap = data.ScalarMappable(
+            cmap=cmap, normalization='none', values=None, extend='neither',
+            title='Annotations', alpha=1,
+            ticks=list(range(len(annotations)+1)),
+            tick_labels=tick_labels,
+            )
+        return colors, colormap
+
+    def get_colors_from_structure(self, structure):
+        cmap = ['darkOrange', 'darkOrchid', 'gray']
+        ct_colors = [cmap[int(pair == 0)] for pair in structure.pair_nts]
+        alignment = data.SequenceAlignment(structure, self)
+        colors = alignment.map_values(ct_colors, fill='gray')
+        colormap = data.ScalarMappable(
+            cmap=cmap, normalization='none', values=None, extend='neither',
+            title='Base-pairing status', alpha=1, ticks=[0, 1, 2],
+            tick_labels=['unpaired', 'paired', 'unaligned'],
+            )
+        return colors, colormap
+
+    def get_colors(self, source, pos_cmap='rainbow', profile=None,
+                   structure=None, annotations=None):
         """Get a numpy array of colors that fits the current sequence.
 
         Args:
@@ -235,14 +186,13 @@ class Data():
                 "structure": colors represent base-pairing status
                 matplotlib color-like: all colors are this color
                 array of color like: must match length of sequence
-            nt_colors (str, optional): 'new' or 'old' as defined in
-                rnavigate.style. Defaults to 'new'.
             pos_cmap (str, optional): cmap used if source="position".
                 Defaults to 'rainbow'.
             profile (Profile or subclass, optional): Data object containing
                 per-nucleotide information. Defaults to None.
-            ct (CT of subclass, optional): Data object containing secondary
-                structure information. Defaults to None.
+            structure (SecondaryStructure or subclass, optional): Data object
+                containing secondary structure information.
+                Defaults to None.
             annotations (list of Annotations or subclass, optional): list of
                 Data objects containing annotations. Defaults to None.
 
@@ -251,44 +201,139 @@ class Data():
                 self.sequence
         """
         if isinstance(source, str) and (source == "sequence"):
-            seq = self.sequence
-            colors = np.array([get_nt_color(nt, nt_colors) for nt in seq])
-            return colors
+            return self.get_colors_from_sequence()
         elif isinstance(source, str) and (source == "position"):
-            cmap = plt.get_cmap(pos_cmap)
-            cmap_values = np.arange(self.length)/self.length
-            return np.array([mpc.rgb2hex(rgb) for rgb in cmap(cmap_values)])
+            return self.get_colors_from_positions(pos_cmap=pos_cmap)
         elif isinstance(source, str) and (source == "profile"):
-            prof_colors = profile.colors
-            colors = np.full(self.length, 'gray', dtype='<U16')
-            am = profile.get_alignment_map(self)
-            for i, i2 in enumerate(am):
-                if i2 != -1:
-                    colors[i2] = mpc.to_hex(prof_colors[i])
-            return colors
+            return self.get_colors_from_profile(profile=profile)
         elif isinstance(source, str) and (source == "annotations"):
-            colors = np.full(self.length, 'gray', dtype='<U16')
-            for annotation in annotations:
-                for site, color in zip(*annotation.get_sites_colors(self)):
-                    colors[site-1] = color
-            return colors
+            return self.get_colors_from_annotations(annotations=annotations)
         elif isinstance(source, str) and (source == "structure"):
-            # TODO: this should be implemented in CT object for reusability
-            cmap = np.array(['C0', 'C1'])
-            ct_colors = cmap[[int(nt == 0) for nt in ct.ct]]
-            colors = np.full(self.length, 'gray', dtype='<U8')
-            alignment_map = ct.get_alignment_map(self)
-            for i, i2 in enumerate(alignment_map):
-                if i2 != -1:
-                    colors[i2] = ct_colors[i]
-            return colors
+            return self.get_colors_from_structure(structure)
         elif mpc.is_color_like(source):
-            return np.full(self.length, source, dtype="<U16")
+            return np.full(self.length, source, dtype="<U16"), None
         elif ((len(source) == self.length)
               and all(mpc.is_color_like(c) for c in source)):
-            return np.array(list(source))
+            return np.array(list(source)), None
         else:
             print('Invalid colors:\n\tchoices are "profile", "sequence", '
                   '"position", "structure", "annotations", a list of mpl '
                   'colors, or a single mpl color.\nDefaulting to sequence.')
-            return self.get_colors("sequence")
+            return self.get_colors_from_sequence()
+
+
+class Data(Sequence):
+    def __init__(self, input_data, sequence, metric, metric_defaults,
+                 read_table_kw=None, name=None):
+        if read_table_kw is None:
+            read_table_kw = {}
+        # assign data
+        if isinstance(input_data, pd.DataFrame):
+            self.data = input_data
+            self.filepath = 'dataframe'
+        elif isfile(input_data):
+            self.data = self.read_file(input_data, read_table_kw)
+            self.filepath = input_data
+        else:
+            print(f"{self} initialized without data.")
+        # assign sequence
+        if sequence is None:
+            sequence = self.data
+        super().__init__(sequence, name=name)
+        # assign metrics
+        self.metric_defaults = {
+            'default': {
+                'metric_column': 'Profile',
+                'error_column': None,
+                'color_column': None,
+                'cmap': 'viridis',
+                'normalization': '0_1',
+                'values': None,
+                'extend': 'neither',
+                'title': 'Type: metric',
+                'alpha': 0.7},
+            "Distance": {
+                "metric_column": "Distance",
+                'error_column': None,
+                'color_column': None,
+                "cmap": "cool",
+                "normalization": "min_max",
+                "values": [5, 50],
+                'extend':'both',
+                'title':'3D distance',
+                'alpha': 0.7},
+            }
+        self.add_metric_defaults(metric_defaults)
+        self.default_metric = metric
+        self._metric = None
+        self.metric = metric
+
+    def add_metric_defaults(self, metric_defaults):
+        default_defaults = self.metric_defaults['default']
+        for metric, defaults in metric_defaults.items():
+            self.metric_defaults[metric] = default_defaults | defaults
+
+    @property
+    def metric(self):
+        return self._metric['metric_column']
+
+    @metric.setter
+    def metric(self, value):
+        if isinstance(value, str):
+            try:
+                self._metric = self.metric_defaults[value]
+                return
+            except KeyError as exception:
+                if value not in self.data.columns:
+                    print(f"metric ({value}) not found in data:\n"
+                          + str(list(self.data.columns)))
+                    raise exception
+                self._metric = self.metric_defaults['default']
+                self._metric['metric_column'] = value
+                return
+        try:
+            defaults = self.metric_defaults[value["metric_column"]]
+        except KeyError:
+            defaults = self.metric_defaults['default']
+        for key in value:
+            if key not in defaults:
+                raise ValueError(f'{key} is not an expected value for metric '
+                                 f'setting:\n{list(defaults.keys())}')
+        self._metric = defaults | value
+
+    @property
+    def error_column(self):
+        if self._metric['error_column'] in self.data.columns:
+            return self._metric['error_column']
+        print(f'Warning: {self} missing expected error column')
+        return None
+
+    @property
+    def color_column(self):
+        if self._metric['color_column'] in self.data.columns:
+            return self._metric['color_column']
+        return self._metric['metric_column']
+
+    @property
+    def cmap(self):
+        cmap_kwargs = {}
+        for k, v in self._metric.items():
+            if not k.endswith("column"):
+                cmap_kwargs[k] = v
+        return data.ScalarMappable(**cmap_kwargs)
+
+    @property
+    def colors(self):
+        values = self.data[self.color_column]
+        if values.dtype.name == 'bool':
+            values = values.astype('int')
+        return self.cmap.values_to_hexcolors(np.ma.masked_invalid(values))
+
+    def read_file(self, filepath, read_table_kw):
+        """Convert data file to pandas dataframe and store as self.data
+
+        Args:
+            filepath (str): path to data file containing interactions
+            read_table_kw (dict): kwargs dictionary passed to pd.read_table
+        """
+        return pd.read_table(filepath, **read_table_kw)

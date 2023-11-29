@@ -3,39 +3,32 @@ Loading custom data
 
 After creating an `rnav.Sample` object and loading data using the standard
 method (see [loading data](../loading-data.md)), adding additional data is
-straightforward and very flexible using the `rnav.Sample.set_data()` method.
-
-One common example is with annotations. It is common to want multiple
-annotations of the same type, but with different colors/names, associated with
-a sample object.
+is accomplished using the `rnav.Sample.set_data()` method.
 
 Here, we call the `set_data` method with the required keywords and generic
 values, these will be discussed further below. `sample` is a hypothetical
 `rnav.Sample` object.
 
 ```
-sample.set_data(
+my_sample.set_data(
     name="my_custom_data",
     filepath="path/to/data/file.txt",
-    instantiator=rnav.data.Data,
-    seq_source="self",
+    data_class="data_keyword",
     **kwargs)
 ```
 
 `name`
 
 * This variable is set to an arbitrary string of your choosing.
-* This string becomes a key to the `sample.data` and `sample.inputs`
-  dictionaries, and can be used with plotting functions that require a key
-  of the `sample.data` dictionary.
+* This string becomes a data keyword and can be provided to plotting functions.
+* Data keywords can also be used to access the underlying data:
+  - `my_sample.data["my_custom_data"]`
 
 `filepath`
 
 * This is a string that contains the path to the data file you are loading.
-* If a list is passed, then a new data object is created for each file in the
-  list. The keys to `sample.data` are then `"name_1"`, `"name_2"`, etc.
 
-`instantiator`
+``
 
 * This is an `rnav.data.Data` class or subclass to be called to instantiate
   (create) the new data object. One of the following (or your own class):
@@ -55,13 +48,7 @@ sample.set_data(
       * `rnav.data.SHAPEJuMP`: ShapeJumper output file
       * `rnav.data.PairProb`: pairing probabilities file
       * `rnav.data.AllPossible`: all possible nucleotide pairs in a sequence
-    * `rnav.data.CT`: base class for secondary structures and drawings
-      * `rnav.data.DotBracket`: secondary structure in .db format
-      * `rnav.data.XRNA`: drawing in XRNA format
-      * `rnav.data.VARNA`: drawing in VARNA format
-      * `rnav.data.R2DT`: drawing in R2DT json format
-      * `rnav.data.NSD`: drawing in StructureEditor NSD format
-      * `rnav.data.CTE`: drawing in StructureEditor CTE format
+    * `rnav.data.SecondaryStructure`: secondary structures and drawings
     * `rnav.data.PDB`: 3D atomic coordinates in RCSD PDB or CIF format
 * use `help(rnav.data.Data)` to get info for the Data class, or any other class
 
