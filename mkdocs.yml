@@ -39,7 +39,7 @@ nav:
 plugins:
   - search
   - mkdocs-jupyter:
-      execute: True
+      execute: False
       kernel_name: Python3
 
 
