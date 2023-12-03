@@ -16,37 +16,59 @@ class DistHist(plots.Plot):
                 else:
                     ax2.sharey(base_ax2)
 
-    def set_figure_size(self, fig=None, ax=None,
-                        rows=None, cols=None,
-                        height_ax_rel=None, width_ax_rel=None,
-                        width_ax_in=2, height_ax_in=2,
-                        height_gap_in=1, width_gap_in=0.4,
-                        top_in=1, bottom_in=1,
-                        left_in=1, right_in=1):
-        super().set_figure_size(fig=fig, ax=ax, rows=rows, cols=cols,
-                                height_ax_rel=height_ax_rel,
-                                width_ax_rel=width_ax_rel,
-                                width_ax_in=width_ax_in,
-                                height_ax_in=height_ax_in,
-                                height_gap_in=height_gap_in,
-                                width_gap_in=width_gap_in, top_in=top_in,
-                                bottom_in=bottom_in, left_in=left_in,
-                                right_in=right_in)
+    def set_figure_size(
+        self,
+        fig=None,
+        ax=None,
+        rows=None,
+        cols=None,
+        height_ax_rel=None,
+        width_ax_rel=None,
+        width_ax_in=2,
+        height_ax_in=2,
+        height_gap_in=1,
+        width_gap_in=0.4,
+        top_in=1,
+        bottom_in=1,
+        left_in=1,
+        right_in=1,
+    ):
+        super().set_figure_size(
+            fig=fig,
+            ax=ax,
+            rows=rows,
+            cols=cols,
+            height_ax_rel=height_ax_rel,
+            width_ax_rel=width_ax_rel,
+            width_ax_in=width_ax_in,
+            height_ax_in=height_ax_in,
+            height_gap_in=height_gap_in,
+            width_gap_in=width_gap_in,
+            top_in=top_in,
+            bottom_in=bottom_in,
+            left_in=left_in,
+            right_in=right_in,
+        )
 
-    def plot_data(self, structure, interactions, bg_interactions, label,
-                  atom="O2'", ax=None):
+    def plot_data(
+        self, structure, interactions, bg_interactions, label, atom="O2'", ax=None
+    ):
         if ax is None:
             ax = self.get_ax()
         ax2 = self.axes2[ax]
         if bg_interactions is not None:
-            self.plot_experimental_distances(ax=ax2, structure=structure,
-                                             interactions=bg_interactions,
-                                             atom=atom, histtype='step')
+            self.plot_experimental_distances(
+                ax=ax2,
+                structure=structure,
+                interactions=bg_interactions,
+                atom=atom,
+                histtype="step",
+            )
         else:
-            self.plot_structure_distances(
-                ax=ax2, structure=structure, atom=atom)
-        self.plot_experimental_distances(ax=ax, structure=structure,
-                                         interactions=interactions, atom=atom)
+            self.plot_structure_distances(ax=ax2, structure=structure, atom=atom)
+        self.plot_experimental_distances(
+            ax=ax, structure=structure, interactions=interactions, atom=atom
+        )
         ax.set(title=label)
         self.i += 1
         if self.i == self.length:
@@ -59,25 +81,38 @@ class DistHist(plots.Plot):
             for row in self.axes:
                 for not_rightmost_axis in row[:-1]:
                     self.axes2[not_rightmost_axis].yaxis.set_tick_params(
-                        labelright=False)
+                        labelright=False
+                    )
 
     def plot_structure_distances(self, ax, structure, atom):
         matrix = structure.get_distance_matrix(atom=atom)
         dists = []
-        for i in range(len(matrix)-6):
-            for j in range(i+6, len(matrix)):
+        for i in range(len(matrix) - 6):
+            for j in range(i + 6, len(matrix)):
                 if not np.isnan(matrix[i, j]):
                     dists.append(matrix.item(i, j))
-        ax.hist(dists, bins=range(0, int(max(dists))+5, 5),
-                histtype="step", color="0.5", label="All distances")
+        ax.hist(
+            dists,
+            bins=range(0, int(max(dists)) + 5, 5),
+            histtype="step",
+            color="0.5",
+            label="All distances",
+        )
 
-    def plot_experimental_distances(self, ax, structure, interactions, atom,
-                                    histtype='bar'):
+    def plot_experimental_distances(
+        self, ax, structure, interactions, atom, histtype="bar"
+    ):
         interactions.set_3d_distances(structure, atom)
-        ij_dists = interactions.data.loc[interactions.data['mask'], "Distance"]
-        if (len(ij_dists) > 0) and (histtype == 'bar'):
-            ax.hist(ij_dists, bins=range(0, int(max(ij_dists))+5, 5),
-                      width=5, ec='none')
-        elif (len(ij_dists) > 0) and (histtype == 'step'):
-            ax.hist(ij_dists, bins=range(0, int(max(ij_dists))+5, 5),
-                      histtype='step', color='0.5', label='All distances')
+        ij_dists = interactions.data.loc[interactions.data["mask"], "Distance"]
+        if (len(ij_dists) > 0) and (histtype == "bar"):
+            ax.hist(
+                ij_dists, bins=range(0, int(max(ij_dists)) + 5, 5), width=5, ec="none"
+            )
+        elif (len(ij_dists) > 0) and (histtype == "step"):
+            ax.hist(
+                ij_dists,
+                bins=range(0, int(max(ij_dists)) + 5, 5),
+                histtype="step",
+                color="0.5",
+                label="All distances",
+            )

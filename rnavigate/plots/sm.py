@@ -5,41 +5,57 @@ from rnavigate.styles import rx_color, bg_color, dc_color
 
 
 class SM(plots.Plot):
-    def __init__(self, nt_length, region=None,
-                 panels=["profile", "rates", "depth"]):
+    def __init__(self, nt_length, region=None, panels=["profile", "rates", "depth"]):
         if region is None:
             self.nt_length = nt_length
             self.region = [1, nt_length]
         super().__init__(len(panels), len(panels), cols=1)
         self.panels = panels
 
-    def set_figure_size(self, fig=None, ax=None,
-                        rows=None, cols=None,
-                        height_ax_rel=None, width_ax_rel=0.03,
-                        width_ax_in=None, height_ax_in=2,
-                        height_gap_in=0.5, width_gap_in=0.5,
-                        top_in=1, bottom_in=0.5,
-                        left_in=0.5, right_in=0.5):
-        super().set_figure_size(fig=fig, ax=ax, rows=rows, cols=cols,
-                                height_ax_rel=height_ax_rel,
-                                width_ax_rel=width_ax_rel,
-                                width_ax_in=width_ax_in,
-                                height_ax_in=height_ax_in,
-                                height_gap_in=height_gap_in,
-                                width_gap_in=width_gap_in, top_in=top_in,
-                                bottom_in=bottom_in, left_in=left_in,
-                                right_in=right_in)
+    def set_figure_size(
+        self,
+        fig=None,
+        ax=None,
+        rows=None,
+        cols=None,
+        height_ax_rel=None,
+        width_ax_rel=0.03,
+        width_ax_in=None,
+        height_ax_in=2,
+        height_gap_in=0.5,
+        width_gap_in=0.5,
+        top_in=1,
+        bottom_in=0.5,
+        left_in=0.5,
+        right_in=0.5,
+    ):
+        super().set_figure_size(
+            fig=fig,
+            ax=ax,
+            rows=rows,
+            cols=cols,
+            height_ax_rel=height_ax_rel,
+            width_ax_rel=width_ax_rel,
+            width_ax_in=width_ax_in,
+            height_ax_in=height_ax_in,
+            height_gap_in=height_gap_in,
+            width_gap_in=width_gap_in,
+            top_in=top_in,
+            bottom_in=bottom_in,
+            left_in=left_in,
+            right_in=right_in,
+        )
 
     def plot_data(self, profile, label):
-        """Creates a figure with the three classic Shapemapper plots.
-        """
+        """Creates a figure with the three classic Shapemapper plots."""
         self.fig.suptitle(label)
         for i, plot in enumerate(self.panels):
             ax = self.get_ax(i)
-            plot_func = {"profile": self.plot_sm_profile,
-                         "rates": self.plot_sm_rates,
-                         "depth": self.plot_sm_depth
-                         }[plot]
+            plot_func = {
+                "profile": self.plot_sm_profile,
+                "rates": self.plot_sm_rates,
+                "depth": self.plot_sm_depth,
+            }[plot]
             plot_func(ax, profile)
         self.axes[-1, 0].set_xlabel("Nucleotide position")
 
@@ -56,10 +72,18 @@ class SM(plots.Plot):
         colors, _ = profile.get_colors("profile", profile=profile)
         sample = profile.data["Norm_profile"].copy()
         sample[np.isnan(sample)] = -1
-        ax.bar(profile.data['Nucleotide'], sample, align="center",
-               width=1.05, color=colors, edgecolor=colors,
-               linewidth=0.0, yerr=profile.data['Norm_stderr'],
-               ecolor=near_black, capsize=1)
+        ax.bar(
+            profile.data["Nucleotide"],
+            sample,
+            align="center",
+            width=1.05,
+            color=colors,
+            edgecolor=colors,
+            linewidth=0.0,
+            yerr=profile.data["Norm_stderr"],
+            ecolor=near_black,
+            capsize=1,
+        )
         ax.set_title("Normalized Profile")
         ax.set_ylim(ymin, ymax)
         ax.set_xlim(1, profile.length)
@@ -70,7 +94,7 @@ class SM(plots.Plot):
         # uses a little transformation magic to place correctly
         inv = ax.transData.inverted()
         for loc, spine in list(ax.spines.items()):
-            if loc == 'left':
+            if loc == "left":
                 trans = spine.get_transform()
         tp = trans.transform_point([0, 0])
         tp2 = inv.transform_point(tp)
@@ -80,21 +104,36 @@ class SM(plots.Plot):
         tpA2 = inv.transform_point(tpA)
         tpB2 = inv.transform_point(tpB)
         rectW = tpB2[0] - tpA2[0]
-        rect = Rectangle((rectX, -0.5), rectW, orange_thresh +
-                         0.5, facecolor="black", edgecolor="none")
+        rect = Rectangle(
+            (rectX, -0.5),
+            rectW,
+            orange_thresh + 0.5,
+            facecolor="black",
+            edgecolor="none",
+        )
         ax.add_patch(rect)
         rect.set_clip_on(False)
-        rect = Rectangle((rectX, orange_thresh), rectW, red_thresh -
-                         orange_thresh, facecolor="orange", edgecolor="none")
+        rect = Rectangle(
+            (rectX, orange_thresh),
+            rectW,
+            red_thresh - orange_thresh,
+            facecolor="orange",
+            edgecolor="none",
+        )
         ax.add_patch(rect)
         rect.set_clip_on(False)
-        rect = Rectangle((rectX, red_thresh), rectW, 4 -
-                         red_thresh, facecolor="red", edgecolor="none")
+        rect = Rectangle(
+            (rectX, red_thresh),
+            rectW,
+            4 - red_thresh,
+            facecolor="red",
+            edgecolor="none",
+        )
         ax.add_patch(rect)
         rect.set_clip_on(False)
-        ax.get_xaxis().tick_bottom()   # remove unneeded ticks
+        ax.get_xaxis().tick_bottom()  # remove unneeded ticks
         ax.get_yaxis().tick_left()
-        ax.tick_params(axis='y', which='minor', left=False)
+        ax.tick_params(axis="y", which="minor", left=False)
         ax.minorticks_on()
         ax.set(yticks=[0, 1, 2, 3, 4])
 
@@ -111,7 +150,7 @@ class SM(plots.Plot):
             line.set_markeredgewidth(1)
 
         # put nuc sequence below ax
-        plots.plot_sequence_track(ax, profile.sequence, yvalue=0, ytrans='axes')
+        plots.plot_sequence_track(ax, profile.sequence, yvalue=0, ytrans="axes")
 
     def plot_sm_depth(self, ax, profile):
         """Plots classic ShapeMapper read depth on the given ax
@@ -120,25 +159,63 @@ class SM(plots.Plot):
             ax (pyplot ax): ax on which to add plot
         """
         sample = profile.data
-        ax.plot(sample['Nucleotide'], sample['Modified_read_depth'],
-                linewidth=1.5, color=rx_color, alpha=1.0, label="Modified")
-        ax.plot(sample['Nucleotide'], sample['Untreated_read_depth'],
-                linewidth=1.5, color=bg_color, alpha=1.0, label="Untreated")
-        ax.plot(sample['Nucleotide'], sample['Denatured_read_depth'],
-                linewidth=1.5, color=dc_color, alpha=1.0, label="Denatured")
+        ax.plot(
+            sample["Nucleotide"],
+            sample["Modified_read_depth"],
+            linewidth=1.5,
+            color=rx_color,
+            alpha=1.0,
+            label="Modified",
+        )
+        ax.plot(
+            sample["Nucleotide"],
+            sample["Untreated_read_depth"],
+            linewidth=1.5,
+            color=bg_color,
+            alpha=1.0,
+            label="Untreated",
+        )
+        ax.plot(
+            sample["Nucleotide"],
+            sample["Denatured_read_depth"],
+            linewidth=1.5,
+            color=dc_color,
+            alpha=1.0,
+            label="Denatured",
+        )
         ax.set_xlim(1, profile.length)
-        ax.legend(title="Effective depth\nin lighter colors",
-                  loc=2, borderpad=0.8, handletextpad=0.2, framealpha=0.75)
-        ax.plot(sample['Nucleotide'], sample['Modified_effective_depth'],
-                linewidth=1.0, color=rx_color, alpha=0.3)
-        ax.plot(sample['Nucleotide'], sample['Untreated_effective_depth'],
-                linewidth=1.0, color=bg_color, alpha=0.3)
-        ax.plot(sample['Nucleotide'], sample['Denatured_effective_depth'],
-                linewidth=1.0, color=dc_color, alpha=0.3)
+        ax.legend(
+            title="Effective depth\nin lighter colors",
+            loc=2,
+            borderpad=0.8,
+            handletextpad=0.2,
+            framealpha=0.75,
+        )
+        ax.plot(
+            sample["Nucleotide"],
+            sample["Modified_effective_depth"],
+            linewidth=1.0,
+            color=rx_color,
+            alpha=0.3,
+        )
+        ax.plot(
+            sample["Nucleotide"],
+            sample["Untreated_effective_depth"],
+            linewidth=1.0,
+            color=bg_color,
+            alpha=0.3,
+        )
+        ax.plot(
+            sample["Nucleotide"],
+            sample["Denatured_effective_depth"],
+            linewidth=1.0,
+            color=dc_color,
+            alpha=0.3,
+        )
         xmin, xmax, ymin, ymax = ax.axis()
         ax.set_ylim(0, ymax)
         ax.minorticks_on()
-        ax.tick_params(axis='y', which='minor', left=False)
+        ax.tick_params(axis="y", which="minor", left=False)
         yticks = [int(y) for y in ax.get_yticks()]
         formatted_ticks = [self.metric_abbreviate(val) for val in yticks]
         ax.set(yticks=yticks, yticklabels=formatted_ticks)
@@ -166,40 +243,74 @@ class SM(plots.Plot):
         """
         sample = profile.data
         # choose a decent range for ax, excluding high-background positions
-        temp_rates = sample.loc[sample['Untreated_rate'] <= 0.05,
-                                'Modified_rate']
+        temp_rates = sample.loc[sample["Untreated_rate"] <= 0.05, "Modified_rate"]
         near_top_rate = np.nanpercentile(temp_rates, 98.0)
         maxes = np.array([0.32, 0.16, 0.08, 0.04, 0.02, 0.01])
         ymax = np.amin(maxes[maxes > near_top_rate])
-        rx_err = sample['Modified_rate'] / sample['Modified_effective_depth']
-        rx_upper = sample['Modified_rate'] + rx_err
-        rx_lower = sample['Modified_rate'] - rx_err
-        bg_err = sample['Untreated_rate'] / sample['Untreated_effective_depth']
-        bg_upper = sample['Untreated_rate'] + bg_err
-        bg_lower = sample['Untreated_rate'] - bg_err
-        dc_err = sample['Denatured_rate'] / sample['Denatured_effective_depth']
-        dc_upper = sample['Denatured_rate'] + dc_err
-        dc_lower = sample['Denatured_rate'] - dc_err
+        rx_err = sample["Modified_rate"] / sample["Modified_effective_depth"]
+        rx_upper = sample["Modified_rate"] + rx_err
+        rx_lower = sample["Modified_rate"] - rx_err
+        bg_err = sample["Untreated_rate"] / sample["Untreated_effective_depth"]
+        bg_upper = sample["Untreated_rate"] + bg_err
+        bg_lower = sample["Untreated_rate"] - bg_err
+        dc_err = sample["Denatured_rate"] / sample["Denatured_effective_depth"]
+        dc_upper = sample["Denatured_rate"] + dc_err
+        dc_lower = sample["Denatured_rate"] - dc_err
         ax.set_ylabel("Mutation rate (%)")
-        ax.plot(sample['Nucleotide'], sample['Modified_rate'], zorder=3,
-                color=rx_color, linewidth=1.5, label='Modified')
-        ax.plot(sample['Nucleotide'], sample['Untreated_rate'], zorder=2,
-                color=bg_color, linewidth=1.5, label='Untreated')
-        ax.plot(sample['Nucleotide'], sample['Denatured_rate'], zorder=2,
-                color=dc_color, linewidth=1.5)
-        ax.fill_between(sample['Nucleotide'], rx_lower, rx_upper,
-                        edgecolor="none", alpha=0.5, facecolor=rx_color)
-        ax.fill_between(sample['Nucleotide'], bg_lower, bg_upper,
-                        edgecolor="none", alpha=0.5, facecolor=bg_color)
-        ax.fill_between(sample['Nucleotide'], dc_lower, dc_upper,
-                        edgecolor="none", alpha=0.5, facecolor=dc_color)
+        ax.plot(
+            sample["Nucleotide"],
+            sample["Modified_rate"],
+            zorder=3,
+            color=rx_color,
+            linewidth=1.5,
+            label="Modified",
+        )
+        ax.plot(
+            sample["Nucleotide"],
+            sample["Untreated_rate"],
+            zorder=2,
+            color=bg_color,
+            linewidth=1.5,
+            label="Untreated",
+        )
+        ax.plot(
+            sample["Nucleotide"],
+            sample["Denatured_rate"],
+            zorder=2,
+            color=dc_color,
+            linewidth=1.5,
+        )
+        ax.fill_between(
+            sample["Nucleotide"],
+            rx_lower,
+            rx_upper,
+            edgecolor="none",
+            alpha=0.5,
+            facecolor=rx_color,
+        )
+        ax.fill_between(
+            sample["Nucleotide"],
+            bg_lower,
+            bg_upper,
+            edgecolor="none",
+            alpha=0.5,
+            facecolor=bg_color,
+        )
+        ax.fill_between(
+            sample["Nucleotide"],
+            dc_lower,
+            dc_upper,
+            edgecolor="none",
+            alpha=0.5,
+            facecolor=dc_color,
+        )
         ax.legend(loc=2, borderpad=0.8, handletextpad=0.2, framealpha=0.75)
-        ax.set_xlim((1, len(sample['Modified_rate'])))
+        ax.set_xlim((1, len(sample["Modified_rate"])))
         ax.set_ylim((0, ymax))
         ax.minorticks_on()
-        ax.tick_params(axis='y', which='minor', left=False)
+        ax.tick_params(axis="y", which="minor", left=False)
         yticks = ax.get_yticks()
-        yticklabels = [str(int(x*100)) for x in yticks]
+        yticklabels = [str(int(x * 100)) for x in yticks]
         ax.set(yticks=yticks, yticklabels=yticklabels)
         for line in ax.get_yticklines():
             line.set_markersize(6)
@@ -222,13 +333,11 @@ class SM(plots.Plot):
         Returns:
             str: abbreviated number
         """
-        suffixes = {3: 'k',
-                    6: 'M',
-                    9: "G"}
+        suffixes = {3: "k", 6: "M", 9: "G"}
         s = str(num)
         # replace trailing zeros with metric abbreviation
-        zero_count = len(s) - len(s.rstrip('0'))
-        suffix = ''
+        zero_count = len(s) - len(s.rstrip("0"))
+        suffix = ""
         new_string = str(s)
         for num_zeros in sorted(suffixes.keys()):
             if num_zeros <= zero_count:

@@ -11,10 +11,10 @@ class Sample:
     structural data for a single RNA experiment. Between samples, common data
     types should be given a common data keyword so they can be easily compared.
     """
+
     def __init__(
-            self, sample, inherit=None, keep_inherited_defaults=True,
-            **data_keywords
-            ):
+        self, sample, inherit=None, keep_inherited_defaults=True, **data_keywords
+    ):
         """Creates a Sample.
 
         Required arguments:
@@ -46,18 +46,19 @@ class Sample:
         self.inputs = {}
         self.data = {}
         self.defaults = {
-                "default_annotation": None,
-                "default_profile": None,
-                "default_structure": None,
-                "default_interactions": None,
-                "default_pdb": None
-                }
+            "default_annotation": None,
+            "default_profile": None,
+            "default_structure": None,
+            "default_interactions": None,
+            "default_pdb": None,
+        }
 
         # inherit data from other Samples
         self.inherit_data(
             inherit=inherit,
             keep_inherited_defaults=keep_inherited_defaults,
-            overwrite=False)
+            overwrite=False,
+        )
 
         # get data and store inputs for all data_keywords
         for data_keyword, inputs in data_keywords.items():
@@ -80,9 +81,7 @@ class Sample:
         """
         if isinstance(inherit, (list, tuple)):
             for inherit_sample in inherit[::-1]:
-                self.inherit_data(
-                    inherit_sample, keep_inherited_defaults, overwrite
-                    )
+                self.inherit_data(inherit_sample, keep_inherited_defaults, overwrite)
         elif isinstance(inherit, Sample):
             if overwrite:
                 self.data |= inherit.data
@@ -97,9 +96,7 @@ class Sample:
                     if self.defaults[k] is None:
                         self.defaults[k] = v
         elif inherit is not None:
-            raise ValueError(
-                "inherit only accepts rnav.Sample or list of rnav.Sample"
-                )
+            raise ValueError("inherit only accepts rnav.Sample or list of rnav.Sample")
 
     def set_data(self, data_keyword, inputs, overwrite=False):
         """Add data to Sample using the given data keyword and inputs
@@ -139,10 +136,12 @@ class Sample:
         if (data_keyword in self.data) and not overwrite:
             raise ValueError(
                 f"'{data_keyword}' is already a data keyword. "
-                "Choose a different one.")
+                "Choose a different one."
+            )
         try:
             self.data[data_keyword] = create_data(
-                sample=self, data_keyword=data_keyword, inputs=inputs)
+                sample=self, data_keyword=data_keyword, inputs=inputs
+            )
         except BaseException as e:
             raise ValueError(f"issue while loading {data_keyword}") from e
         self.inputs[data_keyword] = inputs
@@ -176,10 +175,7 @@ class Sample:
         if data_class is None:
             data_class = data.Sequence
         if isinstance(data_keyword, dict):
-            return {
-                k: self.get_data(v, data_class)
-                for k, v in data_keyword.items()
-                }
+            return {k: self.get_data(v, data_class) for k, v in data_keyword.items()}
         elif isinstance(data_keyword, list):
             return [self.get_data(v, data_class) for v in data_keyword]
         elif isinstance(data_keyword, data.Sequence):
@@ -188,8 +184,7 @@ class Sample:
             return data_keyword
         elif data_keyword is None:
             return None
-        elif (isinstance(data_keyword, str)
-                and data_keyword.startswith("default_")):
+        elif isinstance(data_keyword, str) and data_keyword.startswith("default_"):
             data_keyword = self.defaults[data_keyword]
             if data_keyword is None:
                 raise not_in_sample
@@ -233,8 +228,14 @@ class Sample:
             self.defaults[default_keyword] = data_keyword
 
     def filter_interactions(
-            self, interactions, metric=None, cmap=None, normalization=None,
-            values=None, **kwargs):
+        self,
+        interactions,
+        metric=None,
+        cmap=None,
+        normalization=None,
+        values=None,
+        **kwargs,
+    ):
         """sets coloring properties and filters interactions data.
 
         Args:
@@ -271,8 +272,7 @@ class Sample:
         try:
             interactions = self.get_data(interactions, data.Interactions)
         except KeyError as exception:
-            raise KeyError(
-                f"{interactions} is not in {self.sample}") from exception
+            raise KeyError(f"{interactions} is not in {self.sample}") from exception
 
         if metric is None:
             metric = interactions.default_metric
@@ -313,7 +313,8 @@ class Sample:
             "profiles": [],
             "structures": [],
             "interactions": [],
-            "pdbs": []}
+            "pdbs": [],
+        }
         for data_keyword, data_object in self.data.items():
             if data_keyword in self.defaults.values():
                 data_keyword += " (default)"

@@ -14,7 +14,8 @@ def _parse_plot_kwargs(plot_kwargs, plot):
     elif not isinstance(plot_kwargs, dict):
         raise ValueError(
             "plot_kwargs must be a dictionary of keyword-arguments "
-            f"to be passed to {plot}.")
+            f"to be passed to {plot}."
+        )
     return plot_kwargs
 
 
@@ -37,21 +38,20 @@ def fit_data(data_object, alignment):
         if isinstance(data_object, data.PDB):
             return data_object
         alignment = data.AlignmentChain(
-            data.SequenceAlignment(
-                data_object,
-                alignment.starting_sequence),
-            alignment)
+            data.SequenceAlignment(data_object, alignment.starting_sequence), alignment
+        )
         return data_object.get_aligned_data(alignment)
     else:
         return data_object
 
 
-class PlottingArgumentParser():
+class PlottingArgumentParser:
     """Parse arguments for high-level plotting functions.
 
     Given samples list and data keywords, returns a dictionary of data objects
     for each sample, optionally aligned to a target sequence.
     """
+
     def __init__(self, samples, labels, alignment=None, **data_dict):
         self.samples = self._parse_samples(samples)
         self.labels = self._parse_labels(labels)
@@ -86,7 +86,8 @@ class PlottingArgumentParser():
                 if ("interactions" in key) and key != "interactions":
                     sample.filter_interactions(**value)
                     new_value = sample.get_data(
-                        value["interactions"], data.Interactions)
+                        value["interactions"], data.Interactions
+                    )
                     new_value = fit_data(new_value, alignment)
                     this_data_dict[key] = new_value
                     continue
@@ -127,8 +128,10 @@ class PlottingArgumentParser():
 
     def _parse_labels(self, labels):
         """Ensures the value of labels is a list, same length as samples."""
-        error = ValueError("labels must be a list of strings of length equal "
-                           "to length of sample list.")
+        error = ValueError(
+            "labels must be a list of strings of length equal "
+            "to length of sample list."
+        )
         if labels is None:
             labels = [sample.sample for sample in self.samples]
         elif not isinstance(labels, list):
@@ -150,7 +153,8 @@ class PlottingArgumentParser():
                 a list of annotations data or data keywords (or empty)
         """
         error = ValueError(
-            "annotations must be a list containing data keywords or objects")
+            "annotations must be a list containing data keywords or objects"
+        )
         if annotations is None:
             return []
         if isinstance(annotations, list):
@@ -192,7 +196,8 @@ class PlottingArgumentParser():
             "format 2: dictionary containing format 1:\n"
             "            {'interactions': format 1, 'filter': True}\n"
             "format 3: list of format 2 dictionaries:\n"
-            "            [format 2, format 2]\n")
+            "            [format 2, format 2]\n"
+        )
         if interactions is None:
             if return_list:
                 return [{"interactions": None}]

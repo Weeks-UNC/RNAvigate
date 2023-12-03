@@ -18,9 +18,9 @@ class Annotation(data.Sequence):
         name (string): the label for this annotation for use on plots
         color (valid matplotlib color): color to represent annotation on plots
         sequence (string): the reference sequence string
-        """
-    def __init__(self, input_data, annotation_type,
-                 sequence, name=None, color="blue"):
+    """
+
+    def __init__(self, input_data, annotation_type, sequence, name=None, color="blue"):
         """Create an annotation from a list of sites or regions.
 
         Args:
@@ -60,9 +60,8 @@ class Annotation(data.Sequence):
 
     @classmethod
     def from_boolean_array(
-            cls, values, sequence, annotation_type, name,
-            color="blue", window=1,
-            ):
+        cls, values, sequence, annotation_type, name, color="blue", window=1
+    ):
         """Create an Annotation from an array of boolean values.
 
         True values are used to create the Annotation.
@@ -98,7 +97,7 @@ class Annotation(data.Sequence):
                 stop = min(len(sequence), position + pad)
                 if current_annotation is None:
                     current_annotation = [start, stop]
-                elif start <= current_annotation[1]+1:
+                elif start <= current_annotation[1] + 1:
                     current_annotation[1] = stop
                 elif start > current_annotation[1]:
                     annotations.append(current_annotation)
@@ -106,15 +105,18 @@ class Annotation(data.Sequence):
         if annotation_type == "spans":
             annotations.append(current_annotation)
         return cls(
-            input_data=annotations, annotation_type=annotation_type,
-            color=color, sequence=sequence, name=name)
+            input_data=annotations,
+            annotation_type=annotation_type,
+            color=color,
+            sequence=sequence,
+            name=name,
+        )
 
     def from_spans(self, spans):
         """Create the self.data dataframe from a list of spans."""
         data_dict = {"start": [], "end": []}
         for span in spans:
-            if ((len(span) != 2)
-                    and any(not isinstance(pos, int) for pos in span)):
+            if (len(span) != 2) and any(not isinstance(pos, int) for pos in span):
                 raise ValueError(
                     f"{self.annotation_type} must be a list of pairs of "
                     f"integers:\n{spans}"
@@ -127,7 +129,8 @@ class Annotation(data.Sequence):
     def from_sites(self, sites):
         if any(not isinstance(site, int) for site in sites):
             raise ValueError(
-                f"{self.annotation_type} must be a list of integers:\n{sites}")
+                f"{self.annotation_type} must be a list of integers:\n{sites}"
+            )
         return pd.DataFrame({"site": sites})
 
     def get_aligned_data(self, alignment):
@@ -150,7 +153,7 @@ class Annotation(data.Sequence):
         if self.annotation_type in ["spans", "primers"]:
             sites = []
             for _, row in self.data.iterrows():
-                sites.extend(list(range(row["start"], row["end"]+1)))
+                sites.extend(list(range(row["start"], row["end"] + 1)))
         elif self.annotation_type in ["sites", "group"]:
             sites = list(self.data["site"].values)
         return sites
@@ -159,10 +162,10 @@ class Annotation(data.Sequence):
         subsequences = []
         if self.annotation_type in ["spans", "primers"]:
             for _, (start, stop) in self.data[["start", "stop"]].iterrows():
-                subsequences.append(self.sequence[start-1-buffer:stop+buffer])
+                subsequences.append(self.sequence[start - 1 - buffer : stop + buffer])
         elif self.annotation_type in ["sites", "groups"]:
             for _, (site) in self.data[["sites"]].iterrows():
-                subsequences.append(self.sequence[site-1-buffer:stop+buffer])
+                subsequences.append(self.sequence[site - 1 - buffer : stop + buffer])
         return subsequences
 
     def __getitem__(self, idx):
@@ -178,9 +181,8 @@ class Annotation(data.Sequence):
 
 class Motif(Annotation):
     """Automatically annotates the occurances of a sequence motif as spans."""
-    def __init__(
-            self, input_data, sequence, name=None, color="blue"
-            ):
+
+    def __init__(self, input_data, sequence, name=None, color="blue"):
         """Creates a Motif annotation, which acts like a span Annotation, for
         highlighting a sequence motif of interest, given with conventional
         nucleotide codes. e.g. "DRACH"
@@ -250,20 +252,22 @@ class Motif(Annotation):
             name=self.name,
             color=self.color,
             sequence=alignment.target_sequence,
-            )
+        )
 
 
 class ORFs(Annotation):
     """Automatically annotations occurances of open-reading frames as spans."""
-    def __init__(
-            self, input_data, name=None, sequence=None, color="blue"
-            ):
+
+    def __init__(self, input_data, name=None, sequence=None, color="blue"):
         self.input_data = input_data
         span_list = self.get_spans_from_orf(sequence, which=input_data)
         super().__init__(
-            name=name, sequence=sequence, annotation_type="spans",
-            input_data=span_list, color=color,
-            )
+            name=name,
+            sequence=sequence,
+            annotation_type="spans",
+            input_data=span_list,
+            color=color,
+        )
 
     def get_spans_from_orf(self, sequence, which="all"):
         """Given a sequence string, returns spans for specified ORFs
@@ -284,7 +288,7 @@ class ORFs(Annotation):
         stop_codons = "UAA|UAG|UGA"
         start_codon = "AUG"
         stop_sites = [m.end() for m in re.finditer(stop_codons, sequence)]
-        start_sites = [m.start()+1 for m in re.finditer(start_codon, sequence)]
+        start_sites = [m.start() + 1 for m in re.finditer(start_codon, sequence)]
         for start in start_sites:
             for stop in stop_sites:
                 if (stop - start) % 3 == 2 and start < stop:
@@ -292,7 +296,7 @@ class ORFs(Annotation):
         if which == "all":
             return spans
         if which == "longest":
-            lengths = [end-start for start, end in spans]
+            lengths = [end - start for start, end in spans]
             index = lengths.index(max(lengths))
             return [spans[index]]
 
@@ -301,13 +305,18 @@ class ORFs(Annotation):
             input_data=self.input_data,
             name=self.name,
             color=self.color,
-            sequence=alignment.target_sequence)
+            sequence=alignment.target_sequence,
+        )
 
 
 def domains(input_data, names, colors, sequence):
     return [
         Annotation(
-            input_data=[span], annotation_type="spans", name=name,
-            color=color, sequence=sequence,
-            ) for span, name, color in zip(input_data, names, colors)
-        ]
+            input_data=[span],
+            annotation_type="spans",
+            name=name,
+            color=color,
+            sequence=sequence,
+        )
+        for span, name, color in zip(input_data, names, colors)
+    ]

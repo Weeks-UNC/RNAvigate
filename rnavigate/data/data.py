@@ -1,3 +1,9 @@
+"""Classes for storing and manipulating data for RNAvigate.
+
+This module contains the base classes for RNAvigate data classes:
+    Sequence: represents a nucleotide sequence
+    Data: represents a data table with a sequence
+"""
 from os.path import isfile
 import Bio.SeqIO
 import numpy as np
@@ -7,7 +13,7 @@ from rnavigate import styles
 from rnavigate import data
 
 
-def normalize_sequence(sequence, t_or_u='U', uppercase=True):
+def normalize_sequence(sequence, t_or_u="U", uppercase=True):
     """Returns sequence as all uppercase nucleotides and/or corrects T or U.
 
     Required arguments:
@@ -34,21 +40,21 @@ def normalize_sequence(sequence, t_or_u='U', uppercase=True):
         sequence = sequence.upper()
     if not t_or_u:
         pass
-    elif t_or_u.upper() == 'U':
-        sequence = sequence.replace('t', 'u').replace('T', 'U')
-    elif t_or_u.upper() == 'T':
-        sequence = sequence.replace('u', 't').replace('U', 'T')
+    elif t_or_u.upper() == "U":
+        sequence = sequence.replace("t", "u").replace("T", "U")
+    elif t_or_u.upper() == "T":
+        sequence = sequence.replace("u", "t").replace("U", "T")
     return sequence
 
 
-class Sequence():
+class Sequence:
     def __init__(self, input_data, name=None):
         """Constructs a Data object given a sequence string, fasta file, or
         dataframe containing a "Sequence" column.
 
-        Args:
-            sequence (str | pandas.DataFrame):
-                sequence string, fasta file, or a pandas dataframe containing
+        Required arguments:
+            sequence (string or pandas.DataFrame):
+                sequence string, fasta file, or a Pandas dataframe containing
                 a "Sequence" column.
         """
         self.name = name
@@ -65,8 +71,9 @@ class Sequence():
         self.null_alignment = data.SequenceAlignment(self, self)
 
     def __str__(self):
+        """Return the name of the sequence."""
         if self.name is None:
-            return 'seq-object'
+            return "seq-object"
         return self.name
 
     def read_fasta(self, fasta):
@@ -76,8 +83,8 @@ class Sequence():
         Args:
             fasta (str): path to fasta file
         """
-        with open(fasta, 'r') as file:
-            fasta = list(Bio.SeqIO.parse(file, 'fasta'))
+        with open(fasta, "r") as file:
+            fasta = list(Bio.SeqIO.parse(file, "fasta"))
         return str(fasta[0].seq).replace("T", "U")
 
     def get_seq_from_dataframe(self, dataframe):
@@ -86,7 +93,7 @@ class Sequence():
         Args:
             dataframe (pandas DataFrame): must contain a "Sequence" column
         """
-        sequence = ''.join(dataframe["Sequence"].values)
+        sequence = "".join(dataframe["Sequence"].values)
         return sequence.replace("T", "U").replace("t", "u")
 
     @property
@@ -98,7 +105,7 @@ class Sequence():
         """
         return len(self.sequence)
 
-    def normalize_sequence(self, t_or_u='U', uppercase=True):
+    def normalize_sequence(self, t_or_u="U", uppercase=True):
         """Converts sequence to all uppercase nucleotides and corrects T or U.
 
         Optional arguments:
@@ -111,70 +118,97 @@ class Sequence():
                 Whether to make sequence all uppercase
                 Defaults to True
         """
-        self.sequence = normalize_sequence(
-            self, t_or_u=t_or_u, uppercase=uppercase
-            )
+        self.sequence = normalize_sequence(self, t_or_u=t_or_u, uppercase=uppercase)
 
     def get_aligned_data(self, alignment):
+        """Get a copy of the sequence positionally aligned to another sequence.
+
+        Args:
+            alignment (data.Alignment): the alignment to use
+        """
         return Sequence(alignment.target_sequence)
 
     def get_colors_from_sequence(self):
+        """Get a numpy array of colors representing the nucleotide sequence."""
         colors = np.array([styles.get_nt_color(nt) for nt in self.sequence])
         colormap = data.ScalarMappable(
-            cmap=[styles.get_nt_color(nt) for nt in 'AUGC'],
-            normalization='none', values=None, extend='neither',
-            title='Nucleotide identity', alpha=1, ticks=[0, 1, 2, 3],
-            tick_labels=['A', 'U', 'G', 'C']
-            )
+            cmap=[styles.get_nt_color(nt) for nt in "AUGC"],
+            normalization="none",
+            values=None,
+            extend="neither",
+            title="Nucleotide identity",
+            alpha=1,
+            ticks=[0, 1, 2, 3],
+            tick_labels=["A", "U", "G", "C"],
+        )
         return colors, colormap
 
-    def get_colors_from_positions(self, pos_cmap='rainbow'):
+    def get_colors_from_positions(self, pos_cmap="rainbow"):
+        """Get a numpy array of colors representing the nucleotide position."""
         colormap = data.ScalarMappable(
-            cmap=pos_cmap, normalization='min_max', values=[1, self.length],
-            extend='neither', title='Nucleotide position', alpha=1
-            )
+            cmap=pos_cmap,
+            normalization="min_max",
+            values=[1, self.length],
+            extend="neither",
+            title="Nucleotide position",
+            alpha=1,
+        )
         colors = colormap.values_to_hexcolors(np.arange(self.length))
         return colors, colormap
 
     def get_colors_from_profile(self, profile):
+        """Get a numpy array of colors representing per-nucleotide data."""
         alignment = data.SequenceAlignment(profile, self)
         colors = alignment.map_values(profile.colors, fill="#808080")
         colormap = profile.cmap
         return colors, colormap
 
     def get_colors_from_annotations(self, annotations):
-        colors = np.full(self.length, 'gray', dtype='<U16')
-        cmap = ['gray']
-        tick_labels = ['other']
+        """Get a numpy array of colors representing sequence annotations."""
+        colors = np.full(self.length, "gray", dtype="<U16")
+        cmap = ["gray"]
+        tick_labels = ["other"]
         for annotation in annotations:
             cmap.append(annotation.color)
             tick_labels.append(annotation.name)
             annotation = annotation.get_aligned_data(
-                data.SequenceAlignment(annotation, self))
-            for site in annotation.get_sites():
-                colors[site-1] = annotation.color
-        colormap = data.ScalarMappable(
-            cmap=cmap, normalization='none', values=None, extend='neither',
-            title='Annotations', alpha=1,
-            ticks=list(range(len(annotations)+1)),
-            tick_labels=tick_labels,
+                data.SequenceAlignment(annotation, self)
             )
+            for site in annotation.get_sites():
+                colors[site - 1] = annotation.color
+        colormap = data.ScalarMappable(
+            cmap=cmap,
+            normalization="none",
+            values=None,
+            extend="neither",
+            title="Annotations",
+            alpha=1,
+            ticks=list(range(len(annotations) + 1)),
+            tick_labels=tick_labels,
+        )
         return colors, colormap
 
     def get_colors_from_structure(self, structure):
-        cmap = ['darkOrange', 'darkOrchid', 'gray']
+        """Get a numpy array of colors representing base-pairing status."""
+        cmap = ["darkOrange", "darkOrchid", "gray"]
         ct_colors = [cmap[int(pair == 0)] for pair in structure.pair_nts]
         alignment = data.SequenceAlignment(structure, self)
-        colors = alignment.map_values(ct_colors, fill='gray')
+        colors = alignment.map_values(ct_colors, fill="gray")
         colormap = data.ScalarMappable(
-            cmap=cmap, normalization='none', values=None, extend='neither',
-            title='Base-pairing status', alpha=1, ticks=[0, 1, 2],
-            tick_labels=['unpaired', 'paired', 'unaligned'],
-            )
+            cmap=cmap,
+            normalization="none",
+            values=None,
+            extend="neither",
+            title="Base-pairing status",
+            alpha=1,
+            ticks=[0, 1, 2],
+            tick_labels=["unpaired", "paired", "unaligned"],
+        )
         return colors, colormap
 
-    def get_colors(self, source, pos_cmap='rainbow', profile=None,
-                   structure=None, annotations=None):
+    def get_colors(
+        self, source, pos_cmap="rainbow", profile=None, structure=None, annotations=None
+    ):
         """Get a numpy array of colors that fits the current sequence.
 
         Args:
@@ -187,7 +221,7 @@ class Sequence():
                 matplotlib color-like: all colors are this color
                 array of color like: must match length of sequence
             pos_cmap (str, optional): cmap used if source="position".
-                Defaults to 'rainbow'.
+                Defaults to "rainbow".
             profile (Profile or subclass, optional): Data object containing
                 per-nucleotide information. Defaults to None.
             structure (SecondaryStructure or subclass, optional): Data object
@@ -212,25 +246,34 @@ class Sequence():
             return self.get_colors_from_structure(structure)
         elif mpc.is_color_like(source):
             return np.full(self.length, source, dtype="<U16"), None
-        elif ((len(source) == self.length)
-              and all(mpc.is_color_like(c) for c in source)):
+        elif (len(source) == self.length) and all(mpc.is_color_like(c) for c in source):
             return np.array(list(source)), None
         else:
-            print('Invalid colors:\n\tchoices are "profile", "sequence", '
-                  '"position", "structure", "annotations", a list of mpl '
-                  'colors, or a single mpl color.\nDefaulting to sequence.')
+            print("Invalid colors:")
+            print("\tchoices are profile, sequence, position, structure,")
+            print("annotations, a list of mpl colors, or a single mpl color.")
+            print("Defaulting to sequence.")
             return self.get_colors_from_sequence()
 
 
 class Data(Sequence):
-    def __init__(self, input_data, sequence, metric, metric_defaults,
-                 read_table_kw=None, name=None):
+    """The base class for RNAvigate Profile and Interactions classes."""
+
+    def __init__(
+        self,
+        input_data,
+        sequence,
+        metric,
+        metric_defaults,
+        read_table_kw=None,
+        name=None,
+    ):
         if read_table_kw is None:
             read_table_kw = {}
         # assign data
         if isinstance(input_data, pd.DataFrame):
             self.data = input_data
-            self.filepath = 'dataframe'
+            self.filepath = "dataframe"
         elif isfile(input_data):
             self.data = self.read_file(input_data, read_table_kw)
             self.filepath = input_data
@@ -242,40 +285,43 @@ class Data(Sequence):
         super().__init__(sequence, name=name)
         # assign metrics
         self.metric_defaults = {
-            'default': {
-                'metric_column': 'Profile',
-                'error_column': None,
-                'color_column': None,
-                'cmap': 'viridis',
-                'normalization': '0_1',
-                'values': None,
-                'extend': 'neither',
-                'title': 'Type: metric',
-                'alpha': 0.7},
+            "default": {
+                "metric_column": "Profile",
+                "error_column": None,
+                "color_column": None,
+                "cmap": "viridis",
+                "normalization": "0_1",
+                "values": None,
+                "extend": "neither",
+                "title": "Type: metric",
+                "alpha": 0.7,
+            },
             "Distance": {
                 "metric_column": "Distance",
-                'error_column': None,
-                'color_column': None,
+                "error_column": None,
+                "color_column": None,
                 "cmap": "cool",
                 "normalization": "min_max",
                 "values": [5, 50],
-                'extend':'both',
-                'title':'3D distance',
-                'alpha': 0.7},
-            }
+                "extend": "both",
+                "title": "3D distance",
+                "alpha": 0.7,
+            },
+        }
         self.add_metric_defaults(metric_defaults)
         self.default_metric = metric
         self._metric = None
         self.metric = metric
 
     def add_metric_defaults(self, metric_defaults):
-        default_defaults = self.metric_defaults['default']
+        """Add metric defaults to self.metric_defaults"""
+        default_defaults = self.metric_defaults["default"]
         for metric, defaults in metric_defaults.items():
             self.metric_defaults[metric] = default_defaults | defaults
 
     @property
     def metric(self):
-        return self._metric['metric_column']
+        return self._metric["metric_column"]
 
     @metric.setter
     def metric(self, value):
@@ -285,34 +331,38 @@ class Data(Sequence):
                 return
             except KeyError as exception:
                 if value not in self.data.columns:
-                    print(f"metric ({value}) not found in data:\n"
-                          + str(list(self.data.columns)))
+                    print(
+                        f"metric ({value}) not found in data:\n"
+                        + str(list(self.data.columns))
+                    )
                     raise exception
-                self._metric = self.metric_defaults['default']
-                self._metric['metric_column'] = value
+                self._metric = self.metric_defaults["default"]
+                self._metric["metric_column"] = value
                 return
         try:
             defaults = self.metric_defaults[value["metric_column"]]
         except KeyError:
-            defaults = self.metric_defaults['default']
+            defaults = self.metric_defaults["default"]
         for key in value:
             if key not in defaults:
-                raise ValueError(f'{key} is not an expected value for metric '
-                                 f'setting:\n{list(defaults.keys())}')
+                raise ValueError(
+                    f"{key} is not an expected value for metric "
+                    f"setting:\n{list(defaults.keys())}"
+                )
         self._metric = defaults | value
 
     @property
     def error_column(self):
-        if self._metric['error_column'] in self.data.columns:
-            return self._metric['error_column']
-        print(f'Warning: {self} missing expected error column')
+        if self._metric["error_column"] in self.data.columns:
+            return self._metric["error_column"]
+        print(f"Warning: {self} missing expected error column")
         return None
 
     @property
     def color_column(self):
-        if self._metric['color_column'] in self.data.columns:
-            return self._metric['color_column']
-        return self._metric['metric_column']
+        if self._metric["color_column"] in self.data.columns:
+            return self._metric["color_column"]
+        return self._metric["metric_column"]
 
     @property
     def cmap(self):
@@ -325,8 +375,8 @@ class Data(Sequence):
     @property
     def colors(self):
         values = self.data[self.color_column]
-        if values.dtype.name == 'bool':
-            values = values.astype('int')
+        if values.dtype.name == "bool":
+            values = values.astype("int")
         return self.cmap.values_to_hexcolors(np.ma.masked_invalid(values))
 
     def read_file(self, filepath, read_table_kw):

@@ -1,4 +1,4 @@
-"""This module contains the SequenceChecker used to inspect the sequences.
+"""SequenceChecker analysis used to inspect sequence differences.
 
 Given a list of samples, we can inspect which data keywords belong to the
 samples, which sequences match up perfectly, and inspect the differences
@@ -9,7 +9,7 @@ import numpy as np
 from rnavigate import data
 
 
-class SequenceChecker():
+class SequenceChecker:
     """Check the sequences stored in a list of samples.
 
     Attributes:
@@ -20,6 +20,7 @@ class SequenceChecker():
         which_sequences: a dataframe of samples and keywords and which
             sequences each contains.
     """
+
     def __init__(self, samples):
         """Creates an instance of SequenceChecker given a list of samples
 
@@ -122,8 +123,10 @@ class SequenceChecker():
                     rnav.data.set_multiple_sequence_alignment()
         """
         print("Multiple sequence alignment")
-        alignments = [data.SequenceAlignment(base_sequence, seq).alignment2
-                      for seq in self.sequences]
+        alignments = [
+            data.SequenceAlignment(base_sequence, seq).alignment2
+            for seq in self.sequences
+        ]
         pos = "".join(f"{n:<20}" for n in range(1, len(alignments[0]), 20))
         misses = "".join("X "[len(set(nts)) == 1] for nts in zip(*alignments))
         print("    ID    length   alignment")

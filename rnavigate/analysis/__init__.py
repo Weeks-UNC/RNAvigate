@@ -5,6 +5,7 @@ from rnavigate.analysis.auroc import WindowedAUROC
 from rnavigate.analysis.fragmapper import FragMaP, Fragmapper
 from rnavigate.analysis.check_sequence import SequenceChecker
 
+
 __all__ = [
     "LogCompare",
     "LowSS",

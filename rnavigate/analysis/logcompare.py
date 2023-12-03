@@ -1,10 +1,14 @@
+"""LogCompare compares reactivity profiles for significant differences.
+
+This analysis requires replicates.
+"""
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize_scalar
 from rnavigate.plots import Plot
 
 
-class LogCompare():
+class LogCompare:
     """Compares 2 experimental samples, given replicates of each sample.
     First, the log10(modified/untreated) rate is calculated. These values a
     scaled to minimize the median of the absolute value of the difference
@@ -34,8 +38,7 @@ class LogCompare():
             2: same as 1 above, for the second sample
     """
 
-    def __init__(self, samples1, samples2, name1, name2, data="profile",
-                 region="all"):
+    def __init__(self, samples1, samples2, name1, name2, data="profile", region="all"):
         """Takes replicates of two samples for comparison. Replicates are
         required. Calculates the log division profile
         (log10(modified/untreated)) and minimizes the median of the absolute
@@ -58,8 +61,9 @@ class LogCompare():
         self.load_replicates(*samples2, group=2)
         sequences_match = self.groups[1]["seq"] == self.groups[2]["seq"]
         assert sequences_match, "Sample sequences do not match."
-        self.groups[2][self.data] = self.rescale(self.groups[2][self.data],
-                                                 self.groups[1][self.data])
+        self.groups[2][self.data] = self.rescale(
+            self.groups[2][self.data], self.groups[1][self.data]
+        )
         self.groups[1]["name"] = name1
         self.groups[2]["name"] = name2
         self.make_plots()
@@ -77,7 +81,7 @@ class LogCompare():
         df = sample.data[self.data].data
         plus = df.Modified_rate.values.copy()
         minus = df.Untreated_rate.values.copy()
-        profile = plus/minus
+        profile = plus / minus
         profile = np.log(profile)
         profile[minus > 0.05] = np.nan
         return profile, sample.data[self.data].sequence
@@ -90,8 +94,10 @@ class LogCompare():
             profile (np.array): log10 profile
             target_profile (np.array): 2nd log10 profile
         """
+
         def f(offset):
             return np.nanmedian(np.abs(profile + offset - target_profile))
+
         result = minimize_scalar(f, bounds=[-20, 20])
         offset = result.x
         return offset
@@ -108,7 +114,7 @@ class LogCompare():
             np.array: scaled profile
         """
         offset = self.calc_scale_factor(profile, target_profile)
-        return profile+offset
+        return profile + offset
 
     def load_replicates(self, *samples, group):
         """calculates average and standard error for a group of replicates,
@@ -133,10 +139,12 @@ class LogCompare():
         stacked = np.vstack(profiles)
         avgprofile = np.nanmean(stacked, ax=0)
         stderr = np.std(stacked, ax=0)
-        self.groups[group] = {self.data: avgprofile,
-                              "stderr": stderr,
-                              "stacked": stacked,
-                              "seq": seq}
+        self.groups[group] = {
+            self.data: avgprofile,
+            "stderr": stderr,
+            "stacked": stacked,
+            "seq": seq,
+        }
 
     def make_plots(self):
         """Visualize this analysis."""
@@ -144,32 +152,46 @@ class LogCompare():
         prof1, stderr1, stack1, seq, name1 = self.groups[1].values()
         prof2, stderr2, stack2, seq, name2 = self.groups[2].values()
 
-        x = np.array(list(range(1, len(prof1)+1)))
+        x = np.array(list(range(1, len(prof1) + 1)))
 
         # create a two row, one column figure, scaled for RNA length
-        _, axes = plt.subplots(2, 1, figsize=(0.1*len(prof1), 14), sharex=True)
+        _, axes = plt.subplots(2, 1, figsize=(0.1 * len(prof1), 14), sharex=True)
         # first axes contains raw log10 profiles with error bars
         ax = axes[0]
         ax.step(x, prof1, label=name1, color="C0")
         ax.step(x, prof2, label=name2, color="C1")
-        ax.fill_between(x, prof1-stderr1, prof1+stderr1,
-                        step='pre', color='C0', alpha=0.25, lw=0)
-        ax.fill_between(x, prof2-stderr2, prof2+stderr2,
-                        step='pre', color='C1', alpha=0.25, lw=0)
-        ax.legend(loc='upper right')
-        ax.axhline(0, color='black', lw=1, zorder=0)
-        ax.set_ylabel('ln(Mod/BG)')
+        ax.fill_between(
+            x,
+            prof1 - stderr1,
+            prof1 + stderr1,
+            step="pre",
+            color="C0",
+            alpha=0.25,
+            lw=0,
+        )
+        ax.fill_between(
+            x,
+            prof2 - stderr2,
+            prof2 + stderr2,
+            step="pre",
+            color="C1",
+            alpha=0.25,
+            lw=0,
+        )
+        ax.legend(loc="upper right")
+        ax.axhline(0, color="black", lw=1, zorder=0)
+        ax.set_ylabel("ln(Mod/BG)")
         Plot.add_sequence(self, ax=ax, sequence=seq)
 
         # calculate mean difference and standard error for z-scores
-        stack1 = stack1+10
+        stack1 = stack1 + 10
         rescale_dms = self.rescale(stack1, stack2)
         stack1 = rescale_dms
-        diff = stack2-stack1
+        diff = stack2 - stack1
         meandiff = np.nanmean(diff, ax=0)
         std_err = np.std(diff, ax=0)
         # compute z-scores
-        z_scores = meandiff/std_err
+        z_scores = meandiff / std_err
         # normalize to 0-1 (values > 5 = 1, values < -5 = 0)
         z_scores = (z_scores + 5) / 10
         z_scores[z_scores > 1] = 1
@@ -180,17 +202,21 @@ class LogCompare():
 
         # create 2nd plot of differences colored by z-score
         ax = axes[1]
-        ax.bar(x-0.5, meandiff, color=colormap(z_scores), lw=0)
-        ax.axhline(0, color='black', lw=1)
-        ax.set_xlabel('nucleotide')
-        ax.set_ylabel(f'{name2}-{name1}')
-        ax.errorbar(x-0.5, meandiff, yerr=std_err,
-                    fmt='none', color='black', lw=1)
+        ax.bar(x - 0.5, meandiff, color=colormap(z_scores), lw=0)
+        ax.axhline(0, color="black", lw=1)
+        ax.set_xlabel("nucleotide")
+        ax.set_ylabel(f"{name2}-{name1}")
+        ax.errorbar(x - 0.5, meandiff, yerr=std_err, fmt="none", color="black", lw=1)
         Plot.add_sequence(self, ax=ax, sequence=seq)
 
         # create a color bar scale for z-score differences
         axin1 = ax.inset_axes([0.8, 0.1, 0.15, 0.15])
-        cmap = plt.get_cmap('bwr')
-        Plot.view_colormap(ax=axin1, ticks=[0, 5, 10], values=[-5, 0, 5],
-                           title="Z-score", cmap=list(cmap(np.arange(cmap.N))))
+        cmap = plt.get_cmap("bwr")
+        Plot.view_colormap(
+            ax=axin1,
+            ticks=[0, 5, 10],
+            values=[-5, 0, 5],
+            title="Z-score",
+            cmap=list(cmap(np.arange(cmap.N))),
+        )
         plt.tight_layout()

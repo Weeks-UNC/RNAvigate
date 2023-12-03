@@ -37,7 +37,7 @@ from rnavigate.plots.functions import (
     plot_structure_ss,
     plot_annotation_circle,
     plot_interactions_circle,
-    )
+)
 
 __all__ = [
     "Alignment",

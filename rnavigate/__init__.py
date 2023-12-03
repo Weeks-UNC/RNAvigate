@@ -22,7 +22,7 @@ from rnavigate.plotting_functions import (
     plot_shapemapper,
     plot_skyline,
     plot_ss,
-    )
+)
 from rnavigate import analysis
 from rnavigate import data
 from rnavigate import plots

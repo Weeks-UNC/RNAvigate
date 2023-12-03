@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import math
 
 
-
 class Plot(ABC):
     def __init__(self, num_samples, rows=None, cols=None, **kwargs):
         self.length = num_samples
@@ -148,15 +147,14 @@ class Plot(ABC):
         if right_in is not None and left_in is not None:
             width_fig_in = left_in + width_subplot_in + right_in
             fig.subplots_adjust(
-                right=(1 - (right_in / width_fig_in)),
-                left=(left_in / width_fig_in))
+                right=(1 - (right_in / width_fig_in)), left=(left_in / width_fig_in)
+            )
         elif right_in is None and left_in is None:
             right_rel = fig.subplotpars.right
             left_rel = fig.subplotpars.left
             width_fig_in = width_subplot_in / (right_rel - left_rel)
         else:
-            raise ValueError(
-                "Must provide both right and left margins or neither")
+            raise ValueError("Must provide both right and left margins or neither")
 
         # repeat the process for figure height
         if height_ax_in is None:
@@ -169,15 +167,14 @@ class Plot(ABC):
         if top_in is not None and bottom_in is not None:
             height_fig_in = bottom_in + height_subplot_in + top_in
             fig.subplots_adjust(
-                top=(1 - (top_in / height_fig_in)),
-                bottom=(bottom_in / height_fig_in))
+                top=(1 - (top_in / height_fig_in)), bottom=(bottom_in / height_fig_in)
+            )
         elif top_in is None and bottom_in is None:
             top_rel = fig.subplotpars.top
             bottom_rel = fig.subplotpars.bottom
             height_fig_in = height_subplot_in / (top_rel - bottom_rel)
         else:
-            raise ValueError(
-                "Must provide both top and bottom margins or neither")
+            raise ValueError("Must provide both top and bottom margins or neither")
 
         fig.set_size_inches(width_fig_in, height_fig_in)
 
@@ -186,24 +183,51 @@ class ColorBar(Plot):
     def plot_data(self, colorbar):
         ax = self.get_ax(self.i)
         cax = plt.colorbar(
-            colorbar, cax=ax, orientation="horizontal", aspect=40,
-            spacing='proportional', **colorbar.cbar_args
-            )
+            colorbar,
+            cax=ax,
+            orientation="horizontal",
+            aspect=40,
+            spacing="proportional",
+            **colorbar.cbar_args
+        )
         if colorbar.tick_labels is not None:
             ax.set_xticklabels(colorbar.tick_labels)
         ax.set_title(colorbar.title)
         cax.outline.set_visible(False)
         cax.set_alpha(0.7)
         self.i += 1
-        return (2, self.rows/2)
+        return (2, self.rows / 2)
 
     def set_figure_size(
-            self, fig=None, ax=None, rows=None, cols=None,
-            height_ax_rel=None, width_ax_rel=None,
-            width_ax_in=3, height_ax_in=0.1,
-            height_gap_in=0.75, width_gap_in=0.5,
-            top_in=None, bottom_in=None, left_in=None, right_in=None):
+        self,
+        fig=None,
+        ax=None,
+        rows=None,
+        cols=None,
+        height_ax_rel=None,
+        width_ax_rel=None,
+        width_ax_in=3,
+        height_ax_in=0.1,
+        height_gap_in=0.75,
+        width_gap_in=0.5,
+        top_in=None,
+        bottom_in=None,
+        left_in=None,
+        right_in=None,
+    ):
         return super().set_figure_size(
-            fig, ax, rows, cols, height_ax_rel, width_ax_rel, width_ax_in,
-            height_ax_in, height_gap_in, width_gap_in, top_in, bottom_in,
-            left_in, right_in)
+            fig,
+            ax,
+            rows,
+            cols,
+            height_ax_rel,
+            width_ax_rel,
+            width_ax_in,
+            height_ax_in,
+            height_gap_in,
+            width_gap_in,
+            top_in,
+            bottom_in,
+            left_in,
+            right_in,
+        )

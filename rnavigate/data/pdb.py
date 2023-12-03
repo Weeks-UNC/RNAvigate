@@ -40,6 +40,7 @@ class PDB(data.Sequence):
             keys are atom identifiers, values are the pairwise atom distance
             matrices between residues. These are only stored if computed.
     """
+
     def __init__(self, input_data, chain, sequence=None, name=None):
         """Construct PDB object based on an input PDB or CIF file.
 
@@ -110,7 +111,7 @@ class PDB(data.Sequence):
         for i in range(len(self.sequence)):
             correct_offset = True
             for pdb_nt, pdb_idx in zip(self.pdb_seq, self.pdb_idx):
-                if self.sequence[pdb_idx-i-1] != pdb_nt:
+                if self.sequence[pdb_idx - i - 1] != pdb_nt:
                     correct_offset = False
                     break
             if correct_offset:
@@ -143,20 +144,21 @@ class PDB(data.Sequence):
             atom = {nt: "N1" for nt in "AG"} | {nt: "N3" for nt in "UC"}
         elif isinstance(atom, str):
             atom = {nt: atom for nt in "AUCG"}
-        seq = self.sequence[nt-1].upper().replace("T", "U")
+        seq = self.sequence[nt - 1].upper().replace("T", "U")
         atom = atom[seq]
-        xyz = [float(c) for c in self.pdb[0][self.chain]
-               [int(pdb_idx)][atom].get_coord()]
+        xyz = [
+            float(c) for c in self.pdb[0][self.chain][int(pdb_idx)][atom].get_coord()
+        ]
         return xyz
 
     def get_distance(self, i, j, atom="O2'"):
         """Get the atomic distance between nucleotides i and j (1-indexed)."""
         if atom in self.distance_matrix:
-            return self.distance_matrix[atom][i-1, j-1]
+            return self.distance_matrix[atom][i - 1, j - 1]
         try:
             xi, yi, zi = self.get_xyz_coord(i, atom)
             xj, yj, zj = self.get_xyz_coord(j, atom)
-            distance = ((xi-xj)**2 + (yi-yj)**2 + (zi-zj)**2)**0.5
+            distance = ((xi - xj) ** 2 + (yi - yj) ** 2 + (zi - zj) ** 2) ** 0.5
         except KeyError:
             distance = np.nan
         return distance
@@ -168,14 +170,14 @@ class PDB(data.Sequence):
         x = np.full(self.length, np.nan)
         y = np.full(self.length, np.nan)
         z = np.full(self.length, np.nan)
-        for i in (self.pdb_idx - self.offset):
+        for i in self.pdb_idx - self.offset:
             try:
-                x[i-1], y[i-1], z[i-1] = self.get_xyz_coord(i, atom)
+                x[i - 1], y[i - 1], z[i - 1] = self.get_xyz_coord(i, atom)
             except KeyError:
                 pass
         a = x - x[:, np.newaxis]
         b = y - y[:, np.newaxis]
         c = z - z[:, np.newaxis]
-        matrix = np.sqrt(a*a + b*b + c*c)
+        matrix = np.sqrt(a * a + b * b + c * c)
         # self.distance_matrix[atom] = np.nan_to_num(matrix, nan=1000)
         return matrix

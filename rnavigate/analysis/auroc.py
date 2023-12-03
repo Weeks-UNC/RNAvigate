@@ -1,16 +1,23 @@
+"""Windowed AUROC assesses agreement between reactivities and base-pairing."""
 from rnavigate import plots
 from sklearn.metrics import roc_curve, auc
 import numpy as np
 
 
-class WindowedAUROC():
-    """Class for computing and displaying windowed AUROC analysis. This
-    analysis computes the ROC curve over a sliding window for the performance
-    of per-nucleotide data (usually SHAPE-MaP or DMS-MaP Normalized reactivity)
-    in predicting the base-pairing status of each nucleotide. The area under
-    this curve (AUROC) is displayed compared to the median across the RNA.
-    Below, an arc plot displays the secondary structure and per-nucleotide
-    profile.
+class WindowedAUROC:
+    """Compute and display windowed AUROC analysis.
+
+    This analysis computes the ROC curve over a sliding window for the
+    performance of per-nucleotide data (usually SHAPE-MaP or DMS-MaP Normalized
+    reactivity) in predicting the base-pairing status of each nucleotide. The
+    area under this curve (AUROC) is displayed compared to the median across
+    the RNA. Below, an arc plot displays the secondary structure and
+    per-nucleotide profile.
+
+     AUROC values (should) range from 0.5 (no predictive power) to 1.0
+    (perfect predictive power). A value of 0.5 indicates that the reactivity
+    profile does not fit the structure prediction well. These regions are good
+    candidates for further investigation with ensemble deconvolution.
 
     Citation:
     Lan, T.C.T., Allan, M.F., Malsick, L.E. et al. Secondary structural
@@ -33,8 +40,13 @@ class WindowedAUROC():
         median_auroc: the median of the auroc array
     """
 
-    def __init__(self, sample, window=81, profile="default_profile",
-                 structure="default_structure"):
+    def __init__(
+        self,
+        sample,
+        window=81,
+        profile="default_profile",
+        structure="default_structure",
+    ):
         """Compute the AUROC for all windows. AUROC is a measure of how well a
         reactivity profile predicts paired vs. unpaired nucleotide status.
 
@@ -68,10 +80,10 @@ class WindowedAUROC():
         # for each possible window: compute auroc and populate array
         self.auroc = np.full(len(profile), np.nan)
         pad = window // 2
-        for i in range(pad, len(profile)-pad):
+        for i in range(pad, len(profile) - pad):
             # get profile and structure values within window
-            win_profile = profile[i-pad:i+pad+1]
-            win_ct = pair_nts[i-pad:i+pad+1]
+            win_profile = profile[i - pad : i + pad + 1]
+            win_ct = pair_nts[i - pad : i + pad + 1]
             # ignore positions where profile is nan
             valid = ~np.isnan(win_profile)
             # y: classification (paired or unpaired)
@@ -111,13 +123,19 @@ class WindowedAUROC():
         auc_ax = ax.twinx()
         auc_ax.set_ylim(0.5, 1.6)
         auc_ax.set_yticks([0.5, self.auroc_median, 1.0])
-        auc_ax.fill_between(x_values, self.auroc[start-1:stop],
-                            self.auroc_median, fc='0.3', lw=0)
+        auc_ax.fill_between(
+            x_values,
+            self.auroc[start - 1 : stop],
+            self.auroc_median,
+            fc="0.3",
+            lw=0,
+        )
         plots.adjust_spines(auc_ax, ["left"])
         plots.clip_spines(auc_ax, ["left"])
 
         # add structure and reactivity profile track
         plot.plot_data(
+            sequence=self.structure,
             structure=self.structure,
             structure2=None,
             interactions=None,
@@ -127,25 +145,40 @@ class WindowedAUROC():
             seqbar=False,
             title=False,
             annotations=[],
-            plot_error=False)
+            plot_error=False,
+        )
 
         # Place Track Labels
-        ax.set_title(f"{self.sample.sample}\n{start} - {stop}", loc='left',
-                     fontdict={"fontsize": 48})
-        ax.text(1.002, 6/8, "Secondary\nStructure",
-                transform=ax.transAxes, fontsize=36, va='center')
-        ax.text(1.002, 2/8, f"{self.window}-nt window\nAUROC",
-                transform=ax.transAxes, va='center', fontsize=36)
+        ax.set_title(
+            f"{self.sample.sample}\n{start} - {stop}",
+            loc="left",
+            fontdict={"fontsize": 48},
+        )
+        ax.text(
+            1.002,
+            6 / 8,
+            "Secondary\nStructure",
+            transform=ax.transAxes,
+            fontsize=36,
+            va="center",
+        )
+        ax.text(
+            1.002,
+            2 / 8,
+            f"{self.window}-nt window\nAUROC",
+            transform=ax.transAxes,
+            va="center",
+            fontsize=36,
+        )
 
         # limits, ticks, spines, and grid
         ax.set_ylim([-305, 315])
         ax.set_xticks(ticks=[x for x in range(500, stop, 500) if x > start])
-        ax.set_xticks(ticks=[x for x in range(100, stop, 100) if x > start],
-                      minor=True)
-        ax.tick_params(ax='x', which='major', labelsize=36)
-        plots.adjust_spines(ax, ['bottom'])
-        ax.grid(ax='x')
+        ax.set_xticks(ticks=[x for x in range(100, stop, 100) if x > start], minor=True)
+        ax.tick_params(ax="x", which="major", labelsize=36)
+        plots.adjust_spines(ax, ["bottom"])
+        ax.grid(ax="x")
 
         # set figure size so that 100 ax units == 1 inch
-        plot.set_figure_size(height_ax_rel=1/100, width_ax_rel=1/100)
+        plot.set_figure_size(height_ax_rel=1 / 100, width_ax_rel=1 / 100)
         return plot

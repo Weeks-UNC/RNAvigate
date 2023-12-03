@@ -6,7 +6,7 @@ from rnavigate.helper_functions import (
     PlottingArgumentParser,
     _parse_plot_kwargs,
     fit_data,
-    )
+)
 from rnavigate.data_loading import get_sequence
 
 
@@ -26,16 +26,16 @@ __all__ = [
     "plot_roc",
     "plot_disthist",
     "plot_ntdist",
-    ]
+]
 
 
 def plot_qc(
-        # required
-        samples,
-        profile,
-        # optional display
-        labels=None
-        ):
+    # required
+    samples,
+    profile,
+    # optional display
+    labels=None,
+):
     """Creates a multipanel quality control plot displaying mutations per
     molecule, read length distribution, and mutation rate distributions for
     modified and unmodified samples.
@@ -68,12 +68,13 @@ def plot_qc(
 
 
 def plot_shapemapper(
-        # required
-        sample,
-        profile,
-        # optional display
-        label=None,
-        panels=None):
+    # required
+    sample,
+    profile,
+    # optional display
+    label=None,
+    panels=None,
+):
     """Makes a standard ShapeMapper2 profile plot with 3 panels: Normalized
     Reactivities, mutation rates, and read depths.
 
@@ -105,24 +106,24 @@ def plot_shapemapper(
 
 
 def plot_skyline(
-        # required
-        samples,
-        profile,
-        # optional data inputs
-        sequence=None,
-        annotations=None,
-        domains=None,
-        # optional data display
-        labels=None,
-        nt_ticks=(20, 5),
-        columns=None,
-        errors=None,
-        annotations_mode="track",
-        seqbar=True,
-        region="all",
-        # optional plot display
-        plot_kwargs=None,
-        ):
+    # required
+    samples,
+    profile,
+    # optional data inputs
+    sequence=None,
+    annotations=None,
+    domains=None,
+    # optional data display
+    labels=None,
+    nt_ticks=(20, 5),
+    columns=None,
+    errors=None,
+    annotations_mode="track",
+    seqbar=True,
+    region="all",
+    # optional plot display
+    plot_kwargs=None,
+):
     """Plots multiple per-nucleotide datasets on a single axis.
 
     Required arguments:
@@ -187,39 +188,45 @@ def plot_skyline(
     )
     plot_kwargs = _parse_plot_kwargs(plot_kwargs, "rnavigate.plots.Skyline")
     plot = plots.Skyline(
-        num_samples=len(samples), nt_length=sequence.length, region=region,
-        **plot_kwargs
-        )
+        num_samples=len(samples),
+        nt_length=sequence.length,
+        region=region,
+        **plot_kwargs,
+    )
     for data_dict in parsed_args.data_dicts:
         plot.plot_data(
-            **data_dict, columns=columns, errors=errors, nt_ticks=nt_ticks,
-            annotations_mode=annotations_mode, seqbar=seqbar,
-            )
+            **data_dict,
+            columns=columns,
+            errors=errors,
+            nt_ticks=nt_ticks,
+            annotations_mode=annotations_mode,
+            seqbar=seqbar,
+        )
     plot.set_figure_size()
     plot.plot_colorbars()
     return plot
 
 
 def plot_profile(
-        # required
-        samples,
-        profile,
-        # optional data inputs
-        sequence=None,
-        annotations=None,
-        domains=None,
-        # optional data display
-        labels=None,
-        nt_ticks=(20, 5),
-        column=None,
-        plot_error=True,
-        annotations_mode="track",
-        seqbar=True,
-        region="all",
-        # optional plot display
-        colorbars=True,
-        plot_kwargs=None,
-        ):
+    # required
+    samples,
+    profile,
+    # optional data inputs
+    sequence=None,
+    annotations=None,
+    domains=None,
+    # optional data display
+    labels=None,
+    nt_ticks=(20, 5),
+    column=None,
+    plot_error=True,
+    annotations_mode="track",
+    seqbar=True,
+    region="all",
+    # optional plot display
+    colorbars=True,
+    plot_kwargs=None,
+):
     """Aligns reactivity profiles by sequence and plots them on seperate axes.
 
     Required arguments:
@@ -283,17 +290,24 @@ def plot_profile(
         alignment=sequence.null_alignment,
         annotations=annotations,
         domains=domains,
-        profile=profile)
+        profile=profile,
+    )
     plot_kwargs = _parse_plot_kwargs(plot_kwargs, "rnavigate.plots.Profile")
     plot = plots.Profile(
-        num_samples=len(samples), nt_length=sequence.length, region=region,
-        **plot_kwargs
-        )
+        num_samples=len(samples),
+        nt_length=sequence.length,
+        region=region,
+        **plot_kwargs,
+    )
     for data_dict in parsed_args.data_dicts:
         plot.plot_data(
-            **data_dict, column=column, plot_error=plot_error, seqbar=seqbar,
-            annotations_mode=annotations_mode, nt_ticks=nt_ticks,
-            )
+            **data_dict,
+            column=column,
+            plot_error=plot_error,
+            seqbar=seqbar,
+            annotations_mode=annotations_mode,
+            nt_ticks=nt_ticks,
+        )
     plot.set_figure_size()
     if colorbars:
         plot.plot_colorbars()
@@ -301,13 +315,13 @@ def plot_profile(
 
 
 def plot_alignment(
-        # required
-        data1,
-        data2,
-        # optional display
-        labels=None,
-        plot_kwargs=None
-        ):
+    # required
+    data1,
+    data2,
+    # optional display
+    labels=None,
+    plot_kwargs=None,
+):
     """Plots the sequence alignment used to compare two sequences
 
     Required arguments:
@@ -331,39 +345,38 @@ def plot_alignment(
     if labels is None:
         labels = [f"{s.sample}: {seq}" for s, seq in [data1, data2]]
     plot = plots.Alignment(num_samples=1, **plot_kwargs)
-    alignment = data.SequenceAlignment(
-        data1[0].data[data1[1]], data2[0].data[data2[1]])
+    alignment = data.SequenceAlignment(data1[0].data[data1[1]], data2[0].data[data2[1]])
     plot.plot_data(alignment=alignment, label=labels)
     plot.set_figure_size()
     return plot
 
 
 def plot_arcs(
-        # required
-        samples,
-        sequence,
-        # optional data inputs
-        structure=None,
-        structure2=None,
-        interactions=None,
-        interactions2=None,
-        profile=None,
-        annotations=None,
-        domains=None,
-        # optional data display
-        labels=None,
-        nt_ticks=(20, 5),
-        profile_scale_factor=1,
-        plot_error=False,
-        annotation_mode="track",
-        panels=None,
-        seqbar=True,
-        region="all",
-        # optional plot display
-        colorbars=True,
-        title=True,
-        plot_kwargs=None,
-        ):
+    # required
+    samples,
+    sequence,
+    # optional data inputs
+    structure=None,
+    structure2=None,
+    interactions=None,
+    interactions2=None,
+    profile=None,
+    annotations=None,
+    domains=None,
+    # optional data display
+    labels=None,
+    nt_ticks=(20, 5),
+    profile_scale_factor=1,
+    plot_error=False,
+    annotation_mode="track",
+    panels=None,
+    seqbar=True,
+    region="all",
+    # optional plot display
+    colorbars=True,
+    title=True,
+    plot_kwargs=None,
+):
     """Plots interactions and/or base-pairs as arcs.
 
     Required arguments:
@@ -468,23 +481,30 @@ def plot_arcs(
         structure2=structure2,
         profile=profile,
         interactions2=interactions2,
-        interactions=interactions
-        )
+        interactions=interactions,
+    )
     plot_kwargs = _parse_plot_kwargs(plot_kwargs, "rnavigate.plots.AP")
     parsed_args.update_rows_cols(plot_kwargs)
     # initialize plot
     plot = plots.AP(
         num_samples=parsed_args.num_samples,
         nt_length=sequence.length,
-        region=region, **plot_kwargs)
+        region=region,
+        **plot_kwargs,
+    )
     # loop through samples and interactions, adding each as a new axis
     for data_dict in parsed_args.data_dicts:
         plot.plot_data(
-            **data_dict, sequence=sequence, title=title, panels=panels,
-            plot_error=plot_error, annotation_mode=annotation_mode,
-            seqbar=seqbar, profile_scale_factor=profile_scale_factor,
+            **data_dict,
+            sequence=sequence,
+            title=title,
+            panels=panels,
+            plot_error=plot_error,
+            annotation_mode=annotation_mode,
+            seqbar=seqbar,
+            profile_scale_factor=profile_scale_factor,
             nt_ticks=nt_ticks,
-            )
+        )
     plot.set_figure_size()
     if colorbars:
         plot.plot_colorbars()
@@ -492,24 +512,24 @@ def plot_arcs(
 
 
 def plot_arcs_compare(
-        # required
-        samples,
-        sequence,
-        # optional data inputs
-        structure=None,
-        structure2=None,
-        interactions=None,
-        interactions2=None,
-        profile=None,
-        # optional data display
-        labels=None,
-        profile_scale_factor=1,
-        plot_error=False,
-        region="all",
-        # optional plot display
-        colorbars=True,
-        plot_kwargs=None,
-        ):
+    # required
+    samples,
+    sequence,
+    # optional data inputs
+    structure=None,
+    structure2=None,
+    interactions=None,
+    interactions2=None,
+    profile=None,
+    # optional data display
+    labels=None,
+    profile_scale_factor=1,
+    plot_error=False,
+    region="all",
+    # optional plot display
+    colorbars=True,
+    plot_kwargs=None,
+):
     """Generates a single arc plot displaying combinations of secondary
     structures, per-nucleotide data, inter-nucleotide data, and sequence
     annotations. The first sample will be on top, the second on the bottom.
@@ -593,20 +613,18 @@ def plot_arcs_compare(
         profile=profile,
         interactions2=interactions2,
         interactions=interactions,
-        )
+    )
     plot_kwargs = _parse_plot_kwargs(plot_kwargs, "rnavigate.plots.AP")
     # initialize plot
     plot = plots.AP(
-        num_samples=1, nt_length=len(alignment.target_sequence), region=region,
-        **plot_kwargs
-        )
+        num_samples=1,
+        nt_length=len(alignment.target_sequence),
+        region=region,
+        **plot_kwargs,
+    )
     # loop through samples and filters, adding each as a new axis
     labels = []
-    for data_dict, seq, panel in zip(
-            parsed_args.data_dicts,
-            [1, 2],
-            ["top", "bottom"]
-            ):
+    for data_dict, seq, panel in zip(parsed_args.data_dicts, [1, 2], ["top", "bottom"]):
         if seq == 1:
             seq, other_seq = seq1, seq2
         else:
@@ -616,18 +634,28 @@ def plot_arcs_compare(
             "structure": panel,
             "interactions": panel,
             "interactions2": panel,
-            "profile": panel}
+            "profile": panel,
+        }
         labels.append(data_dict.pop("label"))
         data_dict = fit_data(data_dict, alignment)
         plot.plot_data(
-            ax=0, sequence=seq, track_height=6, label="", seqbar=False,
-            panels=panels, **data_dict, plot_error=plot_error,
+            ax=0,
+            sequence=seq,
+            track_height=6,
+            label="",
+            seqbar=False,
+            panels=panels,
+            **data_dict,
+            plot_error=plot_error,
             profile_scale_factor=profile_scale_factor,
-            )
-    plots.plot_sequence_alignment(
-        ax=plot.axes[0, 0], alignment=alignment, labels=labels, top=6,
-        bottom=0,
         )
+    plots.plot_sequence_alignment(
+        ax=plot.axes[0, 0],
+        alignment=alignment,
+        labels=labels,
+        top=6,
+        bottom=0,
+    )
     plot.set_figure_size()
     if colorbars:
         plot.plot_colorbars()
@@ -635,23 +663,23 @@ def plot_arcs_compare(
 
 
 def plot_ss(
-        # required
-        samples,
-        structure,
-        # optional data inputs
-        profile=None,
-        annotations=None,
-        interactions=None,
-        interactions2=None,
-        # optional data display
-        labels=None,
-        colors=None,
-        nt_ticks=None,
-        bp_style="dotted",
-        # optional plot display
-        colorbars=True,
-        plot_kwargs=None,
-        ):
+    # required
+    samples,
+    structure,
+    # optional data inputs
+    profile=None,
+    annotations=None,
+    interactions=None,
+    interactions2=None,
+    # optional data display
+    labels=None,
+    colors=None,
+    nt_ticks=None,
+    bp_style="dotted",
+    # optional plot display
+    colorbars=True,
+    plot_kwargs=None,
+):
     """Generates a multipanel secondary structure drawing with optional
     coloring by per-nucleotide data and display of inter-nucleotide data and/or
     sequence annotations. Each plot may display a unique sample and/or
@@ -752,9 +780,7 @@ def plot_ss(
     # loop through samples and filters, adding each as a new axis
     for data_dict in parsed_args.data_dicts:
         data_dict = fit_data(data_dict, data_dict["structure"].null_alignment)
-        plot.plot_data(
-            **data_dict, colors=colors, nt_ticks=nt_ticks, bp_style=bp_style
-            )
+        plot.plot_data(**data_dict, colors=colors, nt_ticks=nt_ticks, bp_style=bp_style)
     plot.set_figure_size()
     if colorbars:
         plot.plot_colorbars()
@@ -762,31 +788,31 @@ def plot_ss(
 
 
 def plot_mol(
-        # required
-        samples,
-        structure,
-        # optional data inputs
-        profile=None,
-        interactions=None,
-        # optional data display
-        labels=None,
-        style="cartoon",
-        hide_cylinders=False,
-        colors="grey",
-        atom="O2'",
-        rotation=None,
-        orientation=None,
-        get_orientation=False,
-        # optional viewer display
-        title=True,
-        colorbars=True,
-        width=400,
-        height=400,
-        rows=None,
-        cols=None,
-        background_alpha=1,
-        show=True,
-        ):
+    # required
+    samples,
+    structure,
+    # optional data inputs
+    profile=None,
+    interactions=None,
+    # optional data display
+    labels=None,
+    style="cartoon",
+    hide_cylinders=False,
+    colors="grey",
+    atom="O2'",
+    rotation=None,
+    orientation=None,
+    get_orientation=False,
+    # optional viewer display
+    title=True,
+    colorbars=True,
+    width=400,
+    height=400,
+    rows=None,
+    cols=None,
+    background_alpha=1,
+    show=True,
+):
     """Generates a multipanel interactive 3D molecular rendering of a PDB
     structure. Nucleotides may be colored by per-nucleotide data or custom
     color lists. Inter-nucleotide data may be displayed as cylinders connecting
@@ -908,14 +934,19 @@ def plot_mol(
     # initialize plot using 1st 3D structure (applies to all samples)
     structure = samples[0].get_data(structure)
     plot = plots.Mol(
-        num_samples=parsed_args.num_samples, pdb=structure, width=width,
-        height=height, background_alpha=background_alpha, rotation=rotation,
-        orientation=orientation, style=style, rows=rows, cols=cols
-        )
+        num_samples=parsed_args.num_samples,
+        pdb=structure,
+        width=width,
+        height=height,
+        background_alpha=background_alpha,
+        rotation=rotation,
+        orientation=orientation,
+        style=style,
+        rows=rows,
+        cols=cols,
+    )
     for data_dict in parsed_args.data_dicts:
-        plot.plot_data(
-            **data_dict, colors=colors, atom=atom, title=title
-            )
+        plot.plot_data(**data_dict, colors=colors, atom=atom, title=title)
     # hide nucleotide cylinders in all viewers
     if hide_cylinders:
         plot.hide_cylinders()
@@ -928,25 +959,25 @@ def plot_mol(
 
 
 def plot_heatmap(
-        # required
-        samples,
-        sequence,
-        # optional data input
-        structure=None,
-        interactions=None,
-        regions=None,
-        # optional data display
-        labels=None,
-        levels=None,
-        interpolation="nearest",
-        atom="O2'",
-        plot_type="heatmap",
-        weights=None,
-        # optional plot display
-        rows=None,
-        cols=None,
-        plot_kwargs=None,
-        ):
+    # required
+    samples,
+    sequence,
+    # optional data input
+    structure=None,
+    interactions=None,
+    regions=None,
+    # optional data display
+    labels=None,
+    levels=None,
+    interpolation="nearest",
+    atom="O2'",
+    plot_type="heatmap",
+    weights=None,
+    # optional plot display
+    rows=None,
+    cols=None,
+    plot_kwargs=None,
+):
     """Generates a multipanel plot displaying a heatmap of inter-nucleotide
     data (nucleotide resolution of 2D KDE) and/or contour map of pdb
     distances. Each plot may display a unique sample and/or filtering scheme.
@@ -1033,43 +1064,49 @@ def plot_heatmap(
         samples=samples,
         labels=labels,
         alignment=sequence.null_alignment,
-        interactions=interactions
+        interactions=interactions,
     )
     plot_kwargs = _parse_plot_kwargs(plot_kwargs, "rnavigate.plots.Heatmap")
     # initialize plot using 1st 3D pdb (applies to all samples)
     structure = samples[0].data[structure]
     plot = plots.Heatmap(
         parsed_args.num_samples, structure, rows=rows, cols=cols, **plot_kwargs
-        )
+    )
     # loop through samples and interactions, adding each as a new axis
     for data_dict in parsed_args.data_dicts:
         plot.plot_data(
-            **data_dict, regions=regions, levels=levels, weights=weights,
-            interpolation=interpolation, atom=atom, plot_type=plot_type,
-            )
+            **data_dict,
+            regions=regions,
+            levels=levels,
+            weights=weights,
+            interpolation=interpolation,
+            atom=atom,
+            plot_type=plot_type,
+        )
     plot.set_figure_size()
     return plot
 
 
 def plot_circle(
-        # required
-        samples,
-        sequence,
-        # optional data inputs
-        structure=None,
-        structure2=None,
-        interactions=None,
-        interactions2=None,
-        annotations=None,
-        profile=None,
-        # optional data display
-        colors=None,
-        nt_ticks=(20, 5),
-        gap=30,
-        labels=None,
-        # optional plot display
-        colorbars=True,
-        plot_kwargs=None):
+    # required
+    samples,
+    sequence,
+    # optional data inputs
+    structure=None,
+    structure2=None,
+    interactions=None,
+    interactions2=None,
+    annotations=None,
+    profile=None,
+    # optional data display
+    colors=None,
+    nt_ticks=(20, 5),
+    gap=30,
+    labels=None,
+    # optional plot display
+    colorbars=True,
+    plot_kwargs=None,
+):
     """Creates a figure containing a circle plot for each sample given.
 
     Data that can be plotted on circle plots includes annotations (highlights
@@ -1167,7 +1204,7 @@ def plot_circle(
         interactions2=interactions2,
         profile=profile,
         annotations=annotations,
-        interactions=interactions
+        interactions=interactions,
     )
     plot_kwargs = _parse_plot_kwargs(plot_kwargs, "rnavigate.plots.Circle")
     parsed_args.update_rows_cols(plot_kwargs)
@@ -1175,10 +1212,7 @@ def plot_circle(
     # loop through samples and interactions, adding each as a new axis
     for data_dict in parsed_args.data_dicts:
         data_dict = fit_data(data_dict, data_dict["sequence"].null_alignment)
-        plot.plot_data(
-            **data_dict, colors=colors, nt_ticks=nt_ticks,
-            gap=gap
-            )
+        plot.plot_data(**data_dict, colors=colors, nt_ticks=nt_ticks, gap=gap)
     plot.set_figure_size()
     if colorbars:
         plot.plot_colorbars()
@@ -1186,25 +1220,25 @@ def plot_circle(
 
 
 def plot_linreg(
-        # required
-        samples,
-        profile,
-        # optional data inputs
-        sequence=None,
-        structure=None,
-        annotations=None,
-        # optional data display
-        labels=None,
-        kde=False,
-        scale="linear",
-        regression="pearson",
-        colors="sequence",
-        column=None,
-        region="all",
-        # optional plot display
-        colorbars=True,
-        plot_kwargs=None,
-        ):
+    # required
+    samples,
+    profile,
+    # optional data inputs
+    sequence=None,
+    structure=None,
+    annotations=None,
+    # optional data display
+    labels=None,
+    kde=False,
+    scale="linear",
+    regression="pearson",
+    colors="sequence",
+    column=None,
+    region="all",
+    # optional plot display
+    colorbars=True,
+    plot_kwargs=None,
+):
     """Performs linear regression analysis and generates scatter plots of all
     sample-to-sample profile vs. profile comparisons. Colors nucleotides by
     identity or base-pairing status.
@@ -1281,13 +1315,17 @@ def plot_linreg(
         alignment=sequence.null_alignment,
         structure=structure,
         profile=profile,
-        annotations=annotations
+        annotations=annotations,
     )
     plot_kwargs = _parse_plot_kwargs(plot_kwargs, "rnavigate.plots.LinReg")
     plot = plots.LinReg(
-        num_samples=parsed_args.num_samples, scale=scale,
-        regression=regression, kde=kde, region=region, **plot_kwargs,
-        )
+        num_samples=parsed_args.num_samples,
+        scale=scale,
+        regression=regression,
+        kde=kde,
+        region=region,
+        **plot_kwargs,
+    )
     for data_dict in parsed_args.data_dicts:
         plot.plot_data(**data_dict, colors=colors, column=column)
     plot.set_figure_size()
@@ -1297,16 +1335,16 @@ def plot_linreg(
 
 
 def plot_roc(
-        # required
-        samples,
-        structure,
-        profile,
-        # optional data display
-        labels=None,
-        nts="AUCG",
-        # optional plot display
-        plot_kwargs=None
-        ):
+    # required
+    samples,
+    structure,
+    profile,
+    # optional data display
+    labels=None,
+    nts="AUCG",
+    # optional plot display
+    plot_kwargs=None,
+):
     """Performs receiver operator characteristic analysis (ROC), calculates
     area under ROC curve (AUC), and generates ROC plots to assess how well
     per-nucleotide data predicts base-paired status. Does this for all
@@ -1355,21 +1393,21 @@ def plot_roc(
 
 
 def plot_disthist(
-        # required
-        samples,
-        structure,
-        interactions,
-        # optional data inputs
-        bg_interactions=None,
-        # optional data display
-        labels=None,
-        same_axis=False,
-        atom="O2'",
-        # optional plot display
-        rows=None,
-        cols=None,
-        plot_kwargs=None
-        ):
+    # required
+    samples,
+    structure,
+    interactions,
+    # optional data inputs
+    bg_interactions=None,
+    # optional data display
+    labels=None,
+    same_axis=False,
+    atom="O2'",
+    # optional plot display
+    rows=None,
+    cols=None,
+    plot_kwargs=None,
+):
     """Calculates 3D distance of nucleotides in inter-nucleotide data and plots
     the distribution of these distances. Compares this to a "background"
     distribution consisting of either all pairwise distances in structure, or
@@ -1441,14 +1479,12 @@ def plot_disthist(
     plot_kwargs = _parse_plot_kwargs(plot_kwargs, "rnavigate.plots.DistHist")
     # initialize plot
     if same_axis:
-        plot = plots.DistHist(
-            parsed_args.num_samples, rows=1, cols=1, **plot_kwargs
-            )
+        plot = plots.DistHist(parsed_args.num_samples, rows=1, cols=1, **plot_kwargs)
         ax = plot.axes[0, 0]
     else:
         plot = plots.DistHist(
             parsed_args.num_samples, rows=rows, cols=cols, **plot_kwargs
-            )
+        )
         ax = None
     # loop through samples and interactions, adding each as a new axis
     for data_dict in parsed_args.data_dicts:
@@ -1458,15 +1494,15 @@ def plot_disthist(
 
 
 def plot_ntdist(
-        # required
-        samples,
-        profile,
-        # optional data display
-        labels=None,
-        column=None,
-        # optional plot display
-        plot_kwargs=None
-        ):
+    # required
+    samples,
+    profile,
+    # optional data display
+    labels=None,
+    column=None,
+    # optional plot display
+    plot_kwargs=None,
+):
     """Plots the distributions of values at A, U, C, and G.
 
     Calculates the kernel density estimate (KDE) for each nucleobase and plots
@@ -1503,7 +1539,7 @@ def plot_ntdist(
     )
     plot_kwargs = _parse_plot_kwargs(
         plot_kwargs, "rnavigate.plots.NucleotideDistribution"
-        )
+    )
     plot = plots.NucleotideDistribution(parsed_args.num_samples, **plot_kwargs)
     for data_dict in parsed_args.data_dicts:
         plot.plot_data(**data_dict, column=column)

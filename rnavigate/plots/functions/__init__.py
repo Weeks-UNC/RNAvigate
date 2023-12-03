@@ -14,7 +14,7 @@ from rnavigate.plots.functions.tracks import (
     plot_annotation_track,
     plot_domain_track,
     plot_sequence_track,
-    )
+)
 from rnavigate.plots.functions.ss import (
     plot_annotation_ss,
     plot_basepairs_ss,
@@ -23,11 +23,11 @@ from rnavigate.plots.functions.ss import (
     plot_positions_ss,
     plot_sequence_ss,
     plot_structure_ss,
-    )
+)
 from rnavigate.plots.functions.circle import (
     plot_annotation_circle,
     plot_interactions_circle,
-    )
+)
 
 __all__ = [
     "get_contrasting_colors",

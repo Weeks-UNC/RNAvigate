@@ -7,8 +7,14 @@ from rnavigate import data
 
 class Profile(data.Data):
     def __init__(
-            self, input_data, metric='default', metric_defaults=None,
-            read_table_kw=None, sequence=None, name=None):
+        self,
+        input_data,
+        metric="default",
+        metric_defaults=None,
+        read_table_kw=None,
+        sequence=None,
+        name=None,
+    ):
         if metric_defaults is None:
             metric_defaults = {}
         super().__init__(
@@ -18,7 +24,7 @@ class Profile(data.Data):
             metric_defaults=metric_defaults,
             read_table_kw=read_table_kw,
             name=name,
-            )
+        )
 
     @classmethod
     def from_array(cls, input_data, sequence, **kwargs):
@@ -28,31 +34,32 @@ class Profile(data.Data):
                 "RNAVIGATE ERROR\n"
                 "===============\n"
                 "\tinput array must be the same size as the input sequence\n"
-                )
+            )
             print(message)
             raise ValueError(message)
         if not all(isinstance(value, (int, float)) for value in input_data):
             message = (
                 "RNAVIGATE ERROR\n"
                 "===============\n"
-                "\tinput array must be all float or integer values\n")
+                "\tinput array must be all float or integer values\n"
+            )
             print(message)
             raise ValueError(message)
-        df = pd.DataFrame({
-            'Nucleotide': [i for i in range(sequence.length)],
-            'Sequence': list(sequence.sequence),
-            'Profile': input_data
-        })
+        df = pd.DataFrame(
+            {
+                "Nucleotide": [i for i in range(sequence.length)],
+                "Sequence": list(sequence.sequence),
+                "Profile": input_data,
+            }
+        )
         return cls(input_data=df, sequence=sequence, **kwargs)
 
     @property
     def recreation_kwargs(self):
         return {}
 
-    def normalize_sequence(self, t_or_u='U', uppercase=True):
-        super().normalize_sequence(
-            t_or_u=t_or_u,
-            uppercase=uppercase)
+    def normalize_sequence(self, t_or_u="U", uppercase=True):
+        super().normalize_sequence(t_or_u=t_or_u, uppercase=uppercase)
         self.data["Sequence"] = list(self.sequence)
 
     def get_aligned_data(self, alignment):
@@ -63,7 +70,8 @@ class Profile(data.Data):
             metric_defaults=self.metric_defaults,
             sequence=alignment.target_sequence,
             name=self.name,
-            **self.recreation_kwargs)
+            **self.recreation_kwargs,
+        )
 
     def copy(self):
         return self.get_aligned_data(self.null_alignment)
@@ -82,9 +90,14 @@ class Profile(data.Data):
         return plotting_dataframe
 
     def calculate_windows(
-            self, column, window, method='median', new_name=None,
-            minimum_points=None, mask_na=True,
-            ):
+        self,
+        column,
+        window,
+        method="median",
+        new_name=None,
+        minimum_points=None,
+        mask_na=True,
+    ):
         """calculates a windowed operation over a column of self.data and
         stores the result as a new column. Value of each window is assigned to
         the center position of the window.
@@ -102,27 +115,26 @@ class Profile(data.Data):
                 Defaults to the size of the window.
         """
         if window % 2 != 1:
-            raise ValueError('`window` argument must be an odd number.')
+            raise ValueError("`window` argument must be an odd number.")
         if new_name is None:
-            new_name = f'{method}_{window}_nt'
+            new_name = f"{method}_{window}_nt"
         if minimum_points is None:
             minimum_points = window
         windows = self.data[column].rolling(
-            window=window, center=True, min_periods=minimum_points)
-        if method == 'median':
+            window=window, center=True, min_periods=minimum_points
+        )
+        if method == "median":
             self.data[new_name] = windows.median()
-        elif method == 'mean':
+        elif method == "mean":
             self.data[new_name] = windows.mean()
-        elif method == 'minimum':
+        elif method == "minimum":
             self.data[new_name] = windows.min()
-        elif method == 'maximum':
+        elif method == "maximum":
             self.data[new_name] = windows.max()
         elif isinstance(method, FunctionType):
             self.data[new_name] = windows.apply(method)
         else:
-            raise ValueError(
-                'method argument must be median, mean, maximum or minimum'
-                )
+            raise ValueError("method argument must be median, mean, maximum or minimum")
         if mask_na:
             self.data.loc[self.data[column].isna(), new_name] = np.nan
 
@@ -131,16 +143,22 @@ class Profile(data.Data):
         # Mean absolute difference
         mad = np.abs(np.subtract.outer(values, values)).mean()
         # Relative mean absolute difference
-        rmad = mad/np.mean(values)
+        rmad = mad / np.mean(values)
         # Gini coefficient
         g = 0.5 * rmad
         return g
 
     def normalize(
-            self, profile_column=None, new_profile=None, error_column=None,
-            new_error=None, norm_method=None, nt_groups=None,
-            profile_factors=None, **norm_kwargs
-            ):
+        self,
+        profile_column=None,
+        new_profile=None,
+        error_column=None,
+        new_error=None,
+        norm_method=None,
+        nt_groups=None,
+        profile_factors=None,
+        **norm_kwargs,
+    ):
         """Normalize values in a column, and store in a new column.
 
         By default, performs ShapeMapper2 boxplot normalization on self.metric
@@ -199,28 +217,28 @@ class Profile(data.Data):
         if new_error is None:
             new_error = "Norm_error"
         profile = self.data[profile_column]
-        norm_sequence = self.sequence.upper().replace('T', 'U')
+        norm_sequence = self.sequence.upper().replace("T", "U")
         # initialize the error arrays
         if error_column is not None:
             error = self.data[error_column]
             normerr = np.zeros(error.shape)
             mask = profile != 0
-            normerr[mask] = (error[mask]/profile[mask])**2
+            normerr[mask] = (error[mask] / profile[mask]) ** 2
         else:
             normerr = None
         # calculate normalization factors, if appropriate
         if profile_factors is None:
-            profile_factors = {nt: np.nan for nt in 'ACGU'}
-            error_factors = {nt: np.nan for nt in 'ACGU'}
+            profile_factors = {nt: np.nan for nt in "ACGU"}
+            error_factors = {nt: np.nan for nt in "ACGU"}
             methods_groups = {
-                'DMS': (self.norm_percentiles, ['AC', 'GU']),
-                'eDMS': (self.norm_eDMS, ['A', 'C', 'G', 'U']),
-                'boxplot': (self.norm_boxplot, nt_groups),
-                'percentiles': (self.norm_percentiles, nt_groups)
+                "DMS": (self.norm_percentiles, ["AC", "GU"]),
+                "eDMS": (self.norm_eDMS, ["A", "C", "G", "U"]),
+                "boxplot": (self.norm_boxplot, nt_groups),
+                "percentiles": (self.norm_percentiles, nt_groups),
             }
             norm_method, nt_groups = methods_groups[norm_method]
             if nt_groups is None:
-                nt_groups = ['AUCG']
+                nt_groups = ["AUCG"]
             for nt_group in nt_groups:
                 in_group = [nt in nt_group for nt in norm_sequence]
                 prof, err = norm_method(profile[in_group], **norm_kwargs)
@@ -232,9 +250,9 @@ class Profile(data.Data):
         self.data[new_profile] = norm_profile
         # calculate the new errors, if appropriate
         if normerr is not None and error_factors is not None:
-            for i in 'AUCG':
+            for i in "AUCG":
                 mask = [nt == i for nt in norm_sequence]
-                normerr[mask] += (error_factors[i] * profile_factors[i])**2
+                normerr[mask] += (error_factors[i] * profile_factors[i]) ** 2
                 normerr[mask] = np.sqrt(normerr[mask])
                 normerr[mask] *= np.abs(norm_profile[mask])
             self.data[new_error] = normerr
@@ -301,9 +319,9 @@ class Profile(data.Data):
         num_finite = len(finite_values)
         num_iqr = len(iqr_values)
         # see if too many values are classified as outliers
-        if num_finite < 100 and num_iqr/num_finite < 0.95:
+        if num_finite < 100 and num_iqr / num_finite < 0.95:
             iqr_values = finite_values[finite_values <= p95]
-        elif num_finite >= 100 and num_iqr/num_finite < 0.9:
+        elif num_finite >= 100 and num_iqr / num_finite < 0.9:
             iqr_values = finite_values[finite_values < p90]
         new_p90 = np.percentile(iqr_values, 90)
         final_values = iqr_values[iqr_values > new_p90]
@@ -322,19 +340,19 @@ class Profile(data.Data):
             (float, float): scaling factor and error propagation factor
         """
         # if too few values points, don't normalize
-        if len(values)<10:
+        if len(values) < 10:
             return np.nan, np.nan
-        bounds = np.percentile(values, [90., 95.])
+        bounds = np.percentile(values, [90.0, 95.0])
         mask = (values >= bounds[0]) & (values < bounds[1])
         normset = values[mask]
         # compute the norm the standard way
         n1 = np.mean(normset)
         try:
             # compute the norm only considering reactive nts
-            n2 = np.percentile(values[values > 0.001], 75.)
+            n2 = np.percentile(values[values > 0.001], 75.0)
         except IndexError:
             n2 = 0
-        factor = max(n1,n2)
+        factor = max(n1, n2)
         # if signal too low, don't norm the values
         if factor < 0.002:
             return np.nan, np.nan
@@ -342,8 +360,8 @@ class Profile(data.Data):
         return factor, error_factor
 
     def norm_percentiles(
-            self, values, lower_bound=90, upper_bound=99, median_or_mean="mean"
-            ):
+        self, values, lower_bound=90, upper_bound=99, median_or_mean="mean"
+    ):
         """Calculates profile scaling factors and error propagation by scaling
         the median between upper and lower bound percentiles to 1.
 
@@ -372,30 +390,39 @@ class Profile(data.Data):
 
 class SHAPEMaP(Profile):
     def __init__(
-            self, input_data, normalize=None, read_table_kw=None,
-            sequence=None, metric='Norm_profile', metric_defaults=None,
-            log=None, name=None,
-            ):
+        self,
+        input_data,
+        normalize=None,
+        read_table_kw=None,
+        sequence=None,
+        metric="Norm_profile",
+        metric_defaults=None,
+        log=None,
+        name=None,
+    ):
         self.read_lengths, self.mutations_per_molecule = self.read_log(log)
         if metric_defaults is None:
             metric_defaults = {}
         metric_defaults = {
-            'Norm_profile': {
-                'metric_column': 'Norm_profile',
-                'error_column': 'Norm_stderr',
-                'cmap': ["grey", "black", "orange", "red", "red"],
-                'normalization': "bins",
-                'values': [-0.4, 0.4, 0.85, 2],
-                'title': 'SHAPE Reactivity',
-                'extend': 'both'}
-            } | metric_defaults
-        if (isinstance(input_data, str)
-                and input_data.endswith(".map")
-                and read_table_kw is None):
+            "Norm_profile": {
+                "metric_column": "Norm_profile",
+                "error_column": "Norm_stderr",
+                "cmap": ["grey", "black", "orange", "red", "red"],
+                "normalization": "bins",
+                "values": [-0.4, 0.4, 0.85, 2],
+                "title": "SHAPE Reactivity",
+                "extend": "both",
+            }
+        } | metric_defaults
+        if (
+            isinstance(input_data, str)
+            and input_data.endswith(".map")
+            and read_table_kw is None
+        ):
             read_table_kw = {
-                "names": ["Nucleotide", "Norm_profile",
-                          "Norm_stderr", "Sequence"],
-                "na_values": "-999"}
+                "names": ["Nucleotide", "Norm_profile", "Norm_stderr", "Sequence"],
+                "na_values": "-999",
+            }
 
         super().__init__(
             input_data=input_data,
@@ -404,13 +431,15 @@ class SHAPEMaP(Profile):
             metric=metric,
             metric_defaults=metric_defaults,
             name=name,
-            )
+        )
         if normalize is not None:
             self.normalize(
-                profile_column="HQ_profile", new_profile="Norm_profile",
-                error_column="HQ_stderr", new_error="Norm_stderr",
+                profile_column="HQ_profile",
+                new_profile="Norm_profile",
+                error_column="HQ_stderr",
+                new_error="Norm_stderr",
                 norm_method=normalize,
-                )
+            )
 
     @classmethod
     def from_rnaframework(cls, input_data, normalize=None):
@@ -419,64 +448,95 @@ class SHAPEMaP(Profile):
         sequence = root.find("./transcript/sequence").text
         sequence = [nt for nt in sequence if nt in "ATCG"]
         reactivities = root.find("./transcript/reactivity").text
-        reactivities = [float(rx) for rx in reactivities.split(',')]
-        input_data = pd.DataFrame({
-            'Nucleotide': [n+1 for n in range(len(sequence))],
-            'Sequence': sequence,
-            "Norm_profile": reactivities})
+        reactivities = [float(rx) for rx in reactivities.split(",")]
+        input_data = pd.DataFrame(
+            {
+                "Nucleotide": [n + 1 for n in range(len(sequence))],
+                "Sequence": sequence,
+                "Norm_profile": reactivities,
+            }
+        )
         profile = cls(input_data=input_data, normalize=normalize)
         return profile
 
     def read_log(self, log):
         if log is None:
             return None, None
-        with open(log, 'r') as f:
+        with open(log, "r") as f:
             flist = list(f)
             log_format_test = 0
             for i, line in enumerate(flist):
                 if line.startswith("  |MutationCounter_Modified"):
                     log_format_test += 1
                     modlength = []
-                    for x in flist[i+6:i+27]:
-                        modlength.append(float(x.strip().split('\t')[1]))
+                    for x in flist[i + 6 : i + 27]:
+                        modlength.append(float(x.strip().split("\t")[1]))
                     modmuts = []
-                    for x in flist[i+32:i+53]:
-                        modmuts.append(float(x.strip().split('\t')[1]))
+                    for x in flist[i + 32 : i + 53]:
+                        modmuts.append(float(x.strip().split("\t")[1]))
                 if line.startswith("  |MutationCounter_Untreated"):
                     log_format_test += 1
                     untlength = []
-                    for x in flist[i+6:i+27]:
-                        untlength.append(float(x.strip().split('\t')[1]))
+                    for x in flist[i + 6 : i + 27]:
+                        untlength.append(float(x.strip().split("\t")[1]))
                     untmuts = []
-                    for x in flist[i+32:i+53]:
-                        untmuts.append(float(x.strip().split('\t')[1]))
-        message = ("Histogram data missing from log file. Requires" +
-                   " --per-read-histogram flag when running ShapeMapper.")
+                    for x in flist[i + 32 : i + 53]:
+                        untmuts.append(float(x.strip().split("\t")[1]))
+        message = (
+            "Histogram data missing from log file. Requires"
+            + " --per-read-histogram flag when running ShapeMapper."
+        )
         assert log_format_test >= 2, message
-        read_lengths = pd.DataFrame({
-            'Read_length': [
-                '0-49', '50-99', '100-149', '150-199', '200-249', '250-299',
-                '300-349', '350-399', '400-449', '450-499', '500-549',
-                '550-599', '600-649', '650-699', '700-749', '750-799',
-                '800-849', '850-899', '900-949', '950-999', '>1000'
+        read_lengths = pd.DataFrame(
+            {
+                "Read_length": [
+                    "0-49",
+                    "50-99",
+                    "100-149",
+                    "150-199",
+                    "200-249",
+                    "250-299",
+                    "300-349",
+                    "350-399",
+                    "400-449",
+                    "450-499",
+                    "500-549",
+                    "550-599",
+                    "600-649",
+                    "650-699",
+                    "700-749",
+                    "750-799",
+                    "800-849",
+                    "850-899",
+                    "900-949",
+                    "950-999",
+                    ">1000",
                 ],
-            'Modified_read_length': modlength,
-            'Untreated_read_length': untlength,
-            })
-        mutations_per_molecule = pd.DataFrame({
-                'Mutation_count': np.arange(21),
-                'Modified_mutations_per_molecule': modmuts,
-                'Untreated_mutations_per_molecule': untmuts
-            })
+                "Modified_read_length": modlength,
+                "Untreated_read_length": untlength,
+            }
+        )
+        mutations_per_molecule = pd.DataFrame(
+            {
+                "Mutation_count": np.arange(21),
+                "Modified_mutations_per_molecule": modmuts,
+                "Untreated_mutations_per_molecule": untmuts,
+            }
+        )
         return read_lengths, mutations_per_molecule
 
 
 class DanceMaP(SHAPEMaP):
     def __init__(
-            self, input_data, component, read_table_kw=None,
-            sequence=None, metric='Norm_profile', metric_defaults=None,
-            name=None,
-            ):
+        self,
+        input_data,
+        component,
+        read_table_kw=None,
+        sequence=None,
+        metric="Norm_profile",
+        metric_defaults=None,
+        name=None,
+    ):
         self.component = component
         super().__init__(
             input_data=input_data,
@@ -485,12 +545,11 @@ class DanceMaP(SHAPEMaP):
             metric=metric,
             metric_defaults=metric_defaults,
             name=name,
-            )
+        )
 
     @property
     def recreation_kwargs(self):
-        return {'component': self.component}
-
+        return {"component": self.component}
 
     def read_file(self, input_data, read_table_kw={}):
         # parse header
@@ -503,11 +562,16 @@ class DanceMaP(SHAPEMaP):
         self.percents = [float(x) for x in header2.strip().split()[1:]]
         self.percent = self.percents[self.component]
         # parse datatable
-        read_table_kw['names'] = ["Nucleotide", "Sequence", "Norm_profile",
-                                  "Modified_rate", "Untreated_rate"]
+        read_table_kw["names"] = [
+            "Nucleotide",
+            "Sequence",
+            "Norm_profile",
+            "Modified_rate",
+            "Untreated_rate",
+        ]
         col_offset = 3 * self.component
         bg_col = 3 * self.components + 2
-        read_table_kw["usecols"] = [0, 1, 2+col_offset, 3+col_offset, bg_col]
+        read_table_kw["usecols"] = [0, 1, 2 + col_offset, 3 + col_offset, bg_col]
         df = pd.read_table(self.filepath, header=2, **read_table_kw)
         # some rows have an "i" added to the final column
         stripped = []
@@ -515,7 +579,7 @@ class DanceMaP(SHAPEMaP):
             if type(x) is float:
                 stripped.append(x)
             else:
-                stripped.append(float(x.rstrip(' i')))
+                stripped.append(float(x.rstrip(" i")))
         df["Untreated_rate"] = stripped
         df = df.eval("Reactivity_profile = Modified_rate - Untreated_rate")
         return df
@@ -523,24 +587,28 @@ class DanceMaP(SHAPEMaP):
 
 class RNPMaP(Profile):
     def __init__(
-            self, input_data, read_table_kw=None, sequence=None,
-            metric="NormedP", metric_defaults=None, name=None,
-            ):
+        self,
+        input_data,
+        read_table_kw=None,
+        sequence=None,
+        metric="NormedP",
+        metric_defaults=None,
+        name=None,
+    ):
         if metric_defaults is None:
             metric_defaults = {}
         if read_table_kw is None:
             read_table_kw = {}
         metric_defaults = {
-            'NormedP': {
-                'metric_column': 'NormedP',
-                'color_column': 'RNPsite',
-                'cmap': ["silver", "limegreen"],
-                'normalization': "none",
-                'values': None}
-            } | metric_defaults
-        read_table_kw = {
-            'sep': ','
-            } | read_table_kw
+            "NormedP": {
+                "metric_column": "NormedP",
+                "color_column": "RNPsite",
+                "cmap": ["silver", "limegreen"],
+                "normalization": "none",
+                "values": None,
+            }
+        } | metric_defaults
+        read_table_kw = {"sep": ","} | read_table_kw
         super().__init__(
             input_data=input_data,
             read_table_kw=read_table_kw,
@@ -548,14 +616,18 @@ class RNPMaP(Profile):
             metric=metric,
             metric_defaults=metric_defaults,
             name=name,
-            )
+        )
 
 
 class DeltaProfile(Profile):
     def __init__(
-            self, profile1, profile2, metric=None, metric_defaults=None,
-            name=None,
-            ):
+        self,
+        profile1,
+        profile2,
+        metric=None,
+        metric_defaults=None,
+        name=None,
+    ):
         if metric is None:
             metric = profile1.metric
 
@@ -565,20 +637,25 @@ class DeltaProfile(Profile):
         new_data = pd.merge(
             profile1.data[columns],
             profile2.data[columns],
-            how="left", on=["Nucleotide"], suffixes=["_1", "_2"])
+            how="left",
+            on=["Nucleotide"],
+            suffixes=["_1", "_2"],
+        )
         new_data.eval(f"Delta_profile = {metric}_1 - {metric}_2", inplace=True)
         metric_defaults = {
-            'Delta_profile': {
-                'metric_column': 'Delta_profile',
-                'error_column': None,
-                'color_column': None,
-                'cmap': 'coolwarm',
-                'normalization': "min_max",
-                'values': [-0.8, 0.8]}
-            } | metric_defaults
+            "Delta_profile": {
+                "metric_column": "Delta_profile",
+                "error_column": None,
+                "color_column": None,
+                "cmap": "coolwarm",
+                "normalization": "min_max",
+                "values": [-0.8, 0.8],
+            }
+        } | metric_defaults
         super().__init__(
             input_data=new_data,
             sequence=profile1.sequence,
             metric="Delta_profile",
             metric_defaults=metric_defaults,
-            name=name)
+            name=name,
+        )

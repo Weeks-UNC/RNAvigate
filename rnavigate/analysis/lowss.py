@@ -52,9 +52,13 @@ class LowSS(Sample):
     """
 
     def __init__(
-            self, sample, window=55, shapemap='shapemap', pairprob='pairprob',
-            structure='ss'
-            ):
+        self,
+        sample,
+        window=55,
+        shapemap="shapemap",
+        pairprob="pairprob",
+        structure="ss",
+    ):
         """Perform Low SHAPE, low Shannon entropy analysis given a sample with
         1) reactivities 2) MFE structure 3) pairing probabilities.
 
@@ -82,21 +86,23 @@ class LowSS(Sample):
         pairprob = sample.get_data(pairprob, data.PairingProbability)
         structure = structure.get_aligned_data(structure.null_alignment)
         shapemap = shapemap.get_aligned_data(
-            data.SequenceAlignment(shapemap, structure))
+            data.SequenceAlignment(shapemap, structure)
+        )
         pairprob = pairprob.get_aligned_data(
-            data.SequenceAlignment(pairprob, structure))
+            data.SequenceAlignment(pairprob, structure)
+        )
         entropy = pairprob.get_entropy_profile()
         super().__init__(
-            sample=f'{sample.sample}: lowSS',
+            sample=f"{sample.sample}: lowSS",
             structure=structure,
             shapemap=shapemap,
             pairprob=pairprob,
             entropy=entropy,
-            )
+        )
         self.parent = sample
         self.window = window
-        self.median_shape = shapemap.data['Norm_profile'].median(skipna=True)
-        self.median_entropy = entropy.data['Entropy'].median(skipna=True)
+        self.median_shape = shapemap.data["Norm_profile"].median(skipna=True)
+        self.median_entropy = entropy.data["Entropy"].median(skipna=True)
         self.reset_window()
 
     def reset_lowss(self, maximum_shape=None, maximum_entropy=0.08):
@@ -110,18 +116,21 @@ class LowSS(Sample):
         """
         if maximum_shape is None:
             maximum_shape = self.median_shape
-        entropies = self.data['entropy'].data['Windowed_entropy']
-        shapes = self.data['shapemap'].data['Windowed_profile']
+        entropies = self.data["entropy"].data["Windowed_entropy"]
+        shapes = self.data["shapemap"].data["Windowed_profile"]
         is_lowss = (entropies < maximum_entropy) & (shapes < maximum_shape)
         self.set_data(
             overwrite=True,
-            data_keyword='lowSS',
+            data_keyword="lowSS",
             inputs=data.Annotation.from_boolean_array(
-                values=is_lowss, window=self.window, annotation_type='spans',
-                color="grey", sequence=self.data['structure'].sequence,
+                values=is_lowss,
+                window=self.window,
+                annotation_type="spans",
+                color="grey",
+                sequence=self.data["structure"].sequence,
                 name="lowSS",
-                ),
-            )
+            ),
+        )
 
     def reset_window(self, window=None):
         """Resets the window size and recalculates windowed SHAPE reactivities
@@ -137,14 +146,20 @@ class LowSS(Sample):
         else:
             self.window = window
         # Calculate windowed median SHAPE and entropies
-        self.data['shapemap'].calculate_windows(
-            column='Norm_profile', window=window, method='median',
-            new_name='Windowed_profile', minimum_points=1,
-            )
-        self.data['entropy'].calculate_windows(
-            column='Entropy', window=window, method='median',
-            new_name='Windowed_entropy', minimum_points=1,
-            )
+        self.data["shapemap"].calculate_windows(
+            column="Norm_profile",
+            window=window,
+            method="median",
+            new_name="Windowed_profile",
+            minimum_points=1,
+        )
+        self.data["entropy"].calculate_windows(
+            column="Entropy",
+            window=window,
+            method="median",
+            new_name="Windowed_entropy",
+            minimum_points=1,
+        )
         self.reset_lowss()
 
     def plot_lowss(self, region=None, colorbars=True):
@@ -161,11 +176,11 @@ class LowSS(Sample):
         Returns:
             rnavigate.plots.AP: LowSS visualization
         """
-        shapemap = self.data['shapemap']
-        structure = self.data['structure']
-        pairprob = self.data['pairprob']
-        entropy = self.data['entropy']
-        lowss = self.data['lowSS']
+        shapemap = self.data["shapemap"]
+        structure = self.data["structure"]
+        pairprob = self.data["pairprob"]
+        entropy = self.data["entropy"]
+        lowss = self.data["lowSS"]
         # show entire RNA if region is not provided
         if region is None:
             start = 1
@@ -173,7 +188,7 @@ class LowSS(Sample):
             region = [start, stop]
         # if region is an integer, get that lowSS region +/- 150 nts
         elif isinstance(region, int):
-            region = lowss[region-1]
+            region = lowss[region - 1]
             start, stop = region
             start = max(start - 150, 1)
             stop = min(stop + 150, structure.length)
@@ -190,10 +205,12 @@ class LowSS(Sample):
         prof_ax.set_ylim(-3, 1)
         prof_ax.set_yticks([0.0, 0.4, 0.85])
         prof_ax.fill_between(
-            x=x_values, y1=[self.median_shape]*region_length,
-            y2=shapemap.data['Windowed_profile'][start-1:stop],
-            fc='0.3', lw=0
-            )
+            x=x_values,
+            y1=[self.median_shape] * region_length,
+            y2=shapemap.data["Windowed_profile"][start - 1 : stop],
+            fc="0.3",
+            lw=0,
+        )
         plots.adjust_spines(prof_ax, ["left"])
         plots.clip_spines(prof_ax, ["left"])
 
@@ -202,10 +219,12 @@ class LowSS(Sample):
         ent_ax.set_ylim(-1.5, 1.5)
         ent_ax.set_yticks(ticks=[0, 0.08, 0.5])
         ent_ax.fill_between(
-            x=x_values, y1=[0.08]*region_length,
-            y2=entropy.data['Windowed_entropy'][start-1:stop],
-            fc='C1', lw=0,
-            )
+            x=x_values,
+            y1=[0.08] * region_length,
+            y2=entropy.data["Windowed_entropy"][start - 1 : stop],
+            fc="C1",
+            lw=0,
+        )
         plots.adjust_spines(ent_ax, ["left"])
         plots.clip_spines(ent_ax, ["left"])
 
@@ -218,39 +237,64 @@ class LowSS(Sample):
             seqbar=False,
             title=False,
             annotations=[lowss],
-            annotation_mode="bar")
+            annotation_mode="bar",
+        )
 
         # Place Track Labels
-        ax.set_title(f"{self.sample}\n{start} - {stop}", loc='left',
-                     fontdict={"fontsize": 16})
-        ax.text(1.002, 7/8, "SHAPE\nReactivity",
-                fontsize=12, transform=ax.transAxes, va='center')
-        ax.text(1.002, 5/8, "Shannon\nEntropy",
-                fontsize=12, transform=ax.transAxes, va='center')
-        ax.text(1.002, 3/8, "Secondary\nStructure",
-                transform=ax.transAxes, fontsize=12, va='center')
-        ax.text(1.002, 1/8, "Pairing\nProbability",
-                transform=ax.transAxes, va='center', fontsize=12)
+        ax.set_title(
+            f"{self.sample}\n{start} - {stop}", loc="left", fontdict={"fontsize": 16}
+        )
+        ax.text(
+            1.002,
+            7 / 8,
+            "SHAPE\nReactivity",
+            fontsize=12,
+            transform=ax.transAxes,
+            va="center",
+        )
+        ax.text(
+            1.002,
+            5 / 8,
+            "Shannon\nEntropy",
+            fontsize=12,
+            transform=ax.transAxes,
+            va="center",
+        )
+        ax.text(
+            1.002,
+            3 / 8,
+            "Secondary\nStructure",
+            transform=ax.transAxes,
+            fontsize=12,
+            va="center",
+        )
+        ax.text(
+            1.002,
+            1 / 8,
+            "Pairing\nProbability",
+            transform=ax.transAxes,
+            va="center",
+            fontsize=12,
+        )
 
         # Place region labels
         for i, (lssr_start, lssr_stop) in enumerate(lowss):
             middle = (lssr_stop + lssr_start) / 2
             if start < middle < stop:
                 ax.text(
-                    x=middle, y=550, s=str(i+1),
-                    ha='center', va='center', fontsize=12
-                    )
+                    x=middle, y=550, s=str(i + 1), ha="center", va="center", fontsize=12
+                )
 
         ax.set_ylim([-305, 915])
-        ax.set_xticks(ticks=[x for x in range(500, stop+1, 500) if x > start])
+        ax.set_xticks(ticks=[x for x in range(500, stop + 1, 500) if x > start])
         ax.set_xticks(
-            ticks=[x for x in range(100, stop+1, 100) if x > start], minor=True
-            )
-        ax.tick_params(axis='x', which='major', labelsize=12)
-        plots.adjust_spines(ax, ['bottom'])
+            ticks=[x for x in range(100, stop + 1, 100) if x > start], minor=True
+        )
+        ax.tick_params(axis="x", which="major", labelsize=12)
+        plots.adjust_spines(ax, ["bottom"])
 
         # set figure size so that 200 ax units == 1 inch
-        plot.set_figure_size(height_ax_rel=1/200, width_ax_rel=1/200)
+        plot.set_figure_size(height_ax_rel=1 / 200, width_ax_rel=1 / 200)
         if colorbars:
             plot.plot_colorbars()
         return plot

@@ -18,28 +18,57 @@ data_keyword_defaults = {
     "ringmap": {"data_class": data.RINGMaP, "sequence": "default_profile"},
     "pairmap": {"data_class": data.PAIRMaP, "sequence": "default_profile"},
     "shapejump": {"data_class": data.SHAPEJuMP, "sequence": _required},
-    "pairprob": {"data_class": data.PairingProbability,
-                 "sequence": "default_profile"},
+    "pairprob": {"data_class": data.PairingProbability, "sequence": "default_profile"},
     "ss": {"data_class": data.SecondaryStructure},
-    "ss_pairs": {"data_class": data.SecondaryStructure.from_pairs_list,
-                 "sequence": _required},
+    "ss_pairs": {
+        "data_class": data.SecondaryStructure.from_pairs_list,
+        "sequence": _required,
+    },
     "pdb": {"data_class": data.PDB, "chain": _required},
     "allpossible": {"data_class": data.AllPossible, "sequence": _required},
-    "motif": {"data_class": data.Motif, "name": _required,
-              "sequence": _required, "color": _required},
-    "orfs": {"data_class": data.ORFs, "name": _required,
-             "sequence": _required, "color": _required},
-    "spans": {"data_class": data.Annotation, "name": _required,
-              "sequence": _required, "color": _required},
-    "sites": {"data_class": data.Annotation, "name": _required,
-              "sequence": _required, "color": _required},
-    "group": {"data_class": data.Annotation, "name": _required,
-              "sequence": _required, "color": _required},
-    "primers": {"data_class": data.Annotation, "name": _required,
-                "sequence": _required, "color": _required},
-    "domains": {"data_class": data.domains, "sequence": _required,
-                "colors": _required, "names": _required},
-    }
+    "motif": {
+        "data_class": data.Motif,
+        "name": _required,
+        "sequence": _required,
+        "color": _required,
+    },
+    "orfs": {
+        "data_class": data.ORFs,
+        "name": _required,
+        "sequence": _required,
+        "color": _required,
+    },
+    "spans": {
+        "data_class": data.Annotation,
+        "name": _required,
+        "sequence": _required,
+        "color": _required,
+    },
+    "sites": {
+        "data_class": data.Annotation,
+        "name": _required,
+        "sequence": _required,
+        "color": _required,
+    },
+    "group": {
+        "data_class": data.Annotation,
+        "name": _required,
+        "sequence": _required,
+        "color": _required,
+    },
+    "primers": {
+        "data_class": data.Annotation,
+        "name": _required,
+        "sequence": _required,
+        "color": _required,
+    },
+    "domains": {
+        "data_class": data.domains,
+        "sequence": _required,
+        "colors": _required,
+        "names": _required,
+    },
+}
 
 
 def create_data(data_keyword, inputs, sample=None):
@@ -115,8 +144,7 @@ def create_data(data_keyword, inputs, sample=None):
         inputs = data_keyword_defaults[data_keyword] | inputs
         data_constructor = inputs.pop("data_class")
     except KeyError as exception:
-        raise KeyError(
-            f"{data_keyword} is not a valid data keyword.") from exception
+        raise KeyError(f"{data_keyword} is not a valid data keyword.") from exception
 
     # get sequence from another object if appropriate
     if "sequence" in inputs:
@@ -130,7 +158,8 @@ def create_data(data_keyword, inputs, sample=None):
     if len(required_arguments) > 0:
         raise ValueError(
             f"{data_keyword} missing required arguments:\n"
-            ", ".join(required_arguments))
+            ", ".join(required_arguments)
+        )
 
     # instantiate and return the data class
     try:
@@ -139,9 +168,7 @@ def create_data(data_keyword, inputs, sample=None):
             data_obj.name = label
         return data_obj
     except BaseException as exception:
-        raise ValueError(
-            f"data_keyword={data_keyword}\ninputs={inputs}"
-            ) from exception
+        raise ValueError(f"data_keyword={data_keyword}\ninputs={inputs}") from exception
 
 
 def get_sequence(sequence, sample=None, default=None):
@@ -174,8 +201,7 @@ def get_sequence(sequence, sample=None, default=None):
         return sequence
     if isinstance(sequence, str) and os.path.isfile(sequence):
         return data.Sequence(sequence)
-    if (isinstance(sequence, str)
-            and all([nt.upper() in "AUCGT.-" for nt in sequence])):
+    if isinstance(sequence, str) and all([nt.upper() in "AUCGT.-" for nt in sequence]):
         return data.Sequence(sequence)
     else:
         raise ValueError(f"Cannot find sequence from ({sequence})")

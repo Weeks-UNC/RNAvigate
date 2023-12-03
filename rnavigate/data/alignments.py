@@ -20,6 +20,7 @@ from rnavigate import data
 # store sequence alignments
 _alignments_cache = {}
 
+
 # structure alignment parameters
 # conversion of nt+pairing to pseudo amino acid sequence
 def convert_sequence(aas, nts, dbn):
@@ -47,7 +48,7 @@ def convert_sequence(aas, nts, dbn):
     nts_key = "AAAAACCCCCUUUUUGGGGG-"
     dbn_key = "([.])([.])([.])([.])-"
     aas_key = "ACDEFGHIKLMNPQRSTVWY-"
-    to_aa = {nt+db: aa for nt, db, aa in zip(nts_key, dbn_key, aas_key)}
+    to_aa = {nt + db: aa for nt, db, aa in zip(nts_key, dbn_key, aas_key)}
     to_nt = {aa: nt for nt, aa in zip(nts_key, aas_key)}
     to_db = {aa: db for db, aa in zip(dbn_key, aas_key)}
     if aas is True:
@@ -58,7 +59,7 @@ def convert_sequence(aas, nts, dbn):
         pk_level |= {right: "]" for right in "}>abcdefghijklmnopqrstuvwxyz"}
         pk_level |= {keep: keep for keep in ".()[]"}
         dbn = [pk_level[db] for db in dbn]
-        aas = "".join(to_aa[nt+db] for nt, db in zip(nts, dbn))
+        aas = "".join(to_aa[nt + db] for nt, db in zip(nts, dbn))
         return aas
     elif nts is True:
         nts = "".join([to_nt[aa] for aa in aas])
@@ -66,8 +67,11 @@ def convert_sequence(aas, nts, dbn):
     elif dbn is True:
         dbn = "".join([to_db[aa] for aa in aas])
         return dbn
-    raise ValueError("Please specify which sequence to return by setting aas, "
-                     "nts, or dbn to  True.")
+    raise ValueError(
+        "Please specify which sequence to return by setting aas, "
+        "nts, or dbn to  True."
+    )
+
 
 # code used to generate structure_scoring_dict
 # pair_scores = ({}
@@ -96,33 +100,39 @@ def convert_sequence(aas, nts, dbn):
 #         pair_score = pair_scores[pair1+pair2]
 #         scoring_dict[(aa1, aa2)] = nt_score + pair_score
 
+# fmt: off
 structure_scoring_dict = {
-    ("A", "A"): 10, ("A", "C"): 7, ("A", "D"): -3, ("A", "E"): -5, ("A", "F"): -5, ("A", "G"): 5, ("A", "H"): 2, ("A", "I"): -8, ("A", "K"): -10, ("A", "L"): -10, ("A", "M"): 5, ("A", "N"): 2, ("A", "P"): -8, ("A", "Q"): -10, ("A", "R"): -10, ("A", "S"): 5, ("A", "T"): 2, ("A", "V"): -8, ("A", "W"): -10, ("A", "Y"): -10,  # noqa: E501 pylint: disable=C0301
-    ("C", "A"): 7, ("C", "C"): 10, ("C", "D"): -3, ("C", "E"): -5, ("C", "F"): -5, ("C", "G"): 2, ("C", "H"): 5, ("C", "I"): -8, ("C", "K"): -10, ("C", "L"): -10, ("C", "M"): 2, ("C", "N"): 5, ("C", "P"): -8, ("C", "Q"): -10, ("C", "R"): -10, ("C", "S"): 2, ("C", "T"): 5, ("C", "V"): -8, ("C", "W"): -10, ("C", "Y"): -10,  # noqa: E501 pylint: disable=C0301
-    ("D", "A"): -3, ("D", "C"): -3, ("D", "D"): 11, ("D", "E"): -3, ("D", "F"): -3, ("D", "G"): -8, ("D", "H"): -8, ("D", "I"): 6, ("D", "K"): -8, ("D", "L"): -8, ("D", "M"): -8, ("D", "N"): -8, ("D", "P"): 6, ("D", "Q"): -8, ("D", "R"): -8, ("D", "S"): -8, ("D", "T"): -8, ("D", "V"): 6, ("D", "W"): -8, ("D", "Y"): -8,  # noqa: E501 pylint: disable=C0301
-    ("E", "A"): -5, ("E", "C"): -5, ("E", "D"): -3, ("E", "E"): 10, ("E", "F"): 7, ("E", "G"): -10, ("E", "H"): -10, ("E", "I"): -8, ("E", "K"): 5, ("E", "L"): 2, ("E", "M"): -10, ("E", "N"): -10, ("E", "P"): -8, ("E", "Q"): 5, ("E", "R"): 2, ("E", "S"): -10, ("E", "T"): -10, ("E", "V"): -8, ("E", "W"): 5, ("E", "Y"): 2,  # noqa: E501 pylint: disable=C0301
-    ("F", "A"): -5, ("F", "C"): -5, ("F", "D"): -3, ("F", "E"): 7, ("F", "F"): 10, ("F", "G"): -10, ("F", "H"): -10, ("F", "I"): -8, ("F", "K"): 2, ("F", "L"): 5, ("F", "M"): -10, ("F", "N"): -10, ("F", "P"): -8, ("F", "Q"): 2, ("F", "R"): 5, ("F", "S"): -10, ("F", "T"): -10, ("F", "V"): -8, ("F", "W"): 2, ("F", "Y"): 5,  # noqa: E501 pylint: disable=C0301
-    ("G", "A"): 5, ("G", "C"): 2, ("G", "D"): -8, ("G", "E"): -10, ("G", "F"): -10, ("G", "G"): 10, ("G", "H"): 7, ("G", "I"): -3, ("G", "K"): -5, ("G", "L"): -5, ("G", "M"): 5, ("G", "N"): 2, ("G", "P"): -8, ("G", "Q"): -10, ("G", "R"): -10, ("G", "S"): 5, ("G", "T"): 2, ("G", "V"): -8, ("G", "W"): -10, ("G", "Y"): -10,  # noqa: E501 pylint: disable=C0301
-    ("H", "A"): 2, ("H", "C"): 5, ("H", "D"): -8, ("H", "E"): -10, ("H", "F"): -10, ("H", "G"): 7, ("H", "H"): 10, ("H", "I"): -3, ("H", "K"): -5, ("H", "L"): -5, ("H", "M"): 2, ("H", "N"): 5, ("H", "P"): -8, ("H", "Q"): -10, ("H", "R"): -10, ("H", "S"): 2, ("H", "T"): 5, ("H", "V"): -8, ("H", "W"): -10, ("H", "Y"): -10,  # noqa: E501 pylint: disable=C0301
-    ("I", "A"): -8, ("I", "C"): -8, ("I", "D"): 6, ("I", "E"): -8, ("I", "F"): -8, ("I", "G"): -3, ("I", "H"): -3, ("I", "I"): 11, ("I", "K"): -3, ("I", "L"): -3, ("I", "M"): -8, ("I", "N"): -8, ("I", "P"): 6, ("I", "Q"): -8, ("I", "R"): -8, ("I", "S"): -8, ("I", "T"): -8, ("I", "V"): 6, ("I", "W"): -8, ("I", "Y"): -8,  # noqa: E501 pylint: disable=C0301
-    ("K", "A"): -10, ("K", "C"): -10, ("K", "D"): -8, ("K", "E"): 5, ("K", "F"): 2, ("K", "G"): -5, ("K", "H"): -5, ("K", "I"): -3, ("K", "K"): 10, ("K", "L"): 7, ("K", "M"): -10, ("K", "N"): -10, ("K", "P"): -8, ("K", "Q"): 5, ("K", "R"): 2, ("K", "S"): -10, ("K", "T"): -10, ("K", "V"): -8, ("K", "W"): 5, ("K", "Y"): 2,  # noqa: E501 pylint: disable=C0301
-    ("L", "A"): -10, ("L", "C"): -10, ("L", "D"): -8, ("L", "E"): 2, ("L", "F"): 5, ("L", "G"): -5, ("L", "H"): -5, ("L", "I"): -3, ("L", "K"): 7, ("L", "L"): 10, ("L", "M"): -10, ("L", "N"): -10, ("L", "P"): -8, ("L", "Q"): 2, ("L", "R"): 5, ("L", "S"): -10, ("L", "T"): -10, ("L", "V"): -8, ("L", "W"): 2, ("L", "Y"): 5,  # noqa: E501 pylint: disable=C0301
-    ("M", "A"): 5, ("M", "C"): 2, ("M", "D"): -8, ("M", "E"): -10, ("M", "F"): -10, ("M", "G"): 5, ("M", "H"): 2, ("M", "I"): -8, ("M", "K"): -10, ("M", "L"): -10, ("M", "M"): 10, ("M", "N"): 7, ("M", "P"): -3, ("M", "Q"): -5, ("M", "R"): -5, ("M", "S"): 5, ("M", "T"): 2, ("M", "V"): -8, ("M", "W"): -10, ("M", "Y"): -10,  # noqa: E501 pylint: disable=C0301
-    ("N", "A"): 2, ("N", "C"): 5, ("N", "D"): -8, ("N", "E"): -10, ("N", "F"): -10, ("N", "G"): 2, ("N", "H"): 5, ("N", "I"): -8, ("N", "K"): -10, ("N", "L"): -10, ("N", "M"): 7, ("N", "N"): 10, ("N", "P"): -3, ("N", "Q"): -5, ("N", "R"): -5, ("N", "S"): 2, ("N", "T"): 5, ("N", "V"): -8, ("N", "W"): -10, ("N", "Y"): -10,  # noqa: E501 pylint: disable=C0301
-    ("P", "A"): -8, ("P", "C"): -8, ("P", "D"): 6, ("P", "E"): -8, ("P", "F"): -8, ("P", "G"): -8, ("P", "H"): -8, ("P", "I"): 6, ("P", "K"): -8, ("P", "L"): -8, ("P", "M"): -3, ("P", "N"): -3, ("P", "P"): 11, ("P", "Q"): -3, ("P", "R"): -3, ("P", "S"): -8, ("P", "T"): -8, ("P", "V"): 6, ("P", "W"): -8, ("P", "Y"): -8,  # noqa: E501 pylint: disable=C0301
-    ("Q", "A"): -10, ("Q", "C"): -10, ("Q", "D"): -8, ("Q", "E"): 5, ("Q", "F"): 2, ("Q", "G"): -10, ("Q", "H"): -10, ("Q", "I"): -8, ("Q", "K"): 5, ("Q", "L"): 2, ("Q", "M"): -5, ("Q", "N"): -5, ("Q", "P"): -3, ("Q", "Q"): 10, ("Q", "R"): 7, ("Q", "S"): -10, ("Q", "T"): -10, ("Q", "V"): -8, ("Q", "W"): 5, ("Q", "Y"): 2,  # noqa: E501 pylint: disable=C0301
-    ("R", "A"): -10, ("R", "C"): -10, ("R", "D"): -8, ("R", "E"): 2, ("R", "F"): 5, ("R", "G"): -10, ("R", "H"): -10, ("R", "I"): -8, ("R", "K"): 2, ("R", "L"): 5, ("R", "M"): -5, ("R", "N"): -5, ("R", "P"): -3, ("R", "Q"): 7, ("R", "R"): 10, ("R", "S"): -10, ("R", "T"): -10, ("R", "V"): -8, ("R", "W"): 2, ("R", "Y"): 5,  # noqa: E501 pylint: disable=C0301
-    ("S", "A"): 5, ("S", "C"): 2, ("S", "D"): -8, ("S", "E"): -10, ("S", "F"): -10, ("S", "G"): 5, ("S", "H"): 2, ("S", "I"): -8, ("S", "K"): -10, ("S", "L"): -10, ("S", "M"): 5, ("S", "N"): 2, ("S", "P"): -8, ("S", "Q"): -10, ("S", "R"): -10, ("S", "S"): 10, ("S", "T"): 7, ("S", "V"): -3, ("S", "W"): -5, ("S", "Y"): -5,  # noqa: E501 pylint: disable=C0301
-    ("T", "A"): 2, ("T", "C"): 5, ("T", "D"): -8, ("T", "E"): -10, ("T", "F"): -10, ("T", "G"): 2, ("T", "H"): 5, ("T", "I"): -8, ("T", "K"): -10, ("T", "L"): -10, ("T", "M"): 2, ("T", "N"): 5, ("T", "P"): -8, ("T", "Q"): -10, ("T", "R"): -10, ("T", "S"): 7, ("T", "T"): 10, ("T", "V"): -3, ("T", "W"): -5, ("T", "Y"): -5,  # noqa: E501 pylint: disable=C0301
-    ("V", "A"): -8, ("V", "C"): -8, ("V", "D"): 6, ("V", "E"): -8, ("V", "F"): -8, ("V", "G"): -8, ("V", "H"): -8, ("V", "I"): 6, ("V", "K"): -8, ("V", "L"): -8, ("V", "M"): -8, ("V", "N"): -8, ("V", "P"): 6, ("V", "Q"): -8, ("V", "R"): -8, ("V", "S"): -3, ("V", "T"): -3, ("V", "V"): 11, ("V", "W"): -3, ("V", "Y"): -3,  # noqa: E501 pylint: disable=C0301
-    ("W", "A"): -10, ("W", "C"): -10, ("W", "D"): -8, ("W", "E"): 5, ("W", "F"): 2, ("W", "G"): -10, ("W", "H"): -10, ("W", "I"): -8, ("W", "K"): 5, ("W", "L"): 2, ("W", "M"): -10, ("W", "N"): -10, ("W", "P"): -8, ("W", "Q"): 5, ("W", "R"): 2, ("W", "S"): -5, ("W", "T"): -5, ("W", "V"): -3, ("W", "W"): 10, ("W", "Y"): 7,  # noqa: E501 pylint: disable=C0301
-    ("Y", "A"): -10, ("Y", "C"): -10, ("Y", "D"): -8, ("Y", "E"): 2, ("Y", "F"): 5, ("Y", "G"): -10, ("Y", "H"): -10, ("Y", "I"): -8, ("Y", "K"): 2, ("Y", "L"): 5, ("Y", "M"): -10, ("Y", "N"): -10, ("Y", "P"): -8, ("Y", "Q"): 2, ("Y", "R"): 5, ("Y", "S"): -5, ("Y", "T"): -5, ("Y", "V"): -3, ("Y", "W"): 7, ("Y", "Y"): 10  # noqa: E501 pylint: disable=C0301
+    ("A","A"):10,("A","C"):7,("A","D"):-3,("A","E"):-5,("A","F"):-5,("A","G"):5,("A","H"):2,("A","I"):-8,("A","K"):-10,("A","L"):-10,("A","M"):5,("A","N"):2,("A","P"):-8,("A","Q"):-10,("A","R"):-10,("A","S"):5,("A","T"):2,("A","V"):-8,("A","W"):-10,("A","Y"):-10,
+    ("C", "A"): 7,("C", "C"): 10,("C", "D"): -3,("C", "E"): -5,("C", "F"): -5,("C", "G"): 2,("C", "H"): 5,("C", "I"): -8,("C", "K"): -10,("C", "L"): -10,("C", "M"): 2,("C", "N"): 5,("C", "P"): -8,("C", "Q"): -10,("C", "R"): -10,("C", "S"): 2,("C", "T"): 5,("C", "V"): -8,("C", "W"): -10,("C", "Y"): -10,  # noqa: E501 pylint: disable=C0301
+    ("D", "A"): -3,("D", "C"): -3,("D", "D"): 11,("D", "E"): -3,("D", "F"): -3,("D", "G"): -8,("D", "H"): -8,("D", "I"): 6,("D", "K"): -8,("D", "L"): -8,("D", "M"): -8,("D", "N"): -8,("D", "P"): 6,("D", "Q"): -8,("D", "R"): -8,("D", "S"): -8,("D", "T"): -8,("D", "V"): 6,("D", "W"): -8,("D", "Y"): -8,  # noqa: E501 pylint: disable=C0301
+    ("E", "A"): -5,("E", "C"): -5,("E", "D"): -3,("E", "E"): 10,("E", "F"): 7,("E", "G"): -10,("E", "H"): -10,("E", "I"): -8,("E", "K"): 5,("E", "L"): 2,("E", "M"): -10,("E", "N"): -10,("E", "P"): -8,("E", "Q"): 5,("E", "R"): 2,("E", "S"): -10,("E", "T"): -10,("E", "V"): -8,("E", "W"): 5,("E", "Y"): 2,  # noqa: E501 pylint: disable=C0301
+    ("F", "A"): -5,("F", "C"): -5,("F", "D"): -3,("F", "E"): 7,("F", "F"): 10,("F", "G"): -10,("F", "H"): -10,("F", "I"): -8,("F", "K"): 2,("F", "L"): 5,("F", "M"): -10,("F", "N"): -10,("F", "P"): -8,("F", "Q"): 2,("F", "R"): 5,("F", "S"): -10,("F", "T"): -10,("F", "V"): -8,("F", "W"): 2,("F", "Y"): 5,  # noqa: E501 pylint: disable=C0301
+    ("G", "A"): 5,("G", "C"): 2,("G", "D"): -8,("G", "E"): -10,("G", "F"): -10,("G", "G"): 10,("G", "H"): 7,("G", "I"): -3,("G", "K"): -5,("G", "L"): -5,("G", "M"): 5,("G", "N"): 2,("G", "P"): -8,("G", "Q"): -10,("G", "R"): -10,("G", "S"): 5,("G", "T"): 2,("G", "V"): -8,("G", "W"): -10,("G", "Y"): -10,  # noqa: E501 pylint: disable=C0301
+    ("H", "A"): 2,("H", "C"): 5,("H", "D"): -8,("H", "E"): -10,("H", "F"): -10,("H", "G"): 7,("H", "H"): 10,("H", "I"): -3,("H", "K"): -5,("H", "L"): -5,("H", "M"): 2,("H", "N"): 5,("H", "P"): -8,("H", "Q"): -10,("H", "R"): -10,("H", "S"): 2,("H", "T"): 5,("H", "V"): -8,("H", "W"): -10,("H", "Y"): -10,  # noqa: E501 pylint: disable=C0301
+    ("I", "A"): -8,("I", "C"): -8,("I", "D"): 6,("I", "E"): -8,("I", "F"): -8,("I", "G"): -3,("I", "H"): -3,("I", "I"): 11,("I", "K"): -3,("I", "L"): -3,("I", "M"): -8,("I", "N"): -8,("I", "P"): 6,("I", "Q"): -8,("I", "R"): -8,("I", "S"): -8,("I", "T"): -8,("I", "V"): 6,("I", "W"): -8,("I", "Y"): -8,  # noqa: E501 pylint: disable=C0301
+    ("K", "A"): -10,("K", "C"): -10,("K", "D"): -8,("K", "E"): 5,("K", "F"): 2,("K", "G"): -5,("K", "H"): -5,("K", "I"): -3,("K", "K"): 10,("K", "L"): 7,("K", "M"): -10,("K", "N"): -10,("K", "P"): -8,("K", "Q"): 5,("K", "R"): 2,("K", "S"): -10,("K", "T"): -10,("K", "V"): -8,("K", "W"): 5,("K", "Y"): 2,  # noqa: E501 pylint: disable=C0301
+    ("L", "A"): -10,("L", "C"): -10,("L", "D"): -8,("L", "E"): 2,("L", "F"): 5,("L", "G"): -5,("L", "H"): -5,("L", "I"): -3,("L", "K"): 7,("L", "L"): 10,("L", "M"): -10,("L", "N"): -10,("L", "P"): -8,("L", "Q"): 2,("L", "R"): 5,("L", "S"): -10,("L", "T"): -10,("L", "V"): -8,("L", "W"): 2,("L", "Y"): 5,  # noqa: E501 pylint: disable=C0301
+    ("M", "A"): 5,("M", "C"): 2,("M", "D"): -8,("M", "E"): -10,("M", "F"): -10,("M", "G"): 5,("M", "H"): 2,("M", "I"): -8,("M", "K"): -10,("M", "L"): -10,("M", "M"): 10,("M", "N"): 7,("M", "P"): -3,("M", "Q"): -5,("M", "R"): -5,("M", "S"): 5,("M", "T"): 2,("M", "V"): -8,("M", "W"): -10,("M", "Y"): -10,  # noqa: E501 pylint: disable=C0301
+    ("N", "A"): 2,("N", "C"): 5,("N", "D"): -8,("N", "E"): -10,("N", "F"): -10,("N", "G"): 2,("N", "H"): 5,("N", "I"): -8,("N", "K"): -10,("N", "L"): -10,("N", "M"): 7,("N", "N"): 10,("N", "P"): -3,("N", "Q"): -5,("N", "R"): -5,("N", "S"): 2,("N", "T"): 5,("N", "V"): -8,("N", "W"): -10,("N", "Y"): -10,  # noqa: E501 pylint: disable=C0301
+    ("P", "A"): -8,("P", "C"): -8,("P", "D"): 6,("P", "E"): -8,("P", "F"): -8,("P", "G"): -8,("P", "H"): -8,("P", "I"): 6,("P", "K"): -8,("P", "L"): -8,("P", "M"): -3,("P", "N"): -3,("P", "P"): 11,("P", "Q"): -3,("P", "R"): -3,("P", "S"): -8,("P", "T"): -8,("P", "V"): 6,("P", "W"): -8,("P", "Y"): -8,  # noqa: E501 pylint: disable=C0301
+    ("Q", "A"): -10,("Q", "C"): -10,("Q", "D"): -8,("Q", "E"): 5,("Q", "F"): 2,("Q", "G"): -10,("Q", "H"): -10,("Q", "I"): -8,("Q", "K"): 5,("Q", "L"): 2,("Q", "M"): -5,("Q", "N"): -5,("Q", "P"): -3,("Q", "Q"): 10,("Q", "R"): 7,("Q", "S"): -10,("Q", "T"): -10,("Q", "V"): -8,("Q", "W"): 5,("Q", "Y"): 2,  # noqa: E501 pylint: disable=C0301
+    ("R", "A"): -10,("R", "C"): -10,("R", "D"): -8,("R", "E"): 2,("R", "F"): 5,("R", "G"): -10,("R", "H"): -10,("R", "I"): -8,("R", "K"): 2,("R", "L"): 5,("R", "M"): -5,("R", "N"): -5,("R", "P"): -3,("R", "Q"): 7,("R", "R"): 10,("R", "S"): -10,("R", "T"): -10,("R", "V"): -8,("R", "W"): 2,("R", "Y"): 5,  # noqa: E501 pylint: disable=C0301
+    ("S", "A"): 5,("S", "C"): 2,("S", "D"): -8,("S", "E"): -10,("S", "F"): -10,("S", "G"): 5,("S", "H"): 2,("S", "I"): -8,("S", "K"): -10,("S", "L"): -10,("S", "M"): 5,("S", "N"): 2,("S", "P"): -8,("S", "Q"): -10,("S", "R"): -10,("S", "S"): 10,("S", "T"): 7,("S", "V"): -3,("S", "W"): -5,("S", "Y"): -5,  # noqa: E501 pylint: disable=C0301
+    ("T", "A"): 2,("T", "C"): 5,("T", "D"): -8,("T", "E"): -10,("T", "F"): -10,("T", "G"): 2,("T", "H"): 5,("T", "I"): -8,("T", "K"): -10,("T", "L"): -10,("T", "M"): 2,("T", "N"): 5,("T", "P"): -8,("T", "Q"): -10,("T", "R"): -10,("T", "S"): 7,("T", "T"): 10,("T", "V"): -3,("T", "W"): -5,("T", "Y"): -5,  # noqa: E501 pylint: disable=C0301
+    ("V", "A"): -8,("V", "C"): -8,("V", "D"): 6,("V", "E"): -8,("V", "F"): -8,("V", "G"): -8,("V", "H"): -8,("V", "I"): 6,("V", "K"): -8,("V", "L"): -8,("V", "M"): -8,("V", "N"): -8,("V", "P"): 6,("V", "Q"): -8,("V", "R"): -8,("V", "S"): -3,("V", "T"): -3,("V", "V"): 11,("V", "W"): -3,("V", "Y"): -3,  # noqa: E501 pylint: disable=C0301
+    ("W", "A"): -10,("W", "C"): -10,("W", "D"): -8,("W", "E"): 5,("W", "F"): 2,("W", "G"): -10,("W", "H"): -10,("W", "I"): -8,("W", "K"): 5,("W", "L"): 2,("W", "M"): -10,("W", "N"): -10,("W", "P"): -8,("W", "Q"): 5,("W", "R"): 2,("W", "S"): -5,("W", "T"): -5,("W", "V"): -3,("W", "W"): 10,("W", "Y"): 7,  # noqa: E501 pylint: disable=C0301
+    ("Y", "A"): -10,("Y", "C"): -10,("Y", "D"): -8,("Y", "E"): 2,("Y", "F"): 5,("Y", "G"): -10,("Y", "H"): -10,("Y", "I"): -8,("Y", "K"): 2,("Y", "L"): 5,("Y", "M"): -10,("Y", "N"): -10,("Y", "P"): -8,("Y", "Q"): 2,("Y", "R"): 5,("Y", "S"): -5,("Y", "T"): -5,("Y", "V"): -3,("Y", "W"): 7,("Y", "Y"): 10,  # noqa: E501 pylint: disable=C0301
 }
+# fmt: off
 
 
 def set_alignment(
-        sequence1, sequence2, alignment1, alignment2, t_or_u="U",
-        ):
+    sequence1,
+    sequence2,
+    alignment1,
+    alignment2,
+    t_or_u="U",
+):
     """Add an alignment to be used as the default between two sequences.
 
     When objects with these sequences are aligned for visualization, RNAvigate
@@ -162,33 +172,22 @@ def set_alignment(
             "    Alignment 1 and 2 must having matching length.\n"
             f"    alignment 1: {len(alignment1):>7}\n"
             f"    alignment 2: {len(alignment2):>7}\n"
-            )
+        )
     if alignment1.replace("-", "") != sequence1:
         raise ValueError("Alignment 1 does not match sequence 1")
     if alignment2.replace("-", "") != sequence2:
         raise ValueError("Alignment 2 does not match sequence 2")
     # Store dictionaries in _alignments_cache
     if hash1 not in _alignments_cache and hash2 not in _alignments_cache:
-        _alignments_cache[hash1] = {
-            hash2: {
-                "seqA": alignment1,
-                "seqB": alignment2
-                }
-            }
+        _alignments_cache[hash1] = {hash2: {"seqA": alignment1, "seqB": alignment2}}
     elif hash1 in _alignments_cache:
-        _alignments_cache[hash1].update({
-            hash2: {
-                "seqA": alignment1,
-                "seqB": alignment2
-                }
-            })
+        _alignments_cache[hash1].update(
+            {hash2: {"seqA": alignment1, "seqB": alignment2}}
+        )
     elif hash2 in _alignments_cache:
-        _alignments_cache[hash2].update({
-            hash1: {
-                "seqA": alignment2,
-                "seqB": alignment1
-                }
-            })
+        _alignments_cache[hash2].update(
+            {hash1: {"seqA": alignment2, "seqB": alignment1}}
+        )
 
 
 def set_multiple_sequence_alignment(fasta, set_pairwise=False):
@@ -224,7 +223,7 @@ def set_multiple_sequence_alignment(fasta, set_pairwise=False):
     if not set_pairwise:
         return data.Sequence(base_sequence)
     for i, seq1 in enumerate(fasta[:-1]):
-        for seq2 in fasta[i+1:]:
+        for seq2 in fasta[i + 1 :]:
             alignment1, alignment2 = [], []
             for nt1, nt2 in zip(seq1, seq2):
                 if nt1 == "-" and nt2 == "-":
@@ -274,8 +273,8 @@ def lookup_alignment(sequence1, sequence2, t_or_u="U"):
             inverse_alignment = _alignments_cache[hash2][hash1]
             return {
                 "seqA": inverse_alignment["seqB"],
-                "seqB": inverse_alignment["seqA"]
-                }
+                "seqB": inverse_alignment["seqA"],
+            }
         except KeyError:
             return None
 
@@ -302,6 +301,7 @@ class BaseAlignment(ABC):
             (rows that cannot be mapped are dropped)
             (missing rows filled with NaN)
     """
+
     def __init__(self, starting_sequence, target_length):
         """Creates a BaseAlignment with starting and target sequences.
 
@@ -402,8 +402,9 @@ class BaseAlignment(ABC):
             dataframe = dataframe[dataframe[col] != 0]
         return dataframe.copy()
 
-    def map_nucleotide_dataframe(self, dataframe, position_column="Nucleotide",
-                                 sequence_column="Sequence"):
+    def map_nucleotide_dataframe(
+        self, dataframe, position_column="Nucleotide", sequence_column="Sequence"
+    ):
         """Takes a per-nt dataframe and map it to the target sequence.
 
         Dataframe must have 1 row per nucleotide in starting sequence,
@@ -429,13 +430,13 @@ class BaseAlignment(ABC):
                 target sequence positions are filled.
         """
         dataframe = dataframe.copy()
-        dataframe[position_column] = self.map_positions(
-            dataframe[position_column]
-            )
+        dataframe[position_column] = self.map_positions(dataframe[position_column])
         dataframe = dataframe[dataframe[position_column] != 0]
-        new_dataframe = pd.DataFrame({
-            position_column: np.arange(self.target_length)+1,
-            })
+        new_dataframe = pd.DataFrame(
+            {
+                position_column: np.arange(self.target_length) + 1,
+            }
+        )
         new_dataframe = new_dataframe.merge(dataframe, "left", position_column)
         new_dataframe[sequence_column] = list(self.target_sequence)
         return new_dataframe
@@ -467,10 +468,10 @@ class SequenceAlignment(BaseAlignment):
             (rows that cannot be mapped are dropped)
             (missing rows filled with NaN)
     """
+
     def __init__(
-            self, sequence1, sequence2, align_kwargs=None, full=False,
-            use_previous=True
-            ):
+        self, sequence1, sequence2, align_kwargs=None, full=False, use_previous=True
+    ):
         """Creates an alignment from sequence1 to sequence2.
 
         Args:
@@ -480,11 +481,7 @@ class SequenceAlignment(BaseAlignment):
                 positions. Defaults to False.
         """
         if align_kwargs is None:
-            self.align_kwargs = {
-                "match": 1,
-                "mismatch": 0,
-                "open": -5,
-                "extend": -0.1}
+            self.align_kwargs = {"match": 1, "mismatch": 0, "open": -5, "extend": -0.1}
         if isinstance(sequence1, data.Sequence):
             sequence1 = sequence1.sequence
         if isinstance(sequence2, data.Sequence):
@@ -505,11 +502,13 @@ class SequenceAlignment(BaseAlignment):
         al1, al2 = self.alignment1, self.alignment2
         misses = "".join([" ", "X"][i != j] for i, j in zip(al1, al2))
         position = "".join(f"{n:<20}" for n in range(1, len(al1), 20))
-        return ("alignment:\n"
-                f"    {position}\n"
-                f"    {al1}\n"
-                f"    {misses}\n"
-                f"    {al2}\n")
+        return (
+            "alignment:\n"
+            f"    {position}\n"
+            f"    {al1}\n"
+            f"    {misses}\n"
+            f"    {al2}\n"
+        )
 
     def print(self, print_format="full"):
         """Print the alignment in a human-readable format.
@@ -569,10 +568,8 @@ class SequenceAlignment(BaseAlignment):
         tags["insertions"] = np.sum(alignment1 == "-")
         tags["matches"] = np.sum(alignment1 == alignment2)
         tags["mismatches"] = (
-            np.sum(alignment1 != alignment2)
-            - tags["deletions"]
-            - tags["insertions"]
-            )
+            np.sum(alignment1 != alignment2) - tags["deletions"] - tags["insertions"]
+        )
         for key in ["matches", "mismatches", "deletions", "insertions"]:
             print(f"    {key:<10} {tags[key]}")
         print()
@@ -650,14 +647,17 @@ class SequenceAlignment(BaseAlignment):
         alignments = lookup_alignment(seq1, seq2)
         if alignments is None:
             alignment = align.globalms(
-                seq1, seq2, penalize_end_gaps=False,
-                one_alignment_only=True, **self.align_kwargs
-                )
+                seq1,
+                seq2,
+                penalize_end_gaps=False,
+                one_alignment_only=True,
+                **self.align_kwargs,
+            )
             set_alignment(
                 sequence1=seq1,
                 sequence2=seq2,
                 alignment1=alignment[0].seqA,
-                alignment2=alignment[0].seqB
+                alignment2=alignment[0].seqB,
             )
             alignments = lookup_alignment(seq1, seq2)
         align1, align2 = alignments["seqA"], alignments["seqB"]
@@ -710,6 +710,7 @@ class AlignmentChain(BaseAlignment):
             (rows that cannot be mapped are dropped)
             (missing rows filled with NaN)
     """
+
     def __init__(self, *alignments):
         """Creates a single alignment from multiple alignments
 
@@ -725,8 +726,10 @@ class AlignmentChain(BaseAlignment):
                 raise ValueError("Alignments do not chain.")
 
         self.alignments = alignments
-        super().__init__(self.alignments[0].starting_sequence,
-                         len(self.alignments[-1].target_sequence))
+        super().__init__(
+            self.alignments[0].starting_sequence,
+            len(self.alignments[-1].target_sequence),
+        )
 
     def get_mapping(self):
         """combines mappings from each alignment.
@@ -775,8 +778,10 @@ class StructureAlignment(BaseAlignment):
             (rows that cannot be mapped are dropped)
             (missing rows filled with NaN)
     """
-    def __init__(self, sequence1, sequence2, structure1=None, structure2=None,
-                 full=False):
+
+    def __init__(
+        self, sequence1, sequence2, structure1=None, structure2=None, full=False
+    ):
         """Creates an alignment from structure1 to structure2.
 
         Args:
@@ -816,20 +821,21 @@ class StructureAlignment(BaseAlignment):
             (tuple of 2 str): alignment1 and alignment2
         """
         # Normalize sequences
-        seq1 = convert_sequence(
-            aas=True, nts=self.sequence1, dbn=self.structure1
-            )
-        seq2 = convert_sequence(
-            aas=True, nts=self.sequence2, dbn=self.structure2
-            )
+        seq1 = convert_sequence(aas=True, nts=self.sequence1, dbn=self.structure1)
+        seq2 = convert_sequence(aas=True, nts=self.sequence2, dbn=self.structure2)
         # Check if sequences match
         if seq1 == seq2:
             return (seq1, seq2)
         else:
             alignment = align.globalds(
-                seq1, seq2, structure_scoring_dict, -12, -1,
-                penalize_end_gaps=False, one_alignment_only=True
-                )[0]
+                seq1,
+                seq2,
+                structure_scoring_dict,
+                -12,
+                -1,
+                penalize_end_gaps=False,
+                one_alignment_only=True,
+            )[0]
             alignment1 = alignment.seqA
             alignment2 = alignment.seqB
             set_alignment(
@@ -838,7 +844,7 @@ class StructureAlignment(BaseAlignment):
                 alignment1=alignment1,
                 alignment2=alignment2,
                 t_or_u=False,
-                )
+            )
             alignment = lookup_alignment(seq1, seq2, t_or_u=False)
             alignment1, alignment2 = alignment["seqA"], alignment["seqB"]
         # convert pseudo-amino acid alignments back into nucleotide alignments
@@ -872,15 +878,13 @@ class StructureAlignment(BaseAlignment):
     def get_inverse_alignment(self):
         return StructureAlignment(
             self.sequence2, self.sequence1, self.structure2, self.structure1
-            )
+        )
 
     def set_as_default_alignment(self):
 
         set_alignment(
             sequence1=self.sequence1,
             sequence2=self.sequence2,
-            alignment1=convert_sequence(
-                aas=self.alignment1, nts=True, dbn=False),
-            alignment2=convert_sequence(
-                aas=self.alignment2, nts=True, dbn=False)
-            )
+            alignment1=convert_sequence(aas=self.alignment1, nts=True, dbn=False),
+            alignment2=convert_sequence(aas=self.alignment2, nts=True, dbn=False),
+        )
