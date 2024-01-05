@@ -16,60 +16,48 @@ Sections:
 ## Introduction
 
 RNAvigate is built around `rnav.Sample`, which defines and organizes the data that are associated with an experimental sample or RNA.
-Creating a `Sample` and providing data files will load and store this data.
-This step allows access to all of the visualization and analysis tools RNAvigate offers.
+Creating a `Sample` and assigning data files to data keywords accomplishes 3 tasks:
 
-Here is how to create a sample:
+1. The data files are grouped. This grouping could represent an experimental sample, or a component of an structure ensemble.
+2. The data files are parsed and converted into one of five data classes:
+   annotation, secondary structure, tertiary structure, per-nucleotide measurements, inter-nucleotide measurements.
+   Parsing and data class assignment are determined by the data keyword.
+3. The data class is assigned to a data keyword for easy access.
+
+Data stored in the Sample is then compatible with all of RNAvigate's visualization and analysis tools.
 
 ```python
 import rnavigate as rnav         # Load RNAvigate and give it the alias "rnav"
 
 my_sample = rnav.Sample(         # create a new sample
     sample="My sample name",     # provide a name for plot labels
-    data_keyword="my_data.txt")  # load data, data_keywords are explained below
+    data_keyword="my_data.txt",  # load data files
+    data_keyword2="my_other_data.txt",
+    )
 ```
 
-Our new variable `my_sample`, now contains the data loaded from `my_data.txt`.
-The `data_keyword` used here is not a real data keyword.
-Data keywords tell RNAvigate how to parse and access the data in the input file.
-`rnav.Sample` can accept any number of data keyword arguments.
-This allows flexible organization for all of the data related to a sample.
+Above, `sample="My sample name"` provides a label, to appear in plot titles and legends, for any data that came from this sample.
+`"My sample name"` should be replaced with any string that uniquely and succinctly identifies this sample.
+A `sample` label is always required.
 
-[Skip to data keywords](#data-keywords)
+`data_keyword` should be replaced with a data keyword appropriate for your specific data (see below).
 
-## Call signature
-
-Besides data keyword arguments, there are two other optional arguments to know.
-Here is the call signature for `rnav.Sample`:
+Then, visualizing this data would look something like this:
 
 ```python
-rnav.Sample(
-    sample,
-    inherit=None,
-    keep_inherited_defaults=False,
-    **data_keywords)
+plot = rnav.plot_arcs(          # represent my data as an arc plot
+    samples=[my_sample],        # visualize my_sample
+    sequence="data_keyword",    # positionally align all data to this sequence
+    profile="data_keyword",     # display profile data
+    structure="data_keyword2",  # display secondary structure
+    )
 ```
 
-### Required arguments
+`plot_arcs` can be replaced with other plotting functions, which are introduced in the next guide: "Visualizing data".
 
-#### `sample`
-
-type: string
-
-This string should be succinct, but uniquely describe the sample.
-It is used mainly when plotting, as a label for data that came from this sample.
-
-### Optional arguments
-
-#### `inherit`
-
-- type: `None` or `rnavigate.Sample`
-- default: `None`
-
-If another `rnav.Sample` is provided, the created sample will inherit all data keywords from the provided sample.
-
-These data are shared, i.e. any change to one sample applies to the other.
-This sharing saves on memory and computation time for large data sets.
+Before we get into data keywords, `rnav.Sample` accepts two other arguments: `inherit` and `keep_inherited_defaults`.
+These are used to share data between samples, e.g. a literature-accepted structure shared between experimental samples.
+This sharing saves on memory and computation time.
 
 Example usage:
 
@@ -89,64 +77,17 @@ sample2 = rnav.Sample(
     keyword2='sample2-data.txt')
 ```
 
-`sample1` and `sample2` now share the data stored in `keyword1`.
+`sample1` and `sample2` now both have `keyword1`, which is shared, and `keyword2`, which is not.
 
-Another way to do this is to pass the data from `shared_data` directly to a data keyword.
-
-```python
-sample1 = rnav.Sample(
-    name='knockout',
-    keyword1='big_structure.pdb',
-    keyword2='sample1-data.txt')
-
-sample2 = rnav.Sample(
-    name='control',
-    keyword1=sample1.get_data("keyword1"),
-    keyword2='sample2-data.txt')
-```
-
-#### `keep_inherited_defaults`
-
-- type: `True` or `False`
-- default: `False`
-
-If set to `True`, default keywords from `inherit` will be kept.
-
-Every sample can have default keywords for each of the data classes:
-- annotations
-- structure (secondary structures)
-- pdb (3D structures)
-- profile (per-nucleotide measurements)
-- interactions (inter-nucleotide measurements)
+At the moment, default keywords are only used to simplify data keyword inputs. For
+example, the `ringmap` data keyword uses the sequence provided by `default_profile`,
+which is the first profile-type data provided to the Sample.
 
 ---
 
-## `**data_keywords`
+## data keywords
 
-Data keywords perform two major functions in RNAvigate. When loading data, they
-tell RNAvigate how to parse that data. When plotting data or performing
-analyses they tell RNAvigate which data to access. I'll use a made-up data
-keyword (`keyword`) to illustrate:
-
-`rnav.Sample` initialization:
-
-```python
-my_sample = rnav.Sample(
-    sample="my sample name",
-    keyword="expected_input")
-```
-
-`rnav.plot_something` functions:
-
-```python
-plot = rnav.plot_skyline(
-    samples=[my_sample],
-    profile="keyword")
-```
-
-Data keywords can either be a standard keyword or an arbitrary one. Arbitrary
-data keywords are useful when multiple data sources of the same kind are
-associated with a single sample.
+Data keywords can either be a standard keyword or an arbitrary one:
 
 ### Standard data keywords
 
@@ -165,15 +106,14 @@ associated with a single sample.
 An arbitrary keyword is useful if you are loading 2 or more of the same data
 type into a single sample. Arbitrary keywords must follow some simple rules:
 
-1. Cannot already be a data keyword
+1. Cannot conflict with a given sample's other data keywords.
 2. Cannot be `inherit` or `keep_inherited_defaults`
 3. Cannot consist only of valid nucleotides: `AUCGTaucgt`
 4. Cannot start with a number: `0123456789`
-5. Cannot contain any symbols accept underscore: `!@#$%^&`, etc.
-6. Cannot contain spaces or tabs
+5. Must only contain numbers, letters and underscores.
 
 If an arbitrary data keyword is used, a dictionary must be provided, specifying
-the standard data keyword to use for parsing inputs, and any other options.
+the standard data keyword to use for parsing inputs.
 
 Example:
 
@@ -238,6 +178,7 @@ example uses:
 - coloring nucleotides in a secondary structure diagram, circle plot, or 3D
   molecular rendering
 - calculating profile-to-profile linear regressions
+- calculating ROC curves
 - Renormalizing per-nucleotide data
 
 input explaination:
@@ -255,11 +196,10 @@ SHAPE, DMS, or other reagent per-nucleotide reactivities
 
 Two similar data keywords:
 - `dmsmap` applies DMS-MaP normalization to profile when loaded
-  - ([publication](https://doi.org/10.1073/pnas.1905491116))
+  - [PAIR-MaP paper](https://doi.org/10.1073/pnas.1905491116)
 - `shapemap_rnaframework` accepts an RNAframework xml file.
   - RNAframework files do not contain error estimates or raw data.
   - [RNAframework software][]
-
 
 ```python
 dmsmap="path/to/shapemap_profile.txt"
@@ -270,7 +210,6 @@ is equivalent to
 ```python
 dmsmap={'shapemap': "shapemap_profile.txt", "normalize": "DMS"}
 ```
-
 
 example uses:
 
@@ -329,6 +268,7 @@ back to [standard data keywords][]
 Reactivity profile of a single component of a DanceMapper model
 
 [DanceMapper software][]
+[DANCE-MaP paper][]
 
 example uses:
 
@@ -1047,6 +987,7 @@ back to [standard data keywords][]
 [ShapeMapper2 software]: https://github.com/Weeks-UNC/shapemapper2
 [RNAframework software]: https://github.com/dincarnato/RNAFramework
 [DanceMapper software]: https://github.com/MustoeLab/DanceMapper
+[DANCE-MaP paper]: https://doi.org/10.1016/j.molcel.2022.02.009
 [RingMapper software]: https://github.com/Weeks-UNC/RingMapper
 [PairMapper software]: https://github.com/Weeks-UNC/RingMapper
 [RNAStructure software]: https://rna.urmc.rochester.edu/RNAstructure.html

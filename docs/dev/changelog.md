@@ -101,7 +101,7 @@ NOTES:
 NOTES:
 
 - Beginning of version history
-- removed py3dmol version from env.yaml (uses most recent)
+- removed py3dmol version from environment file (uses most recent)
 
 New plots:
 

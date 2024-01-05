@@ -168,7 +168,7 @@ not change your default modules. They will be restored next time you log in.
 ```bash
 module rm python pymol pyrosetta
 module load anaconda/2019.10
-conda env create -f /proj/kweeks/bin/RNAvigate_v1.0.0/env.yaml
+conda env create -f /proj/kweeks/bin/RNAvigate_v1.0.0/environment.yml
 source activate RNAvigate_v1.0.0
 conda develop /proj/kweeks/bin/RNAvigate_v1.0.0/
 python -m ipykernel install --user --name=RNAvigate_v1.0.0

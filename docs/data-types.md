@@ -51,6 +51,7 @@ RNAvigate data class: `rnav.data.Profile`
 Profiles define per-nucleotide measurements.
 
 Types of measurements:
+
 - chemical reactivity, such as mutational profiles (MaP) and RT stop signals
 - read counts or enrichment scores, such as CLIP or RIP based methods
 - sequence conservation
@@ -66,6 +67,7 @@ Secondary structures define a pattern of base-pairing. Additionally, these may
 contain secondary structure diagram layout coordinates for each nucleotide.
 
 Types of secondary structures:
+
 - Experimentally determined from CryoEM or crystal structures
 - computationally modeled de novo or informed by chemical probing data
 - Secondary structure drawing layouts, such as from VARNA, XRNA, R2DT, etc.
@@ -79,6 +81,7 @@ Interactions define inter-nucleotide measurements. These can be between
 individual nucleotides or uniform windows of nucleotides.
 
 Types of interactions:
+
 - Single molecule correlated events
 - Interactions data from proximity ligation, SHARC, SHAPE-JuMP, etc.
 - Base-pairing probabilities
@@ -92,5 +95,6 @@ RNAvigate data class: `rnav.data.PDB`
 3D structures define the atomic coordinates of residues in an RNA.
 
 Types of 3D structures:
+
 - Experimentally determined from CryoEM or crystal structures
 - computationally modeled de novo or informed by chemical probing data
