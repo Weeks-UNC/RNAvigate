@@ -76,27 +76,30 @@ def create_data(data_keyword, inputs, sample=None):
     is used to parse **data_keywords passed to rnavigate.Sample, but can also
     be used on it's own using the same syntax.
 
-    Required arguments:
-        data_keyword (string)
-            a standard data keyword
-            if inputs is a dictionary, this can be an arbitrary data keyword
-        inputs (any)
+    Parameters
+    ----------
+        data_keyword : string
+            a data keyword sting
+            if inputs is a dictionary, this argument is ignored
+        inputs : any
             If a dictionary, the first key must be the standard data keyword
-            Otherwise, the expected type depends on the data_keyword
-
-    Optional arguments:
-        sample (rnavigate.Sample)
+            Otherwise, the expected type depends on `data_keyword`
+        sample : rnavigate.Sample, optional
             Requried only if inputs is a dictionary containing a "sequence" key
-            with a value that is a standard data keyword
+            with a value that is an assigned data keyword
                 {"sequence": "data_keyword"}
                     is replaced with:
                 {"sequence": sample.get_data("data_keyword").sequence}
             Defaults to None.
 
-    Returns: new RNAvigate data object
+    Returns
+    -------
+        rnavigate.data.Sequence object
+            the new RNAvigate data object
 
-    Usage:
-        In this example we create a data object from a fasta file. There are
+    Examples
+    --------
+        In this example we create a Sequence object from a fasta file. There are
         two valid syntaxes:
 
             create_data(
@@ -174,20 +177,21 @@ def create_data(data_keyword, inputs, sample=None):
 def get_sequence(sequence, sample=None, default=None):
     """Flexible function that returns a Data object containing a sequence.
 
-    Args:
-        sequence (any): a sequence string, a data keyword, or a data object
-        sample (Sample, optional): sample holding sequence data.
-            Defaults to None.
-        default (any, optional): same format as sequence above. uses this
-            as sequence value if sequence is None.
+    Parameters
+    ----------
+        sequence : any
+            a sequence string, a data keyword string, or a data object
+        sample : rnavigate.Sample, optional
+            A sample is required if `sequence` is a data keyword string
+            Defaults to None
+        default : any, optional
+            same format as sequence above. This value is used if `sequence` is None
             Defaults to None.
 
-    Raises:
-        ValueError: If sequence and default are both None
-        ValueError: If Data object could not be retreived based on inputs
-
-    Returns:
-        rnavigate.Sequence: containing the desired sequence
+    Returns
+    -------
+        rnavigate.Sequence
+            a sequence object containing the desired sequence
     """
     if sequence is None and default is None:
         raise ValueError("A sequence must be provided.")

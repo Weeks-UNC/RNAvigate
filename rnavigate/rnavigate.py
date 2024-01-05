@@ -10,38 +10,69 @@ class Sample:
     The Sample class stores all of the relevant experimental and computational
     structural data for a single RNA experiment. Between samples, common data
     types should be given a common data keyword so they can be easily compared.
+
+    Parameters
+    ----------
+    sample : str
+        an arbitrary name. This will be used as a label in plot legends and titles
+        to differentiate it from other samples
+    inherit : Sample or list of these, optional
+        Data keywords and associated data from other samples become data keywords
+        and associated data of this sample. This does not make additional copies
+        of the data: i.e. operations that make changes to inherited data change the
+        original sample, and any other samples that inherited that data. This can
+        be useful to save time and memory on operations and large data structures
+        that are shared between samples.
+    keep_inherited_defaults : bool, default = True
+        whether to keep inherited default keywords
+    **data_keywords:
+        There are many built-in data keywords with different expectations and
+        behaviors. For a full list with input formats and output behavior, visit:
+        https://rnavigate.readthedocs.io/en/latest/loading-data/
+
+    Attributes
+    ----------
+    sample : str
+        the name of the sample
+    inputs : dict
+        a dictionary of data keywords and their (user-defined) inputs
+    data : dict
+        a dictionary of data keywords and their associated data
+    defaults : dict
+        a dictionary of data classes and their default data keywords
+
+    Example
+    -------
+    >>> sample = rnavigate.Sample(
+    ...     sample="My sample",
+    ...     shapemap="path/to/shapmapper_profile.txt",
+    ...     ss="path/to/structure.ct",
+    ...     ringmap="path/to/ringmapper_rings.txt",
+    ...     pdb="path/to/pdb.pdb",
+    ...     arbitrary_keyword={
+    ...         "sites": [10, 20, 30],
+    ...         "name": "sites of interest",
+    ...         "color": "red",
+    ...     },
+    ... )
+    >>> sample.print_data_keywords()
+    My sample data keywords:
+      annotations:
+        arbitrary_keyword (default)
+      profiles:
+        shapemap (default)
+      structures:
+        ss (default)
+      interactions:
+        ringmap (default)
+      pdbs:
+        pdb (default)
     """
 
     def __init__(
         self, sample, inherit=None, keep_inherited_defaults=True, **data_keywords
     ):
-        """Creates a Sample.
-
-        Required arguments:
-            sample (string)
-                An arbitrary name. This will be used as a label in plot legends
-                and titles to differentiate it from other samples
-
-        Optional arguments:
-            inherit (Sample or list of Samples)
-                Data keywords and associated data from other samples become the
-                data keywords and associated data from this sample. This does
-                not make additional copies of the data: i.e. operations that
-                make changes to inherited data change the original sample, and
-                any other samples that inherited that data. This can be useful
-                to save time and memory on operations and large data structures
-                that are shared between samples.
-            keep_inherited_defaults (True or False)
-                whether to keep inherited default keywords
-                defaults to True
-
-        Data keywords:
-            There are many built-in data keywords with different expectations
-            and behaviors. For a full list with expected input formats and
-            output behavior, visit:
-
-            https://rnavigate.readthedocs.io/en/latest/loading-data/
-        """
+        """Creates a Sample."""
         self.sample = sample
         self.inputs = {}
         self.data = {}
@@ -68,16 +99,13 @@ class Sample:
     def inherit_data(self, inherit, keep_inherited_defaults, overwrite):
         """retrieves and stores data and data keywords from other samples
 
-        Args:
-            inherit (RNAvigate Sample or list of Samples)
+        Parameters:
+            inherit : Sample or list of Samples
                 Other samples from which to inherit data and data keywords
-            keep_inherited_defaults (True or False)
+            keep_inherited_defaults : bool
                 Use default values from inherited samples
-            overwrite (True or False)
-                whether to overwrite any existing keywords
-
-        Raises:
-            ValueError: if inherit is not a Sample or list of Samples
+            overwrite : bool
+                whether to overwrite any existing keywords with inherited keywords
         """
         if isinstance(inherit, (list, tuple)):
             for inherit_sample in inherit[::-1]:
@@ -108,30 +136,21 @@ class Sample:
                 sample="name",
                 data_keyword=inputs)
 
-            is equivalent to:
+        is equivalent to:
 
             my_sample = rnavigate.Sample(
                 sample="name")
             my_sample.add_data(
                 "data_keyword", inputs)
 
-        Required arguments:
-            data_keyword (string)
-                a data keyword (arbitrary or standard) used to store and/or
-                parse the inputs
-            inputs (dictionary or RNAvigate Data)
-                a dictionary used to create the data object
-
-        Optional arguments:
-            overwrite (bool)
+        Parameters
+        ----------
+            data_keyword : str
+                a data keyword used to store and/or parse the inputs
+            inputs : dict or rnavigate.data.Data
+                a dictionary used to create the data object or a data object itself
+            overwrite : bool, defaults to False
                 whether to overwrite a pre-existing data_keyword
-                Defaults to False.
-
-        Raises:
-            ValueError:
-                the data keyword already exists and overwrite is False
-            ValueError:
-                there was an issue parsing the data
         """
         if (data_keyword in self.data) and not overwrite:
             raise ValueError(
@@ -149,21 +168,24 @@ class Sample:
     def get_data(self, data_keyword, data_class=None):
         """Replaces data keyword with data object, even if nested.
 
-        Required arguments:
-            data_keyword (Data or data keyword or list/dict of such types)
+        Parameters
+        ----------
+            data_keyword : rnavigate.data.Data or data keyword or list/dict of these
                 If None, returns None.
                 If a data keyword, returns associated data from sample
                 If Data, returns that data.
                 If a list or dictionary, returns list or dictionary with
                     data keyword values replaced with associated Data
-            data_class (RNAvigate Data class)
+            data_class : rnavigate.data.Data class or subclass, optional
                 If provided, ensures that returned data is of this type.
 
-        Returns:
+        Returns
+        -------
             Same type as data_keyword argument, but data keywords are replaced
                 with associated data
 
-        Raises:
+        Raises
+        ------
             ValueError:
                 if data is not found in sample
             ValueError:
@@ -203,12 +225,11 @@ class Sample:
         It's data class is determined automatically. Only one default exists
         per data class and per Sample object.
 
-        Required arguments:
-            data_keyword (string)
+        Parameters
+        ----------
+            data_keyword : str
                 The data keyword to set as the default
-
-        Optional arguments:
-            overwrite (True or False)
+            overwrite : bool, defaults to ``True``
                 whether to overwrite a pre-existing default data keyword
         """
         data_object = self.data[data_keyword]
@@ -236,13 +257,14 @@ class Sample:
         values=None,
         **kwargs,
     ):
-        """sets coloring properties and filters interactions data.
+        """sets coloring properties and applies filters to interactions data.
 
-        Args:
-            interactions (rnavigate.data.Interactions | str):
+        Parameters
+        ----------
+            interactions : rnavigate.data.Interactions or data keyword string
                 Interactions object to be filtered. If a string, value is
                 replaced with self.get_data(interactions)
-            metric (str, optional):
+            metric : str, optional
                 column of interactions data to be used as metric for coloring
                 interactions.
                 "Distance" will compute 3D distance in "pdb", defaulting to

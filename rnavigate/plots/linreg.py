@@ -1,14 +1,59 @@
+"""Plot linear regression scatter plots."""
+
 from scipy import stats
 import seaborn as sns
-import matplotlib as mpl
 import numpy as np
-from rnavigate import plots, styles
+from rnavigate import plots
 
 
 class LinReg(plots.Plot):
+    """Plot a linear regression scatter plot, pairwise, between profiles.
+
+    Parameters
+    ----------
+    num_samples : int
+        Number of samples to plot.
+    scale : str, optional
+        Scale of the plot, either 'linear' or 'log'. The default is 'linear'.
+    regression : 'pearson' or 'spearman', Defaults to 'pearson'
+        Type of regression to perform.
+    kde : bool, optional
+        Whether to plot a kernel density estimate instead of a scatter plot.
+        The default is False.
+    region : 'all' or tuple of 2 integers, defaults to 'all'
+        Start and end positions of the region to plot. If 'all', plot the
+        entire profile.
+
+    Attributes
+    ----------
+    fig : matplotlib.figure.Figure
+        Figure of the plot.
+    axes : numpy.ndarray of matplotlib.axes.Axes
+        Axes of the plot.
+    length : int
+        Number of samples to plot.
+    lims : list of 2 floats
+        Limits of the plot applied to all x and y axes.
+    profiles : list of numpy.ndarray
+        Each sample's per-nucleotide values over the region and column of interest.
+    colors : list of numpy.ndarray
+        A color for each nucleotide in the region applied to the scatter plot.
+    labels : list of str
+        A label for each sample.
+    scale : 'linear' or 'log'
+        Scale of the plot axes.
+    kde : bool
+        Whether to plot a kernel density estimate instead of a scatter plot.
+    regression : function
+        Regression function to use.
+    region : tuple of 2 integers
+        Start and end positions of the region to plot.
+    """
+
     def __init__(
         self, num_samples, scale="linear", regression="pearson", kde=False, region="all"
     ):
+        """Initialize the linear regression plot."""
         super().__init__(num_samples)
         self.region = region
         linreg_axes = []
@@ -20,19 +65,16 @@ class LinReg(plots.Plot):
         self.lims = [0, 0]
         self.scale = scale
         self.kde = kde
-        self.regression = {"pearson": stats.pearsonr, "spearman": stats.spearmanr}[
-            regression
-        ]
+        if regression == "pearson":
+            self.regression = stats.pearsonr
+        elif regression == "spearman":
+            self.regression = stats.spearmanr
         self.profiles = []
         self.colors = []
         self.labels = []
 
     def set_figure_size(
         self,
-        fig=None,
-        ax=None,
-        rows=None,
-        cols=None,
         height_ax_rel=None,
         width_ax_rel=None,
         width_ax_in=2,
@@ -44,11 +86,32 @@ class LinReg(plots.Plot):
         left_in=0.5,
         right_in=0.5,
     ):
+        """Set the figure size.
+
+        Parameters
+        ----------
+        height_ax_rel : float, defaults to None
+            Height of the axes relative to the y-axis limits.
+        width_ax_rel : float, defaults to None
+            Width of the axes relative to the x-axis limits.
+        width_ax_in : float, defaults to 2
+            Width of the axes in inches.
+        height_ax_in : float, defaults to 2
+            Height of the axes in inches.
+        height_gap_in : float, defaults to 0.3
+            Height of the gap between axes in inches.
+        width_gap_in : float, defaults to 0.3
+            Width of the gap between axes in inches.
+        top_in : float, defaults to 1
+            Top margin of the figure in inches.
+        bottom_in : float, defaults to 0.5
+            Bottom margin of the figure in inches.
+        left_in : float, defaults to 0.5
+            Left margin of the figure in inches.
+        right_in : float, defaults to 0.5
+            Right margin of the figure in inches.
+        """
         super().set_figure_size(
-            fig=fig,
-            ax=ax,
-            rows=rows,
-            cols=cols,
             height_ax_rel=height_ax_rel,
             width_ax_rel=width_ax_rel,
             width_ax_in=width_ax_in,
@@ -61,12 +124,26 @@ class LinReg(plots.Plot):
             right_in=right_in,
         )
 
-    def get_rows_columns(self, rows=None, cols=None):
-        return (self.length - 1, self.length - 1)
-
     def plot_data(
         self, structure, profile, annotations, label, column=None, colors="sequence"
     ):
+        """Add profile data. If all samples have been added, plot the regression.
+
+        Parameters
+        ----------
+        structure : Structure
+            Structure object.
+        profile : Profile
+            Profile object.
+        annotations : Annotations
+            Annotations object.
+        label : str
+            Label for the sample.
+        column : str, optional
+            Column of the profile to plot. The default is None.
+        colors : str, optional
+            Color scheme to use. The default is 'sequence'.
+        """
         if self.region == "all":
             start, end = 1, profile.length
         else:
@@ -91,6 +168,7 @@ class LinReg(plots.Plot):
             self.finalize()
 
     def finalize(self):
+        """Finalize the plot by formatting the axes and adding labels."""
         # change the plotting buffer for linear scale
         if self.scale == "log" and self.kde:
             # change the tick labels to 'fake' a log scale plot
@@ -147,6 +225,17 @@ class LinReg(plots.Plot):
                     )
 
     def plot_regression(self, i, j):
+        """Plot a linear regression between two profiles.
+
+        Profiles must already have been added using `plot_data`.
+
+        Parameters
+        ----------
+        i : int
+            Index of the first profile.
+        j : int
+            Index of the second profile.
+        """
         ax = self.axes[i, j]
         p1 = self.profiles[j + 1]
         p2 = self.profiles[i]

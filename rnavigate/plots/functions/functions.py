@@ -6,6 +6,21 @@ from rnavigate import data, plots
 
 
 def get_contrasting_colors(colors):
+    """Get contrasting colors for a list of colors.
+
+    Returns a list of "k" (black) or "w" (white) for each color in the input list,
+    which ever contrasts better with the input color.
+
+    Parameters
+    ----------
+    colors : list of str
+        List of colors to get contrasting colors for.
+
+    Returns
+    -------
+    list of str
+        List of "k" or "w" for each color in the input list.
+    """
     contrasting = ["k"] * len(colors)
     for i, color in enumerate(colors):
         r, g, b = mp_colors.to_rgb(color)
@@ -15,6 +30,15 @@ def get_contrasting_colors(colors):
 
 
 def adjust_spines(ax, spines):
+    """Places the given spines on the given axis, removes others.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        The axes to adjust the spines of.
+    spines : list of str
+        The spines to adjust. Valid options are "left", "right", "top", and "bottom".
+    """
     for loc, spine in ax.spines.items():
         if loc in spines:
             spine.set_position(("outward", 10))  # outward by 10 points
@@ -31,6 +55,15 @@ def adjust_spines(ax, spines):
 
 
 def clip_spines(ax, spines):
+    """Clips the given spines to the range of the ticks.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        The axes to clip the spines of.
+    spines : list of str
+        The spines to clip. Valid options are "left", "right", "top", and "bottom".
+    """
     for spine in spines:
         if spine in ["left", "right"]:
             ticks = ax.get_yticks()
@@ -40,6 +73,24 @@ def clip_spines(ax, spines):
 
 
 def get_nt_ticks(sequence, region, gap):
+    """Get the ticks and labels for a region of a sequence.
+
+    Dashes are ignored when counting nucleotide positions.
+
+    Parameters
+    ----------
+    sequence : str or rnavigate.data.Sequence
+        The sequence to get ticks and labels for.
+    region : tuple of int
+        The region of the sequence to get ticks and labels for.
+    gap : int
+        The gap between major ticks.
+
+    Returns
+    -------
+    ticks, labels : tuple of list of int
+        The ticks and labels for the given region of the sequence.
+    """
     if isinstance(sequence, data.Sequence):
         sequence = sequence.sequence
     start, end = region
@@ -57,6 +108,23 @@ def get_nt_ticks(sequence, region, gap):
 
 
 def set_nt_ticks(ax, sequence, region, major, minor):
+    """Set the ticks and labels for a region of a sequence.
+
+    Dashes are ignored when counting nucleotide positions.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        The axes to set the ticks and labels of.
+    sequence : str or rnavigate.data.Sequence
+        The sequence to set ticks and labels for.
+    region : tuple of int
+        The region of the sequence to set ticks and labels for.
+    major : int
+        The gap between major ticks.
+    minor : int
+        The gap between minor ticks.
+    """
     ticks, labels = get_nt_ticks(sequence, region, major)
     ax.set_xticks(ticks=ticks)
     ax.set_xticklabels(labels=labels)
@@ -64,6 +132,7 @@ def set_nt_ticks(ax, sequence, region, major, minor):
 
 
 def box_xtick_labels(ax):
+    """Place a transparent box behind the xtick labels of the provided axis."""
     for label in ax.get_xticklabels():
         label.set_bbox(
             {
@@ -76,6 +145,23 @@ def box_xtick_labels(ax):
 
 
 def plot_sequence_alignment(ax, alignment, labels, top=5, bottom=-5, ytrans="data"):
+    """Plot a sequence alignment.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        The axes to plot the alignment on.
+    alignment : rnavigate.data.Alignment
+        The alignment to plot.
+    labels : tuple of str
+        The labels for the two sequences in the alignment.
+    top : int, optional
+        The y-value to plot the top sequence at.
+    bottom : int, optional
+        The y-value to plot the bottom sequence at.
+    ytrans : str, optional
+        The transform to use for the y-values. Valid options are "data" and "axes".
+    """
     al1 = alignment.alignment1
     al2 = alignment.alignment2
     height = (top - bottom) / 3
@@ -116,6 +202,21 @@ def plot_sequence_alignment(ax, alignment, labels, top=5, bottom=-5, ytrans="dat
 
 
 def plot_interactions_arcs(ax, interactions, panel, yvalue=0, region="all"):
+    """Plot interactions as arcs.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        The axes to plot the interactions on.
+    interactions : rnavigate.data.Interactions
+        The interactions to plot.
+    panel : "top" or "bottom"
+        The panel to plot the interactions on.
+    yvalue : float, optional
+        The y-value at which to plot the interactions.
+    region : tuple of int, optional
+        The region of the sequence to plot interactions for.
+    """
     if region == "all":
         region = [1, interactions.length]
     mn, mx = region
@@ -143,6 +244,23 @@ def plot_interactions_arcs(ax, interactions, panel, yvalue=0, region="all"):
 def plot_profile_bars(
     ax, profile, scale_factor=1, plot_error=True, bottom=0, region="all"
 ):
+    """Plot per-nucleotide data as colored bars.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        The axes to plot the profile on.
+    profile : rnavigate.data.Profile
+        The profile to plot.
+    scale_factor : float, optional
+        The factor by which to multiply per-nucleotide values.
+    plot_error : bool, optional
+        Whether to plot error bars.
+    bottom : float, optional
+        The y-value at which to plot the bars.
+    region : tuple of int, optional
+        The region of the sequence to plot bars for.
+    """
     if region == "all":
         region = [1, profile.length]
     mn, mx = region
@@ -179,6 +297,21 @@ def plot_profile_bars(
 
 
 def plot_profile_skyline(ax, profile, label, columns, errors):
+    """Plot per-nucleotide data as a skyline plot.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        The axes to plot the profile on.
+    profile : rnavigate.data.Profile
+        The profile to plot.
+    label : str
+        The label to use for the plot legend.
+    columns : list of str
+        The columns of the profile to plot.
+    errors : list of str
+        The columns of the profile to use for error bars.
+    """
     values = profile.data
     if columns is None:
         columns = profile.metric

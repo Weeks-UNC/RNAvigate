@@ -3,7 +3,31 @@ import numpy as np
 
 
 class SS(plots.Plot):
+    """Plot secondary structure diagrams.
+
+    Parameters
+    ----------
+    num_samples : int
+        Number of samples to plot.
+    **kwargs
+        Keyword arguments passed to `rnavigate.plots.Plot`.
+
+    Attributes
+    ----------
+    fig : matplotlib.figure.Figure
+        Figure object.
+    axes : numpy.ndarray of matplotlib.axes.Axes
+        Array of axes objects.
+    xlims : list of float
+        x limits of the plot.
+    ylims : list of float
+        y limits of the plot.
+    i : int
+        Index of the current plot.
+    """
+
     def __init__(self, num_samples, **kwargs):
+        """Initialize the plot."""
         super().__init__(num_samples, sharey=True, sharex=True, **kwargs)
         for i in range(self.length):
             ax = self.get_ax(i)
@@ -13,10 +37,6 @@ class SS(plots.Plot):
 
     def set_figure_size(
         self,
-        fig=None,
-        ax=None,
-        rows=None,
-        cols=None,
         height_ax_rel=0.2,
         width_ax_rel=0.2,
         width_ax_in=None,
@@ -28,11 +48,32 @@ class SS(plots.Plot):
         left_in=0.5,
         right_in=0.5,
     ):
+        """Set the figure size.
+
+        Parameters
+        ----------
+        height_ax_rel : float, defaults to 0.2
+            Height of the axes relative to the y-axis limits.
+        width_ax_rel : float, defaults to 0.2
+            Width of the axes relative to the x-axis limits.
+        width_ax_in : float
+            Width of the axes in inches.
+        height_ax_in : float
+            Height of the axes in inches.
+        height_gap_in : float, defaults to 0.5
+            Height of the gap between axes in inches.
+        width_gap_in : float, defaults to 0.2
+            Width of the gap between axes in inches.
+        top_in : float, defaults to 1
+            Height of the top margin in inches.
+        bottom_in : float, defaults to 0.5
+            Height of the bottom margin in inches.
+        left_in : float, defaults to 0.5
+            Width of the left margin in inches.
+        right_in : float, defaults to 0.5
+            Width of the right margin in inches.
+        """
         super().set_figure_size(
-            fig=fig,
-            ax=ax,
-            rows=rows,
-            cols=cols,
             height_ax_rel=height_ax_rel,
             width_ax_rel=width_ax_rel,
             width_ax_in=width_ax_in,
@@ -57,6 +98,31 @@ class SS(plots.Plot):
         nt_ticks=None,
         bp_style="dotted",
     ):
+        """Plot the data on the current axes.
+
+        Parameters
+        ----------
+        structure : rnavigate.data.SecondaryStructure
+            Structure object with diagram drawing coordinates.
+        interactions : rnavigate.data.Interactions, optional
+            Interactions object to plot as lines between nucleotides.
+        interactions2 : rnavigate.data.Interactions, optional
+            Interactions object to plot as lines between nucleotides.
+        profile : rnavigate.data.Profile, optional
+            Profile object used to color nucleotides.
+        annotations : list of rnavigate.data.Annotation, optional
+            Annotation objects to highlight regions or nucleotides of interest.
+        label : str, optional
+            Label for the plot title.
+        colors : dict, optional
+            Dictionary of colors for each plot element. Keys are "sequence",
+            "nucleotides", "structure", and "basepairs". Values are either
+            matplotlib colors or strings specifying the color scheme.
+        nt_ticks : int, optional
+            Number of nucleotides between tick marks.
+        bp_style : "dotted", "solid", or "conventional", defaults to "dotted"
+            Style of base pair lines.
+        """
         if annotations is None:
             annotations = []
         ax = self.get_ax()

@@ -7,6 +7,17 @@ from rnavigate import styles, data, plots
 
 # Secondary structure diagram ploting functions
 def plot_structure_ss(ax, structure, colors):
+    """Plot the structure of a secondary structure diagram.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        Axes to plot on.
+    structure : rnavigate.data.SecondaryStructure
+        Secondary structure with diagram drawing coordinates to plot.
+    colors : list
+        List of colors to use for each nucleotide in the structure.
+    """
     x = structure.xcoordinates
     y = structure.ycoordinates
 
@@ -43,6 +54,17 @@ def plot_structure_ss(ax, structure, colors):
 
 
 def plot_basepairs_ss(ax, structure, bp_style):
+    """Plot the basepairs of a secondary structure diagram.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        Axes to plot on.
+    structure : rnavigate.data.SecondaryStructure
+        Secondary structure with diagram drawing coordinates to plot.
+    bp_style : "conventional", "dotted" or "line"
+        Style of basepairs to plot.
+    """
     if bp_style not in ["conventional", "dotted", "line"]:
         raise ValueError('bp_style must be one of "conventional", "dotted" or "line".')
     x = structure.xcoordinates
@@ -115,6 +137,17 @@ def plot_basepairs_ss(ax, structure, bp_style):
 
 
 def plot_sequence_ss(ax, structure, colors):
+    """Plot the sequence of a secondary structure diagram.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        Axes to plot on.
+    structure : rnavigate.data.SecondaryStructure
+        Secondary structure with diagram drawing coordinates to plot.
+    colors : list
+        List of colors to use for each nucleotide in the structure.
+    """
     if isinstance(structure, data.SequenceCircle):
         x = structure.data["Theta"]
         y = np.full(x.shape, structure.radius)
@@ -138,6 +171,17 @@ def plot_sequence_ss(ax, structure, colors):
 
 
 def plot_nucleotides_ss(ax, structure, colors):
+    """Plot the nucleotides of a secondary structure diagram.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        Axes to plot on.
+    structure : rnavigate.data.SecondaryStructure
+        Secondary structure with diagram drawing coordinates to plot.
+    colors : list
+        List of colors to use for each nucleotide in the structure.
+    """
     if isinstance(structure, data.SequenceCircle):
         x = structure.data["Theta"]
         y = np.full(x.shape, structure.radius)
@@ -150,6 +194,21 @@ def plot_nucleotides_ss(ax, structure, colors):
 
 
 def plot_positions_ss(ax, structure, xticks=20):
+    """Plot the positions of a secondary structure diagram.
+
+    Label locations are chosen from a point on a circle around each position that is
+    the furthest from any other nucleotides. This sometimes causes tick marks and
+    labels to overlap with other plot elements.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        Axes to plot on.
+    structure : rnavigate.data.SecondaryStructure
+        Secondary structure with diagram drawing coordinates to plot.
+    xticks : int
+        Spacing between position labels.
+    """
     xs = structure.xcoordinates
     ys = structure.ycoordinates
     thetas = np.pi / 32 * np.arange(64)
@@ -189,6 +248,17 @@ def plot_positions_ss(ax, structure, xticks=20):
 
 
 def plot_interactions_ss(ax, structure, interactions):
+    """Plot the interactions as lines over a secondary structure diagram.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        Axes to plot on.
+    structure : rnavigate.data.SecondaryStructure
+        Secondary structure with diagram drawing coordinates.
+    interactions : rnavigate.data.Interactions
+        Interactions to plot.
+    """
     ij_colors = interactions.get_ij_colors()
     segments = []
     colors = []
@@ -208,6 +278,17 @@ def plot_interactions_ss(ax, structure, interactions):
 
 
 def plot_annotation_ss(ax, structure, annotation):
+    """Highlight regions or nucleotides of interest on a secondary structure diagram.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        Axes to plot on.
+    structure : rnavigate.data.SecondaryStructure
+        Secondary structure with diagram drawing coordinates.
+    annotation : rnavigate.data.Annotation
+        Annotation to plot.
+    """
     color = annotation.color
     if annotation.annotation_type in ["spans", "primers"]:
         for start, end in annotation:

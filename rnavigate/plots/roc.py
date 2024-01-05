@@ -4,7 +4,37 @@ from sklearn.metrics import roc_curve, auc
 
 
 class ROC(plots.Plot):
+    """Plot ROC curves.
+
+    Parameters
+    ----------
+    num_samples : int
+        Number of samples to plot.
+    **kwargs
+        Keyword arguments passed to `rnavigate.plots.Plot`.
+
+    Attributes
+    ----------
+    fig : matplotlib.figure.Figure
+        Figure object.
+    a_ax : matplotlib.axes.Axes
+        Axes object for the AUC plot of A nucleotides.
+    u_ax : matplotlib.axes.Axes
+        Axes object for the AUC plot of U nucleotides.
+    g_ax : matplotlib.axes.Axes
+        Axes object for the AUC plot of G nucleotides.
+    c_ax : matplotlib.axes.Axes
+        Axes object for the AUC plot of C nucleotides.
+    main_ax : matplotlib.axes.Axes
+        Axes object for the main ROC plot.
+    axes : numpy.ndarray of matplotlib.axes.Axes
+        Array of axes objects.
+    i : int
+        Index of the current plot.
+    """
+
     def __init__(self, num_samples, **kwargs):
+        """Initialize the plot."""
         super().__init__(num_samples, **kwargs)
         self.a_ax = self.axes[0, 2]
         self.u_ax = self.axes[0, 3]
@@ -17,10 +47,6 @@ class ROC(plots.Plot):
 
     def set_figure_size(
         self,
-        fig=None,
-        ax=None,
-        rows=None,
-        cols=None,
         height_ax_rel=None,
         width_ax_rel=None,
         width_ax_in=1.5,
@@ -32,11 +58,32 @@ class ROC(plots.Plot):
         left_in=0.5,
         right_in=0.5,
     ):
+        """Set the figure size.
+
+        Parameters
+        ----------
+        height_ax_rel : float
+            Height of the axes relative to the y-axis limits.
+        width_ax_rel : float
+            Width of the axes relative to the x-axis limits.
+        width_ax_in : float
+            Width of the axes in inches.
+        height_ax_in : float
+            Height of the axes in inches.
+        height_gap_in : float
+            Height of the gap between axes in inches.
+        width_gap_in : float
+            Width of the gap between axes in inches.
+        top_in : float
+            Height of the top margin in inches.
+        bottom_in : float
+            Height of the bottom margin in inches.
+        left_in : float
+            Width of the left margin in inches.
+        right_in : float
+            Width of the right margin in inches.
+        """
         super().set_figure_size(
-            fig=fig,
-            ax=ax,
-            rows=rows,
-            cols=cols,
             height_ax_rel=height_ax_rel,
             width_ax_rel=width_ax_rel,
             width_ax_in=width_ax_in,
@@ -50,9 +97,38 @@ class ROC(plots.Plot):
         )
 
     def get_rows_columns(self, rows=None, cols=None):
+        """Get the number of rows and columns.
+
+        Parameters
+        ----------
+        rows : int
+            Number of rows. This is ignored.
+        cols : int
+            Number of columns. This is ignored.
+
+        Returns
+        -------
+        rows : int
+            Number of rows. This is always 2.
+        cols : int
+            Number of columns. This is always 4.
+        """
         return (2, 4)
 
     def plot_data(self, structure, profile, label, nts="AUCG"):
+        """Plot the data.
+
+        Parameters
+        ----------
+        structure : rnavigate.structure.Structure
+            Structure object.
+        profile : rnavigate.profile.Profile
+            Profile object.
+        label : str
+            Sample name.
+        nts : str, defaults to "AUCG"
+            Which nucleotides to plot.
+        """
         self.i += 1
 
         metric = profile.metric

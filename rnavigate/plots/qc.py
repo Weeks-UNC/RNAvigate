@@ -5,7 +5,35 @@ from rnavigate import plots
 
 
 class QC(plots.Plot):
+    """Plot QC data from log files.
+
+    Parameters
+    ----------
+    num_samples : int
+        Number of samples to plot.
+
+    Attributes
+    ----------
+    fig : matplotlib.figure.Figure
+        Figure object.
+    ax_muts_unt : matplotlib.axes.Axes
+        Axes object for the mutations per molecule plot of untreated samples.
+    ax_muts_mod : matplotlib.axes.Axes
+        Axes object for the mutations per molecule plot of modified samples.
+    ax_read_unt : matplotlib.axes.Axes
+        Axes object for the read length plot of untreated samples.
+    ax_read_mod : matplotlib.axes.Axes
+        Axes object for the read length plot of modified samples.
+    ax_boxplot : matplotlib.axes.Axes
+        Axes object for the boxplot of mutation rates.
+    axes : numpy.ndarray of matplotlib.axes.Axes
+        Array of axes objects.
+    i : int
+        Index of the current plot.
+    """
+
     def __init__(self, num_samples):
+        """Initialize the plot."""
         super().__init__(num_samples)
         if self.length == 1:
             self.ax_muts_unt = self.axes[0, 0]
@@ -60,10 +88,6 @@ class QC(plots.Plot):
 
     def set_figure_size(
         self,
-        fig=None,
-        ax=None,
-        rows=None,
-        cols=None,
         height_ax_rel=None,
         width_ax_rel=None,
         width_ax_in=2,
@@ -75,11 +99,32 @@ class QC(plots.Plot):
         left_in=0.5,
         right_in=0.5,
     ):
+        """Set the size of the figure.
+
+        Parameters
+        ----------
+        height_ax_rel : float, optional
+            Height of the axes relative to the y-axis limits.
+        width_ax_rel : float, optional
+            Width of the axes relative to the x-axis limits.
+        width_ax_in : float, defaults to 2
+            Width of the axes in inches.
+        height_ax_in : float, defaults to 2
+            Height of the axes in inches.
+        height_gap_in : float, defaults to 1
+            Height of the gap between axes in inches.
+        width_gap_in : float, defaults to 1
+            Width of the gap between axes in inches.
+        top_in : float, defaults to 1
+            Height of the top margin in inches.
+        bottom_in : float, defaults to 0.5
+            Height of the bottom margin in inches.
+        left_in : float, defaults to 0.5
+            Width of the left margin in inches.
+        right_in : float, defaults to 0.5
+            Width of the right margin in inches.
+        """
         super().set_figure_size(
-            fig=fig,
-            ax=ax,
-            rows=rows,
-            cols=cols,
             height_ax_rel=height_ax_rel,
             width_ax_rel=width_ax_rel,
             width_ax_in=width_ax_in,
@@ -93,12 +138,37 @@ class QC(plots.Plot):
         )
 
     def get_rows_columns(self, rows=None, cols=None):
+        """Get the number of rows and columns.
+
+        Parameters
+        ----------
+        rows : int, optional
+            Number of rows. This is ignored.
+        cols : int, optional
+            Number of columns. This is ignored.
+
+        Returns
+        -------
+        rows : int
+            Number of rows. 1 if there is only one sample, 2 otherwise.
+        cols : int
+            Number of columns. 3 if there is only one sample, 4 otherwise.
+        """
         if self.length == 1:
             return (1, 3)
         else:
             return (2, 4)
 
     def plot_data(self, profile, label):
+        """Plot the data.
+
+        Parameters
+        ----------
+        profile : rnavigate.profile.Profile
+            Profile object.
+        label : str
+            Label for the sample.
+        """
         self.plot_mutations_per_molecule(profile=profile, label=label)
         self.plot_read_lengths(profile=profile, label=label)
         self.profiles.append(profile)
@@ -113,6 +183,17 @@ class QC(plots.Plot):
             self.make_boxplot(labels)
 
     def plot_mutations_per_molecule(self, profile, label, upper_limit=12):
+        """Plot the mutations per molecule.
+
+        Parameters
+        ----------
+        profile : rnavigate.profile.Profile
+            Profile object.
+        label : str
+            Label for the sample.
+        upper_limit : int, optional
+            Upper limit of the x-axis.
+        """
         df = profile.mutations_per_molecule
         if df is None:
             raise ValueError("profile is missing QC data from log file")
@@ -123,6 +204,17 @@ class QC(plots.Plot):
         self.ax_muts_unt.plot(x, y2, label=label)
 
     def plot_read_lengths(self, profile, label, upper_limit=12):
+        """Plot the read lengths.
+
+        Parameters
+        ----------
+        profile : rnavigate.profile.Profile
+            Profile object.
+        label : str
+            Label for the sample.
+        upper_limit : int, optional
+            Upper limit of the x-axis.
+        """
         df = profile.read_lengths
         if self.length == 1:
             width = 0.4
@@ -138,6 +230,13 @@ class QC(plots.Plot):
         self.ax_read_unt.bar(x2, y2, width, label=label)
 
     def make_boxplot(self, labels):
+        """Make the boxplot of mutation rates.
+
+        Parameters
+        ----------
+        labels : list of str
+            Labels for the samples.
+        """
         cols = ["Modified_rate", "Untreated_rate"]
         data = []
         for i, profile in enumerate(self.profiles):

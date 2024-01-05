@@ -16,23 +16,22 @@ from rnavigate import data
 def normalize_sequence(sequence, t_or_u="U", uppercase=True):
     """Returns sequence as all uppercase nucleotides and/or corrects T or U.
 
-    Required arguments:
-        sequence (string or RNAvigate Sequence)
-            The sequence string
-            If given an RNAvigate Sequence, the sequence string is retrieved
+    Parameters
+    ----------
+    sequence : string or RNAvigate Sequence)
+        The sequence
+        If given an RNAvigate Sequence, the sequence string is retrieved
+    t_or_u : "T", "U", or False, defaults to "U"
+        "T" converts "U"s to "T"s
+        "U" converts "T"s to "U"s
+        False does nothing
+    uppercase bool, defaults to True
+        Whether to make sequence all uppercase
 
-    Optional arguments:
-        t_or_u ("T", "U", or False)
-            "T" converts "U"s to "T"s
-            "U" converts "T"s to "U"s
-            False does nothing
-            Defaults to "U"
-        uppercase (True or False)
-            Whether to make sequence all uppercase
-            Defaults to True
-
-    Returns:
-        string: the cleaned-up sequence string
+    Returns
+    -------
+        string
+            the cleaned-up sequence string
     """
     if isinstance(sequence, Sequence):
         sequence = sequence.sequence
@@ -48,15 +47,30 @@ def normalize_sequence(sequence, t_or_u="U", uppercase=True):
 
 
 class Sequence:
-    def __init__(self, input_data, name=None):
-        """Constructs a Data object given a sequence string, fasta file, or
-        dataframe containing a "Sequence" column.
+    """A class for storing and manipulating RNA sequences.
 
-        Required arguments:
-            sequence (string or pandas.DataFrame):
-                sequence string, fasta file, or a Pandas dataframe containing
-                a "Sequence" column.
-        """
+    Parameters
+    ----------
+    sequence : string or pandas.DataFrame
+        sequence string, fasta file, or a Pandas dataframe containing a
+        "Sequence" column
+    name : string, optional
+        The name of the sequence, defaults to None
+
+    Attributes
+    ----------
+    sequence : string
+        The sequence string
+    name : string
+        The name of the sequence
+    other_info : dict
+        A dictionary of additional information about the sequence
+    null_alignment : SequenceAlignment
+        An alignment of the sequence to itself
+    """
+
+    def __init__(self, input_data, name=None):
+        """Initialize the Sequence object."""
         self.name = name
         self.other_info = dict()
         if isinstance(input_data, str):
@@ -77,11 +91,12 @@ class Sequence:
         return self.name
 
     def read_fasta(self, fasta):
-        """Parse a fasta file for the first sequence. Store the sequence name
-        as self.gene and the sequence string as self.sequence.
+        """Parse a fasta file for the first sequence.
 
-        Args:
-            fasta (str): path to fasta file
+        Parameters
+        ----------
+        fasta : string
+            path to fasta file
         """
         with open(fasta, "r") as file:
             fasta = list(Bio.SeqIO.parse(file, "fasta"))
@@ -90,8 +105,10 @@ class Sequence:
     def get_seq_from_dataframe(self, dataframe):
         """Parse a dataframe for the sequence string, store as self.sequence.
 
-        Args:
-            dataframe (pandas DataFrame): must contain a "Sequence" column
+        Parameters
+        ----------
+        dataframe : pandas.DataFrame
+            must contain a "Sequence" column
         """
         sequence = "".join(dataframe["Sequence"].values)
         return sequence.replace("T", "U").replace("t", "u")
@@ -100,36 +117,52 @@ class Sequence:
     def length(self):
         """Get the length of the sequence
 
-        Returns:
-            int: the length of self.sequence
+        Returns
+        -------
+        length : int
+            the length of self.sequence
         """
         return len(self.sequence)
 
     def normalize_sequence(self, t_or_u="U", uppercase=True):
         """Converts sequence to all uppercase nucleotides and corrects T or U.
 
-        Optional arguments:
-            t_or_u ("T", "U", or False)
-                "T" converts "U"s to "T"s
-                "U" converts "T"s to "U"s
-                False does nothing.
-                Defaults to "U"
-            uppercase (True or False)
-                Whether to make sequence all uppercase
-                Defaults to True
+        Parameters
+        ----------
+        t_or_u : "T", "U", or False, defaults to "U"
+            "T" converts "U"s to "T"s
+            "U" converts "T"s to "U"s
+            False does nothing.
+        uppercase : bool, defaults to True
+            Whether to make sequence all uppercase
         """
         self.sequence = normalize_sequence(self, t_or_u=t_or_u, uppercase=uppercase)
 
     def get_aligned_data(self, alignment):
         """Get a copy of the sequence positionally aligned to another sequence.
 
-        Args:
-            alignment (data.Alignment): the alignment to use
+        Parameters
+        ----------
+        alignment : rnavigate.data.Alignment
+            the alignment to use
+
+        Returns
+        -------
+        aligned_sequence : rnavigate.data.Sequence
+            the aligned sequence
         """
         return Sequence(alignment.target_sequence)
 
     def get_colors_from_sequence(self):
-        """Get a numpy array of colors representing the nucleotide sequence."""
+        """Get a colors and colormap representing the nucleotide sequence.
+
+        Returns
+        -------
+        colors : numpy array
+            one matplotlib color-like value for each nucleotide in self.sequence
+        colormap : rnavigate.data.ScalarMappable
+            a colormap used for creating a colorbar
+        """
         colors = np.array([styles.get_nt_color(nt) for nt in self.sequence])
         colormap = data.ScalarMappable(
             cmap=[styles.get_nt_color(nt) for nt in "AUGC"],
@@ -144,7 +177,20 @@ class Sequence:
         return colors, colormap
 
     def get_colors_from_positions(self, pos_cmap="rainbow"):
-        """Get a numpy array of colors representing the nucleotide position."""
+        """Get colors and colormap representing the nucleotide position.
+
+        Parameters
+        ----------
+        pos_cmap : str, defaults to "rainbow"
+            cmap used for position colors
+
+        Returns
+        -------
+        colors : numpy array
+            one matplotlib color-like value for each nucleotide in self.sequence
+        colormap : rnavigate.data.ScalarMappable
+            a colormap used for creating a colorbar
+        """
         colormap = data.ScalarMappable(
             cmap=pos_cmap,
             normalization="min_max",
@@ -157,14 +203,40 @@ class Sequence:
         return colors, colormap
 
     def get_colors_from_profile(self, profile):
-        """Get a numpy array of colors representing per-nucleotide data."""
+        """Get colors and colormap representing per-nucleotide data.
+
+        Parameters
+        ----------
+        profile : rnavigate.data.Profile
+            the profile to use to get colors.
+
+        Returns
+        -------
+        colors : numpy array
+            one matplotlib color-like value for each nucleotide in self.sequence
+        colormap : rnavigate.data.ScalarMappable
+            a colormap used for creating a colorbar
+        """
         alignment = data.SequenceAlignment(profile, self)
         colors = alignment.map_values(profile.colors, fill="#808080")
         colormap = profile.cmap
         return colors, colormap
 
     def get_colors_from_annotations(self, annotations):
-        """Get a numpy array of colors representing sequence annotations."""
+        """Get colors and colormap representing sequence annotations.
+
+        Parameters
+        ----------
+        annotations : list of rnavigate.data.Annotations
+            the annotations to use to get colors.
+
+        Returns
+        -------
+        colors : numpy array
+            one matplotlib color-like value for each nucleotide in self.sequence
+        colormap : rnavigate.data.ScalarMappable
+            a colormap used for creating a colorbar
+        """
         colors = np.full(self.length, "gray", dtype="<U16")
         cmap = ["gray"]
         tick_labels = ["other"]
@@ -189,7 +261,20 @@ class Sequence:
         return colors, colormap
 
     def get_colors_from_structure(self, structure):
-        """Get a numpy array of colors representing base-pairing status."""
+        """Get colors and colormap representing base-pairing status.
+
+        Parameters
+        ----------
+        structure : rnavigate.data.SecondaryStructure
+            the structure to use to get colors.
+
+        Returns
+        -------
+        colors : numpy array
+            one matplotlib color-like value for each nucleotide in self.sequence
+        colormap : rnavigate.data.ScalarMappable
+            a colormap used for creating a colorbar
+        """
         cmap = ["darkOrange", "darkOrchid", "gray"]
         ct_colors = [cmap[int(pair == 0)] for pair in structure.pair_nts]
         alignment = data.SequenceAlignment(structure, self)
@@ -209,30 +294,33 @@ class Sequence:
     def get_colors(
         self, source, pos_cmap="rainbow", profile=None, structure=None, annotations=None
     ):
-        """Get a numpy array of colors that fits the current sequence.
+        """Get colors and colormap representing information about the sequence.
 
-        Args:
-            source (str | array of color-like): One of the following:
-                "position": colors represent position in sequence
-                "sequence": colors represent nucleotide identity
-                "annotations": colors represent sequence annotations
-                "profile": colors represent per-nucleotide data
-                "structure": colors represent base-pairing status
-                matplotlib color-like: all colors are this color
-                array of color like: must match length of sequence
-            pos_cmap (str, optional): cmap used if source="position".
-                Defaults to "rainbow".
-            profile (Profile or subclass, optional): Data object containing
-                per-nucleotide information. Defaults to None.
-            structure (SecondaryStructure or subclass, optional): Data object
-                containing secondary structure information.
-                Defaults to None.
-            annotations (list of Annotations or subclass, optional): list of
-                Data objects containing annotations. Defaults to None.
+        Parameters
+        ----------
+        source : str, list, or matplotlib color-like
+            the source of the color information
+            if a string, must be one of:
+                "sequence", "position", "profile", "structure", "annotations"
+            if a list, must be a list of matplotlib color-like values, colormap
+                will be None.
+            if a matplotlib color-like value, all nucleotides will be colored
+                that color, colormap will be None.
+        pos_cmap : str, defaults to "rainbow"
+            cmap used for position colors if source is "position"
+        profile : rnavigate.data.Profile, optional
+            the profile to use to get colors if source is "profile"
+        structure : rnavigate.data.SecondaryStructure, optional
+            the structure to use to get colors if source is "structure"
+        annotations : list of rnavigate.data.Annotations, optional
+            the annotations to use to get colors if source is "annotations"
 
-        Returns:
-            numpy array: one matplotlib color-like value for each nucleotide in
-                self.sequence
+        Returns
+        -------
+        colors : numpy array
+            one matplotlib color-like value for each nucleotide in self.sequence
+        colormap : rnavigate.data.ScalarMappable
+            a colormap used for creating a colorbar
         """
         if isinstance(source, str) and (source == "sequence"):
             return self.get_colors_from_sequence()
@@ -257,7 +345,38 @@ class Sequence:
 
 
 class Data(Sequence):
-    """The base class for RNAvigate Profile and Interactions classes."""
+    """The base class for RNAvigate Profile and Interactions classes.
+
+    Parameters
+    ----------
+    input_data : pandas.DataFrame or str
+        a pandas dataframe or path to a data file
+    sequence : string or rnavigate.data.Sequence
+        the sequence to use for the data
+    metric : string or dict
+        the column of the dataframe to use as the default metric to visualize
+    metric_defaults : dict
+        a dictionary of metric defaults
+    read_table_kw : dict, optional
+        kwargs dictionary passed to pd.read_table
+    name : string, optional
+        the name of the data, defaults to None
+
+    Attributes
+    ----------
+    data : pandas.DataFrame
+        the data table
+    filepath : string
+        the path to the data file
+    sequence : string or rnavigate.data.Sequence
+        the sequence to use for the data
+    metric : string or dict
+        the column of the dataframe to use as the metric to visualize
+    metric_defaults : dict
+        A dictionary of metric values and default settings for visualization
+    default_metric : string
+        the default metric to use for visualization
+    """
 
     def __init__(
         self,
@@ -268,6 +387,7 @@ class Data(Sequence):
         read_table_kw=None,
         name=None,
     ):
+        """Initialize the Data object."""
         if read_table_kw is None:
             read_table_kw = {}
         # assign data
@@ -321,10 +441,23 @@ class Data(Sequence):
 
     @property
     def metric(self):
+        """Get the column of the dataframe to use as the metric for visualization."""
         return self._metric["metric_column"]
 
     @metric.setter
     def metric(self, value):
+        """Set the column of the dataframe and other settings to use for visualization.
+
+        Parameters
+        ----------
+        value : string or dict
+            the column of the dataframe to use as the metric for visualization
+            if a string, must be one of:
+                "default", "Distance", or a column name in self.data
+            if a dict, must contain at least one of:
+                "metric_column", "error_column", "color_column", "cmap",
+                "normalization", "values", "extend", "title", or "alpha"
+        """
         if isinstance(value, str):
             try:
                 self._metric = self.metric_defaults[value]
@@ -353,6 +486,7 @@ class Data(Sequence):
 
     @property
     def error_column(self):
+        """Get the column of the dataframe to use as the error for visualization."""
         if self._metric["error_column"] in self.data.columns:
             return self._metric["error_column"]
         print(f"Warning: {self} missing expected error column")
@@ -360,12 +494,14 @@ class Data(Sequence):
 
     @property
     def color_column(self):
+        """Get the column of the dataframe to use as the color for visualization."""
         if self._metric["color_column"] in self.data.columns:
             return self._metric["color_column"]
         return self._metric["metric_column"]
 
     @property
     def cmap(self):
+        """Get the colormap to use for colorbars and to retrieve colors."""
         cmap_kwargs = {}
         for k, v in self._metric.items():
             if not k.endswith("column"):
@@ -374,6 +510,7 @@ class Data(Sequence):
 
     @property
     def colors(self):
+        """Get one matplotlib color-like value for each nucleotide in self.sequence."""
         values = self.data[self.color_column]
         if values.dtype.name == "bool":
             values = values.astype("int")
@@ -382,8 +519,16 @@ class Data(Sequence):
     def read_file(self, filepath, read_table_kw):
         """Convert data file to pandas dataframe and store as self.data
 
-        Args:
-            filepath (str): path to data file containing interactions
-            read_table_kw (dict): kwargs dictionary passed to pd.read_table
+        Parameters
+        ----------
+        filepath : string
+            path to data file containing interactions
+        read_table_kw : dict
+            kwargs dictionary passed to pd.read_table
+
+        Returns
+        -------
+        dataframe : pandas.DataFrame
+            the data table
         """
         return pd.read_table(filepath, **read_table_kw)

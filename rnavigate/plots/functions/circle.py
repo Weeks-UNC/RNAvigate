@@ -5,6 +5,17 @@ from rnavigate import styles
 
 
 def plot_interactions_circle(ax, seq_circle, interactions):
+    """Plot interactions on a circle plot.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        The axes to plot on.
+    seq_circle : rnavigate.data.SequenceCircle
+        The sequence circle object containing nucleotide positions.
+    interactions : rnavigate.data.Interactions
+        The interactions to be plotted as arcs between nucleotides.
+    """
     radius = seq_circle.radius
     theta = seq_circle.data["Theta"]
     ij_colors = interactions.get_ij_colors()
@@ -28,6 +39,19 @@ def plot_interactions_circle(ax, seq_circle, interactions):
 
 
 def plot_annotation_circle(ax, seq_circle, annotation, offset=1):
+    """Plot annotations on a circle plot.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        The axes to plot on.
+    seq_circle : rnavigate.data.SequenceCircle
+        The sequence circle object containing nucleotide positions.
+    annotation : rnavigate.data.Annotation
+        The annotation to be plotted.
+    offset : float, optional
+        The offset from the circle circumference to plot the annotation.
+    """
     radius = seq_circle.radius + offset
     color = annotation.color
     if annotation.annotation_type in ["spans", "primers"]:

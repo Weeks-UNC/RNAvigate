@@ -6,6 +6,104 @@ from rnavigate import data
 
 
 class Profile(data.Data):
+    """A class to represent per-nucleotide data.
+
+    Parameters
+    ----------
+    input_data : str or pandas.DataFrame
+        path to a csv or tab file or a pandas DataFrame
+        Table must be 1 row for each nucleotide in the sequence.
+        table columns must contain these columns:
+            A nucleotide position column labelled "Nucleotide"
+            A sequence column labelled "Sequence" with 1 of (A, C, G, U, T) per row
+                These will be added to the table if `sequence` is provided.
+            A data measurement column labelled "Profile" with a float or integer
+                Label may be another name if specified in `metric_defaults`
+            Optionally: A measurement error column.
+                Label must be specified in `metric_defaults`
+            Other columns may be present, and set up using `metric_defaults`.
+                See `metric_defaults` for more information.
+    read_table_kw : dict, optional
+        Keyword arguments to pass to pandas.read_table.
+        Defaults to None.
+    sequence : rnavigate.Sequence or str, optional
+        A sequence to use as the reference sequence.
+        This is required if `input_data` does not contain a "Sequence" column.
+        Defaults to None.
+    metric : str, defaults to "default"
+        The name of the set of value-to-color options to use.
+        "default" specifies:
+            "Profile" column is used
+            No error rates are present
+            Values are normalized to the range [0, 1]
+            Values are mapped to colors using the "viridis" colormap
+        "Distance" specifies:
+            (3-D) "Distance" column is used
+            No error rates are present
+            Values in the range [5, 50] are normalized to the range [0, 1]
+            Values are mapped to colors using the "cool" colormap
+        Other options may be defined in `metric_defaults`.
+    metric_defaults : dict, optional
+        Keys are metric names, to be used with `metric`.
+        Values are dictionaries of plotting parameters:
+            "metric_column" : str
+                The name of the column to use as the metric.
+                Plots and analyses that use per-nucleotide data will use this column.
+                If "color_column" is not provided, this column also defines colors.
+            "error_column" : str or None
+                The name of the column to use as the error.
+                If None, no error bars are plotted.
+            "color_column" : str or None
+                The name of the column to use for coloring.
+                If None, colors are defined by "metric_column".
+            "cmap" : str or list
+                The name of the colormap to use.
+                If a list, the list of colors to use.
+            "normalization" : str
+                The type of normalization to use.
+                In order to be used with colormaps, values are normalized to either
+                be integers for categorical colormaps, or floats in the range [0, 1]
+                for continuous colormaps.
+                "none" : no normalization is performed
+                "min_max" : values are scaled to floats in the range [0, 1] based on
+                    the upper and lower bounds defined in "values"
+                "0_1" : values are scaled to floats in the range [0, 1] based on
+                    the minimum and maximum values in the data
+                "bins" : values are scaled an integer based on bins defined by the
+                    list of bounds defined in "values"
+                "percentiles" : values are scaled to floats in the range [0, 1]
+                    based on upper and lower percentile bounds defined by "values"
+            "values" : list or None
+                The values to use when normalizing the data.
+                if "normalization" is "min_max", this should be a list of two values
+                    defining the upper and lower bounds.
+                if "normalization" is "bins", this should be a list of values
+                    of length 1 less than the length of cmap.
+                    example: [5, 10, 20] defines 4 bins:
+                        (-infinity, 5), [5, 10), [10, 20), [20, infinity)
+                if "normalization" is "percentiles", this should be a list of two
+                    values defining the upper and lower percentile bounds.
+                if "normalization" is "0_1" or "none", this should be None.
+            "title" : str, defaults to ""
+                The title of the colorbar.
+            "ticks" : list, defaults to None
+                The tick locations to use for the colorbar. If None, values are
+                determined automatically.
+            "tick_labels" : list, defaults to None
+                The labels to use for the colorbar ticks. If None, values are
+                determined automatically from "ticks".
+            "extend" : "neither", "both", "min", or "max", defaults to "neither"
+                Which ends of the colorbar to extend (places an arrow head).
+        Defaults to None.
+    name : str, optional
+        A name for the data set. Defaults to None.
+
+    Attributes
+    ----------
+    data : pandas.DataFrame
+        The data table
+    """
+
     def __init__(
         self,
         input_data,
@@ -15,6 +113,7 @@ class Profile(data.Data):
         sequence=None,
         name=None,
     ):
+        """Initialize the Profile object."""
         if metric_defaults is None:
             metric_defaults = {}
         super().__init__(
@@ -28,6 +127,22 @@ class Profile(data.Data):
 
     @classmethod
     def from_array(cls, input_data, sequence, **kwargs):
+        """Construct a Profile object from an array of values.
+
+        Parameters
+        ----------
+        input_data : list or np.array
+            A list or array of values to use as the metric.
+        sequence : str
+            The RNA sequence.
+        **kwargs
+            Additional keyword arguments to pass to the Profile constructor.
+
+        Returns
+        -------
+        Profile
+            A Profile object with the provided values.
+        """
         sequence = data.Sequence(sequence)
         if len(input_data) != sequence.length:
             message = (
@@ -56,13 +171,36 @@ class Profile(data.Data):
 
     @property
     def recreation_kwargs(self):
+        """A dictionary of keyword arguments to pass when recreating the object."""
         return {}
 
     def normalize_sequence(self, t_or_u="U", uppercase=True):
+        """Changes the values in self.data["Sequence"] to the normalized sequence.
+
+        Parameters
+        ----------
+        t_or_u : "T" or "U", Defaults to "U".
+            Whether to replace T with U or U with T.
+        uppercase : bool, Defaults to True.
+            Whether to convert the sequence to uppercase.
+        """
         super().normalize_sequence(t_or_u=t_or_u, uppercase=uppercase)
         self.data["Sequence"] = list(self.sequence)
 
     def get_aligned_data(self, alignment):
+        """Returns a new Profile object with the data aligned to a sequence.
+
+        Parameters
+        ----------
+        alignment : rnavigate.data.SequenceAlignment
+            The alignment to use to map rows of self.data to a new sequence.
+
+        Returns
+        -------
+        Profile
+            A new Profile object with the data aligned to the sequence in the
+            alignment.
+        """
         dataframe = alignment.map_nucleotide_dataframe(self.data)
         return self.__class__(
             input_data=dataframe,
@@ -74,9 +212,18 @@ class Profile(data.Data):
         )
 
     def copy(self):
+        """Returns a copy of the Profile."""
         return self.get_aligned_data(self.null_alignment)
 
     def get_plotting_dataframe(self):
+        """Returns a dataframe with the data to be plotted.
+
+        Returns
+        -------
+        pandas.DataFrame
+            A dataframe with the columns "Nucleotide", "Values", "Errors", and
+            "Colors".
+        """
         new_names = ["Nucleotide"]
         old_names = ["Nucleotide"]
         old_names.append(self.metric)
@@ -98,21 +245,28 @@ class Profile(data.Data):
         minimum_points=None,
         mask_na=True,
     ):
-        """calculates a windowed operation over a column of self.data and
-        stores the result as a new column. Value of each window is assigned to
+        """calculates a windowed operation over a column of data.
+
+        Result is stored in a new column. Value of each window is assigned to
         the center position of the window.
 
-        Args:
-            column (str): name of column to perform operation on
-            window (int): window size, must be an odd number
-            method (str, optional): operation to perform over windows, must be
-                one of 'median', 'mean', 'minimum', 'maximum'
-                Defaults to 'median'.
-            new_name (str, optional): name of new column for stored result.
-                Defaults to f"{method}_{window}_nt", e.g. "median_55_nt".
-            minimum_points (int, optional): minimum number of points within
-                each window.
-                Defaults to the size of the window.
+        Parameters
+        ----------
+        column : str
+            name of column to perform operation on
+        window : int
+            window size, must be an odd number
+        method : string or function, defaults to "median"
+            operation to perform over windows.
+            if string, must be "median", "mean", "minimum", or "maximum"
+            if function, must take a 1D numpy array as input and return a scalar
+        new_name : str, defaults to f"{method}_{window}_nt"
+            name of new column for stored result.
+        minimum_points : int, defaults to value of `window`
+            minimum number of points within each window.
+        mask_na : bool, defaults to True
+            whether to mask the result of the operation where the original
+            column has a nan value.
         """
         if window % 2 != 1:
             raise ValueError("`window` argument must be an odd number.")
@@ -164,49 +318,49 @@ class Profile(data.Data):
         By default, performs ShapeMapper2 boxplot normalization on self.metric
         and stores the result as "Norm_profile".
 
-        Optional arguments:
-            profile_column (string)
-                column name of values to normalize
-                Defaults to self.metric
-            new_profile (string)
-                column name of new normalized values
-                Defaults to "Norm_profile"
-            error_column (string)
-                column name of error values to propagate
-                Defaults to self.error_column
-            new_error (string)
-                column name of new propagated error values
-                Defaults to "Norm_error"
-            norm_method (string)
-                normalization method to use.
-                "DMS" uses self.norm_percentile and nt_groups=['AC', 'UG']
-                    scales the median of 90th to 95th percentiles to 1
-                    As and Cs are normalized seperately from Us and Gs
-                "eDMS" uses self.norm_eDMS and  nt_groups=['A', 'U', 'C', 'G']
-                    Applies the new eDMS-MaP normalization.
-                    Each nucleotide is normalized seperately.
-                "boxplot" uses self.norm_boxplot and nt_groups=['AUCG']
-                    removes outliers (> 1.5 iqr) and scales median to 1
-                    scales nucleotides together unless specified with nt_groups
-                "percentile" uses self.norm_percentile and nt_groups=['AUCG']
-                    scales the median of 90th to 95th percentiles to 1
-                    scales nucleotides together unless specified with nt_groups
-                Defaults to "boxplot": the default normalization of ShapeMapper
-            nt_groups (list of strings)
-                A list of nucleotides to group
-                e.g. ['AUCG'] groups all nts together
-                     ['AC', 'UG'] groups As with Cs and Us with Gs
-                     ['A', 'C', 'U', 'G'] scales each nt seperately
-                Default depends on norm_method
-            profile_factors (dictionary)
-                a scaling factor (float) for each nucleotide. keys must be:
-                    'A', 'C', 'U', 'G'
-                Note: using this argument overrides any calculation of scaling
-                Defaults to None
-            **norm_kwargs: these are passed to the norm_method function
+        Parameters
+        ----------
+        profile_column : string, defaults to self.metric
+            column name of values to normalize
+        new_profile : string, defaults to "Norm_profile"
+            column name of new normalized values
+        error_column : string, defaults to self.error_column
+            column name of error values to propagate
+        new_error : string, defaults to "Norm_error"
+            column name of new propagated error values
+        norm_method : string, defaults to "boxplot"
+            normalization method to use.
+            "DMS" uses self.norm_percentile and nt_groups=['AC', 'UG']
+                scales the median of 90th to 95th percentiles to 1
+                As and Cs are normalized seperately from Us and Gs
+            "eDMS" uses self.norm_eDMS and  nt_groups=['A', 'U', 'C', 'G']
+                Applies the new eDMS-MaP normalization.
+                Each nucleotide is normalized seperately.
+            "boxplot" uses self.norm_boxplot and nt_groups=['AUCG']
+                removes outliers (> 1.5 iqr) and scales median to 1
+                scales nucleotides together unless specified with nt_groups
+            "percentile" uses self.norm_percentile and nt_groups=['AUCG']
+                scales the median of 90th to 95th percentiles to 1
+                scales nucleotides together unless specified with nt_groups
+            Defaults to "boxplot": the default normalization of ShapeMapper
+        nt_groups : list of strings, defaults to None
+            A list of nucleotides to group
+            e.g. ['AUCG'] groups all nts together
+                    ['AC', 'UG'] groups As with Cs and Us with Gs
+                    ['A', 'C', 'U', 'G'] scales each nt seperately
+            Default depends on norm_method
+        profile_factors : dictionary, defaults to None
+            a scaling factor (float) for each nucleotide. keys must be:
+                'A', 'C', 'U', 'G'
+            Note: using this argument overrides any calculation of scaling
+            Defaults to None
+        **norm_kwargs
+            these are passed to the norm_method function
 
-        Returns:
-            dict: the new profile scaling factors dictionary
+        Returns
+        -------
+        profile_factors : dict
+            the new profile scaling factors dictionary
         """
         if profile_column is None:
             profile_column = self.metric
@@ -263,15 +417,16 @@ class Profile(data.Data):
 
         If either bound is set to None, one-sided Winsorization is performed.
 
-        Required arguments:
-            column (string)
-                the column of data to be winsorized
-            lower_bound (Number or None)
-                Data below this value is set to this value.
-                If None, no lower bound is applied.
-            upper_bound (Number or None)
-                Data above this value is set to this value.
-                If None, no upper bound is applied.
+        Parameters
+        ----------
+        column : string
+            the column of data to be winsorized
+        lower_bound : Number or None, defaults to None
+            Data below this value is set to this value.
+            If None, no lower bound is applied.
+        upper_bound : Number or None, defaults to None
+            Data above this value is set to this value.
+            If None, no upper bound is applied.
         """
         if lower_bound is not None:
             below_idx = self.data[column] < lower_bound
@@ -283,12 +438,15 @@ class Profile(data.Data):
     def normalize_external(self, profiles, **kwargs):
         """normalize reactivities using other profiles to normfactors.
 
-        Args:
-            profiles (list of rnavigate.data.Profile): a list of other profiles
-                used to compute scaling factors
+        Parameters
+        ----------
+        profiles : list of rnavigate.data.Profile
+            a list of other profiles used to compute scaling factors
 
-        Returns:
-            dict: the new profile scaling factors dictionary
+        Returns
+        -------
+        profile_factors : dict
+            the new profile scaling factors dictionary
         """
         combined_df = pd.concat([profile.data for profile in profiles])
         combined_profile = Profile(input_data=combined_df)
@@ -305,11 +463,15 @@ class Profile(data.Data):
         these values can skew these result. This method excludes such nan
         values. Other elements are the same.
 
-        Args:
-            values (1D numpy array): values to scale
+        Parameters
+        ----------
+        values : 1D numpy array
+            values to normalize
 
-        Returns:
-            (float, float): scaling factor and error propagation factor
+        Returns
+        -------
+        (float, float)
+            scaling factor and error propagation factor
         """
         finite_values = values[np.isfinite(values)]
         p25, p75, p90, p95 = np.percentile(finite_values, [25, 75, 90, 95])
@@ -330,14 +492,17 @@ class Profile(data.Data):
         return factor, error_factor
 
     def norm_eDMS(self, values):
-        """Returns normalization factors for normalize values following eDMS
-        pernt scheme in ShapeMapper 2.2
+        """Calculates norm factors following eDMS pernt scheme in ShapeMapper 2.2
 
-        Args:
-            values (1D numpy array): values to scale
+        Parameters
+        ----------
+        values : 1D numpy array
+            values to normalize
 
-        Returns:
-            (float, float): scaling factor and error propagation factor
+        Returns
+        -------
+        (float, float)
+            scaling factor and error propagation factor
         """
         # if too few values points, don't normalize
         if len(values) < 10:
@@ -362,18 +527,23 @@ class Profile(data.Data):
     def norm_percentiles(
         self, values, lower_bound=90, upper_bound=99, median_or_mean="mean"
     ):
-        """Calculates profile scaling factors and error propagation by scaling
-        the median between upper and lower bound percentiles to 1.
+        """Calculates factors to scale the median between percentile bounds to 1.
 
-        Args:
-            values (1D numpy.array): values to scale
-            lower_bound (int or float, optional): percentile of lower bound
-                Defaults to 90
-            upper_bound (int or float, optional): percentile of upper bound
-                Defaults to 99
+        Parameters
+        ----------
+        values : 1D numpy array
+            values to normalize
+        lower_bound : int or float, optional
+            percentile of lower bound, Defaults to 90
+        upper_bound : int or float, optional
+            percentile of upper bound, Defaults to 99
+        median_or_mean : string, optional
+            whether to use the median or mean of the values between the bounds.
 
-        Returns:
-            (float, float): scaling factor and error propagation factor
+        Returns
+        -------
+        (float, float)
+            scaling factor and error propagation factor
         """
         if median_or_mean == "mean":
             factor_function = np.mean
@@ -389,6 +559,111 @@ class Profile(data.Data):
 
 
 class SHAPEMaP(Profile):
+    """A class to represent per-nucleotide SHAPE-MaP data.
+
+    Parameters
+    ----------
+    input_data : str or pandas.DataFrame
+        path to a ShapeMapper2 profile.txt or .map file or a pandas DataFrame
+    normalize : "DMS", "eDMS", "boxplot", "percentiles", or None, defaults to None
+        The normalization method to use.
+        "DMS" uses self.norm_percentile and nt_groups=['AC', 'UG']
+            scales the median of 90th to 95th percentiles to 1
+            As and Cs are normalized seperately from Us and Gs
+        "eDMS" uses self.norm_eDMS and  nt_groups=['A', 'U', 'C', 'G']
+            Applies the new eDMS-MaP normalization.
+            Each nucleotide is normalized seperately.
+        "boxplot" uses self.norm_boxplot and nt_groups=['AUCG']
+            removes outliers (> 1.5 iqr) and scales median to 1
+            scales nucleotides together unless specified with nt_groups
+        "percentiles" uses self.norm_percentile and nt_groups=['AUCG']
+            scales the median of 90th to 95th percentiles to 1
+            scales nucleotides together unless specified with nt_groups
+        Defaults to None: no normalization is performed
+    read_table_kw : dict, optional
+        Keyword arguments to pass to pandas.read_table. These are not necessary for
+        profile.txt and .map files.
+        Defaults to None.
+    sequence : rnavigate.Sequence or str, optional
+        A sequence to use as the reference sequence. This is not necessary for
+        profile.txt and .map files.
+        Defaults to None.
+    metric : str, defaults to "Norm_profile"
+        The name of the set of value-to-color options to use.
+        "Norm_profile" specifies:
+            "Norm_profile" column is used
+            "Norm_stderr" column is used for error bars
+            Values are normalized to bins:
+                (-inf, -0.4), [-0.4, 0.4), [0.4, 0.85), [0.85, 2), [2, inf)
+            Bins are mapped to "grey", "black", "orange", "red", "red"
+        Other options may be defined in `metric_defaults`.
+    metric_defaults : dict, optional
+        Keys are metric names, to be used with `metric`.
+        Values are dictionaries of plotting parameters:
+            "metric_column" : str
+                The name of the column to use as the metric.
+                Plots and analyses that use per-nucleotide data will use this column.
+                If "color_column" is not provided, this column also defines colors.
+            "error_column" : str or None
+                The name of the column to use as the error.
+                If None, no error bars are plotted.
+            "color_column" : str or None
+                The name of the column to use for coloring.
+                If None, colors are defined by "metric_column".
+            "cmap" : str or list
+                The name of the colormap to use.
+                If a list, the list of colors to use.
+            "normalization" : str
+                The type of normalization to use.
+                In order to be used with colormaps, values are normalized to either
+                be integers for categorical colormaps, or floats in the range [0, 1]
+                for continuous colormaps.
+                "none" : no normalization is performed
+                "min_max" : values are scaled to floats in the range [0, 1] based on
+                    the upper and lower bounds defined in "values"
+                "0_1" : values are scaled to floats in the range [0, 1] based on
+                    the minimum and maximum values in the data
+                "bins" : values are scaled an integer based on bins defined by the
+                    list of bounds defined in "values"
+                "percentiles" : values are scaled to floats in the range [0, 1]
+                    based on upper and lower percentile bounds defined by "values"
+            "values" : list or None
+                The values to use when normalizing the data.
+                if "normalization" is "min_max", this should be a list of two values
+                    defining the upper and lower bounds.
+                if "normalization" is "bins", this should be a list of values
+                    of length 1 less than the length of cmap.
+                    example: [5, 10, 20] defines 4 bins:
+                        (-infinity, 5), [5, 10), [10, 20), [20, infinity)
+                if "normalization" is "percentiles", this should be a list of two
+                    values defining the upper and lower percentile bounds.
+                if "normalization" is "0_1" or "none", this should be None.
+            "title" : str, defaults to ""
+                The title of the colorbar.
+            "ticks" : list, defaults to None
+                The tick locations to use for the colorbar. If None, values are
+                determined automatically.
+            "tick_labels" : list, defaults to None
+                The labels to use for the colorbar ticks. If None, values are
+                determined automatically from "ticks".
+            "extend" : "neither", "both", "min", or "max", defaults to "neither"
+                Which ends of the colorbar to extend (places an arrow head).
+        Defaults to None.
+    log : str, optional
+        Path to a ShapeMapper v2 shapemap_log.txt file with mutations-per-molecule
+        and read-length histograms. These will be present if the --per-read-histogram
+        flag was used when running ShapeMapper v2.
+        Currently, this is not working with ShapeMapper v2.2 files.
+        Defaults to None.
+    name : str, optional
+        A name for the data set. Defaults to None.
+
+    Attributes
+    ----------
+    data : pandas.DataFrame
+        The data table
+    """
+
     def __init__(
         self,
         input_data,
@@ -400,6 +675,7 @@ class SHAPEMaP(Profile):
         log=None,
         name=None,
     ):
+        """Initialize the SHAPEMaP object."""
         self.read_lengths, self.mutations_per_molecule = self.read_log(log)
         if metric_defaults is None:
             metric_defaults = {}
@@ -443,6 +719,33 @@ class SHAPEMaP(Profile):
 
     @classmethod
     def from_rnaframework(cls, input_data, normalize=None):
+        """Construct a SHAPEMaP object from an RNAFramework output file.
+
+        Parameters
+        ----------
+        input_data : str
+            path to an RNAFramework .xml reactivities file
+        normalize : "DMS", "eDMS", "boxplot", "percentiles", or None, defaults to None
+            The normalization method to use.
+            "DMS" uses self.norm_percentile and nt_groups=['AC', 'UG']
+                scales the median of 90th to 95th percentiles to 1
+                As and Cs are normalized seperately from Us and Gs
+            "eDMS" uses self.norm_eDMS and  nt_groups=['A', 'U', 'C', 'G']
+                Applies the new eDMS-MaP normalization.
+                Each nucleotide is normalized seperately.
+            "boxplot" uses self.norm_boxplot and nt_groups=['AUCG']
+                removes outliers (> 1.5 iqr) and scales median to 1
+                scales nucleotides together unless specified with nt_groups
+            "percentiles" uses self.norm_percentile and nt_groups=['AUCG']
+                scales the median of 90th to 95th percentiles to 1
+                scales nucleotides together unless specified with nt_groups
+            Defaults to None: no normalization is performed
+
+        Returns
+        -------
+        SHAPEMaP
+            A SHAPEMaP object with the provided values.
+        """
         tree = xmlet.parse(input_data)
         root = tree.getroot()
         sequence = root.find("./transcript/sequence").text
@@ -460,6 +763,24 @@ class SHAPEMaP(Profile):
         return profile
 
     def read_log(self, log):
+        """Read the ShapeMapper log file.
+
+        Parameters
+        ----------
+        log : str
+            Path to a ShapeMapper v2 shapemap_log.txt file with
+            mutations-per-molecule and read-length histograms.
+
+        Returns
+        -------
+        read_lengths : pandas.DataFrame
+            A dataframe with the columns "Read_length", "Modified_read_length",
+            and "Untreated_read_length".
+        mutations_per_molecule : pandas.DataFrame
+            A dataframe with the columns "Mutation_count",
+            "Modified_mutations_per_molecule", and
+            "Untreated_mutations_per_molecule".
+        """
         if log is None:
             return None, None
         with open(log, "r") as f:
@@ -527,6 +848,26 @@ class SHAPEMaP(Profile):
 
 
 class DanceMaP(SHAPEMaP):
+    """A class to represent per-nucleotide DanceMaP data.
+
+    Parameters
+    ----------
+    input_data : str or pandas.DataFrame
+        path to a DanceMapper reactivities.txt file or a pandas DataFrame
+    component : int
+        Which component of the DanceMapper ensemble to read in (0-indexed).
+    read_table_kw : dict, optional
+        Keyword arguments to pass to pandas.read_table. These are not necessary for
+        reactivities.txt files.
+        Defaults to None.
+    sequence : rnavigate.Sequence or str, optional
+        A sequence to use as the reference sequence. This is not necessary for
+        reactivities.txt files.
+        Defaults to None.
+    metric : str, defaults to "Norm_profile"
+        The name of the set of value-to-color options to use.
+    """
+
     def __init__(
         self,
         input_data,

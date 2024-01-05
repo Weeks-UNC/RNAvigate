@@ -3,6 +3,7 @@ import matplotlib as mp
 import matplotlib.patches as mp_patches
 from rnavigate import styles
 
+
 # 1-dimensional x-axis tracks
 def plot_sequence_track(
     ax,
@@ -13,6 +14,26 @@ def plot_sequence_track(
     verticalalignment="bottom",
     region="all",
 ):
+    """Plot a sequence track along the x-axis of a plot.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        The axes to plot the sequence track on.
+    sequence : str
+        The sequence to plot.
+    yvalue : float, defaults to -0.05
+        The y-value of the sequence track.
+    height : float, defaults to 0.05
+        The height of the sequence track.
+    ytrans : "data" or "axes", defaults to "data"
+        The y-axis coordinate system.
+    verticalalignment : "top" or "bottom", defaults to "bottom"
+        The vertical alignment of the sequence track.
+    region : list of 2 int, defaults to "all"
+        Start and end positions of the region to plot. If "all", plot the entire
+        sequence.
+    """
     style = styles.settings["sequence_bar"]
     ymin, ymax = ax.get_ylim()
     if ytrans == "axes":
@@ -62,6 +83,26 @@ def plot_annotation_track(
     region="all",
     ytrans="data",
 ):
+    """Plot an annotation track along the x-axis of a plot.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        The axes to plot the annotation track on.
+    annotation : rnavigate.data.Annotation
+        The annotation to plot.
+    yvalue : float
+        The y-value of the annotation track.
+    height : float
+        The height of the annotation track.
+    mode : "track" or "bar"
+        The annotation mode.
+    region : list of 2 int, defaults to "all"
+        Start and end positions of the region to plot. If "all", plot the entire
+        sequence.
+    ytrans : "data" or "axes", defaults to "data"
+        The y-axis coordinate system.
+    """
     if region == "all":
         region = [1, annotation.length]
     mn, mx = region
@@ -123,6 +164,24 @@ def plot_annotation_track(
 
 
 def plot_domain_track(ax, spans, yvalue, height, region="all", ytrans="data"):
+    """Plot a domain track along the x-axis of a plot.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        The axes to plot the domain track on.
+    spans : rnavigate.data.Spans
+        The spans to plot.
+    yvalue : float
+        The y-value of the domain track.
+    height : float
+        The height of the domain track.
+    region : list of 2 int, defaults to "all"
+        Start and end positions of the region to plot. If "all", plot the entire
+        sequence.
+    ytrans : "data" or "axes", defaults to "data"
+        The y-axis coordinate system.
+    """
     if region == "all":
         region = [1, spans.length]
     mn, mx = region

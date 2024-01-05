@@ -7,6 +7,50 @@ from rnavigate import data
 
 
 class Interactions(data.Data):
+    """A class for storing and manipulating interactions data.
+
+    Parameters
+    ----------
+    input_data : string or pandas.DataFrame
+        If string, a path to a file containing interactions data.
+        If dataframe, the dataframe containing interactions data. The dataframe
+        must contain columns "i", "j", and self.metric. Dataframe may also
+        include other columns.
+    sequence : string or rnavigate.data.Sequence
+        The sequence string corresponding to the interactions data.
+    metric : string
+        The column name to use for visualization.
+    metric_defaults : dict
+        Keys are metric names and values are dictionaries of metric-specific defaults.
+        These defaults include:
+            "metric_column" : string
+                the column name to use for visualization
+            "cmap" : string or matplotlib.colors.Colormap)
+                the colormap to use for visualization
+            "normalization" : "min_max", "0_1", "none", or "bins"
+                The type of normalization to use when mapping values to colors
+            "values" : list of float
+                The values to used with normalization of the data
+            "title" : string
+                the title to use for colorbars
+            "extend" : "min", "max", "both", or "neither"
+                Which ends to extend when drawing the colorbar.
+            "tick_labels" : list of string
+    read_table_kw : dict
+        kwargs passed to pandas.read_table() when reading input_data.
+    window : int
+        The window size used to generate the interactions data.
+    name : str
+        The name of the data object.
+
+    Attributes
+    ----------
+    data : pandas.DataFrame
+        The interactions data.
+    window : int
+        The window size that is being represented by i-j pairs.
+    """
+
     def __init__(
         self,
         input_data,
@@ -17,31 +61,7 @@ class Interactions(data.Data):
         window=1,
         name=None,
     ):
-        """Given a dataframe or a data file, construct the interactions object
-
-        Args:
-            input_data (str | pandas.DataFrame):
-                path to a file or dataframe containing interactions data.
-                Must have at least "i" and "j" columns indicating the 5' and 3'
-                ends of the interactions.
-            sequence (str | pandas.DataFrame):
-                sequence string, fasta file, or a pandas dataframe containing
-                a "Sequence" column.
-            default_metric (str, optional): column name to use as the default
-                metric. Defaults to None.
-            read_table_kw (dict, optional): other options for read_table.
-                Defaults to {}.
-            window (int, optional): 5' and 3' interactions windows.
-                Defaults to 1.
-            fasta (str, optional): path to fasta file. Defaults to None.
-            fill (dict, optional): dictionary specifying a fill value (values)
-                to use with a metric (keys). Defaults to {}.
-            cmaps (dict, optional): specifies cmaps (values) to use with
-                metrics (keys). Defaults to {}.
-            mins_maxes (dict, optional): specifies minimum and maximum values
-                as a list of floats (values) to use with given metric (keys).
-                Defaults to {}.
-        """
+        """Initializes the Interactions object."""
         self.window = window
         super().__init__(
             input_data=input_data,
@@ -55,16 +75,21 @@ class Interactions(data.Data):
         self.reset_mask()
 
     def mask_on_sequence(self, compliment_only=None, nts=None):
-        """Mask interactions based on sequence content
+        """Mask interactions based on sequence.
 
-        Args:
-            compliment_only (bool): require that i and j windows are reverse
-                complimentary
-            nts (str): require that all nucleotides in i and j windows are in
-                nts
+        Parameters
+        ----------
+        compliment_only : bool, defaults to None
+            If True, only keep interactions where i and j are complimentary
+            nucleotides.
+        nts : str, defaults to None
+            If compliment_only is False, only keep interactions where i and j
+            are in nts.
 
-        Returns:
-            numpy array: the masking boolean array
+        Returns
+        -------
+        numpy array
+            a boolean array of the same length as self.data
         """
         mask = []
         compliment = {"A": "UT", "U": "AG", "T": "AG", "G": "CU", "C": "G"}
@@ -90,25 +115,27 @@ class Interactions(data.Data):
         ds_only=False,
         paired_only=False,
     ):
-        """Mask interactions based on secondary structure
+        """Masks interactions based on a secondary structure.
 
-        Args:
-            structure (SecondaryStructure):
-                A SecondaryStructure object or list of these objects
-                Filters are applied based on all structures.
-            min_cd (int, optional): minimum allowable contact distance.
-                Defaults to None.
-            max_cd (int, optional): maximum allowable contact distance.
-                Defaults to None.
-            ss_only (bool, optional): whether to require i and j to be single-
-                stranded. Defaults to False.
-            ds_only (bool, optional): whether to require i and j to be double-
-                stranded. Defaults to False.
-            paired_only (bool, optional): whether to require that i and j are
-                base paired. Defaults to False.
+        Parameters
+        ----------
+        structure : rnavigate.data.SecondaryStructure
+            The secondary structure to use for masking.
+        min_cd : int, defaults to None
+            The minimum contact distance to allow.
+        max_cd : int, defaults to None
+            The maximum contact distance to allow.
+        ss_only : bool, defaults to False
+            If True, only keep interactions between single-stranded nucleotides.
+        ds_only : bool, defaults to False
+            If True, only keep interactions between double-stranded nucleotides.
+        paired_only : bool, defaults to False
+            If True, only keep interactions that are paired in the structure.
 
-        Returns:
-            numpy array: the masking boolean array
+        Returns
+        -------
+        mask : numpy array
+            a boolean array of the same length as self.data
         """
         if isinstance(structure, list):
             for each in structure:
@@ -155,20 +182,21 @@ class Interactions(data.Data):
         return mask
 
     def mask_on_profile(self, profile, min_profile=None, max_profile=None):
-        """Masks interactions based on per-nucleotide information. Positions
-        that are not mapped to profile or are np.nan values in profile are not
-        masked.
+        """Masks interactions based on per-nucleotide measurements.
 
-        Args:
-            profile (Profile or subclass): a data object containing
-                per-nucleotide information
-            min_profile (float, optional): minimum allowable per-nucleotide
-                value. Defaults to None.
-            max_profile (float, optional): maximum allowable per-nucleotide
-                value. Defaults to None.
+        Parameters
+        ----------
+        profile : rnavigate.data.Profile
+            The profile to use for masking.
+        min_profile : float, defaults to None
+            The minimum profile value to allow.
+        max_profile : float, defaults to None
+            The maximum profile value to allow.
 
-        Returns:
-            numpy array: the mask array
+        Returns
+        -------
+        mask : numpy array
+            a boolean array of the same length as self.data
         """
         mapping = data.SequenceAlignment(self, profile).mapping
         norm_prof = profile.data["Norm_profile"]
@@ -191,16 +219,19 @@ class Interactions(data.Data):
         return mask
 
     def mask_on_position(self, exclude=None, isolate=None):
-        """Masks interactions based on position in sequence
+        """Mask interactions based on their i and j positions.
 
-        Args:
-            exclude (list of int, optional): a list of nucleotide positions to
-                exclude if i or j is in list
-            isolate (list of int, optional): a list of nucleotide positions to
-                isolate if i and j are not in list
+        Parameters
+        ----------
+        exclude : list of int, defaults to None
+            A list of positions to exclude.
+        isolate : list of int, defaults to None
+            A list of positions to isolate.
 
-        Returns:
-            numpy array: the masking boolean array
+        Returns
+        -------
+        mask : numpy array
+            a boolean array of the same length as self.data
         """
         mask = np.full(len(self.data), True)
         for index, (i, j) in self.data[["i", "j"]].iterrows():
@@ -214,14 +245,19 @@ class Interactions(data.Data):
         return mask
 
     def mask_on_distance(self, max_dist=None, min_dist=None):
-        """Mask interactions based on their primary sequence distance (j-i).
+        """Mask interactions based on their distance in sequence space.
 
-        Args:
-            max_dist (int): maximum allowable distance
-            min_dist (int): minimum allowable distance
+        Parameters
+        ----------
+        max_dist : int, defaults to None
+            The maximum distance to allow. If None, no maximum distance is set.
+        min_dist : int, defaults to None
+            The minimum distance to allow. If None, no minimum distance is set.
 
-        Returns:
-            numpy array: the masking boolean array
+        Returns
+        -------
+        mask : numpy array
+            a boolean array of the same length as self.data
         """
         primary_distances = self.data.eval("i - j").abs()
         mask = self.data["mask"]
@@ -233,19 +269,28 @@ class Interactions(data.Data):
         return mask
 
     def mask_on_values(self, **kwargs):
-        """Mask interactions on values in self.data. Each keyword should have
-        the format "column_operator" where column is a valid column name of
-        the dataframe and operator is one of:
-            "ge": greater than or equal to
-            "le": less than or equal to
-            "gt": greater than
-            "lt": less than
-            "eq": equal to
-            "ne": not equal to
-        The values given to these keywords are then used in the comparison and
-        False comparisons are filtered out. e.g.:
-            self.mask_on_values(Statistic_ge=23) evaluates to:
-            self.update_mask(self.data["Statistic"] >= 23)
+        """Mask interactions based on values in self.data.
+
+        Parameters
+        ----------
+        kwargs : dict
+            Each keyword should have the format "column_operator" where column
+            is a valid column name of the dataframe and operator is one of:
+                "ge": greater than or equal to
+                "le": less than or equal to
+                "gt": greater than
+                "lt": less than
+                "eq": equal to
+                "ne": not equal to
+            The values given to these keywords are then used in the comparison
+            and False comparisons are filtered out. e.g.:
+                self.mask_on_values(Statistic_ge=23) evaluates to:
+                self.update_mask(self.data["Statistic"] >= 23)
+
+        Returns
+        -------
+        mask : numpy array
+            a boolean array of the same length as self.data
         """
         mask = np.full(len(self.data), True)
         for key, value in kwargs.items():
@@ -269,25 +314,36 @@ class Interactions(data.Data):
         self.data["mask"] = np.ones(len(self.data), dtype=bool)
 
     def copy(self, apply_filter=False):
-        """Returns a deep copy of the Interactions.
+        """Returns a copy of the interactions, optionally with masked rows removed.
 
-        Optional arguments:
-            apply_filter (True or False)
-                whether to remove masked rows
-                Defaults to False
+        Parameters
+        ----------
+        apply_filter : bool, defaults to False
+            If True, masked rows ("mask" == False) are dropped.
 
-        Returns:
-            rnavigate.data.Interactions
-                The same subclass as the original object
+        Returns
+        -------
+        rnavigate.data.Interactions
+            A copy of the interactions.
         """
         return self.get_aligned_data(
             alignment=self.null_alignment, apply_filter=apply_filter
         )
 
     def get_aligned_data(self, alignment, apply_filter=True):
-        """Get a new copy of the data with i and j mapped to new positions
-        using an alignment. Interactions in which i or j does not map are
-        dropped.
+        """Returns a copy mapped to a new sequence with masked rows removed.
+
+        Parameters
+        ----------
+        alignment : rnavigate.data.SequenceAlignment
+            The alignment to use for mapping the interactions.
+        apply_filter : bool, defaults to True
+            If True, masked rows ("mask" == False) are dropped.
+
+        Returns
+        -------
+        rnavigate.data.Interactions
+            Interactions mapped to a new sequence.
         """
         if apply_filter:
             dataframe = self.data[self.data["mask"]].reset_index(drop=True)
@@ -306,14 +362,11 @@ class Interactions(data.Data):
         )
 
     def update_mask(self, mask):
-        """Given a new masking array, the mask is updated
-
-        Args:
-            mask (numpy array of bool): the new mask to update on
-        """
+        """Updates the mask by ANDing the current mask with the given mask."""
         self.data["mask"] = self.data["mask"] & mask
 
     def count_filter(self, **kwargs):
+        """Counts the number of interactions that pass the given filters."""
         mask = self.filter(**kwargs)
         return sum(mask)
 
@@ -346,62 +399,68 @@ class Interactions(data.Data):
     ):
         """Convenience function that applies the above filters simultaneously.
 
-        Args:
-            prefiltered (bool, optional):
-                passed to self.set_mask_update().
-                Defaults to False.
-            structure (SecondaryStructure, optional):
-                passed to self.mask_on_structure().
-                Defaults to None.
-            min_cd (int, optional):
-                passed to self.mask_on_structure().
-                Defaults to None.
-            max_cd (int, optional):
-                passed to self.mask_on_structure().
-                Defaults to None.
-            paired_only (bool, optional):
-                passed to self.mask_on_structure().
-                Defaults to False.
-            ss_only (bool, optional):
-                passed to self.mask_on_structure().
-                Defaults to False.
-            ds_only (bool, optional):
-                passed to self.mask_on_structure().
-                Defaults to False.
-            profile (Profile or subclass, optional):
-                passed to self.mask_on_profile().
-                Defaults to None.
-            min_profile (float, optional):
-                passed to self.mask_on_profile().
-                Defaults to None.
-            max_profile (float, optional):
-                passed to self.mask_on_profile().
-                Defaults to None.
-            compliments_only (bool, optional):
-                passed to self.mask_on_sequence().
-                Defaults to False.
-            nts (str, optional):
-                passed to self.mask_on_sequence().
-                Defaults to None.
-            max_distance (int, optional):
-                passed to self.mask_on_distance().
-                Defaults to None.
-            min_distance (int, optional):
-                passed to self.mask_on_distance().
-                Defaults to None.
-            exclude_nts (list of int, optional):
-                passed to self.mask_on_position().
-                Defaults to None.
-            isolate_nts (list of int, optional):
-                passed to self.mask_on_position().
-                Defaults to None.
-            resolve_conflicts (str, optional):
-                passed to self.resolve_conflicts().
-                Defaults to None.
-            **kwargs:
-                additional arguments are first passed to
-                self.data_specific_filter(), remaining kwargs are passed to
-                self.mask_on_values()
+        Parameters
+        ----------
+        prefiltered : bool, defaults to False
+            If True, the mask is not updated.
+        reset_filter : bool, defaults to True
+            If True, the mask is reset before applying filters.
+        structure : rnavigate.data.SecondaryStructure, defaults to None
+            The structure to use for filtering.
+        min_cd : int, defaults to None
+            The minimum contact distance to allow.
+        max_cd : int, defaults to None
+            The maximum contact distance to allow.
+        paired_only : bool, defaults to False
+            If True, only keep interactions that are paired in the structure.
+        ss_only : bool, defaults to False
+            If True, only keep interactions between single-stranded nucleotides.
+        ds_only : bool, defaults to False
+            If True, only keep interactions between double-stranded nucleotides.
+        profile : rnavigate.data.Profile, defaults to None
+            The profile to use for masking.
+        min_profile : float, defaults to None
+            The minimum profile value to allow.
+        max_profile : float, defaults to None
+            The maximum profile value to allow.
+        compliments_only : bool, defaults to False
+            If True, only keep interactions where i and j are complimentary
+            nucleotides.
+        nts : str, defaults to None
+            If compliment_only is False, only keep interactions where i and j
+            are in nts.
+        max_distance : int, defaults to None
+            The maximum distance to allow. If None, no maximum distance is set.
+        min_distance : int, defaults to None
+            The minimum distance to allow. If None, no minimum distance is set.
+        exclude_nts : list of int, defaults to None
+            A list of positions to exclude.
+        isolate_nts : list of int, defaults to None
+            A list of positions to isolate.
+        resolve_conflicts : str, defaults to None
+            If not None, conflicting windows are resolved using the Maximal
+            Weighted Independent Set. The weights are taken from the metric
+            value. The graph is first broken into components to speed up the
+            identification of the MWIS. Then the mask is updated to only
+            include the MWIS.
+        **kwargs : dict
+            Each keyword should have the format "column_operator" where column
+            is a valid column name of the dataframe and operator is one of:
+                "ge": greater than or equal to
+                "le": less than or equal to
+                "gt": greater than
+                "lt": less than
+                "eq": equal to
+                "ne": not equal to
+            The values given to these keywords are then used in the comparison
+            and False comparisons are filtered out. e.g.:
+                self.mask_on_values(Statistic_ge=23) evaluates to:
+                self.update_mask(self.data["Statistic"] >= 23)
+
+        Returns
+        -------
+        mask : numpy array
+            a boolean array of the same length as self.data
         """
 
         def filters_are_on(*filters):
@@ -450,14 +509,21 @@ class Interactions(data.Data):
         return kwargs, np.full(len(self.data), True)
 
     def get_ij_colors(self):
-        """Gets i, j, and colors lists for plotting interactions. i and j are
-        the 5' and 3' ends of each interaction, and colors is the color to use
-        for each interaction. Values of self.data[self.metric] are normalized
-        to 0 to 1, which correspond to self.min_max values. These are then
-        mapped to a color using self.cmap.
+        """Gets i, j, and colors lists for plotting interactions.
 
-        Returns:
-            list, list, list: 5' and 3' ends of each pair, color for each pair
+        i and j are the 5' and 3' ends of each interaction, and colors is the color
+        to use for each interaction. Values of self.data[self.metric] are normalized
+        to 0 to 1, which correspond to self.min_max values. These are then mapped to
+        a color using self.cmap.
+
+        Returns
+        -------
+        i : list
+            5' ends of each interaction
+        j : list
+            3' ends of each interaction
+        colors : list
+            colors to use for each interaction
         """
         if len(self.data) == 0:
             return [], [], []
@@ -473,10 +539,12 @@ class Interactions(data.Data):
         return i_list, j_list, colors
 
     def get_sorted_data(self):
-        """Returns a sorted copy of interactions data.
+        """Returns a copy of the data sorted by self.metric.
 
-        Returns:
-            pandas.DataFrame: i, j, and metric values, sorted
+        Returns
+        -------
+        pandas.DataFrame
+            a copy of the data sorted by self.metric
         """
         ascending = self.metric not in ["Distance"]  # high distance is bad
         dataframe = self.data[["i", "j", self.metric]].copy()
@@ -486,12 +554,12 @@ class Interactions(data.Data):
         return dataframe
 
     def print_new_file(self, outfile=None):
-        """Prints a new file containing repositioned and filtered interactions
-        in the original format
+        """Create a new file with mapped and filtered interactions.
 
-        Args:
-            outfile (str, optional): path to an output file. If None, file
-                string is printed to console. Defaults to None.
+        Parameters
+        ----------
+        outfile : str, defaults to None
+            path to an output file. If None, file string is printed to console.
         """
         data = self.data.copy()
         data = data[data["mask"]]
@@ -508,12 +576,14 @@ class Interactions(data.Data):
             print(self.header, csv)
 
     def set_3d_distances(self, pdb, atom):
-        """Creates or overwrites values in self.data["Distance"] by calculating
-        the distance between atoms in i and j in the PDB structure.
+        """Calculates the distance between atoms in i and j in the PDB structure.
 
-        Args:
-            pdb (PDB): a data object containing atomic coordinates
-            atom (str): an atom id
+        Parameters
+        ----------
+        pdb : rnavigate.pdb.PDB
+            PDB object to use for calculating distances
+        atom : str
+            atom id to use for calculating distances
         """
         mapping = data.SequenceAlignment(self, pdb).mapping
         distance_matrix = pdb.get_distance_matrix(atom=atom)
@@ -529,10 +599,23 @@ class Interactions(data.Data):
         self.data["Distance"] = distances
 
     def resolve_conflicts(self, metric=None):
-        """Resolves conflicting windows using the Maximal Weighted Independent
+        """Uses an experimental method to resolve conflicts.
+
+        Resolves conflicting windows using the Maximal Weighted Independent
         Set. The weights are taken from the metric value. The graph is first
         broken into components to speed up the identification of the MWIS. Then
-        the mask is updated to only include the MWIS.
+        the mask is updated to only include the MWIS. This method is computationally
+        expensive for large or dense datasets.
+
+        Parameters
+        ----------
+        metric : str, defaults to None
+            The metric to use for weighting the graph. If None, self.metric is used.
+
+        Returns
+        -------
+        mask : numpy array
+            a boolean array of the same length as self.data
         """
 
         def get_components(graph):
@@ -627,6 +710,48 @@ class Interactions(data.Data):
 
 
 class SHAPEJuMP(Interactions):
+    """A class for storing and manipulating SHAPEJuMP data.
+
+    Parameters
+    ----------
+    input_data : string or pandas.DataFrame
+        If string, a path to a file containing SHAPEJuMP data.
+        If dataframe, the dataframe containing SHAPEJuMP data. The dataframe
+        must contain columns "i", "j", "Metric" (JuMP rate) and "Percentile"
+        (percentile ranking). Dataframe may also include other columns.
+    sequence : string or rnavigate.data.Sequence
+        The sequence string corresponding to the SHAPEJuMP data.
+    metric : string, defaults to "Percentile"
+        The column name to use for visualization.
+    metric_defaults : dict
+        Keys are metric names and values are dictionaries of metric-specific defaults.
+        These defaults include:
+            "metric_column" : string
+                the column name to use for visualization
+            "cmap" : string or matplotlib.colors.Colormap)
+                the colormap to use for visualization
+            "normalization" : "min_max", "0_1", "none", or "bins"
+                The type of normalization to use when mapping values to colors
+            "values" : list of float
+                The values to used with normalization of the data
+            "title" : string
+                the title to use for colorbars
+            "extend" : "min", "max", "both", or "neither"
+                Which ends to extend when drawing the colorbar.
+            "tick_labels" : list of string
+    read_table_kw : dict
+        kwargs passed to pandas.read_table() when reading input_data.
+    window : int
+        The window size used to generate the SHAPEJuMP data.
+    name : str
+        A name for the interactions object.
+
+    Attributes
+    ----------
+    data : pandas.DataFrame
+        The SHAPEJuMP data.
+    """
+
     def __init__(
         self,
         input_data,
@@ -669,13 +794,21 @@ class SHAPEJuMP(Interactions):
         )
 
     def read_file(self, input_data, read_table_kw=None):
-        """Parses a deletions.txt file and stores data as a dataframe at
-        self.data, sets self.window=1, and calculates a "Percentile" column.
+        """Parses a deletions.txt file and stores it as a dataframe.
 
-        Args:
-            input_data (str): path to deletions.txt file
-            read_table_kw (dict, optional): kwargs passed to pandas.read_table().
-                Defaults to None.
+        Also calculates a "Percentile" column.
+
+        Parameters
+        ----------
+        input_data : str
+            path to deletions.txt file
+        read_table_kw : dict, defaults to {}
+            kwargs passed to pandas.read_table().
+
+        Returns
+        -------
+        pandas.DataFrame
+            the SHAPEJuMP data
         """
         column_names = ["Gene", "i", "j", "Metric"]
         data = pd.read_table(input_data, names=column_names, header=0, **read_table_kw)
@@ -684,6 +817,49 @@ class SHAPEJuMP(Interactions):
 
 
 class RINGMaP(Interactions):
+    """A class for storing and manipulating RINGMaP data.
+
+    Parameters
+    ----------
+    input_data : string or pandas.DataFrame
+        If string, a path to a file containing RINGMaP data.
+        If dataframe, the dataframe containing RINGMaP data. The dataframe
+        must contain columns "i", "j", "Statistic", and "Zij". Dataframe may
+        also include other columns.
+    sequence : string or rnavigate.data.Sequence
+        The sequence string corresponding to the RINGMaP data.
+    metric : string, defaults to "Statistic"
+        The column name to use for visualization.
+    metric_defaults : dict
+        Keys are metric names and values are dictionaries of metric-specific defaults.
+        These defaults include:
+            "metric_column" : string
+                the column name to use for visualization
+            "cmap" : string or matplotlib.colors.Colormap)
+                the colormap to use for visualization
+            "normalization" : "min_max", "0_1", "none", or "bins"
+                The type of normalization to use when mapping values to colors
+            "values" : list of float
+                The values to used with normalization of the data
+            "title" : string
+                the title to use for colorbars
+            "extend" : "min", "max", "both", or "neither"
+                Which ends to extend when drawing the colorbar.
+            "tick_labels" : list of string
+    read_table_kw : dict, optional
+        kwargs passed to pandas.read_table() when reading input_data.
+    window : int, defaults to 1
+        The window size used to generate the RINGMaP data. If an input file is
+        provided, this value is overwritten by the value in the header.
+    name : str, optional
+        A name for the interactions object.
+
+    Attributes
+    ----------
+    data : pandas.DataFrame
+        The RINGMaP data.
+    """
+
     def __init__(
         self,
         input_data,
@@ -694,6 +870,7 @@ class RINGMaP(Interactions):
         window=1,
         name=None,
     ):
+        """Constructs an Interactions object from RINGMaP data"""
         if metric_defaults is None:
             metric_defaults = {}
         metric_defaults = {
@@ -725,15 +902,21 @@ class RINGMaP(Interactions):
         )
 
     def read_file(self, filepath, read_table_kw=None):
-        """Parses a correlations file and stores data as a dataframe at
-        self.data, sets self.window=1, and renames "+/-" column to "Sign".
+        """Parses a RINGMaP correlations file and stores data as a dataframe.
 
-        Args:
-            filepath (str):
-                path to a RingMapper correlations file
-            read_table_kw (dict, optional):
-                kwargs passed to pandas.read_table().
-                Defaults to None.
+        Also sets self.window (usually 1, from header).
+
+        Parameters
+        ----------
+        filepath : str
+            path to correlations file.
+        read_table_kw : dict, defaults to {}
+            kwargs passed to pandas.read_table().
+
+        Returns
+        -------
+        pandas.DataFrame
+            the RINGMaP data
         """
         with open(filepath, "r") as file:
             self.header = file.readline()
@@ -747,14 +930,19 @@ class RINGMaP(Interactions):
     def data_specific_filter(self, positive_only=False, negative_only=False, **kwargs):
         """Adds filters for "Sign" column to parent filter() function
 
-        Args:
-            positive_only (bool, optional): whether to require that sign is 1.
-                Defaults to False.
-            negative_only (bool, optional): whether to require that sign is -1.
-                Defaults to False.
+        Parameters
+        ----------
+        positive_only : bool, defaults to False
+            If True, only keep positive correlations.
+        negative_only : bool, defaults to False
+            If True, only keep negative correlations.
 
-        Returns:
-            dict: any additional keyword-argument pairs are returned
+        Returns
+        -------
+        kwargs : dict
+            any additional keyword-argument pairs are returned
+        mask : numpy array
+            a boolean array of the same length as self.data
         """
         mask = np.full(len(self.data), True)
         if positive_only:
@@ -765,15 +953,14 @@ class RINGMaP(Interactions):
         return kwargs, mask
 
     def get_sorted_data(self):
-        """Overwrites parent get_normalized_ij_data. Uses these values instead:
-            self.data[self.metric] * self.data["Sign"]
+        """Sorts on the product of self.metric and "Sign" columns.
+
         Except when self.metric is "Distance".
 
-        Args:
-            min_max (list of float): min and max values for normalization
-
-        Returns:
-            numpy array: normalized values for color mapping
+        Returns
+        -------
+        pandas.DataFrame
+            a copy of the data sorted by (self.metric * "Sign") columns
         """
         if self.metric == "Distance":
             return super().get_sorted_data()
@@ -785,6 +972,49 @@ class RINGMaP(Interactions):
 
 
 class PAIRMaP(RINGMaP):
+    """A class for storing and manipulating PAIRMaP data.
+
+    Parameters
+    ----------
+    input_data : string or pandas.DataFrame
+        If string, a path to a file containing PAIRMaP data.
+        If dataframe, the dataframe containing PAIRMaP data. The dataframe
+        must contain columns "i", "j", "Statistic", and "Class". Dataframe may
+        also include other columns.
+    sequence : string or rnavigate.data.Sequence
+        The sequence string corresponding to the PAIRMaP data.
+    metric : string, defaults to "Class"
+        The column name to use for visualization.
+    metric_defaults : dict
+        Keys are metric names and values are dictionaries of metric-specific defaults.
+        These defaults include:
+            "metric_column" : string
+                the column name to use for visualization
+            "cmap" : string or matplotlib.colors.Colormap)
+                the colormap to use for visualization
+            "normalization" : "min_max", "0_1", "none", or "bins"
+                The type of normalization to use when mapping values to colors
+            "values" : list of float
+                The values to used with normalization of the data
+            "title" : string
+                the title to use for colorbars
+            "extend" : "min", "max", "both", or "neither"
+                Which ends to extend when drawing the colorbar.
+            "tick_labels" : list of string
+    read_table_kw : dict, optional
+        kwargs passed to pandas.read_table() when reading input_data.
+    window : int, defaults to 1
+        The window size used to generate the PAIRMaP data. If an input file is
+        provided, this value is overwritten by the value in the header.
+    name : str, optional
+        A name for the interactions object.
+
+    Attributes
+    ----------
+    data : pandas.DataFrame
+        The PAIRMaP data.
+    """
+
     def __init__(
         self,
         input_data,
@@ -795,6 +1025,7 @@ class PAIRMaP(RINGMaP):
         window=1,
         name=None,
     ):
+        """Constructs an Interactions object from PAIRMaP data"""
         if metric_defaults is None:
             metric_defaults = {}
         metric_defaults = {
@@ -822,13 +1053,16 @@ class PAIRMaP(RINGMaP):
         )
 
     def read_file(self, filepath, read_table_kw=None):
-        """Parses a pairmap.txt file and stores data as a dataframe at
-        self.data, sets self.window (usually 3, from header).
+        """Parses a pairmap.txt file and stores data as a dataframe
 
-        Args:
-            filepath (str): path to a PAIR-MaP pairmap.txt file
-            read_table_kw (dict, optional): kwargs passed to pandas.read_table().
-                Defaults to None.
+        Sets self.window (usually 3), from header.
+
+        Parameters
+        ----------
+        filepath : str
+            path to pairmap.txt file
+        read_table_kw : dict, defaults to None
+            This argument is ignored.
         """
         with open(filepath, "r") as file:
             self.header = file.readline()
@@ -842,12 +1076,17 @@ class PAIRMaP(RINGMaP):
         """Used by Interactions.filter(). By default, non-primary and
         -secondary pairs are removed. all_pairs=True changes this behavior.
 
-        Args:
-            all_pairs (bool, optional): whether to include all PAIRs.
-                Defaults to False.
+        Parameters
+        ----------
+        all_pairs : bool, defaults to False
+            whether to include all PAIRs.
 
-        Returns:
-            dict: remaining kwargs are passed back to Interactions.filter()
+        Returns
+        -------
+        kwargs : dict
+            any additional keyword-argument pairs are returned
+        mask : numpy array
+            a boolean array of the same length as self.data
         """
         mask = np.full(len(self.data), True)
         if not all_pairs:
@@ -859,13 +1098,10 @@ class PAIRMaP(RINGMaP):
         """Same as parent function, unless metric is set to "Class", in which
         case ij pairs are returned in a different order.
 
-        Args:
-            min_max (list of int, length 2): minimum and maximum bounds for
-                colormapping
-
-        Returns:
-            pandas DataFrame: Dataframe providing i, j, and normalized data
-                values for plotting
+        Returns
+        -------
+        pandas.DataFrame
+            a copy of the data sorted by self.metric
         """
         if self.metric != "Class":
             return super().get_sorted_data()
@@ -884,6 +1120,48 @@ class PAIRMaP(RINGMaP):
 
 
 class PairingProbability(Interactions):
+    """A class for storing and manipulating pairing probability data.
+
+    Parameters
+    ----------
+    input_data : string or pandas.DataFrame
+        If string, a path to a file containing pairing probability data.
+        If dataframe, the dataframe containing pairing probability data. The
+        dataframe must contain columns "i", "j", "Probability", and "log10p".
+        Dataframe may also include other columns.
+    sequence : string or rnavigate.data.Sequence
+        The sequence string corresponding to the pairing probability data.
+    metric : string, defaults to "Probability"
+        The column name to use for visualization.
+    metric_defaults : dict
+        Keys are metric names and values are dictionaries of metric-specific defaults.
+        These defaults include:
+            "metric_column" : string
+                the column name to use for visualization
+            "cmap" : string or matplotlib.colors.Colormap
+                the colormap to use for visualization
+            "normalization" : "min_max", "0_1", "none", or "bins"
+                The type of normalization to use when mapping values to colors
+            "values" : list of float
+                The values to used with normalization of the data
+            "title" : string
+                the title to use for colorbars
+            "extend" : "min", "max", "both", or "neither"
+                Which ends to extend when drawing the colorbar.
+            "tick_labels" : list of string
+    read_table_kw : dict, optional
+        kwargs passed to pandas.read_table() when reading input_data.
+    window : int, defaults to 1
+        The window size used to generate the pairing probability data.
+    name : str, optional
+        A name for the PairingProbability object.
+
+    Attributes
+    ----------
+    data : pandas.DataFrame
+        The pairing probability data.
+    """
+
     def __init__(
         self,
         input_data,
@@ -894,14 +1172,7 @@ class PairingProbability(Interactions):
         window=1,
         name=None,
     ):
-        """Constructs Interactions data from a pairing probability text file
-        containing i, j, and -log10(P) values. Can be obtained using partition
-        and ProbabilityPlot functions from RNAStructure (Matthews Lab).
-
-        Args:
-            input_data (str): path to pairing probability text file
-            sequence (str, optional): Sequence string. Defaults to None.
-        """
+        """Constructs an Interactions object from pairing probability data"""
         if metric_defaults is None:
             metric_defaults = {}
         metric_defaults = {
@@ -945,12 +1216,19 @@ class PairingProbability(Interactions):
         )
 
     def read_file(self, filepath, read_table_kw=None):
-        """Parses a pairing probability text file to create a DataFrame
-        containing i, j, -log10(P) and Probability (0-1).
+        """Parses a pairing probability file and stores data as a dataframe.
 
-        Args:
-            filepath (str): path to pairing probability text file
-            read_table_kw (None, optional): ignored. Defaults to None.
+        Parameters
+        ----------
+        filepath : str
+            path to pairing probability file
+        read_table_kw : dict, defaults to None
+            This argument is ignored.
+
+        Returns
+        -------
+        pandas.DataFrame
+            the pairing probability data
         """
         with open(filepath, "r") as file:
             self.header = file.readline()
@@ -960,13 +1238,19 @@ class PairingProbability(Interactions):
         return dataframe
 
     def get_entropy_profile(self, print_out=False, save_file=None):
-        """Calculates per-nucleotide Shannon entropy and stores as self.entropy
+        """Calculates per-nucleotide Shannon entropy from pairing probabilities.
 
-        Args:
-            print_out (bool, optional): whether to print the result.
-                Defaults to False.
-            save_file (str, optional): file to write result to.
-                Defaults to None.
+        Parameters
+        ----------
+        print_out : bool, defaults to False
+            If True, entropy values are printed to console.
+        save_file : str, defaults to None
+            If not None, entropy values are saved to this file.
+
+        Returns
+        -------
+        rnavigate.data.Profile
+            a Profile object containing the entropy data
         """
         self.data.eval("nlogn = log10p * 10 ** ( - log10p )", inplace=True)
         entropy = np.zeros(self.length)
@@ -1009,11 +1293,14 @@ class PairingProbability(Interactions):
         )
 
     def data_specific_filter(self, **kwargs):
-        """Used by parent filter function. By default, filters out pairs with
-        probability less that 3%
+        """By default, interactions with probabilities less than 0.03 are removed.
 
-        Returns:
-            dict: keyword arguments are passed back to Interactions.filter()
+        Returns
+        -------
+        kwargs : dict
+            any additional keyword-argument pairs are returned
+        mask : numpy array
+            a boolean array of the same length as self.data
         """
         mask = self.data["Probability"] >= 0.03
         self.update_mask(mask)
@@ -1021,6 +1308,43 @@ class PairingProbability(Interactions):
 
 
 class AllPossible(Interactions):
+    """A class for storing and manipulating all possible interactions.
+
+    Parameters
+    ----------
+    sequence : string or rnavigate.data.Sequence
+        The sequence string corresponding to the pairing probability data.
+    metric : string, defaults to "Probability"
+        The column name to use for visualization.
+    metric_defaults : dict
+        Keys are metric names and values are dictionaries of metric-specific defaults.
+        These defaults include:
+            "metric_column" : string
+                the column name to use for visualization
+            "cmap" : string or matplotlib.colors.Colormap
+                the colormap to use for visualization
+            "normalization" : "min_max", "0_1", "none", or "bins"
+                The type of normalization to use when mapping values to colors
+            "values" : list of float
+                The values to used with normalization of the data
+            "title" : string
+                the title to use for colorbars
+            "extend" : "min", "max", "both", or "neither"
+                Which ends to extend when drawing the colorbar.
+            "tick_labels" : list of string
+    read_table_kw : dict, optional
+        kwargs passed to pandas.read_table() when reading input_data.
+    window : int, defaults to 1
+        The window size used to generate the pairing probability data.
+    name : str, optional
+        A name for the PairingProbability object.
+
+    Attributes
+    ----------
+    data : pandas.DataFrame
+        The pairing probability data.
+    """
+
     def __init__(
         self,
         sequence,
@@ -1031,6 +1355,7 @@ class AllPossible(Interactions):
         window=1,
         name=None,
     ):
+        """Constructs an Interactions object from pairing probability data"""
         if isinstance(sequence, data.Sequence):
             sequence = sequence.sequence
         if metric_defaults is None:
@@ -1067,6 +1392,48 @@ class AllPossible(Interactions):
 
 
 class StructureAsInteractions(Interactions):
+    """A class for storing and manipulating structure data.
+
+    Parameters
+    ----------
+    input_data : string or pandas.DataFrame
+        If string, a path to a file containing structure data.
+        If dataframe, the dataframe containing structure data. The dataframe
+        must contain columns "i", "j", and "Structure". Dataframe may also
+        include other columns.
+    sequence : string or rnavigate.data.Sequence
+        The sequence string corresponding to the structure data.
+    metric : string, defaults to "Structure"
+        The column name to use for visualization.
+    metric_defaults : dict
+        Keys are metric names and values are dictionaries of metric-specific defaults.
+        These defaults include:
+            "metric_column" : string
+                the column name to use for visualization
+            "cmap" : string or matplotlib.colors.Colormap
+                the colormap to use for visualization
+            "normalization" : "min_max", "0_1", "none", or "bins"
+                The type of normalization to use when mapping values to colors
+            "values" : list of float
+                The values to used with normalization of the data
+            "title" : string
+                the title to use for colorbars
+            "extend" : "min", "max", "both", or "neither"
+                Which ends to extend when drawing the colorbar.
+            "tick_labels" : list of string
+    read_table_kw : dict, optional
+        kwargs passed to pandas.read_table() when reading input_data.
+    window : int, defaults to 1
+        The window size used to generate the structure data.
+    name : str, optional
+        A name for the StructureAsInteractions object.
+
+    Attributes
+    ----------
+    data : pandas.DataFrame
+        The structure data.
+    """
+
     def __init__(
         self,
         input_data,
@@ -1076,6 +1443,7 @@ class StructureAsInteractions(Interactions):
         window=1,
         name=None,
     ):
+        """Constructs an Interactions object from structure data"""
         if metric_defaults is None:
             metric_defaults = {}
         if metric is None:
@@ -1105,6 +1473,48 @@ class StructureAsInteractions(Interactions):
 
 
 class StructureCompareTwo(Interactions):
+    """A class for storing and manipulating a comparison of two structures.
+
+    Parameters
+    ----------
+    input_data : string or pandas.DataFrame
+        If string, a path to a file containing structure data.
+        If dataframe, the dataframe containing structure data. The dataframe
+        must contain columns "i", "j", and "Structure". Dataframe may also
+        include other columns.
+    sequence : string or rnavigate.data.Sequence
+        The sequence string corresponding to the structure data.
+    metric : string, defaults to "Structure"
+        The column name to use for visualization.
+    metric_defaults : dict
+        Keys are metric names and values are dictionaries of metric-specific defaults.
+        These defaults include:
+            "metric_column" : string
+                the column name to use for visualization
+            "cmap" : string or matplotlib.colors.Colormap
+                the colormap to use for visualization
+            "normalization" : "min_max", "0_1", "none", or "bins"
+                The type of normalization to use when mapping values to colors
+            "values" : list of float
+                The values to used with normalization of the data
+            "title" : string
+                the title to use for colorbars
+            "extend" : "min", "max", "both", or "neither"
+                Which ends to extend when drawing the colorbar.
+            "tick_labels" : list of string
+    read_table_kw : dict, optional
+        kwargs passed to pandas.read_table() when reading input_data.
+    window : int, defaults to 1
+        The window size used to generate the structure data.
+    name : str, optional
+        A name for the StructureAsInteractions object.
+
+    Attributes
+    ----------
+    data : pandas.DataFrame
+        The structure data.
+    """
+
     def __init__(
         self,
         input_data,
@@ -1114,6 +1524,7 @@ class StructureCompareTwo(Interactions):
         window=1,
         name=None,
     ):
+        """Constructs an Interactions object from structure data"""
         if metric is None:
             metric = "Which_structure"
         if metric_defaults is None:
@@ -1169,6 +1580,48 @@ class StructureCompareTwo(Interactions):
 
 
 class StructureCompareMany(Interactions):
+    """A class for storing and manipulating a comparison of many structures.
+
+    Parameters
+    ----------
+    input_data : string or pandas.DataFrame
+        If string, a path to a file containing structure data.
+        If dataframe, the dataframe containing structure data. The dataframe
+        must contain columns "i", "j", and "Structure". Dataframe may also
+        include other columns.
+    sequence : string or rnavigate.data.Sequence
+        The sequence string corresponding to the structure data.
+    metric : string, defaults to "Structure"
+        The column name to use for visualization.
+    metric_defaults : dict
+        Keys are metric names and values are dictionaries of metric-specific defaults.
+        These defaults include:
+            "metric_column" : string
+                the column name to use for visualization
+            "cmap" : string or matplotlib.colors.Colormap
+                the colormap to use for visualization
+            "normalization" : "min_max", "0_1", "none", or "bins"
+                The type of normalization to use when mapping values to colors
+            "values" : list of float
+                The values to used with normalization of the data
+            "title" : string
+                the title to use for colorbars
+            "extend" : "min", "max", "both", or "neither"
+                Which ends to extend when drawing the colorbar.
+            "tick_labels" : list of string
+    read_table_kw : dict, optional
+        kwargs passed to pandas.read_table() when reading input_data.
+    window : int, defaults to 1
+        The window size used to generate the structure data.
+    name : str, optional
+        A name for the StructureAsInteractions object.
+
+    Attributes
+    ----------
+    data : pandas.DataFrame
+        The structure data.
+    """
+
     def __init__(
         self,
         input_data,
@@ -1178,6 +1631,7 @@ class StructureCompareMany(Interactions):
         window=1,
         name=None,
     ):
+        """Constructs an Interactions object from structure data"""
         if metric is None:
             metric = "Num_structures"
         if metric_defaults is None:

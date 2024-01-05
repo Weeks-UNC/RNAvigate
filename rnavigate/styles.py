@@ -59,19 +59,21 @@ settings = {
 
 
 def update_copy(original_settings, user_settings):
-    """Returns a recursively updated copy of the og settings with new settings
+    """Recursively updates and returns a copy of og settings with new settings applied.
 
-    Required arguments:
+    Parameters
+    ----------
         original_settings (dict)
             a default settings dictionary, usually rnav.settings
         user_settings (dict)
             a dictionary with only the fields from the original_settings that
             are to be changed
 
-    Returns:
-        dict
+    Returns
+    -------
+        settings dict
             the original_settings dictionary with the new_settings dictionary
-            values updated (recursively)
+            values recursively applied
     """
     new_settings = dict()
     for k, v in original_settings.items():
@@ -89,6 +91,15 @@ def update_copy(original_settings, user_settings):
 
 
 class Settings(dict):
+    """Context manager for temporarily changing global settings.
+
+    Parameters
+    ----------
+        user_settings : dict
+            a dictionary with only the fields from the original_settings that
+            are to be changed
+    """
+
     def __init__(self, user_settings):
         self.original_settings = update_copy(settings, {})
         self.user_settings = update_copy(settings, user_settings)
@@ -103,21 +114,17 @@ class Settings(dict):
 def set_defaults(context="paper", style="ticks", colors="default", dpi=140):
     """Set or reset the major global style settings.
 
-    _summary_
-
-    Optional arguments:
-        context (str)
+    Parameters
+    ----------
+        context : str, defaults to "paper"
             Passed to seaborn.set_context
             Defaults to "paper"
-        style (str)
+        style : str, defaults to "ticks"
             Passed to seaborn.set_style
-            Defaults to "ticks"
-        colors (str)
+        colors : str, defaults to "default"
             Passed to seaborn.set_palette
-            Defaults to "default"
-        dpi (int)
+        dpi : int, defaults to 140
             Sets the dots-per-inch for inline and exported images
-            Defaults to 140
     """
     if colors == "default":
         colors = [
@@ -141,19 +148,17 @@ def get_nt_color(nt, colors=None):
 
     Invalid nucleotides are set to gray
 
-    Required arguments:
-        nt (str)
+    Parameters
+    ----------
+        nt : str
             a nucleotide letter
-
-    Optional arguments:
-        colors ("rnavigate" or "old")
-            "rnavigate" uses default colors in rnav.settings["sequence_colors"]
+        colors "rnavigate" or "old", defaults to settings["sequence_colors"]
+            "rnavigate" uses blue, light blue, red, light red for "AUCG"
             "old" uses traditional red, yellow, blue, green for "AUCG"
-            Defaults to None
 
     Returns:
-        _type_
-            _description_
+        color : str
+            a hex color string
     """
     if colors is None:
         colors = settings["sequence_colors"]
@@ -163,22 +168,35 @@ def get_nt_color(nt, colors=None):
                 "A": "#f20000",  # red
                 "U": "#f28f00",  # yellow
                 "G": "#00509d",  # blue
-                "C": "#00c200",
-            },  # green
+                "C": "#00c200",  # green
+            },
             "rnavigate": {
                 "A": "#366ef0",  # blue
                 "U": "#9bb9ff",  # light blue
                 "G": "#f04c4c",  # red
-                "C": "#ffa77c",
-            },  # light red
+                "C": "#ffa77c",  # light red
+            },
         }[colors][nt.upper().replace("T", "U")]
     except KeyError:
         return "#aaaaaa"
 
 
-def get_nt_cmap():
+def get_nt_cmap(colors=None):
+    """Get an rnavigate color map for nucleotides.
+
+    Parameters
+    ----------
+        colors "rnavigate" or "old", defaults to settings["sequence_colors"]
+            "rnavigate" uses blue, light blue, red, light red for "AUCG"
+            "old" uses traditional red, yellow, blue, green for "AUCG"
+
+    Returns
+    -------
+        cmap : rnavigate.data.colors.ScalarMappable (matplotlib.cm.ScalarMappable)
+            a color map for nucleotides
+    """
     return data.ScalarMappable(
-        cmap=[get_nt_color(nt) for nt in "AUGC"],
+        cmap=[get_nt_color(nt, colors=colors) for nt in "AUGC"],
         normalization="none",
         values=None,
         title="sequence",
@@ -187,6 +205,8 @@ def get_nt_cmap():
 
 
 def apply_style(style_dict):
+    """Decorator for applying matplotlib style settings to a function."""
+
     def decorator(function):
         @wraps(function)
         def wrapper(*args, **kwargs):
@@ -198,6 +218,7 @@ def apply_style(style_dict):
     return decorator
 
 
+# TODO: these belong in settings dict
 # ShapeMapper Plot Styles
 sm = {
     "font.family": "sans-serif",

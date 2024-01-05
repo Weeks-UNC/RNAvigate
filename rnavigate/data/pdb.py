@@ -2,16 +2,6 @@
 
 This data can be used to filter interactions by 3D distance, and to visualize
 profile and interactions data on interactive 3D structures.
-
-Example use:
-import rnavigate as rnav
-
-my_structure = rnav.data.PDB(
-    input_data="my_structure.cif",
-    chain="A",
-    )
-
-
 """
 
 import Bio.PDB
@@ -20,42 +10,50 @@ import numpy as np
 
 
 class PDB(data.Sequence):
-    """Stores a tertiary structure with atomic coordinates
+    """A class to represent RNA tertiary structures with atomic coordinates.
 
-    PDB data can come from a PDB or CIF file.
-    Note: this is the only object that cannot be aligned to another sequence.
+    This data can be used to filter interactions by 3D distance, and to visualize
+    profile and interactions data on interactive 3D structures.
 
-    Attributes:
-        data (Bio.PDB object)
-            the structure from the PDB or CIF file
-        sequence (string)
-            the sequence of the structure, not always in the same coordinates
-        offset (integer)
-            the difference between sequence and residue positions
-        chain (string)
-            the string chain identifier for the RNA
-        path (string)
-            the path to the PDB or CIF file
-        distance_matrix (dictionary of 2D Numpy array)
-            keys are atom identifiers, values are the pairwise atom distance
-            matrices between residues. These are only stored if computed.
+    Parameters
+    ----------
+    input_data : str
+        path to a PDB or CIF file
+    chain : str
+        chain identifier of RNA of interest
+    sequence : rnavigate.Sequence or str, optional
+        A sequence to use as the reference sequence.
+        This is required if the sequence cannot be found in the header
+        Defaults to None.
+    name : str, optional
+        A name for the data set. Defaults to None.
+
+    Attributes
+    ----------
+    sequence : str
+        The RNA sequence
+    length : int
+        The length of the RNA sequence
+    name : str
+        A name for the data set
+    path : str
+        The path to the PDB or CIF file
+    chain : str
+        The chain identifier of the RNA of interest
+    offset : int
+        The offset between the sequence positions and the PDB residue indices
+    pdb : Bio.PDB.Structure.Structure
+        The PDB structure
+    pdb_idx : np.array
+        The PDB indices of the RNA
+    pdb_seq : np.array
+        The PDB sequence of the RNA
+    distance_matrix : dict
+        A dictionary of distance matrices for each atom type
     """
 
     def __init__(self, input_data, chain, sequence=None, name=None):
-        """Construct PDB object based on an input PDB or CIF file.
-
-        Required arguments:
-            input_data (string)
-                path to a PDB or CIF file
-            chain (string)
-                chain identifier of RNA of interest
-
-        Optional arguments:
-            sequence (rnavigate.Sequence or string)
-                A sequence to use as the reference sequence.
-                This is required if the sequence cannot be found in the header
-                Defaults to None.
-        """
+        """Construct PDB object based on an input PDB or CIF file."""
         self.offset = 0
         self.chain = chain
         if sequence is None:
@@ -66,7 +64,18 @@ class PDB(data.Sequence):
         self.distance_matrix = {}
 
     def get_sequence(self, pdb):
-        """Find the sequence in the provided CIF or PDB file."""
+        """Find the sequence in the provided CIF or PDB file.
+
+        Parameters
+        ----------
+        pdb : str
+            path to a PDB or CIF file
+
+        Returns
+        -------
+        sequence : string
+            The RNA sequence
+        """
         seqres = []
         with open(pdb) as file:
             for line in file.readlines():
@@ -76,7 +85,18 @@ class PDB(data.Sequence):
         return self.get_sequence_from_seqres(seqres)
 
     def get_sequence_from_seqres(self, seqres):
-        """Used by get_sequence to parse the SEQRES entries."""
+        """Used by get_sequence to parse the SEQRES entries.
+
+        Parameters
+        ----------
+        seqres : list
+            A list of SEQRES entries for the RNA chain of interest
+
+        Returns
+        -------
+        sequence : string
+            The RNA sequence
+        """
         sequence = []
         for nt in seqres:
             valid = nt[0].upper() in "GUACT"
@@ -89,7 +109,13 @@ class PDB(data.Sequence):
         return "".join(sequence)
 
     def read_pdb(self, pdb):
-        """Read a PDB or CIF file into the data structure."""
+        """Read a PDB or CIF file into the data structure.
+
+        Parameters
+        ----------
+        pdb : str
+            path to a PDB or CIF file
+        """
         if pdb.split(".")[-1] == "pdb":
             parser = Bio.PDB.PDBParser(QUIET=True)
         elif pdb.split(".")[-1] == "cif":
@@ -121,7 +147,7 @@ class PDB(data.Sequence):
             print("PDB entries could not be matched to sequence.")
 
     def get_pdb_idx(self, seq_idx):
-        """Return the PDB index given the sequence index."""
+        """Return the PDB index given the sequence index (0-indexed)."""
         return seq_idx + self.offset
 
     def get_seq_idx(self, pdb_idx):
@@ -129,7 +155,20 @@ class PDB(data.Sequence):
         return pdb_idx - self.offset
 
     def is_valid_idx(self, pdb_idx=None, seq_idx=None):
-        """Determines if a PDB or sequence index is in the PDB structure."""
+        """Determines if a PDB or sequence index is in the PDB structure.
+
+        Parameters
+        ----------
+        pdb_idx : int, optional
+            A PDB index (1-indexed). Defaults to None.
+        seq_idx : int, optional
+            A sequence index (1-indexed). Defaults to None.
+
+        Returns
+        -------
+        bool
+            True if the index is in the PDB structure, False otherwise.
+        """
         if pdb_idx is not None and pdb_idx in self.pdb_idx:
             return True
         elif seq_idx is not None and (seq_idx in (self.pdb_idx - self.offset)):
@@ -138,7 +177,23 @@ class PDB(data.Sequence):
             return False
 
     def get_xyz_coord(self, nt, atom):
-        """Return the x, y, and z coordinates for a given residue and atom."""
+        """Return the x, y, and z coordinates for a given residue and atom.
+
+        Parameters
+        ----------
+        nt : int
+            The nucleotide of interest (1-indexed)
+        atom : string or dict, defaults to "O2'"
+            The atom to use for distance calculations. If a string, the same atom
+            will be used for all residues. If a dict, the atom will be chosen based
+            on the nucleotide type. If "DMS", the N1 atom will be used for A and G,
+            and the N3 atom will be used for U and C.
+
+        Returns
+        -------
+        xyz : list
+            A list of x, y, and z coordinates
+        """
         pdb_idx = self.get_pdb_idx(nt)
         if atom == "DMS":
             atom = {nt: "N1" for nt in "AG"} | {nt: "N3" for nt in "UC"}
@@ -152,7 +207,25 @@ class PDB(data.Sequence):
         return xyz
 
     def get_distance(self, i, j, atom="O2'"):
-        """Get the atomic distance between nucleotides i and j (1-indexed)."""
+        """Get the distance between given atom in nucleotides i and j (1-indexed).
+
+        Parameters
+        ----------
+        i : int
+            The first nucleotide
+        j : int
+            The second nucleotide
+        atom : string or dict, defaults to "O2'"
+            The atom to use for distance calculations. If a string, the same atom
+            will be used for all residues. If a dict, the atom will be chosen based
+            on the nucleotide type. If "DMS", the N1 atom will be used for A and G,
+            and the N3 atom will be used for U and C.
+
+        Returns
+        -------
+        distance : float
+            The distance between the atoms
+        """
         if atom in self.distance_matrix:
             return self.distance_matrix[atom][i - 1, j - 1]
         try:
@@ -164,7 +237,21 @@ class PDB(data.Sequence):
         return distance
 
     def get_distance_matrix(self, atom="O2'"):
-        """Get the pairwise atomic distance matrix for all residues."""
+        """Get the pairwise atomic distance matrix for all residues.
+
+        Parameters
+        ----------
+        atom : string or dict, defaults to "O2'"
+            The atom to use for distance calculations. If a string, the same atom
+            will be used for all residues. If a dict, the atom will be chosen based
+            on the nucleotide type. If "DMS", the N1 atom will be used for A and G,
+            and the N3 atom will be used for U and C.
+
+        Returns
+        -------
+        matrix : NxN numpy.ndarray
+            A 2D array of pairwise distances. N is the length of the RNA.
+        """
         if atom in self.distance_matrix:
             return self.distance_matrix[atom]
         x = np.full(self.length, np.nan)

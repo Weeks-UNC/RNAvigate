@@ -1,9 +1,35 @@
+"""Plot distance histograms."""
+
 import numpy as np
 from rnavigate import plots
 
 
 class DistHist(plots.Plot):
+    """Create a distance histogram plot.
+
+    Parameters
+    ----------
+    num_samples : int
+        Number of samples to plot.
+    **kwargs
+        Keyword arguments passed to :class:`rnavigate.plots.Plot`.
+
+    Attributes
+    ----------
+    fig : matplotlib.figure.Figure
+        Figure object.
+    axes : numpy.ndarray of matplotlib.axes.Axes
+        Array of axes objects.
+    axes2 : dict
+        Dictionary of twin axes objects. Keys are axes objects from
+        :attr:`rnavigate.plots.DistHist.axes`.
+    i : int
+        Index of current axes object. Increments with each call to
+        :meth:`rnavigate.plots.DistHist.plot_data`.
+    """
+
     def __init__(self, num_samples, **plot_kwargs):
+        """Initialize DistHist object."""
         super().__init__(num_samples, sharey=True, **plot_kwargs)
         self.axes2 = {}
         base_ax2 = None
@@ -18,10 +44,6 @@ class DistHist(plots.Plot):
 
     def set_figure_size(
         self,
-        fig=None,
-        ax=None,
-        rows=None,
-        cols=None,
         height_ax_rel=None,
         width_ax_rel=None,
         width_ax_in=2,
@@ -33,11 +55,32 @@ class DistHist(plots.Plot):
         left_in=1,
         right_in=1,
     ):
+        """Set figure size.
+
+        Parameters
+        ----------
+        height_ax_rel : float, defaults to None
+            Height of axes objects relative to y-axis limits.
+        width_ax_rel : float, defaults to None
+            Width of axes objects relative to x-axis limits.
+        width_ax_in : float, defaults to 2
+            Width of axes objects in inches.
+        height_ax_in : float, defaults to 2
+            Height of axes objects in inches.
+        height_gap_in : float, defaults to 1
+            Height of gap between axes objects in inches.
+        width_gap_in : float, defaults to 0.4
+            Width of gap between axes objects in inches.
+        top_in : float, defaults to 1
+            Height of top margin in inches.
+        bottom_in : float, defaults to 1
+            Height of bottom margin in inches.
+        left_in : float, defaults to 1
+            Width of left margin in inches.
+        right_in : float, defaults to 1
+            Width of right margin in inches.
+        """
         super().set_figure_size(
-            fig=fig,
-            ax=ax,
-            rows=rows,
-            cols=cols,
             height_ax_rel=height_ax_rel,
             width_ax_rel=width_ax_rel,
             width_ax_in=width_ax_in,
@@ -53,6 +96,23 @@ class DistHist(plots.Plot):
     def plot_data(
         self, structure, interactions, bg_interactions, label, atom="O2'", ax=None
     ):
+        """Plot data on the current (or specified) axes object.
+
+        Parameters
+        ----------
+        structure : rnavigate.data.SecondaryStructure or rnavigate.data.PDB
+            Structure object to compute contact distances or 3D distances.
+        interactions : rnavigate.data.Interactions
+            Filtered Interactions object to to visualize pairwise distances.
+        bg_interactions : rnavigate.data.Interactions
+            Filtered Interactions object to to visualize pairwise background distances.
+        label : str
+            Label for the current axes object.
+        atom : str, defaults to "O2'"
+            Atom to compute distances from.
+        ax : matplotlib.axes.Axes, defaults to None
+            Axes object to plot on. If None, use the current axes object.
+        """
         if ax is None:
             ax = self.get_ax()
         ax2 = self.axes2[ax]
@@ -85,6 +145,17 @@ class DistHist(plots.Plot):
                     )
 
     def plot_structure_distances(self, ax, structure, atom):
+        """Plot all distances in the structure.
+
+        Parameters
+        ----------
+        ax : matplotlib.axes.Axes
+            Axes object to plot on.
+        structure : rnavigate.data.SecondaryStructure or rnavigate.data.PDB
+            Structure object to compute contact distances or 3D distances.
+        atom : str
+            Atom to compute distances from.
+        """
         matrix = structure.get_distance_matrix(atom=atom)
         dists = []
         for i in range(len(matrix) - 6):
@@ -102,6 +173,21 @@ class DistHist(plots.Plot):
     def plot_experimental_distances(
         self, ax, structure, interactions, atom, histtype="bar"
     ):
+        """Plot pairwise distances from the interactions object.
+
+        Parameters
+        ----------
+        ax : matplotlib.axes.Axes
+            Axes object to plot on.
+        structure : rnavigate.data.SecondaryStructure or rnavigate.data.PDB
+            Structure object to compute contact distances or 3D distances.
+        interactions : rnavigate.data.Interactions
+            Filtered Interactions object to to visualize pairwise distances.
+        atom : str
+            Atom to compute distances from.
+        histtype : "bar" or "step", defaults to "bar"
+            Type of histogram to plot.
+        """
         interactions.set_3d_distances(structure, atom)
         ij_dists = interactions.data.loc[interactions.data["mask"], "Distance"]
         if (len(ij_dists) > 0) and (histtype == "bar"):

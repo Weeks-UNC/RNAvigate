@@ -4,7 +4,31 @@ import math
 
 
 class Plot(ABC):
+    """Abstract base class for plots.
+
+    Parameters
+    ----------
+    num_samples : int
+        Number of samples to plot.
+    rows : int, optional
+        Number of rows in the plot.
+    cols : int, optional
+        Number of columns in the plot.
+    **kwargs
+        Keyword arguments passed to matplotlib.pyplot.subplots.
+
+    Attributes
+    ----------
+    fig : matplotlib.figure.Figure
+        Figure object.
+    axes : numpy.ndarray of matplotlib.axes.Axes
+        Array of axes objects.
+    i : int
+        Index of the current plot.
+    """
+
     def __init__(self, num_samples, rows=None, cols=None, **kwargs):
+        """Initialize the plot."""
         self.length = num_samples
         self.rows, self.columns = self.get_rows_columns(rows, cols)
         self.fig, self.axes = plt.subplots(
@@ -14,6 +38,19 @@ class Plot(ABC):
         self.colorbars = []
 
     def get_ax(self, i=None):
+        """Get the current axes object.
+
+        Parameters
+        ----------
+        i : int, optional
+            Index of the axes object to return. If None, return the current
+            axes object.
+
+        Returns
+        -------
+        matplotlib.axes.Axes
+            Axes object.
+        """
         if i is None:
             i = self.i
         row = i // self.columns
@@ -21,6 +58,13 @@ class Plot(ABC):
         return self.axes[row, col]
 
     def add_colorbar_args(self, cmap):
+        """Add colorbar arguments to the plot.
+
+        Parameters
+        ----------
+        cmap : rnavigate.data.ScalarMappable
+            Colormap object.
+        """
         if cmap is None:
             return
         for colorbar in self.colorbars:
@@ -30,6 +74,13 @@ class Plot(ABC):
             self.colorbars.append(cmap)
 
     def plot_colorbars(self):
+        """Plot colorbars.
+
+        Returns
+        -------
+        ColorBar
+            ColorBar plot object.
+        """
         rows = len(self.colorbars)
         if rows == 0:
             return (None, None)
@@ -40,6 +91,24 @@ class Plot(ABC):
         return plot
 
     def get_rows_columns(self, rows=None, cols=None):
+        """Get the number of rows and columns in the plot.
+
+        Parameters
+        ----------
+        rows : int, optional
+            Number of rows in the plot. If None, the number of rows is
+            determined automatically.
+        cols : int, optional
+            Number of columns in the plot. If None, the number of columns is
+            determined automatically.
+
+        Returns
+        -------
+        rows : int
+            Number of rows in the plot.
+        cols : int
+            Number of columns in the plot.
+        """
         has_rows = isinstance(rows, int)
         has_cols = isinstance(cols, int)
         if has_rows and has_cols:
@@ -73,8 +142,9 @@ class Plot(ABC):
     def save(self, filename):
         """Saves the figure to a file
 
-        Args:
-            filename (str):
+        Parameters
+        ----------
+            filename : string
                 A file path to write to. The file format is provided by this
                 file extension (svg, pdf, or png).
         """
@@ -82,10 +152,6 @@ class Plot(ABC):
 
     def set_figure_size(
         self,
-        fig=None,
-        ax=None,
-        rows=None,
-        cols=None,
         height_ax_rel=None,
         width_ax_rel=None,
         width_ax_in=None,
@@ -99,30 +165,33 @@ class Plot(ABC):
     ):
         """Sets figure size so that axes sizes are always consistent.
 
-        Args:
-            height_ax_rel (float, optional): ax unit to inches ratio for the
-                y-ax.
-            width_ax_rel (float, optional): ax unit to inches ration for the
-                x-ax.
-            width_ax_in (float, optional): fixed width of each ax in inches
-            height_ax_in (float, optional): fixed height of each ax in inches
-            width_gap_in (float, optional): fixed width of gaps between each
-                ax in inches
-            height_gap_in (float, optional): fixed height of gaps between each
-                ax in inches
-            top_in (float, optional): fixed height of top margin in inches
-            bottom_in (float, optional): fixed height of bottom margin in inches
-            left_in (float, optional): fixed width of left margin in inches
-            right_in (float, optional): fixed width of right margin in inches
+        Parameters
+        ----------
+        height_ax_rel : float, optional
+            Height of the axes relative to the y-axis limits.
+        width_ax_rel : float, optional
+            Width of the axes relative to the x-axis limits.
+        width_ax_in : float, optional
+            Width of the axes in inches.
+        height_ax_in : float, optional
+            Height of the axes in inches.
+        height_gap_in : float, optional
+            Height of the gap between axes in inches.
+        width_gap_in : float, optional
+            Width of the gap between axes in inches.
+        top_in : float, optional
+            Top margin in inches.
+        bottom_in : float, optional
+            Bottom margin in inches.
+        left_in : float, optional
+            Left margin in inches.
+        right_in : float, optional
+            Right margin in inches.
         """
-        if fig is None:
-            fig = self.fig
-        if ax is None:
-            ax = self.axes[0, 0]
-        if rows is None:
-            rows = self.rows
-        if cols is None:
-            cols = self.columns
+        fig = self.fig
+        ax = self.axes[0, 0]
+        rows = self.rows
+        cols = self.columns
 
         try:
             right_ax = ax.get_rmax()
@@ -180,7 +249,33 @@ class Plot(ABC):
 
 
 class ColorBar(Plot):
+    """Plot a colorbar.
+
+    Parameters
+    ----------
+    rows : int, optional
+        Number of rows in the plot.
+    **kwargs
+        Keyword arguments passed to matplotlib.pyplot.subplots.
+
+    Attributes
+    ----------
+    fig : matplotlib.figure.Figure
+        Figure object.
+    axes : numpy.ndarray of matplotlib.axes.Axes
+        Array of axes objects.
+    i : int
+        Index of the current plot.
+    """
+
     def plot_data(self, colorbar):
+        """Add a colorbar to the current axes.
+
+        Parameters
+        ----------
+        colorbar : rnavigate.data.ScalarMappable
+            Colormap object.
+        """
         ax = self.get_ax(self.i)
         cax = plt.colorbar(
             colorbar,
@@ -200,10 +295,6 @@ class ColorBar(Plot):
 
     def set_figure_size(
         self,
-        fig=None,
-        ax=None,
-        rows=None,
-        cols=None,
         height_ax_rel=None,
         width_ax_rel=None,
         width_ax_in=3,
@@ -215,11 +306,32 @@ class ColorBar(Plot):
         left_in=None,
         right_in=None,
     ):
+        """Set the figure size.
+
+        Parameters
+        ----------
+        height_ax_rel : float, optional
+            Height of the axes relative to the y-axis limits.
+        width_ax_rel : float, optional
+            Width of the axes relative to the x-axis limits.
+        width_ax_in : float, defaults to 3
+            Width of the axes in inches.
+        height_ax_in : float, defaults to 0.1
+            Height of the axes in inches.
+        height_gap_in : float, defaults to 0.75
+            Height of the gap between axes in inches.
+        width_gap_in : float, defaults to 0.5
+            Width of the gap between axes in inches.
+        top_in : float, optional
+            Top margin in inches.
+        bottom_in : float, optional
+            Bottom margin in inches.
+        left_in : float, optional
+            Left margin in inches.
+        right_in : float, optional
+            Right margin in inches.
+        """
         return super().set_figure_size(
-            fig,
-            ax,
-            rows,
-            cols,
             height_ax_rel,
             width_ax_rel,
             width_ax_in,

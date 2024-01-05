@@ -23,10 +23,17 @@ def fit_data(data_object, alignment):
     """Given a sample and list of sample.data keys, Data objects are mapped to
     sequence
 
-    Args:
-        sample (rnavigate.Sample): sample to retrieve data from
-        data_list (list): list of sample.data keys or None
-        sequence (rnavigate.Sequence): Data object with a sequence to fit to
+    Parameters
+    ----------
+        data_object : Data object or list or dict of Data objects
+            Data object to be mapped to sequence
+        alignment : SequenceAlignment
+            SequenceAlignment object to be used for mapping
+
+    Returns
+    -------
+        Data object or list or dict of Data objects
+            A new copy of each Data object mapped to a new sequence
     """
     if alignment is None:
         return data_object
@@ -143,14 +150,16 @@ class PlottingArgumentParser:
     def _parse_annotations(self, annotations):
         """Ensures the value of annotations is a list.
 
-        Required arguments:
-            annotations (None, list of str or rnav.data.Annotations)
+        Parameters
+        ----------
+            annotations : None, list of str or rnav.data.Annotations
                 None is converted to []
                 a single string or data object is enclosed in a list
 
-        Returns:
-            list
-                a list of annotations data or data keywords (or empty)
+        Returns
+        -------
+            annotations list
+                a list of annotations data or data keywords (or an empty list)
         """
         error = ValueError(
             "annotations must be a list containing data keywords or objects"
@@ -178,17 +187,18 @@ class PlottingArgumentParser:
         1 is converted to 2 if return_list is False.
         1 and 2 are converted to 3 if return_list is True.
 
-        Required arguments:
-            interactions (format 1, 2, or 3)
-
-        Optional arguments:
-            return_list (bool)
+        Parameters
+        ----------
+            interactions : format 1, 2, or 3
+            return_list : bool, defaults to True
                 Whether to return format 3, otherwise returns format 2
-                Defaults to True
 
-        Returns:
-            dict (format 2 if return_list is False)
-            list (format 3 if return_list is True)
+        Returns
+        -------
+            interactions dict
+                format 2 if return_list is False
+            interactions list
+                format 3 if return_list is True
         """
         error = ValueError(
             "interactions must follow one of the following formats:\n"

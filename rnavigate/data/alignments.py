@@ -1,12 +1,15 @@
 """Alignment objects map coordinates, vectors, and dataframes to a new sequence
 
-Classes:
-    SequenceAlignment (BaseAlignment)
-        aligns one sequence another sequence
-    RegionAlignment (BaseAlignment)
-        cuts a sequence between a start and end position
-    AlignmentChain (BaseAlignment)
-        allows chaining of above alignments
+Classes
+-------
+BaseAlignment (ABC)
+    abstract base class for alignments
+SequenceAlignment (BaseAlignment)
+    aligns one sequence another sequence
+RegionAlignment (BaseAlignment)
+    cuts a sequence between a start and end position
+AlignmentChain (BaseAlignment)
+    allows chaining of above alignments
 """
 
 from abc import ABC, abstractmethod
@@ -24,26 +27,30 @@ _alignments_cache = {}
 # structure alignment parameters
 # conversion of nt+pairing to pseudo amino acid sequence
 def convert_sequence(aas, nts, dbn):
-    """Convert pseudo-amino-acid sequence to nucleotide and dbn or vice versa.
+    """Convert pseudo-amino-acid sequence to nucleotide and dotbracket or vice versa.
 
-    Arguments:
-        aas (string or True)
-            the amino acid sequence
-            if True, returns the amino acid translation of nts and dbn
-        nts (string or True)
-            the nucleotide sequence
-            if True, returns the nucleotide translation of aas
-        dbn (string or True)
-            the dot-bracket notation string
-            if True, returns the dot-bracket translation of aas
+    Parameters
+    ----------
+    aas : string or True
+        the amino acid sequence
+        if True, returns the amino acid translation of nts and dbn
+    nts : string or True
+        the nucleotide sequence
+        if True, returns the nucleotide translation of aas
+    dbn : string or True
+        the dot-bracket notation string
+        if True, returns the dot-bracket translation of aas
 
-    Returns:
-        (string) sequence of the specified translation.
-        if nts and dbn are True, returns a tuple.
+    Returns
+    -------
+    string
+        sequence of the specified translation.
+        If `nts` and `dbn` are True, returns a tuple.
 
-        For example:
-            conver_sequence(aas="ACDEFGHIKLMNPQRSTVWY", nts=True, dbn=True)
-            returns ("AAAAACCCCCUUUUUGGGGG", "([.])([.])([.])([.])")
+    Example
+    -------
+    conver_sequence(aas="ACDEFGHIKLMNPQRSTVWY", nts=True, dbn=True)
+    returns ("AAAAACCCCCUUUUUGGGGG", "([.])([.])([.])([.])")
     """
     nts_key = "AAAAACCCCCUUUUUGGGGG-"
     dbn_key = "([.])([.])([.])([.])-"
@@ -147,15 +154,18 @@ def set_alignment(
         alignment2="AUCGAUCGAGCUGCUGUGUAC---------GUAC"
                      |mm|   | indel |    | indel |
 
-    Required arguments:
-        sequence1 (string)
-            the first sequence
-        sequence2 (string)
-            the second sequence
-        alignment1 (string)
-            first sequence, plus dashes "-" indicating indels
-        alignment2 (string)
-            second sequence, plus dashes "-" indicating indels
+    Parameters
+    ----------
+    sequence1 : string
+        the first sequence
+    sequence2 : string
+        the second sequence
+    alignment1 : string
+        first sequence, plus dashes "-" indicating indels
+    alignment2 : string
+        second sequence, plus dashes "-" indicating indels
+    t_or_u : "T", "U", or False
+        "T" converts "U"s to "T"s
     """
     # Normalize sequences
     sequence1 = data.normalize_sequence(sequence1, t_or_u=t_or_u)
@@ -198,15 +208,13 @@ def set_multiple_sequence_alignment(fasta, set_pairwise=False):
     alignments, if desired. When setting pairwise alignments, dashes that are
     shared between pairwise sequences are removed first.
 
-    Required arguments:
-        fasta (string)
-            location of Pearson fasta file
-
-    Optional arguments:
-        set_pairwise (True or False)
-            whether to set every pairwise alignment as well as the multiple
-            sequence alignment.
-            Defaults to False
+    Parameters
+    ----------
+    fasta : string
+        location of Pearson fasta file
+    set_pairwise : bool, defaults to False
+        whether to set every pairwise alignment as well as the multiple
+        sequence alignment.
     """
     with open(fasta, "r") as file:
         fasta = list(SeqIO.parse(file, "fasta"))
@@ -241,23 +249,22 @@ def set_multiple_sequence_alignment(fasta, set_pairwise=False):
 def lookup_alignment(sequence1, sequence2, t_or_u="U"):
     """look up a previously set alignment in the _alignments_cache
 
-    Required arguments:
-        sequence1 (string)
-            The first sequence to align
-        sequence2 (string)
-            The second sequence to be aligned to
+    Parameters
+    ----------
+    sequence1 : string
+        The first sequence to align
+    sequence2 : string
+        The second sequence to be aligned to
+    t_or_u : "T", "U", or False, defaults to "U"
+        "T" converts "U"s to "T"s
+        "U" converts "U"s to "T"s
+        False does nothing
 
-    Optional arguments:
-        t_or_u ("T", "U", or False)
-            "T" converts "U"s to "T"s
-            "U" converts "U"s to "T"s
-            False does nothing
-            defaults to "U"
-
-    Returns:
-        dictionary, if an alignment is found, otherwise None
-            {"seqA": sequence1 with gap characters representing alignment,
-             "seqB": sequence2 with gap characters representing alignment}
+    Returns
+    -------
+    dictionary, if an alignment is found, otherwise None
+        {"seqA": sequence1 with gap characters representing alignment,
+         "seqB": sequence2 with gap characters representing alignment}
     """
     # Normalize sequences
     sequence1 = data.normalize_sequence(sequence1, t_or_u=t_or_u)
@@ -282,33 +289,28 @@ def lookup_alignment(sequence1, sequence2, t_or_u="U"):
 class BaseAlignment(ABC):
     """Abstract base class for alignments
 
-    Attributes:
-        starting_sequence (str):
-            the beginning sequence
-        mapping (numpy.array): the alignment map array.
-            index of starting_sequence is mapping[index] of target_sequence
-        target_sequence (str):
-            the portion of starting sequence that is mapped
+    Parameters
+    ----------
+    starting_sequence : string
+        the sequence to be aligned
+    target_length : int
+        the length of the target sequence
 
-    Methods:
-        All map_functions map from starting sequence to target sequence.
-        map_values: maps per-nucleotide values
-        map_indices: maps a list of indices
-        map_positions: maps a list of positions
-        map_dataframe: maps a dataframe with multiple position columns
-            (rows that cannot be mapped are dropped)
-        map_nucleotide_dataframe: maps a dataframe with 1 row per nucleotide
-            (rows that cannot be mapped are dropped)
-            (missing rows filled with NaN)
+    Attributes
+    ----------
+    starting_sequence : string
+        the beginning sequence
+    mapping : numpy.array
+        the alignment map array.
+        index of starting_sequence is mapping[index] of target_sequence
+    target_sequence : string
+        the portion of starting sequence that is mapped
+    target_length : integer
+        the length of the target sequence
     """
 
     def __init__(self, starting_sequence, target_length):
-        """Creates a BaseAlignment with starting and target sequences.
-
-        Args:
-            starting_sequence (str): the starting sequence
-            target_sequence (str): the target sequence
-        """
+        """Creates a BaseAlignment with starting and target sequences."""
         self.starting_sequence = starting_sequence
         self.mapping = self.get_mapping()
         self.target_length = target_length
@@ -333,13 +335,17 @@ class BaseAlignment(ABC):
         target sequence, unmapped positions in starting sequence are dropped
         and unmapped positions in target sequence are filled with fill value.
 
-        Args:
-            values (iterable): values to map to target sequence
-            fill (any, optional): a value for unmapped positions in target.
-            Defaults to numpy.nan.
+        Parameters
+        ----------
+        values : iterable
+            values to map to target sequence.
+        fill : any, defaults to np.nan
+            a value for unmapped positions in target sequence.
 
-        Returns:
-            numpy.array: an array of values equal in length to target sequence
+        Returns
+        -------
+        numpy.array
+            an array of values equal in length to target sequence
         """
         new_values = np.full(self.target_length, fill)
         for idx1, value in enumerate(values):
@@ -352,13 +358,18 @@ class BaseAlignment(ABC):
     def map_indices(self, indices, keep_minus_one=True):
         """Takes a list of indices (0-index) and maps them to target sequence
 
-        Args:
-            indices (int | list): a single or list of integer indices
-            keep_minus_one (bool, optional): whether to keep unmapped starting
-                sequence indices (-1) in the returned array. Defaults to True.
+        Parameters
+        ----------
+        indices : int or list of int
+            a single or list of integer indices
+        keep_minus_one : bool, defaults to True
+            whether to keep unmapped starting sequence indices (-1) in the
+            returned array.
 
-        Returns:
-            numpy.array: the equivalent indices in target sequence
+        Returns
+        -------
+        numpy.array
+            the equivalent indices in target sequence
         """
         indices = np.array(indices, dtype=int)
         new_indices = self.mapping[indices]
@@ -369,13 +380,18 @@ class BaseAlignment(ABC):
     def map_positions(self, positions, keep_zero=True):
         """Takes a list of positions (1-index) and maps them to target sequence
 
-        Args:
-            positions (int | list): a single or list of integer positions
-            keep_zero (bool, optional): whether to keep unmapped starting
-                sequence positions (0) in the returned array. Defaults to True.
+        Parameters
+        ----------
+        positions : int or list of int
+            a single or list of integer positions
+        keep_zero : bool, defaults to True
+            whether to keep unmapped starting sequence positions (0) in the
+            returned array.
 
-        Returns:
-            numpy.array: the equivalent positions in target sequence
+        Returns
+        -------
+        numpy.array
+            the equivalent positions in target sequence
         """
         positions = np.array(positions, dtype=int)
         new_positions = self.mapping[positions - 1] + 1
@@ -385,16 +401,20 @@ class BaseAlignment(ABC):
 
     def map_dataframe(self, dataframe, position_columns):
         """Takes a dataframe and maps position columns to target sequence.
-        Unmapped positions are dropped.
 
-        Args:
-            dataframe (pandas.DataFrame): a dataframe with position columns
-            position_columns (list of str): a list of columns containing
-                positions to map
+        Rows with unmapped positions are dropped.
 
-        Returns:
-            pandas.DataFrame: a new dataframe (copy) with position columns
-                mapped or dropped
+        Parameters
+        ----------
+        dataframe : pandas.DataFrame
+            a dataframe with position columns
+        position_columns : list of str
+            a list of columns containing positions to map
+
+        Returns
+        -------
+        pandas.DataFrame
+            a new dataframe (copy) with position columns mapped or dropped
         """
         dataframe = dataframe.copy()
         for col in position_columns:
@@ -412,22 +432,21 @@ class BaseAlignment(ABC):
         mapped to have the same format, but for target sequence nucleotides and
         positions.
 
-        Required arguments:
-            dataframe (pandas.DataFrame)
-                a per-nucleotide dataframe
+        Parameters
+        ----------
+        dataframe : pandas.DataFrame
+            a per-nucleotide dataframe
+        position_column : string, defaults to "Nucleotide"
+            name of the position column.
+        sequence_column : string, defaults to "Sequence"
+            name of the sequence column.
 
-        Optional arguments
-            position_column (string)
-                name of the position column.
-                Defaults to "Nucleotide".
-            sequence_column (string)
-                name of the sequence column.
-                Defaults to "Sequence".
-
-        Returns:
-            pandas.DataFrame: a new dataframe (copy) mapped to target sequence.
-                Unmapped starting sequence positions are dropped and unmapped
-                target sequence positions are filled.
+        Returns
+        -------
+        pandas.DataFrame
+            a new dataframe (copy) mapped to target sequence.
+            Unmapped starting sequence positions are dropped and unmapped
+            target sequence positions are filled.
         """
         dataframe = dataframe.copy()
         dataframe[position_column] = self.map_positions(dataframe[position_column])
@@ -447,39 +466,42 @@ class SequenceAlignment(BaseAlignment):
     to a totally different sequence using user-defined pairwise alignment or
     automatic pairwise alignment.
 
-    Attributes:
-        sequence1 (str): the sequence to be aligned
-        sequence2 (str): the sequence to align to
-        alignment1 (str): the alignment string matching sequence1 to sequence2
-        alignment2 (str): the alignment string matching sequence2 to sequence1
-        starting_sequence (str): sequence1
-        target_sequence(str): sequence2 if full is False, else alignment2
-        mapping (numpy.array): the alignment map array.
-            index of starting_sequence is mapping[index] of target_sequence
+    Parameters
+    ----------
+    sequence1 : string
+        the sequence to be aligned
+    sequence2 : string
+        the sequence to align to
+    align_kwargs : dict, defaults to None
+        a dictionary of arguments to pass to pairwise2.align.globalms
+    full : bool, defaults to False
+        whether to keep unmapped starting sequence positions.
+    use_previous : bool, defaults to True
+        whether to use previously set alignments
 
-    Methods:
-        All map_functions map from starting sequence to target sequence.
-        map_values: maps per-nucleotide values
-        map_indices: maps a list of indices
-        map_positions: maps a list of positions
-        map_dataframe: maps a dataframe with multiple position columns
-            (rows that cannot be mapped are dropped)
-        map_nucleotide_dataframe: maps a dataframe with 1 row per nucleotide
-            (rows that cannot be mapped are dropped)
-            (missing rows filled with NaN)
+    Attributes
+    ----------
+    sequence1 : str
+        the sequence to be aligned
+    sequence2 : str
+        the sequence to align to
+    alignment1 : str
+        the alignment string matching sequence1 to sequence2
+    alignment2 : str
+        the alignment string matching sequence2 to sequence1
+    starting_sequence : str
+        sequence1
+    target_sequence : str
+        sequence2 if full is False, else alignment2
+    mapping : numpy.array
+        the alignment map array.
+        index of starting_sequence is mapping[index] of target_sequence
     """
 
     def __init__(
         self, sequence1, sequence2, align_kwargs=None, full=False, use_previous=True
     ):
-        """Creates an alignment from sequence1 to sequence2.
-
-        Args:
-            sequence1 (str): the starting sequence
-            sequence2 (str): the target sequence
-            full (bool, optional): whether to keep unmapped starting sequence
-                positions. Defaults to False.
-        """
+        """Creates an alignment from sequence1 to sequence2."""
         if align_kwargs is None:
             self.align_kwargs = {"match": 1, "mismatch": 0, "open": -5, "extend": -0.1}
         if isinstance(sequence1, data.Sequence):
@@ -513,14 +535,14 @@ class SequenceAlignment(BaseAlignment):
     def print(self, print_format="full"):
         """Print the alignment in a human-readable format.
 
-        Arguments:
-            print_format (string)
-                how to format the alignment.
-                "full": the full length alignment with changes labeled "X"
-                "cigar": the CIGAR string
-                "long": locations and sequences of each change
-                "short": total number of matches, mismatches, and indels
-                Defaults to "full".
+        Parameters
+        ----------
+        print_format : "full", "cigar", "long" or "short", defaults to "full"
+            how to format the alignment.
+            "full": the full length alignment with changes labeled "X"
+            "cigar": the CIGAR string
+            "long": locations and sequences of each change
+            "short": total number of matches, mismatches, and indels
         """
         if print_format == "full":
             print(self)
@@ -621,14 +643,17 @@ class SequenceAlignment(BaseAlignment):
         print()
 
     def get_inverse_alignment(self):
+        """Gets an alignment that maps from sequence2 to sequence1."""
         return SequenceAlignment(self.sequence2, self.sequence1, self.full)
 
     def get_alignment(self):
         """Gets an alignment that has either been user-defined or previously
         calculated or produces a new pairwise alignment between two sequences.
 
-        Returns:
-            (tuple of 2 str): alignment1 and alignment2
+        Returns
+        -------
+        alignment1, alignment2 : tuple of 2 str
+            the alignment strings matching sequence1 and sequence2, respectively.
         """
         # Normalize sequences
         seq1 = self.sequence1.upper().replace("T", "U")
@@ -666,10 +691,11 @@ class SequenceAlignment(BaseAlignment):
     def get_mapping(self):
         """Calculates a mapping from starting sequence to target sequence.
 
-        Returns:
-            numpy.array: an array of length of starting sequence that maps to
-                an index of target sequence. Stored as self.mapping
-                starting_sequence[idx] == target_sequence[self.mapping[idx]]
+        Returns
+        -------
+        mapping : numpy.array
+            an array that maps to an index of target sequence.
+            index of starting_sequence is mapping[index] of target_sequence
         """
         align1 = self.alignment1
         align2 = self.alignment2
@@ -692,32 +718,26 @@ class SequenceAlignment(BaseAlignment):
 class AlignmentChain(BaseAlignment):
     """Combines a list of alignments into one.
 
-    Attributes:
-        alignments (list): the constituent alignments
-        starting_sequence (str): starting sequence of alignments[0]
-        target_sequence (str): target sequence of alignments[-1]
-        mapping (numpy.array): a vector that maps from starting to target
-            index of starting_sequence is mapping[index] of target sequence
+    Parameters
+    ----------
+    alignments : list of Alignment objects
+        the alignments to chain together
 
-    Methods:
-        All map_functions map from starting sequence to target sequence.
-        map_values: maps per-nucleotide values
-        map_indices: maps a list of indices
-        map_positions: maps a list of positions
-        map_dataframe: maps a dataframe with multiple position columns
-            (rows that cannot be mapped are dropped)
-        map_nucleotide_dataframe: maps a dataframe with 1 row per nucleotide
-            (rows that cannot be mapped are dropped)
-            (missing rows filled with NaN)
+    Attributes
+    ----------
+    alignments : list
+        the constituent alignments
+    starting_sequence : str
+        starting sequence of alignments[0]
+    target_sequence : str
+        target sequence of alignments[-1]
+    mapping : numpy.array
+        an array which maps from `starting_sequence` to `target_sequence`.
+        index of starting_sequence is mapping[index] of target sequence
     """
 
     def __init__(self, *alignments):
-        """Creates a single alignment from multiple alignments
-
-        Raises:
-            ValueError: if the target sequence of one alignment doesn't match
-                the starting sequence of the next.
-        """
+        """Creates a single alignment from multiple alignments."""
         next_sequence_len = len(alignments[0].starting_sequence)
         for alignment in alignments:
             if next_sequence_len == len(alignment.starting_sequence):
@@ -734,9 +754,11 @@ class AlignmentChain(BaseAlignment):
     def get_mapping(self):
         """combines mappings from each alignment.
 
-        Returns:
-            numpy.array: a mapping from initial starting sequence to final
-                target sequence
+        Returns
+        -------
+        mapping : numpy.array
+            mapping from initial starting sequence to final target sequence
+            index of starting_sequence is mapping[index] of target sequence
         """
         indices = self.alignments[0].mapping
         for alignment in self.alignments[1:]:
@@ -753,43 +775,46 @@ class StructureAlignment(BaseAlignment):
     """Experimental secondary structure alignment based on RNAlign2D algorithm
     (https://doi.org/10.1186/s12859-021-04426-8)
 
-    Attributes:
-        sequence1 (str): the sequence to be aligned
-        sequence2 (str): the sequence to align to
-        structure1
-        structure2
-        aa_sequence1
-        aa_sequence2
-        alignment1 (str): the alignment string matching sequence1 to sequence2
-        alignment2 (str): the alignment string matching sequence2 to sequence1
-        starting_sequence (str): sequence1
-        target_sequence(str): sequence2 if full is False, else alignment2
-        mapping (numpy.array): the alignment map array.
-            index of starting_sequence is mapping[index] of target_sequence
+    Parameters
+    ----------
+    sequence1 : string
+        the sequence to be aligned
+    sequence2 : string
+        the sequence to align to
+    structure1 : string, defaults to None
+        the secondary structure of sequence1
+    structure2 : string, defaults to None
+        the secondary structure of sequence2
+    full : bool, defaults to False
+        whether to align to full length of sequence2 or just mapped length
 
-    Methods:
-        All map_functions map from starting sequence to target sequence.
-        map_values: maps per-nucleotide values
-        map_indices: maps a list of indices
-        map_positions: maps a list of positions
-        map_dataframe: maps a dataframe with multiple position columns
-            (rows that cannot be mapped are dropped)
-        map_nucleotide_dataframe: maps a dataframe with 1 row per nucleotide
-            (rows that cannot be mapped are dropped)
-            (missing rows filled with NaN)
+    Attributes
+    ----------
+    sequence1 : str
+        the sequence to be aligned
+    sequence2 : str
+        the sequence to align to
+    structure1 : str
+        the secondary structure of sequence1
+    structure2 : str
+        the secondary structure of sequence2
+    alignment1 : str
+        the alignment string matching sequence1 to sequence2
+    alignment2 : str
+        the alignment string matching sequence2 to sequence1
+    starting_sequence : str
+        sequence1
+    target_sequence : str
+        sequence2 if full is False, else alignment2
+    mapping : numpy.array
+        the alignment map array.
+        index of starting_sequence is mapping[index] of target_sequence
     """
 
     def __init__(
         self, sequence1, sequence2, structure1=None, structure2=None, full=False
     ):
-        """Creates an alignment from structure1 to structure2.
-
-        Args:
-            structure1 (str): the starting structure
-            structure2 (str): the target structure
-            full (bool, optional): whether to keep unmapped starting sequence
-                positions. Defaults to False.
-        """
+        """Creates an alignment from structure1 to structure2."""
         if structure1 is None:
             structure1 = sequence1
         if structure2 is None:
@@ -817,8 +842,10 @@ class StructureAlignment(BaseAlignment):
     def get_alignment(self):
         """Aligns pseudo-amino-acid sequences according to RNAlign2D rules.
 
-        Returns:
-            (tuple of 2 str): alignment1 and alignment2
+        Returns
+        -------
+        alignment1, alignment2 : tuple of 2 str
+            the alignment strings matching sequence1 and sequence2, respectively.
         """
         # Normalize sequences
         seq1 = convert_sequence(aas=True, nts=self.sequence1, dbn=self.structure1)
@@ -853,10 +880,11 @@ class StructureAlignment(BaseAlignment):
     def get_mapping(self):
         """Calculates a mapping from starting sequence to target sequence.
 
-        Returns:
-            numpy.array: an array of length of starting sequence that maps to
-                an index of target sequence. Stored as self.mapping
-                starting_sequence[idx] == target_sequence[self.mapping[idx]]
+        Returns
+        -------
+        mapping : numpy.array
+            an array which maps an indices to the target sequence.
+            starting_sequence[idx] == target_sequence[self.mapping[idx]]
         """
         align1 = self.alignment1
         align2 = self.alignment2
@@ -876,12 +904,13 @@ class StructureAlignment(BaseAlignment):
         return seq1_to_seq2
 
     def get_inverse_alignment(self):
+        """Gets an alignment that maps from sequence2 to sequence1."""
         return StructureAlignment(
             self.sequence2, self.sequence1, self.structure2, self.structure1
         )
 
     def set_as_default_alignment(self):
-
+        """Set this as the default alignment between sequence1 and sequence2."""
         set_alignment(
             sequence1=self.sequence1,
             sequence2=self.sequence2,

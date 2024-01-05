@@ -1,3 +1,5 @@
+"""Module for plotting 3Dmol.js viewers"""
+
 import py3Dmol
 import matplotlib.colors as mpc
 from rnavigate import plots
@@ -17,6 +19,52 @@ class Mol(plots.Plot):
         rows=None,
         cols=None,
     ):
+        """Create a 3Dmol.js viewer with a grid of subviewers
+
+        Parameters
+        ----------
+        num_samples : int
+            Number of subviewers to create
+        pdb : rnavigate.pdb.PDB
+            PDB object to use for plotting
+        width : int, defaults to 400
+            Width of each subviewer in pixels
+        height : int, defaults to 400
+            Height of each subviewer in pixels
+        background_alpha : float, defaults to 1
+            Alpha value for the background color
+        rotation : dict, defaults to None
+            Dictionary of rotation angles for the viewer
+        orientation : list of floats
+            List of floats defining the orientation of the viewer
+        style : str, defaults to "cartoon"
+            Style of the viewer
+        rows : int, defaults to None
+            Number of rows to use in the grid of subviewers. If None, the
+            number of rows is determined automatically.
+        cols : int, defaults to None
+            Number of columns to use in the grid of subviewers. If None, the
+            number of columns is determined automatically.
+
+        Attributes
+        ----------
+        view : py3Dmol.view
+            3Dmol.js viewer object
+        i : int
+            Index of the current subviewer
+        rows : int
+            Number of rows in the grid of subviewers
+        columns : int
+            Number of columns in the grid of subviewers
+        colorbars : list of matplotlib.colorbar.ColorbarBase
+            List of colorbars to be added to the plot
+        style : str
+            Style of the viewer
+        pdb : rnavigate.pdb.PDB
+            PDB object to use for plotting
+        length : int
+            Number of samples
+        """
         self.colorbars = []
         self.style = style
         self.pdb = pdb
@@ -45,6 +93,7 @@ class Mol(plots.Plot):
         self.i = 0
 
     def get_viewer(self, i=None):
+        """Get the subviewer at index i"""
         if i is None:
             i = self.i
         row = i // self.columns
@@ -62,6 +111,29 @@ class Mol(plots.Plot):
         get_orientation=False,
         viewer=None,
     ):
+        """Plot data on the current subviewer.
+
+        Parameters
+        ----------
+        interactions : rnavigate.interactions.Interactions
+            Interactions object to plot as lines on the 3d structure
+        profile : rnavigate.profile.Profile
+            Profile object to use as nucleotide colors
+        label : str, defaults to None
+            Label to use as a title on the subviewer
+        colors : str, defaults to "grey"
+            Color scheme to use for nucleotides
+        atom : str, defaults to "O2'"
+            Atom to use for plotting interactions
+        title : bool, defaults to True
+            Whether or not to add a title to the subviewer
+        get_orientation : bool, defaults to False
+            Whether or not to get the orientation of the subviewer
+            This will display the orientation as a label on the subviewer when the
+            structure is clicked.
+        viewer : tuple of ints, defaults to None
+            Tuple of ints defining the subviewer to plot on
+        """
         if viewer is None:
             viewer = self.get_viewer()
         if get_orientation:
@@ -84,6 +156,21 @@ class Mol(plots.Plot):
         self.i += 1
 
     def add_lines(self, i, j, color, viewer, atom):
+        """Add lines between nucleotides i and j
+
+        Parameters
+        ----------
+        i : int
+            Index of the first nucleotide
+        j : int
+            Index of the second nucleotide
+        color : str
+            Color to use for the line
+        viewer : tuple of ints
+            Tuple of ints defining the subviewer to plot on
+        atom : str
+            Atom to use for plotting interactions
+        """
         pdb = self.pdb
         if not pdb.is_valid_idx(seq_idx=i) or not pdb.is_valid_idx(seq_idx=j):
             return
@@ -100,6 +187,17 @@ class Mol(plots.Plot):
         self.view.addCylinder(cylinder_specs, viewer=viewer)
 
     def plot_interactions(self, viewer, interactions, atom):
+        """Plot interactions on the current subviewer
+
+        Parameters
+        ----------
+        viewer : tuple of ints
+            Tuple of ints defining the subviewer to plot on
+        interactions : rnavigate.interactions.Interactions
+            Interactions object to plot as lines on the 3d structure
+        atom : str
+            Atom to use for plotting interactions
+        """
         window = interactions.window
         for i, j, color in zip(*interactions.get_ij_colors()):
             color = "0x" + mpc.rgb2hex(color)[1:]
@@ -110,6 +208,17 @@ class Mol(plots.Plot):
         self.add_colorbar_args(interactions.cmap)
 
     def set_colors(self, viewer, profile, colors):
+        """Set the colors of the nucleotides on the current subviewer
+
+        Parameters
+        ----------
+        viewer : tuple of ints
+            Tuple of ints defining the subviewer to plot on
+        profile : rnavigate.profile.Profile
+            Profile object to use as nucleotide colors
+        colors : str
+            Color scheme to use for nucleotides
+        """
         colors, _ = self.pdb.get_colors(colors, profile=profile)
         color_selector = {}
         valid_pdbres = []
@@ -130,6 +239,7 @@ class Mol(plots.Plot):
         self.view.setStyle(selector, style, viewer=viewer)
 
     def hide_cylinders(self):
+        """Hide the cylinders that represent nucleotides."""
         resns = ["A", "G", "C", "U"]
         atoms = ["N1", "N1", "N3", "N3"]
         for resn, atom in zip(resns, atoms):
@@ -138,7 +248,14 @@ class Mol(plots.Plot):
             )
 
     def save(self):
-        """output png image of viewer, which must already be instantiated"""
+        """Display the current orientation of the viewer as a png image.
+
+        Notes
+        -----
+        This method must be run in a new cell after the viewer has been
+        instantiated. The resulting png image will be saveable as a png file by
+        clicking and dragging the image to your desktop.
+        """
         print(
             "To save, orient the interactive plot to the view you'd like\n"
             "save, then run plot.save() in a new cell. The resulting image\n"
@@ -147,6 +264,7 @@ class Mol(plots.Plot):
         return self.view.png()
 
     def get_orientation(self):
+        """Adds a clickable event to the viewer to display the orientation vector."""
         self.view.setClickable(
             {},
             "true",

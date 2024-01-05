@@ -3,7 +3,40 @@ import seaborn as sns
 
 
 class Skyline(plots.Plot):
+    """Plot per-nucleotide measurements as stepped line graphs (skyline plots).
+
+    Parameters
+    ----------
+    num_samples : int
+        Number of samples to plot.
+    nt_length : int
+        Length of the nucleotide sequence.
+    region : tuple of int, defaults to "all" (entire sequence)
+        start and end position of the region to plot. If "all", plot the entire
+        sequence.
+    **kwargs
+        Keyword arguments passed to `rnavigate.plots.Plot`.
+
+    Attributes
+    ----------
+    nt_length : int
+        Length of the nucleotide sequence.
+    region : tuple of int
+        start and end position of the region to plot.
+    track_height : float
+        Height of the tracks in the plot.
+    fig : matplotlib.figure.Figure
+        Figure object.
+    ax : matplotlib.axes.Axes
+        Axes object.
+    axes : numpy.ndarray of matplotlib.axes.Axes
+        Array of axes objects.
+    i : int
+        Index of the current plot.
+    """
+
     def __init__(self, num_samples, nt_length, region="all", **kwargs):
+        """Initialize the plot."""
         if region == "all":
             self.nt_length = nt_length
             self.region = (1, nt_length)
@@ -16,10 +49,6 @@ class Skyline(plots.Plot):
 
     def set_figure_size(
         self,
-        fig=None,
-        ax=None,
-        rows=None,
-        cols=None,
         height_ax_rel=None,
         width_ax_rel=0.03,
         width_ax_in=None,
@@ -31,11 +60,33 @@ class Skyline(plots.Plot):
         left_in=1,
         right_in=1,
     ):
+        """Set the figure size.
+
+        Parameters
+        ----------
+        height_ax_rel : float
+            Height of the axes relative to the y-axis limits.
+        width_ax_rel : float
+            Width of the axes relative to the x-axis limits.
+        width_ax_in : float
+            Width of the axes in inches.
+        height_ax_in : float
+            Height of the axes in inches.
+        height_gap_in : float
+            Height of the gap between axes in inches.
+        width_gap_in : float
+            Width of the gap between axes in inches.
+        top_in : float
+            Height of the top margin in inches.
+        bottom_in : float
+            Height of the bottom margin in inches.
+        left_in : float
+            Width of the left margin in inches.
+        right_in : float
+            Width of the right margin in inches.
+        """
+
         super().set_figure_size(
-            fig=fig,
-            ax=ax,
-            rows=rows,
-            cols=cols,
             height_ax_rel=height_ax_rel,
             width_ax_rel=width_ax_rel,
             width_ax_in=width_ax_in,
@@ -49,9 +100,37 @@ class Skyline(plots.Plot):
         )
 
     def get_rows_columns(self, rows=None, cols=None):
+        """Get the number of rows and columns.
+
+        Parameters
+        ----------
+        rows : int
+            Number of rows. This is ignored.
+        cols : int
+            Number of columns. This is ignored.
+
+        Returns
+        -------
+        rows : int
+            Number of rows. This is always 1.
+        cols : int
+            Number of columns. This is always 1.
+        """
         return (1, 1)
 
     def get_ax(self, i=None):
+        """Get the current axes object.
+
+        Parameters
+        ----------
+        i : int, optional
+            Index of the axes object. This is ignored.
+
+        Returns
+        -------
+        ax : matplotlib.axes.Axes
+            Axes object.
+        """
         return self.ax
 
     def plot_data(
@@ -66,6 +145,29 @@ class Skyline(plots.Plot):
         annotations_mode="track",
         nt_ticks=(20, 5),
     ):
+        """Add data to the axes.
+
+        Parameters
+        ----------
+        profile : rnavigate.profile.Profile
+            Profile object.
+        annotations : list of rnavigate.annotation.Annotation, optional
+            List of annotation objects.
+        domains : list of rnavigate.domain.Domain, optional
+            List of domain objects.
+        label : str, optional
+            Sample name.
+        columns : str or list of str, optional
+            Which columns to plot. If None, plot the metric column.
+        seqbar : bool, defaults to True
+            Whether to plot a sequence bar.
+        errors : str, optional
+            Which error columns to plot. If None, do not plot errors.
+        annotations_mode : "track" or "bar", defaults to "track"
+            Whether to plot annotations as a track or as vertical bars.
+        nt_ticks : tuple of int, defaults to (20, 5)
+            Major and minor tick frequency for nucleotide positions.
+        """
         if columns is None:
             columns = profile.metric
         track_unit = 0.03
@@ -125,6 +227,17 @@ class Skyline(plots.Plot):
             self.set_axis(ax=ax, sequence=profile, nt_ticks=nt_ticks)
 
     def set_axis(self, ax, sequence, nt_ticks):
+        """Set the axis limits and ticks.
+
+        Parameters
+        ----------
+        ax : matplotlib.axes.Axes
+            Axes object.
+        sequence : rnavigate.data.Sequence
+            The sequence on which position labels are based. Dashes are ignored.
+        nt_ticks : tuple of int
+            Major and minor tick frequency for nucleotide positions.
+        """
         xlim = self.region
         ax.set_xlim([xlim[0] - 0.5, xlim[1] + 0.5])
         plots.set_nt_ticks(
@@ -150,6 +263,21 @@ class Skyline(plots.Plot):
         xlabel="Nucleotide Position",
         ylabel="Profile",
     ):
+        """Set the axis labels and legend.
+
+        Parameters
+        ----------
+        ax : matplotlib.axes.Axes
+            Axes object.
+        axis_title : str, optional
+            Title of the axes.
+        legend_title : str, optional
+            Title of the legend.
+        xlabel : str, optional
+            Label of the x-axis.
+        ylabel : str, optional
+            Label of the y-axis.
+        """
         ax.set_title(axis_title, loc="left")
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)

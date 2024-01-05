@@ -5,7 +5,34 @@ from rnavigate.styles import rx_color, bg_color, dc_color
 
 
 class SM(plots.Plot):
+    """Plot classic ShapeMapper plots.
+
+    Parameters
+    ----------
+    nt_length : int
+        Length of the nucleotide sequence.
+    region : tuple of int, defaults to "all" (entire sequence)
+        start and end position of the region to plot. If "all", plot the entire
+        sequence.
+    panels : list of str, defaults to ["profile", "rates", "depth"]
+        Which panels to plot. Options are "profile", "rates", and "depth".
+
+    Attributes
+    ----------
+    nt_length : int
+        Length of the nucleotide sequence.
+    region : tuple of int
+        start and end position of the region to plot.
+    fig : matplotlib.figure.Figure
+        Figure object.
+    axes : numpy.ndarray of matplotlib.axes.Axes
+        Array of axes objects.
+    i : int
+        Index of the current plot.
+    """
+
     def __init__(self, nt_length, region=None, panels=["profile", "rates", "depth"]):
+        """Initialize the plot."""
         if region is None:
             self.nt_length = nt_length
             self.region = [1, nt_length]
@@ -14,10 +41,6 @@ class SM(plots.Plot):
 
     def set_figure_size(
         self,
-        fig=None,
-        ax=None,
-        rows=None,
-        cols=None,
         height_ax_rel=None,
         width_ax_rel=0.03,
         width_ax_in=None,
@@ -29,11 +52,32 @@ class SM(plots.Plot):
         left_in=0.5,
         right_in=0.5,
     ):
+        """Set the figure size.
+
+        Parameters
+        ----------
+        height_ax_rel : float, defaults to None
+            Height of the axes relative to the y-axis limits.
+        width_ax_rel : float, defaults to 0.03
+            Width of the axes relative to the x-axis limits.
+        width_ax_in : float, defaults to None
+            Width of the axes in inches.
+        height_ax_in : float, defaults to 2
+            Height of the axes in inches.
+        height_gap_in : float, defaults to 0.5
+            Height of the gap between axes in inches.
+        width_gap_in : float, defaults to 0.5
+            Width of the gap between axes in inches.
+        top_in : float, defaults to 1
+            Height of the top margin in inches.
+        bottom_in : float, defaults to 0.5
+            Height of the bottom margin in inches.
+        left_in : float, defaults to 0.5
+            Width of the left margin in inches.
+        right_in : float, defaults to 0.5
+            Width of the right margin in inches.
+        """
         super().set_figure_size(
-            fig=fig,
-            ax=ax,
-            rows=rows,
-            cols=cols,
             height_ax_rel=height_ax_rel,
             width_ax_rel=width_ax_rel,
             width_ax_in=width_ax_in,
@@ -47,7 +91,15 @@ class SM(plots.Plot):
         )
 
     def plot_data(self, profile, label):
-        """Creates a figure with the three classic Shapemapper plots."""
+        """Plot the data.
+
+        Parameters
+        ----------
+        profile : rnavigate.profile.Profile
+            Profile object.
+        label : str
+            Label for the plot.
+        """
         self.fig.suptitle(label)
         for i, plot in enumerate(self.panels):
             ax = self.get_ax(i)
@@ -60,10 +112,14 @@ class SM(plots.Plot):
         self.axes[-1, 0].set_xlabel("Nucleotide position")
 
     def plot_sm_profile(self, ax, profile):
-        """Plots classic ShapeMapper normalized reactivity on the given ax
+        """Plots classic ShapeMapper profile on the given axis.
 
-        Args:
-            ax (pyplot ax): ax on which to add plot
+        Parameters
+        ----------
+        ax : matplotlib.axes.Axes
+            Axes object.
+        profile : rnavigate.profile.Profile
+            Profile object.
         """
         ymin, ymax = (-0.5, 4)
         near_black = (0, 0, 1 / 255.0)
@@ -153,10 +209,14 @@ class SM(plots.Plot):
         plots.plot_sequence_track(ax, profile.sequence, yvalue=0, ytrans="axes")
 
     def plot_sm_depth(self, ax, profile):
-        """Plots classic ShapeMapper read depth on the given ax
+        """Plots classic ShapeMapper read depth on the given axis.
 
-        Args:
-            ax (pyplot ax): ax on which to add plot
+        Parameters
+        ----------
+        ax : matplotlib.axes.Axes
+            Axes object.
+        profile : rnavigate.profile.Profile
+            Profile object.
         """
         sample = profile.data
         ax.plot(
@@ -236,10 +296,14 @@ class SM(plots.Plot):
         # For now just putting in xaxis label
 
     def plot_sm_rates(self, ax, profile):
-        """Plots classic ShapeMapper mutation rates on the given ax
+        """Plots classic ShapeMapper mutation rates on the given axis.
 
-        Args:
-            ax (pyplot ax): ax on which to add plot
+        Parameters
+        ----------
+        ax : matplotlib.axes.Axes
+            Axes object.
+        profile : rnavigate.profile.Profile
+            Profile object.
         """
         sample = profile.data
         # choose a decent range for ax, excluding high-background positions
@@ -327,11 +391,15 @@ class SM(plots.Plot):
     def metric_abbreviate(self, num):
         """takes a large number and applies an appropriate abbreviation
 
-        Args:
-            num (int): number to be abbreviated
+        Parameters
+        ----------
+            num : int
+                number to be abbreviated
 
-        Returns:
-            str: abbreviated number
+        Returns
+        -------
+            str
+                abbreviated number
         """
         suffixes = {3: "k", 6: "M", 9: "G"}
         s = str(num)
