@@ -1,4 +1,4 @@
-*under_development*
+under_development/
 *.egg-info/
 __pycache__/
 .vscode/
