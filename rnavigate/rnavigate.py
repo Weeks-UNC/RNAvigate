@@ -328,8 +328,12 @@ class Sample:
                 kwargs["structure"] = None
         interactions.filter(**kwargs)
 
-    def print_data_keywords(self):
-        """Print a nicely formatted, organized list of data keywords."""
+    def print_data_keywords(self, return_dict=False):
+        """Print a nicely formatted, organized list of data keywords.
+
+        Returns a dictionary of data keywords, organized by data type, if
+        return_dict is True.
+        """
         data_keywords = {
             "annotations": [],
             "profiles": [],
@@ -350,6 +354,8 @@ class Sample:
                 data_keywords["interactions"].append(data_keyword)
             if isinstance(data_object, data.PDB):
                 data_keywords["pdbs"].append(data_keyword)
+        if return_dict:
+            return data_keywords
         print(f"{self.sample} data keywords:")
         for k, v in data_keywords.items():
             print(f"  {k}:")

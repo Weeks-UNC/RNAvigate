@@ -7,6 +7,7 @@ probing data.
 
 from rnavigate.rnavigate import Sample
 from rnavigate.plotting_functions import (
+    plot_options,
     plot_alignment,
     plot_arcs,
     plot_arcs_compare,
@@ -36,6 +37,7 @@ __email__ = "psirving@email.unc.edu"
 __all__ = [
     "Sample",
     # plotting functions
+    "plot_options",
     "plot_alignment",
     "plot_arcs",
     "plot_arcs_compare",

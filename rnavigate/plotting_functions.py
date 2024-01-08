@@ -11,6 +11,7 @@ from rnavigate.data_loading import get_sequence
 
 
 __all__ = [
+    "plot_options",
     "plot_qc",
     "plot_shapemapper",
     "plot_skyline",
@@ -27,6 +28,237 @@ __all__ = [
     "plot_disthist",
     "plot_ntdist",
 ]
+
+
+def plot_options(samples):
+    """Prints a list of plotting functions compatible with a sample or list of samples.
+
+    Some plotting functions require specific data classes to be loaded into the
+    sample. For plotting multiple samples, data keywords that are not shared, or are
+    shared, but are not of the same data class, are considered invalid.
+
+    Parameters
+    ----------
+        samples : rnavigate.Sample or list of rnavigate.Sample
+            samples to check for compatible plotting functions
+    """
+    if not isinstance(samples, list):
+        samples = [samples]
+    if len(samples) == 0:
+        raise ValueError("No samples provided.")
+    # get all data keywords for each sample
+    # remove " (default)" from data keyword strings
+    # find data keywords that are shared by all samples
+    data_keywords = samples[0].print_data_keywords(return_dict=True)
+    for key in data_keywords:
+        for i, keyword in enumerate(data_keywords[key]):
+            keyword = keyword.split(" ")[0]
+            data_keywords[key][i] = keyword
+    for sample in samples[1:]:
+        these_data_keywords = sample.print_data_keywords(return_dict=True)
+        for key in data_keywords:
+            data_keywords[key] = list(
+                set(data_keywords[key]) & set(these_data_keywords[key])
+            )
+    # SHAPEMaP profiles and those with log data (read length and muts/mol)
+    shapemap = []
+    shapemap_with_log = []
+    for keyword in data_keywords["profiles"]:
+        if all(isinstance(s.get_data(keyword), data.SHAPEMaP) for s in samples):
+            shapemap.append(keyword)
+        if all(s.get_data(keyword).read_lengths is None for s in samples):
+            shapemap_with_log.append(keyword)
+    # SecondaryStructures which contain drawing coordinates
+    ss_with_coords = []
+    for keyword in data_keywords["structures"]:
+        if all("X_coordinate" in s.get_data(keyword).data.columns for s in samples):
+            ss_with_coords.append(keyword)
+    # any sequence data
+    sequences = []
+    for key in data_keywords:
+        for keyword in data_keywords[key]:
+            if all(isinstance(s.get_data(keyword), data.Sequence) for s in samples):
+                sequences.append(keyword)
+
+    print(
+        """
+All data keywords are optional inputs for each RNAvigate sample. However,
+each plotting function has specific data requirements. This list contains
+all plotting functions for which requirements are met by these samples,
+and the specific data keywords that satisfy each requirement.
+
+Further below, a list of compatible optional data keywords is provided.
+These are likely to be useful for plotting, but are not required.
+
+
+Compatible plotting functions and keywords for these samples:"""
+    )
+
+    if len(shapemap_with_log) > 0 and len(samples) == 1:
+        print(
+            f"""
+    plot_qc
+        compatible profiles (SHAPE-MaP with log data): {shapemap_with_log}"""
+        )
+    else:
+        print(
+            """
+    plot_qc
+    NOT COMPATIBLE
+        accepts only 1 sample which must conatin a SHAPE-MaP profile
+        with associated log data."""
+        )
+    if len(shapemap) > 0 and len(samples) == 1:
+        print(
+            f"""
+    plot_shapemapper
+        compatible profiles (SHAPE-MaP): {shapemap}"""
+        )
+    else:
+        print(
+            """
+    plot_shapemapper
+    NOT COMPATIBLE
+        accepts only 1 sample which must conatin a SHAPE-MaP profile."""
+        )
+    if len(data_keywords["profiles"]) > 0:
+        print(
+            f"""
+    plot_skyline
+    plot_profile
+    plot_ntdist
+        compatible profiles: {data_keywords["profiles"]}"""
+        )
+        if len(samples) > 1:
+            print(
+                """
+    plot_linreg
+        compatible profiles: {data_keywords["profiles"]}"""
+            )
+        else:
+            print(
+                """
+    plot_linreg
+    NOT COMPATIBLE
+        accepts only 2 or more samples which must contain profiles."""
+            )
+    else:
+        print(
+            """
+    plot_skyline
+    plot_profile
+    plot_ntdist
+    plot_linreg
+    NOT COMPATIBLE
+        requires sample(s) which contain profiles."""
+        )
+    if len(sequences) > 0:
+        print(
+            f"""
+    plot_arcs
+    plot_circle
+        sequences: {sequences}"""
+        )
+        if len(samples) == 2:
+            print(
+                f"""
+    plot_alignment
+    plot_arcs_compare
+        sequences: {sequences}"""
+            )
+        else:
+            print(
+                """
+    plot_alignment
+    plot_arcs_compare
+    NOT COMPATIBLE
+        accepts only 2 samples which must contain sequences."""
+            )
+    else:
+        print(
+            """
+    plot_arcs
+    plot_circle
+    plot_alignment
+    plot_arcs_compare
+    NOT COMPATIBLE
+        requires sample(s) which contain sequences."""
+        )
+    if len(ss_with_coords) > 0:
+        print(
+            f"""
+    plot_ss
+        structures: {ss_with_coords}"""
+        )
+    else:
+        print(
+            """
+    plot_ss
+    NOT COMPATIBLE
+        requires sample(s) which contain structures with coordinates."""
+        )
+    if len(data_keywords["pdbs"]) > 0:
+        print(
+            f"""
+    plot_mol
+        tertiary structures: {data_keywords["pdbs"]}"""
+        )
+    else:
+        print(
+            """
+    plot_mol
+    NOT COMPATIBLE
+        requires sample(s) which contain tertiary structures."""
+        )
+    if len(data_keywords["interactions"]) > 0:
+        print(
+            f"""
+    plot_heatmap
+        interactions: {data_keywords["interactions"]}"""
+        )
+    else:
+        print(
+            """
+    plot_heatmap
+    NOT COMPATIBLE
+        requires sample(s) which contain interactions."""
+        )
+    if len(data_keywords["profiles"]) > 0 and len(data_keywords["structures"]) > 0:
+        print(
+            f"""
+    plot_roc
+        profiles: {data_keywords["profiles"]}
+        structures: {data_keywords["structures"]}"""
+        )
+    else:
+        print(
+            """
+    plot_roc
+    NOT COMPATIBLE
+        requires sample(s) which contain profiles and structures."""
+        )
+    # requires interactions and secondary or tertiary structure data
+    if len(data_keywords["interactions"]) > 0 and (
+        len(data_keywords["structures"]) > 0 or len(data_keywords["pdbs"]) > 0
+    ):
+        print(
+            f"""
+    plot_disthist
+        interactions: {data_keywords["interactions"]}
+        structures: {data_keywords["structures"]}
+        tertiary structures: {data_keywords["pdbs"]}"""
+        )
+    else:
+        print(
+            """
+    plot_disthist
+    NOT COMPATIBLE
+        requires sample(s) which contain interactions and structures."""
+        )
+
+    print("\n\nCompatible optional data for plotting functions\n")
+    for key in data_keywords:
+        print(f"    {key}: {data_keywords[key]}")
 
 
 def plot_qc(
