@@ -4,6 +4,7 @@ This module contains the base classes for RNAvigate data classes:
     Sequence: represents a nucleotide sequence
     Data: represents a data table with a sequence
 """
+
 from os.path import isfile
 import Bio.SeqIO
 import numpy as np
@@ -229,6 +230,8 @@ class Sequence:
         ----------
         annotations : list of rnavigate.data.Annotations
             the annotations to use to get colors.
+        default_color : matplotlib color-like, defaults to "gray"
+            the color to use for nucleotides not in any annotation
 
         Returns
         -------
