@@ -222,7 +222,7 @@ class Sequence:
         colormap = profile.cmap
         return colors, colormap
 
-    def get_colors_from_annotations(self, annotations):
+    def get_colors_from_annotations(self, annotations, default_color="gray"):
         """Get colors and colormap representing sequence annotations.
 
         Parameters
@@ -237,8 +237,8 @@ class Sequence:
         colormap : rnavigate.data.ScalarMappable
             a colormap used for creating a colorbar
         """
-        colors = np.full(self.length, "gray", dtype="<U16")
-        cmap = ["gray"]
+        colors = np.full(self.length, default_color, dtype="<U16")
+        cmap = [default_color]
         tick_labels = ["other"]
         for annotation in annotations:
             cmap.append(annotation.color)
