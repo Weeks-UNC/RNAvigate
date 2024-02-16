@@ -820,8 +820,8 @@ def plot_arcs_compare(
         )
     plots.plot_sequence_alignment(
         ax=plot.axes[0, 0],
-        alignment=alignment,
-        labels=labels,
+        alignment=alignment.get_inverse_alignment(),
+        labels=labels[::-1],
         top=6,
         bottom=0,
     )

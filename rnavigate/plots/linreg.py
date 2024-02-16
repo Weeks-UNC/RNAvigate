@@ -54,7 +54,7 @@ class LinReg(plots.Plot):
         self, num_samples, scale="linear", regression="pearson", kde=False, region="all"
     ):
         """Initialize the linear regression plot."""
-        super().__init__(num_samples)
+        super().__init__(num_samples, rows=num_samples - 1, cols=num_samples - 1)
         self.region = region
         linreg_axes = []
         for row in range(num_samples - 1):

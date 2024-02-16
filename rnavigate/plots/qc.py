@@ -96,7 +96,7 @@ class QC(plots.Plot):
         width_gap_in=1,
         top_in=1,
         bottom_in=0.5,
-        left_in=0.5,
+        left_in=1,
         right_in=0.5,
     ):
         """Set the size of the figure.

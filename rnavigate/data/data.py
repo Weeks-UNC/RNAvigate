@@ -4,6 +4,7 @@ This module contains the base classes for RNAvigate data classes:
     Sequence: represents a nucleotide sequence
     Data: represents a data table with a sequence
 """
+
 from os.path import isfile
 import Bio.SeqIO
 import numpy as np
@@ -222,13 +223,15 @@ class Sequence:
         colormap = profile.cmap
         return colors, colormap
 
-    def get_colors_from_annotations(self, annotations):
+    def get_colors_from_annotations(self, annotations, default_color="gray"):
         """Get colors and colormap representing sequence annotations.
 
         Parameters
         ----------
         annotations : list of rnavigate.data.Annotations
             the annotations to use to get colors.
+        default_color : matplotlib color-like, defaults to "gray"
+            the color to use for nucleotides not in any annotation
 
         Returns
         -------
@@ -237,8 +240,8 @@ class Sequence:
         colormap : rnavigate.data.ScalarMappable
             a colormap used for creating a colorbar
         """
-        colors = np.full(self.length, "gray", dtype="<U16")
-        cmap = ["gray"]
+        colors = np.full(self.length, default_color, dtype="<U16")
+        cmap = [default_color]
         tick_labels = ["other"]
         for annotation in annotations:
             cmap.append(annotation.color)
