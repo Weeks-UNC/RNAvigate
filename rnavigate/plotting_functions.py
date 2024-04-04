@@ -39,8 +39,8 @@ def plot_options(samples):
 
     Parameters
     ----------
-        samples : rnavigate.Sample or list of rnavigate.Sample
-            samples to check for compatible plotting functions
+    samples : rnavigate.Sample or list of rnavigate.Sample
+        samples to check for compatible plotting functions
     """
     if not isinstance(samples, list):
         samples = [samples]
@@ -274,18 +274,18 @@ def plot_qc(
 
     Parameters
     ----------
-        samples : list of rnavigate.Sample
-            samples to retrieve data from
-        profile : data keyword string or data object
-            ShapeMaP or similar data for plotting reactivity distributions
-            Must contain data from ShapeMapper log file
-        labels : list of str, defaults to sample.sample for each sample in `samples`
-            labels to be used on legends, must be same length as samples list
+    samples : list of rnavigate.Sample
+        samples to retrieve data from
+    profile : data keyword string or data object
+        ShapeMaP or similar data for plotting reactivity distributions
+        Must contain data from ShapeMapper log file
+    labels : list of str, defaults to sample.sample for each sample in `samples`
+        labels to be used on legends, must be same length as samples list
 
     Returns
     -------
-        rnavigate.plots.QC
-            the quality control plot object
+    rnavigate.plots.QC
+        the quality control plot object
     """
     parsed_args = PlottingArgumentParser(
         samples=samples,
@@ -312,19 +312,19 @@ def plot_shapemapper(
 
     Parameters
     ----------
-        sample : rnavigate Sample
-            The sample from which data profile and label will be retreived
-        profile : data keyword string or data object
-            ShapeMaP or similar data for plotting profiles
-        label : str, defaults to sample.sample
-            A label to use as the title of the figure
-        panels : list of str, defaults to ["profile", "rates", "depth"]
-            Which panels to include: options are "profile", "rates", and "depth"
+    sample : rnavigate Sample
+        The sample from which data profile and label will be retreived
+    profile : data keyword string or data object
+        ShapeMaP or similar data for plotting profiles
+    label : str, defaults to sample.sample
+        A label to use as the title of the figure
+    panels : list of str, defaults to ["profile", "rates", "depth"]
+        Which panels to include: options are "profile", "rates", and "depth"
 
     Returns
     -------
-        rnavigate.plots.SM
-            the ShapeMapper2 plot object
+    rnavigate.plots.SM
+        the ShapeMapper2 plot object
     """
     if panels is None:
         panels = ["profile", "rates", "depth"]
@@ -360,40 +360,40 @@ def plot_skyline(
 
     Parameters
     ----------
-        samples : list of rnavigate Samples
-            samples used to retrieve data
-        profile : data keyword string or data object
-            Profile from which values will be plotted
-        sequence : data keyword str, data obj, or sequence str, defaults to `profile`
-            All data are mapped to this sequence before plotting
-            If a data keyword, data from the first sample will be used
-        annotations : list of data keyword strings or data objects, defaults to []
-            Annotations used to highlight regions or sites of interest
-        domains : data keyword string or data object, defaults to None
-            domains to label along x-axis
-        labels : list of str, defaults to sample.sample for each sample
-            list containing Labels to be used in plot legends
-        nt_ticks : tuple of two integers, defaults to (20, 5)
-            first integer is the gap between major tick marks
-            second integer is the gap between minor tick marks
-        columns : string or list of strings, defaults to profile.metric
-            columns names of values from profile to plot
-        errors : string or list of strings, defaults to None (no error bars)
-            column names of error values for plotting error bars
-        annotations_mode : "track" or "bars", defaults to "track"
-            "track" will highlight annotations along the x-axis
-            "bars" will use a vertical transparent bar over the plot
-        seqbar : bool, defaults to ``True``
-            whether to display the sequence along the x-axis
-        region : list of 2 integers, defaults to [1, length of sequence]
-            start and end positions to plot. 1-indexed, inclusive.
-        plot_kwargs : dictionary, defaults to {}
-            Keyword-arguments passed to matplotlib.pyplot.subplots
+    samples : list of rnavigate Samples
+        samples used to retrieve data
+    profile : data keyword string or data object
+        Profile from which values will be plotted
+    sequence : data keyword str, data obj, or sequence str, defaults to `profile`
+        All data are mapped to this sequence before plotting
+        If a data keyword, data from the first sample will be used
+    annotations : list of data keyword strings or data objects, defaults to []
+        Annotations used to highlight regions or sites of interest
+    domains : data keyword string or data object, defaults to None
+        domains to label along x-axis
+    labels : list of str, defaults to sample.sample for each sample
+        list containing Labels to be used in plot legends
+    nt_ticks : tuple of two integers, defaults to (20, 5)
+        first integer is the gap between major tick marks
+        second integer is the gap between minor tick marks
+    columns : string or list of strings, defaults to profile.metric
+        columns names of values from profile to plot
+    errors : string or list of strings, defaults to None (no error bars)
+        column names of error values for plotting error bars
+    annotations_mode : "track" or "bars", defaults to "track"
+        "track" will highlight annotations along the x-axis
+        "bars" will use a vertical transparent bar over the plot
+    seqbar : bool, defaults to ``True``
+        whether to display the sequence along the x-axis
+    region : list of 2 integers, defaults to [1, length of sequence]
+        start and end positions to plot. 1-indexed, inclusive.
+    plot_kwargs : dictionary, defaults to {}
+        Keyword-arguments passed to matplotlib.pyplot.subplots
 
     Returns
     -------
-        rnavigate.plots.Skyline
-            the skyline plot object
+    rnavigate.plots.Skyline
+        the skyline plot object
     """
     sequence = get_sequence(sequence, samples[0], profile)
     parsed_args = PlottingArgumentParser(
@@ -449,42 +449,42 @@ def plot_profile(
 
     Parameters
     ----------
-        samples : list of rnavigate Samples
-            samples used to retrieve data
-        profile : data keyword string or data object
-            Profile from which values will be plotted
-        sequence : data keyword str, data obj, or sequence str, defaults to `profile`
-            All data are mapped to this sequence before plotting
-            If a data keyword, data from the first sample will be used
-        annotations : list of data keyword strings or data objects, defaults to []
-            Annotations used to highlight regions or sites of interest
-        domains : data keyword string or data object, defaults to None
-            domains to label along x-axis
-        labels : list of strings, defaults to sample.sample for each sample
-            list containing Labels to be used in plot legends
-        nt_ticks : tuple of two integers, defaults to (20, 5)
-            first integer is the gap between major tick marks
-            second integer is the gap between minor tick marks
-        column : string, defaults to profile.metric
-            column name of values from profile to plot
-        plot_error : bool, defaults to True
-            Whether to plot error bars, values are determined by profile.metric
-        annotations_mode : "track" or "bars", defaults to "track"
-            "track" will highlight annotations along the x-axis
-            "bars" will use a vertical transparent bar over the plot
-        seqbar : bool, defaults to ``True``
-            whether to display the sequence along the x-axis
-        region : list of 2 integers, defaults to [1, length of sequence]
-            start and end positions to plot. 1-indexed, inclusive.
-        colorbars : bool, defaults to True
-            Whether to plot color scales for per-nucleotide data
-        plot_kwargs : dictionary, defaults to {}
-            Keyword-arguments passed to matplotlib.pyplot.subplots
+    samples : list of rnavigate Samples
+        samples used to retrieve data
+    profile : data keyword string or data object
+        Profile from which values will be plotted
+    sequence : data keyword str, data obj, or sequence str, defaults to `profile`
+        All data are mapped to this sequence before plotting
+        If a data keyword, data from the first sample will be used
+    annotations : list of data keyword strings or data objects, defaults to []
+        Annotations used to highlight regions or sites of interest
+    domains : data keyword string or data object, defaults to None
+        domains to label along x-axis
+    labels : list of strings, defaults to sample.sample for each sample
+        list containing Labels to be used in plot legends
+    nt_ticks : tuple of two integers, defaults to (20, 5)
+        first integer is the gap between major tick marks
+        second integer is the gap between minor tick marks
+    column : string, defaults to profile.metric
+        column name of values from profile to plot
+    plot_error : bool, defaults to True
+        Whether to plot error bars, values are determined by profile.metric
+    annotations_mode : "track" or "bars", defaults to "track"
+        "track" will highlight annotations along the x-axis
+        "bars" will use a vertical transparent bar over the plot
+    seqbar : bool, defaults to ``True``
+        whether to display the sequence along the x-axis
+    region : list of 2 integers, defaults to [1, length of sequence]
+        start and end positions to plot. 1-indexed, inclusive.
+    colorbars : bool, defaults to True
+        Whether to plot color scales for per-nucleotide data
+    plot_kwargs : dictionary, defaults to {}
+        Keyword-arguments passed to matplotlib.pyplot.subplots
 
     Returns
     -------
-        rnavigate.plots.Profile
-            the Profile plot object
+    rnavigate.plots.Profile
+        the Profile plot object
     """
     sequence = get_sequence(sequence, samples[0], profile)
     parsed_args = PlottingArgumentParser(
@@ -529,19 +529,19 @@ def plot_alignment(
 
     Parameters
     ----------
-        data1 : tuple (rnavigate Sample, data keyword string)
-            a sample and data keyword to retrieve a sequence
-        data2 : tuple (rnavigate Sample, data keyword string)
-            another sample and data keyword to retrieve a second sequence
-        labels : list of 2 strings, defaults to "sample.sample: data keyword" for each
-            Labels used for each sample
-        plot_kwargs : dict, defaults to {}
-            passed to matplotlib.pyplot.subplots()
+    data1 : tuple (rnavigate Sample, data keyword string)
+        a sample and data keyword to retrieve a sequence
+    data2 : tuple (rnavigate Sample, data keyword string)
+        another sample and data keyword to retrieve a second sequence
+    labels : list of 2 strings, defaults to "sample.sample: data keyword" for each
+        Labels used for each sample
+    plot_kwargs : dict, defaults to {}
+        passed to matplotlib.pyplot.subplots()
 
     Returns
     -------
-        rnavigate.plots.Alignment
-            the Alignment plot object
+    rnavigate.plots.Alignment
+        the Alignment plot object
     """
     plot_kwargs = _parse_plot_kwargs(plot_kwargs, "rnavigate.plots.Alignment")
     if labels is None:
@@ -583,75 +583,75 @@ def plot_arcs(
 
     Parameters
     ----------
-        samples : list of rnavigate Samples
-            samples used to retrieve data
-        sequence : data keyword string, data object, or sequence string
-            All data are mapped to this sequence before plotting
-            If a data keyword string, data from the first sample will be used
-        structure : data keyword string or data object, defaults to None
-            secondary structure to plot as arcs
-        structure2 : data keyword string or data object, defaults to None
-            another secondary structure to compare with the first structure
-            arcs will be colored depending on which structure they are in
-            Defaults to None
-        interactions : one of the formats below, defaults to None
-            format 1 (data or data keyword)
-                Interactions to plot as arcs, no filtering performed
-            format 2 (dictionary)
-                e.g. {"interactions": format 1}
-                additional filtering options can be added to the dictionary
-            format 3 (list of format 2 dictionaries)
-                This format allows multiple filtering schemes to be applied,
-                each will be plotted on a seperate axis
-        interactions2 : one of the formats below, defaults to None
-            format 1 (data or data keyword)
-                Interactions to plot as arcs, no filtering performed
-            format 2 (dictionary)
-                e.g. {"interactions": format 1}
-                additional filtering options can be added to the dictionary
-        profile : data or data keyword, defaults to None
-            Profile from which values will be plotted
-        annotations : list of data keyword strings or data objects, defaults to []
-            Annotations used to highlight regions or sites of interest
-        domains : data keyword string or data object, defaults to None
-            domains to label along x-axis
-        labels : list of strings, defaults to sample.sample for each sample
-            list containing Labels to be used in plot legends
-        nt_ticks : tuple of two integers, defaults to (20, 5)
-            first integer is the gap between major tick marks
-            second integer is the gap between minor tick marks
-        profile_scale_factor : number, defaults to 1
-            small profile values will be hard to see
-            large profile values will overwhelm the plot
-            e.g. use 1/10 to scale values down 10-fold, use 10 to scale up
-        plot_error : bool, defaults to False
-            Whether to plot error bars, values are determined by profile.metric
-        annotation_mode : "track" or "bars", defaults to "track"
-            "track" will highlight annotations along the x-axis
-            "bars" will use a vertical transparent bar over the plot
-        panels : dict, optional
-            a dictionary of whether plot elements are displayed on the "top"
-            (above x-axis) or "bottom" (below x-axis)
-            Only the values you wish to change from the default are needed
-            defaults to {"interactions": "bottom",
-                         "interactions2": "bottom",
-                         "structure": "top",
-                         "profile": "top"}
-        seqbar : bool, defaults to ``True``
-            whether to display the sequence along the x-axis
-        region : list of 2 integers, defaults to [1, length of sequence]
-            start and end positions to plot. 1-indexed, inclusive.
-        colorbars : bool, defaults to True
-            Whether to plot colorbars for all plot elements
-        title : bool, defaults to True
-            Whether to display titles for each axis
-        plot_kwargs : dict, defaults to {}
-            Keyword-arguments passed to matplotlib.pyplot.subplots
+    samples : list of rnavigate Samples
+        samples used to retrieve data
+    sequence : data keyword string, data object, or sequence string
+        All data are mapped to this sequence before plotting
+        If a data keyword string, data from the first sample will be used
+    structure : data keyword string or data object, defaults to None
+        secondary structure to plot as arcs
+    structure2 : data keyword string or data object, defaults to None
+        another secondary structure to compare with the first structure
+        arcs will be colored depending on which structure they are in
+        Defaults to None
+    interactions : one of the formats below, defaults to None
+        format 1 (data or data keyword)
+            Interactions to plot as arcs, no filtering performed
+        format 2 (dictionary)
+            e.g. {"interactions": format 1}
+            additional filtering options can be added to the dictionary
+        format 3 (list of format 2 dictionaries)
+            This format allows multiple filtering schemes to be applied,
+            each will be plotted on a seperate axis
+    interactions2 : one of the formats below, defaults to None
+        format 1 (data or data keyword)
+            Interactions to plot as arcs, no filtering performed
+        format 2 (dictionary)
+            e.g. {"interactions": format 1}
+            additional filtering options can be added to the dictionary
+    profile : data or data keyword, defaults to None
+        Profile from which values will be plotted
+    annotations : list of data keyword strings or data objects, defaults to []
+        Annotations used to highlight regions or sites of interest
+    domains : data keyword string or data object, defaults to None
+        domains to label along x-axis
+    labels : list of strings, defaults to sample.sample for each sample
+        list containing Labels to be used in plot legends
+    nt_ticks : tuple of two integers, defaults to (20, 5)
+        first integer is the gap between major tick marks
+        second integer is the gap between minor tick marks
+    profile_scale_factor : number, defaults to 1
+        small profile values will be hard to see
+        large profile values will overwhelm the plot
+        e.g. use 1/10 to scale values down 10-fold, use 10 to scale up
+    plot_error : bool, defaults to False
+        Whether to plot error bars, values are determined by profile.metric
+    annotation_mode : "track" or "bars", defaults to "track"
+        "track" will highlight annotations along the x-axis
+        "bars" will use a vertical transparent bar over the plot
+    panels : dict, optional
+        a dictionary of whether plot elements are displayed on the "top"
+        (above x-axis) or "bottom" (below x-axis)
+        Only the values you wish to change from the default are needed
+        defaults to {"interactions": "bottom",
+                        "interactions2": "bottom",
+                        "structure": "top",
+                        "profile": "top"}
+    seqbar : bool, defaults to ``True``
+        whether to display the sequence along the x-axis
+    region : list of 2 integers, defaults to [1, length of sequence]
+        start and end positions to plot. 1-indexed, inclusive.
+    colorbars : bool, defaults to True
+        Whether to plot colorbars for all plot elements
+    title : bool, defaults to True
+        Whether to display titles for each axis
+    plot_kwargs : dict, defaults to {}
+        Keyword-arguments passed to matplotlib.pyplot.subplots
 
     Returns
     -------
-        rnavigate.plots.AP
-            the ArcPlot object
+    rnavigate.plots.AP
+        the ArcPlot object
     """
     sequence = get_sequence(sequence, samples[0], structure)
     parsed_args = PlottingArgumentParser(
@@ -720,54 +720,54 @@ def plot_arcs_compare(
 
     Parameters
     ----------
-        samples : list of 2 rnavigate Samples
-            samples used to retrieve data
-            This plotting function can only compare two samples at a time
-        sequence : data keyword string, data object, or sequence string
-            All data are mapped to this sequence taken from their respective
-            sample before plotting
-        structure : data keyword string or data object, defaults to None
-            secondary structure to plot as arcs
-        structure2 : data keyword string or data object, defaults to None
-            another secondary structure to compare with the first structure
-            arcs will be colored depending on which structure they are in
-        interactions : one of the formats below, defaults to None
-            format 1 (data or data keyword)
-                Interactions to plot as arcs, no filtering performed
-            format 2 (dictionary)
-                e.g. {"interactions": format 1}
-                additional filtering options can be added to the dictionary
-            format 3 (list of format 2 dictionaries)
-                This format allows multiple filtering schemes to be applied,
-                each will be plotted on a seperate axis
-        interactions2 : one of the formats below, defaults to None
-            format 1 (data or data keyword)
-                Interactions to plot as arcs, no filtering performed
-            format 2 (dictionary)
-                e.g. {"interactions": format 1}
-                additional filtering options can be added to the dictionary
-        profile : data keyword string or data object, defaults to None
-            Profile from which values will be plotted
-        labels : list of strings, defaults to sample.sample for each sample
-            list containing Labels to be used in plot legends
-        profile_scale_factor : number, defaults to 1
-            small profile values will be hard to see
-            large profile values will overwhelm the plot
-            e.g. use 1/10 to scale values down 10-fold, use 10 to scale up
-        plot_error : bool, defaults to ``False``
-            Whether to plot error bars, values are determined by profile.metric
-        region : list of 2 integers, defaults to [1, length of sequence]
-            start and end positions to plot. 1-indexed, inclusive.
-        colorbars : bool, defaults to ``True``
-            Whether to plot color scales for all plot elements
-        plot_kwargs : dict, defaults to {}
-            Keyword-arguments passed to matplotlib.pyplot.subplots
+    samples : list of 2 rnavigate Samples
+        samples used to retrieve data
+        This plotting function can only compare two samples at a time
+    sequence : data keyword string, data object, or sequence string
+        All data are mapped to this sequence taken from their respective
+        sample before plotting
+    structure : data keyword string or data object, defaults to None
+        secondary structure to plot as arcs
+    structure2 : data keyword string or data object, defaults to None
+        another secondary structure to compare with the first structure
+        arcs will be colored depending on which structure they are in
+    interactions : one of the formats below, defaults to None
+        format 1 (data or data keyword)
+            Interactions to plot as arcs, no filtering performed
+        format 2 (dictionary)
+            e.g. {"interactions": format 1}
+            additional filtering options can be added to the dictionary
+        format 3 (list of format 2 dictionaries)
+            This format allows multiple filtering schemes to be applied,
+            each will be plotted on a seperate axis
+    interactions2 : one of the formats below, defaults to None
+        format 1 (data or data keyword)
+            Interactions to plot as arcs, no filtering performed
+        format 2 (dictionary)
+            e.g. {"interactions": format 1}
+            additional filtering options can be added to the dictionary
+    profile : data keyword string or data object, defaults to None
+        Profile from which values will be plotted
+    labels : list of strings, defaults to sample.sample for each sample
+        list containing Labels to be used in plot legends
+    profile_scale_factor : number, defaults to 1
+        small profile values will be hard to see
+        large profile values will overwhelm the plot
+        e.g. use 1/10 to scale values down 10-fold, use 10 to scale up
+    plot_error : bool, defaults to ``False``
+        Whether to plot error bars, values are determined by profile.metric
+    region : list of 2 integers, defaults to [1, length of sequence]
+        start and end positions to plot. 1-indexed, inclusive.
+    colorbars : bool, defaults to ``True``
+        Whether to plot color scales for all plot elements
+    plot_kwargs : dict, defaults to {}
+        Keyword-arguments passed to matplotlib.pyplot.subplots
 
     Returns
     -------
-        rnavigate.plots.AP plot
-            object containing matplotlib figure and axes with additional plotting
-            and file saving methods
+    rnavigate.plots.AP plot
+        object containing matplotlib figure and axes with additional plotting
+        and file saving methods
     """
     if len(samples) != 2:
         raise ValueError("Only 2 samples can be compared.")
@@ -856,72 +856,72 @@ def plot_ss(
 
     Parameters
     ----------
-        samples : list of rnavigate Samples
-            samples used to retrieve data
-        structure : data keyword string or data object
-            secondary structure to plot as arcs
-            All data are mapped to this sequence before plotting
-        profile : data keyword string or data object, defaults to None
-            Profile used for coloring if "profile" used in colors dictionary
-        annotations : list of data keyword strings or data objects, defaults to []
-            Annotations used to highlight regions or sites of interest
-        interactions : one of the formats below, defaults to None
-            format 1 (data or data keyword)
-                Interactions to plot on secondary structure, no filtering
-            format 2 (dictionary)
-                e.g. {"interactions": format 1}
-                additional filtering options can be added to the dictionary
-            format 3 (list of format 2 dictionaries)
-                This format allows multiple filtering schemes to be applied,
-                each will be plotted on a seperate axis
-        interactions2 : one of the formats below, defaults to None
-            format 1 (data or data keyword)
-                Interactions to plot on secondary structure, no filtering
-            format 2 (dictionary)
-                e.g. {"interactions": format 1}
-                additional filtering options can be added to the dictionary
-        labels : list of strings, defaults to sample.sample for each sample
-            list containing Labels to be used in plot legends
-            Defaults to sample.sample for each sample
-        colors : dictionary, optional
-            a dictionary of element: value pairs that determines how colors
-            will be applied to each plot element and if that element is plotted
-            only the elements you wish to change need to be included
-            value options and what the colors represent:
-                None: don"t plot this elelement
-                "sequence": nucleotide identity
-                "position": position in sequence
-                "annotations": sequence annotations
-                "profile": per-nucleotide data from profile
-                    profile argument must be provided
-                "structure": base-pairing status
-                matplotlib color: all positions plotted in this color
-                array of colors: a different color for each position
-                    must be the same length as structure
-            "sequence" may also use "contrast" which automatically chooses
-                white or black, which ever contrasts better with "nucleotide"
-                color
-            Defaults to {"sequence": None,
-                         "nucleotides": "sequence",
-                         "structure": "grey",
-                         "basepairs": "grey"}
-        nt_ticks : integer, defaults to None (no labels)
-            gap between major tick marks
-        bp_style : "dotted", "line", or "conventional", defaults to "dotted"
-            "dotted" plots basepairs as a dotted line
-            "line" plots basepairs as a solid line
-            "conventional" plots basepairs using Leontis-Westhof conventions
-                for canonical and wobble pairs ("G-A" plotted as solid dot)
-        colorbars : bool, defaults to True
-            Whether to plot color scales for all plot elements
-        plot_kwargs : dict, defaults to {}
-            Keyword-arguments passed to matplotlib.pyplot.subplots
+    samples : list of rnavigate Samples
+        samples used to retrieve data
+    structure : data keyword string or data object
+        secondary structure to plot as arcs
+        All data are mapped to this sequence before plotting
+    profile : data keyword string or data object, defaults to None
+        Profile used for coloring if "profile" used in colors dictionary
+    annotations : list of data keyword strings or data objects, defaults to []
+        Annotations used to highlight regions or sites of interest
+    interactions : one of the formats below, defaults to None
+        format 1 (data or data keyword)
+            Interactions to plot on secondary structure, no filtering
+        format 2 (dictionary)
+            e.g. {"interactions": format 1}
+            additional filtering options can be added to the dictionary
+        format 3 (list of format 2 dictionaries)
+            This format allows multiple filtering schemes to be applied,
+            each will be plotted on a seperate axis
+    interactions2 : one of the formats below, defaults to None
+        format 1 (data or data keyword)
+            Interactions to plot on secondary structure, no filtering
+        format 2 (dictionary)
+            e.g. {"interactions": format 1}
+            additional filtering options can be added to the dictionary
+    labels : list of strings, defaults to sample.sample for each sample
+        list containing Labels to be used in plot legends
+        Defaults to sample.sample for each sample
+    colors : dictionary, optional
+        a dictionary of element: value pairs that determines how colors
+        will be applied to each plot element and if that element is plotted
+        only the elements you wish to change need to be included
+        value options and what the colors represent:
+            None: don"t plot this elelement
+            "sequence": nucleotide identity
+            "position": position in sequence
+            "annotations": sequence annotations
+            "profile": per-nucleotide data from profile
+                profile argument must be provided
+            "structure": base-pairing status
+            matplotlib color: all positions plotted in this color
+            array of colors: a different color for each position
+                must be the same length as structure
+        "sequence" may also use "contrast" which automatically chooses
+            white or black, which ever contrasts better with "nucleotide"
+            color
+        Defaults to {"sequence": None,
+                        "nucleotides": "sequence",
+                        "structure": "grey",
+                        "basepairs": "grey"}
+    nt_ticks : integer, defaults to None (no labels)
+        gap between major tick marks
+    bp_style : "dotted", "line", or "conventional", defaults to "dotted"
+        "dotted" plots basepairs as a dotted line
+        "line" plots basepairs as a solid line
+        "conventional" plots basepairs using Leontis-Westhof conventions
+            for canonical and wobble pairs ("G-A" plotted as solid dot)
+    colorbars : bool, defaults to True
+        Whether to plot color scales for all plot elements
+    plot_kwargs : dict, defaults to {}
+        Keyword-arguments passed to matplotlib.pyplot.subplots
 
     Returns
     -------
-        rnavigate.plots.SS plot
-            object containing matplotlib figure and axes with additional plotting and
-            file saving methods
+    rnavigate.plots.SS plot
+        object containing matplotlib figure and axes with additional plotting and
+        file saving methods
     """
     parsed_args = PlottingArgumentParser(
         samples=samples,
@@ -980,79 +980,79 @@ def plot_mol(
 
     Parameters
     ----------
-        samples : list of rnavigate Samples
-            samples used to retrieve data
-        structure : data keyword string or data object
-            3D structure to view as interactive molecule
-            All data are mapped to this sequence before plotting
-        profile : data keyword string or data object, defaults to None
-            Profile used to color nucleotides if colors="profile"
-        interactions : one of the formats below, defaults to None
-            format 1 (data or data keyword)
-                Interactions to plot on molecule, no filtering performed
-            format 2 (dictionary)
-                e.g. {"interactions": format 1}
-                additional filtering options can be added to the dictionary
-            format 3 (list of format 2 dictionaries)
-                This format allows multiple filtering schemes to be applied,
-                each will be plotted on a seperate axis
-        labels : list of strings, defaults to sample.sample for each sample
-            list containing Labels to be used in plot titles
-        style : "cartoon", "cross", "line", "sphere" or "stick", defaults to "cartoon"
-            sets the py3Dmol style for drawing the molecule
-        hide_cylinders : bool, defaults to False
-            whether to hide nucleotide cylinders (only shows backbone ribbon)
-        colors : string or list of colors, defaults to "grey"
-            "sequence": color by nucleotide identity
-            "position": color by position in sequence
-            "annotations": color by sequence annotations from `annotations`
-            "profile": color by per-nucleotide data from `profile`
-            "structure": color by base-pairing status
-            matplotlib color: all positions plotted in this color
-            array of colors: a different color for each position
-                must be the same length as structure
-        atom : string or dictionary, defaults to "O2'"
-            which atoms to draw interactions between
-            for DMS reactive atoms (N1 for A and G, N3 for U and C) use "DMS"
-            use a dictionary to specify a different atom for each nucleotide
-                e.g. "DMS" == {"A": "N1", "G": "N1", "U": "N3", "C": "N3"}
-        rotation : dictionary, defaults to {"x": 0, "y": 0, "z": 0}
-            axis-degrees pairs for setting the starting orientation of the
-            molecule, only the axes to be rotated are needed
-            e.g. {"x": 180} flips the molecule on the x-axis
-        orientation : list of 9 floats, defaults to None
-            set the precise starting orientation
-            see get_orientation for more details
-        get_orientation : bool, defaults to False
-            allows getting the orientation for use with orientation argument
-            all other arguments will be ignored and a larger, single panel view
-            window is displayed with no title
-                1. adjust the molecule to the desired orientation
-                2. click on the molecule to display the orientation vector
-                3. copy this orientation vector (manually)
-                4. provide this list of values to the orientation argument
-        title : bool, defaults to True
-            whether to display the title
-        colorbars : bool, defaults to True
-            Whether to plot color scales for all plot elements
-        width : integer, defaults to 400
-            width of view window in pixels
-        height : integer, defaults to 400
-            height of view window in pixels
-        rows : integer, defaults to None (set automatically)
-            the number of rows in the view window
-        cols : integer, defaults to None (set automatically)
-            the number of columns in the view window
-        background_alpha : float, defaults to 1 (completely opaque)
-            the opacity of the view window, must be between 0 and 1
-        show : bool, defaults to True
-            whether to display the viewer object
+    samples : list of rnavigate Samples
+        samples used to retrieve data
+    structure : data keyword string or data object
+        3D structure to view as interactive molecule
+        All data are mapped to this sequence before plotting
+    profile : data keyword string or data object, defaults to None
+        Profile used to color nucleotides if colors="profile"
+    interactions : one of the formats below, defaults to None
+        format 1 (data or data keyword)
+            Interactions to plot on molecule, no filtering performed
+        format 2 (dictionary)
+            e.g. {"interactions": format 1}
+            additional filtering options can be added to the dictionary
+        format 3 (list of format 2 dictionaries)
+            This format allows multiple filtering schemes to be applied,
+            each will be plotted on a seperate axis
+    labels : list of strings, defaults to sample.sample for each sample
+        list containing Labels to be used in plot titles
+    style : "cartoon", "cross", "line", "sphere" or "stick", defaults to "cartoon"
+        sets the py3Dmol style for drawing the molecule
+    hide_cylinders : bool, defaults to False
+        whether to hide nucleotide cylinders (only shows backbone ribbon)
+    colors : string or list of colors, defaults to "grey"
+        "sequence": color by nucleotide identity
+        "position": color by position in sequence
+        "annotations": color by sequence annotations from `annotations`
+        "profile": color by per-nucleotide data from `profile`
+        "structure": color by base-pairing status
+        matplotlib color: all positions plotted in this color
+        array of colors: a different color for each position
+            must be the same length as structure
+    atom : string or dictionary, defaults to "O2'"
+        which atoms to draw interactions between
+        for DMS reactive atoms (N1 for A and G, N3 for U and C) use "DMS"
+        use a dictionary to specify a different atom for each nucleotide
+            e.g. "DMS" == {"A": "N1", "G": "N1", "U": "N3", "C": "N3"}
+    rotation : dictionary, defaults to {"x": 0, "y": 0, "z": 0}
+        axis-degrees pairs for setting the starting orientation of the
+        molecule, only the axes to be rotated are needed
+        e.g. {"x": 180} flips the molecule on the x-axis
+    orientation : list of 9 floats, defaults to None
+        set the precise starting orientation
+        see get_orientation for more details
+    get_orientation : bool, defaults to False
+        allows getting the orientation for use with orientation argument
+        all other arguments will be ignored and a larger, single panel view
+        window is displayed with no title
+            1. adjust the molecule to the desired orientation
+            2. click on the molecule to display the orientation vector
+            3. copy this orientation vector (manually)
+            4. provide this list of values to the orientation argument
+    title : bool, defaults to True
+        whether to display the title
+    colorbars : bool, defaults to True
+        Whether to plot color scales for all plot elements
+    width : integer, defaults to 400
+        width of view window in pixels
+    height : integer, defaults to 400
+        height of view window in pixels
+    rows : integer, defaults to None (set automatically)
+        the number of rows in the view window
+    cols : integer, defaults to None (set automatically)
+        the number of columns in the view window
+    background_alpha : float, defaults to 1 (completely opaque)
+        the opacity of the view window, must be between 0 and 1
+    show : bool, defaults to True
+        whether to display the viewer object
 
     Returns
     -------
-        rnavigate.plots.Mol:
-            object containing py3dmol viewer with additional plotting and file saving
-            methods
+    rnavigate.plots.Mol:
+        object containing py3dmol viewer with additional plotting and file saving
+        methods
     """
     sequence = get_sequence(structure, samples[0])
     if get_orientation:
@@ -1120,65 +1120,65 @@ def plot_heatmap(
 
     Parameters
     ----------
-        samples : list of rnavigate Samples
-            samples used to retrieve data
-        sequence : data keyword string, data object, or sequence string
-            All data are mapped to this sequence before plotting
-        structure : data keyword string or data object, defaults to None
-            secondary structure or 3D structure used to plot contour lines
-            contour lines are drawn according to levels argument
-        interactions : one of the formats below, defaults to None
-            format 1 (data or data keyword)
-                Interactions to plot as a heatmap, no filtering performed
-            format 2 (dictionary)
-                e.g. {"interactions": format 1}
-                additional filtering options can be added to the dictionary
-            format 3 (list of format 2 dictionaries)
-                This format allows multiple filtering schemes to be applied,
-                each will be plotted on a seperate axis
-        regions : list of lists of 4 integers, defaults to None (no boxes)
-            each inner list defines two regions of the RNA that are interacting
-            a box will be drawn around this interaction on the heatmap
-            e.g. [[10, 20, 50, 60], [35, 45, 70, 80]] draws 2 boxes
-                the first box will connect nucleotides 10-20 and 50-60
-                the second box will connect nucleotides 35-45 and 70-80
-        labels : list of strings, defaults to sample.sample for each sample
-            Labels to be used as titles, must be same length as samples list
-        levels : list of floats, defaults to [5] contact distance or [20] 3D distance
-            contours are drawn separating nucleotides above and below these
-            distances
-            if structure argument is a secondary structure
-                distance refers to contact distance
-            if structure argument is a 3D structure
-                distance refers to spatial distance in angstroms
-        interpolation : string, defaults to "nearest"
-            one of matplotlib's interpolations for heatmap (used with imshow)
-            "nearest" works well for shorter RNAs (under 300 nt)
-            "none" works well for longer RNAs (over 1200 nt)
-        atom : string or dictionary, defaults to "O2'"
-            from which atoms to calculate distances
-            for DMS reactive atoms (N1 for A and G, N3 for U and C) use "DMS"
-            use a dictionary to specify a different atom for each nucleotide
-                e.g. "DMS" == {"A": "N1", "G": "N1", "U": "N3", "C": "N3"}
-        plot_type : "heatmap" or "kde", defaults to "heatmap"
-            how to plot interactions data
-            "heatmap" will plot raw data, each interaction is a pixel in a grid
-            "kde" will calculate a kernel density estimate and plot 5 levels
-        weights : string, defaults to None (no weights)
-            weights to be used in kernel density estimation
-            must be a column of interactions data
-        rows : integer, defaults to None (determined automatically)
-            number of rows of plots
-        cols : integer, defaults to None (determined automatically)
-            number of columns of plots
-        plot_kwargs : dictionary, defaults to {}
-            Keyword-arguments passed to matplotlib.pyplot.subplots
+    samples : list of rnavigate Samples
+        samples used to retrieve data
+    sequence : data keyword string, data object, or sequence string
+        All data are mapped to this sequence before plotting
+    structure : data keyword string or data object, defaults to None
+        secondary structure or 3D structure used to plot contour lines
+        contour lines are drawn according to levels argument
+    interactions : one of the formats below, defaults to None
+        format 1 (data or data keyword)
+            Interactions to plot as a heatmap, no filtering performed
+        format 2 (dictionary)
+            e.g. {"interactions": format 1}
+            additional filtering options can be added to the dictionary
+        format 3 (list of format 2 dictionaries)
+            This format allows multiple filtering schemes to be applied,
+            each will be plotted on a seperate axis
+    regions : list of lists of 4 integers, defaults to None (no boxes)
+        each inner list defines two regions of the RNA that are interacting
+        a box will be drawn around this interaction on the heatmap
+        e.g. [[10, 20, 50, 60], [35, 45, 70, 80]] draws 2 boxes
+            the first box will connect nucleotides 10-20 and 50-60
+            the second box will connect nucleotides 35-45 and 70-80
+    labels : list of strings, defaults to sample.sample for each sample
+        Labels to be used as titles, must be same length as samples list
+    levels : list of floats, defaults to [5] contact distance or [20] 3D distance
+        contours are drawn separating nucleotides above and below these
+        distances
+        if structure argument is a secondary structure
+            distance refers to contact distance
+        if structure argument is a 3D structure
+            distance refers to spatial distance in angstroms
+    interpolation : string, defaults to "nearest"
+        one of matplotlib's interpolations for heatmap (used with imshow)
+        "nearest" works well for shorter RNAs (under 300 nt)
+        "none" works well for longer RNAs (over 1200 nt)
+    atom : string or dictionary, defaults to "O2'"
+        from which atoms to calculate distances
+        for DMS reactive atoms (N1 for A and G, N3 for U and C) use "DMS"
+        use a dictionary to specify a different atom for each nucleotide
+            e.g. "DMS" == {"A": "N1", "G": "N1", "U": "N3", "C": "N3"}
+    plot_type : "heatmap" or "kde", defaults to "heatmap"
+        how to plot interactions data
+        "heatmap" will plot raw data, each interaction is a pixel in a grid
+        "kde" will calculate a kernel density estimate and plot 5 levels
+    weights : string, defaults to None (no weights)
+        weights to be used in kernel density estimation
+        must be a column of interactions data
+    rows : integer, defaults to None (determined automatically)
+        number of rows of plots
+    cols : integer, defaults to None (determined automatically)
+        number of columns of plots
+    plot_kwargs : dictionary, defaults to {}
+        Keyword-arguments passed to matplotlib.pyplot.subplots
 
     Returns
     -------
-        rnavigate.plots.Heatmap
-            object containing matplotlib figure and axes with additional plotting and
-            file saving methods
+    rnavigate.plots.Heatmap
+        object containing matplotlib figure and axes with additional plotting and
+        file saving methods
     """
     sequence = get_sequence(sequence, samples[0], structure)
     parsed_args = PlottingArgumentParser(
@@ -1238,72 +1238,72 @@ def plot_circle(
 
     Parameters
     ----------
-        samples : list of rnavigate Samples
-            samples used to retrieve data
-        sequence : data or data keyword
-            All data are mapped to this sequence before plotting
-        structure : data keyword string or data object, defaults to None
-            Structure used to plot base-pairs on circle plot
-        structure2 : data keyword str, data obj or list of either, defaults to None
-            Structures to compare with Structure. Each base-pair is colored by
-            which structure contains it or how many structures contain it.
-        interactions : one of the formats below, defaults to None
-            format 1 (data or data keyword)
-                Interactions to plot on cirle plot, no filtering
-            format 2 (dictionary)
-                e.g. {"interactions": format 1}
-                additional filtering options can be added to the dictionary
-            format 3 (list of format 2 dictionaries)
-                This format allows multiple filtering schemes to be applied,
-                each will be plotted on a seperate axis
-        interactions2 : one of the formats below, defaults to None
-            format 1 (data or data keyword)
-                Interactions to plot on circle plot, no filtering
-            format 2 (dictionary)
-                e.g. {"interactions": format 1}
-                additional filtering options can be added to the dictionary
-        annotations : list of data keyword strings or data objects, defaults to []
-            Annotations used to highlight regions or sites of interest
-        profile : data keyword string or data object, defaults to None
-            Profile used for coloring if "profile" used in colors dictionary
-        labels : list of strings, defaults to sample.sample for each sample
-            list containing Labels to be used in plot legends
-        colors : dictionary, optional
-            a dictionary of element: value pairs that determines how colors
-            will be applied to each plot element and if that element is plotted
-            only the elements you wish to change need to be included
-            Defaults to {"sequence": None,  # sequence not shown
-                         "nucleotides": "sequence",
-                         "structure": "grey"}
-            value options and what the colors represent:
-                None: don't plot this elelement
-                "sequence": nucleotide identity
-                "position": position in sequence
-                "annotations": sequence annotations
-                "profile": per-nucleotide data from profile
-                    profile argument must be provided
-                "structure": base-pairing status
-                matplotlib color: all positions plotted in this color
-                array of colors: a different color for each position
-                    must be the same length as structure
-            "sequence" may also use "contrast" which automatically chooses
-                white or black, which ever contrasts better with "nucleotide"
-                color
-        nt_ticks : tuple of two integers, defaults to (20, 5)
-            first integer is the gap between major tick marks
-            second integer is the gap between minor tick marks
-        gap : integer, defaults to 30
-            Width of gap between 5' and 3' end in degrees
-        colorbars : bool, defaults to True
-            Whether to plot color scales for all plot elements
-        plot_kwargs : dict, defaults to {}
-            Keyword-arguments passed to matplotlib.pyplot.subplots
+    samples : list of rnavigate Samples
+        samples used to retrieve data
+    sequence : data or data keyword
+        All data are mapped to this sequence before plotting
+    structure : data keyword string or data object, defaults to None
+        Structure used to plot base-pairs on circle plot
+    structure2 : data keyword str, data obj or list of either, defaults to None
+        Structures to compare with Structure. Each base-pair is colored by
+        which structure contains it or how many structures contain it.
+    interactions : one of the formats below, defaults to None
+        format 1 (data or data keyword)
+            Interactions to plot on cirle plot, no filtering
+        format 2 (dictionary)
+            e.g. {"interactions": format 1}
+            additional filtering options can be added to the dictionary
+        format 3 (list of format 2 dictionaries)
+            This format allows multiple filtering schemes to be applied,
+            each will be plotted on a seperate axis
+    interactions2 : one of the formats below, defaults to None
+        format 1 (data or data keyword)
+            Interactions to plot on circle plot, no filtering
+        format 2 (dictionary)
+            e.g. {"interactions": format 1}
+            additional filtering options can be added to the dictionary
+    annotations : list of data keyword strings or data objects, defaults to []
+        Annotations used to highlight regions or sites of interest
+    profile : data keyword string or data object, defaults to None
+        Profile used for coloring if "profile" used in colors dictionary
+    labels : list of strings, defaults to sample.sample for each sample
+        list containing Labels to be used in plot legends
+    colors : dictionary, optional
+        a dictionary of element: value pairs that determines how colors
+        will be applied to each plot element and if that element is plotted
+        only the elements you wish to change need to be included
+        Defaults to {"sequence": None,  # sequence not shown
+                        "nucleotides": "sequence",
+                        "structure": "grey"}
+        value options and what the colors represent:
+            None: don't plot this elelement
+            "sequence": nucleotide identity
+            "position": position in sequence
+            "annotations": sequence annotations
+            "profile": per-nucleotide data from profile
+                profile argument must be provided
+            "structure": base-pairing status
+            matplotlib color: all positions plotted in this color
+            array of colors: a different color for each position
+                must be the same length as structure
+        "sequence" may also use "contrast" which automatically chooses
+            white or black, which ever contrasts better with "nucleotide"
+            color
+    nt_ticks : tuple of two integers, defaults to (20, 5)
+        first integer is the gap between major tick marks
+        second integer is the gap between minor tick marks
+    gap : integer, defaults to 30
+        Width of gap between 5' and 3' end in degrees
+    colorbars : bool, defaults to True
+        Whether to plot color scales for all plot elements
+    plot_kwargs : dict, defaults to {}
+        Keyword-arguments passed to matplotlib.pyplot.subplots
 
     Returns
     -------
-        rnavigate.plots.Circle
-            object containing matplotlib figure and axes with additional plotting and
-            file saving methods
+    rnavigate.plots.Circle
+        object containing matplotlib figure and axes with additional plotting and
+        file saving methods
     """
 
     parsed_args = PlottingArgumentParser(
@@ -1356,54 +1356,54 @@ def plot_linreg(
 
     Parameters
     ----------
-        samples : list of rnavigate Samples
-            samples used to retrieve data
-        profile : data keyword string or data object
-            per-nucleotide data to perform linear regression
-            all data are mapped to the sequence of the profile data from the
-            first sample before plotting, unless sequence is supplied
-        sequence : data keyword str, data obj, or sequence str, defaults to None
-            a sequence from which to align all profiles
-            if a data keyword, uses data from the first sample
-        structure : data keyword string or data object, defaults to None
-            Structure used for coloring if colors argument is "structure"
-        annotations : list of data keyword strings or data objects, defaults to []
-            Annotations used for coloring if colors argument is "annotations"
-        labels : list of strings, defaults to sample.sample for each sample
-            list containing Labels to be used in plot legends
-        kde : bool, defaults to False
-            whether to plot kde (density) instead of a scatter plot
-        scale : "linear" or "log", defaults to "linear"
-            "linear" performs regression on raw values, displays linear units
-            "log" performs regression on log10(values), displays log10 units
-        regression : "pearson" or "spearman", defaults to "pearson"
-            "pearson" calculates Pearson R-squared (standard)
-            "spearman" calculates Spearman R-squared (rank-order)
-        colors : string or list of colors, defaults to "sequence"
-            value options and what the colors represent:
-                "sequence": nucleotide identity
-                "position": position in sequence
-                "annotations": sequence annotations
-                "profile": per-nucleotide data from profile
-                    profile argument must be provided
-                "structure": base-pairing status
-                matplotlib color: all positions plotted in this color
-                array of colors: a different color for each position
-                    must be the same length as structure
-        column : string, defaults to profile.metric
-            column name of values from profile to use in regression
-        region : list of 2 integers, defaults to [1, length of sequence]
-            start and end nucleotide positions to include. 1-indexed, inclusive
-        colorbars : bool, defaults to ``True``
-            Whether to plot colorbars for scatter plot colors
-        plot_kwargs : dict, defaults to {}
-            Keyword-arguments passed to matplotlib.pyplot.subplots
+    samples : list of rnavigate Samples
+        samples used to retrieve data
+    profile : data keyword string or data object
+        per-nucleotide data to perform linear regression
+        all data are mapped to the sequence of the profile data from the
+        first sample before plotting, unless sequence is supplied
+    sequence : data keyword str, data obj, or sequence str, defaults to None
+        a sequence from which to align all profiles
+        if a data keyword, uses data from the first sample
+    structure : data keyword string or data object, defaults to None
+        Structure used for coloring if colors argument is "structure"
+    annotations : list of data keyword strings or data objects, defaults to []
+        Annotations used for coloring if colors argument is "annotations"
+    labels : list of strings, defaults to sample.sample for each sample
+        list containing Labels to be used in plot legends
+    kde : bool, defaults to False
+        whether to plot kde (density) instead of a scatter plot
+    scale : "linear" or "log", defaults to "linear"
+        "linear" performs regression on raw values, displays linear units
+        "log" performs regression on log10(values), displays log10 units
+    regression : "pearson" or "spearman", defaults to "pearson"
+        "pearson" calculates Pearson R-squared (standard)
+        "spearman" calculates Spearman R-squared (rank-order)
+    colors : string or list of colors, defaults to "sequence"
+        value options and what the colors represent:
+            "sequence": nucleotide identity
+            "position": position in sequence
+            "annotations": sequence annotations
+            "profile": per-nucleotide data from profile
+                profile argument must be provided
+            "structure": base-pairing status
+            matplotlib color: all positions plotted in this color
+            array of colors: a different color for each position
+                must be the same length as structure
+    column : string, defaults to profile.metric
+        column name of values from profile to use in regression
+    region : list of 2 integers, defaults to [1, length of sequence]
+        start and end nucleotide positions to include. 1-indexed, inclusive
+    colorbars : bool, defaults to ``True``
+        Whether to plot colorbars for scatter plot colors
+    plot_kwargs : dict, defaults to {}
+        Keyword-arguments passed to matplotlib.pyplot.subplots
 
     Returns
     -------
-        rnavigate.plots.LinReg
-            object containing matplotlib figure and axes with additional plotting and
-            file saving methods
+    rnavigate.plots.LinReg
+        object containing matplotlib figure and axes with additional plotting and
+        file saving methods
     """
     sequence = get_sequence(sequence, samples[0], profile)
     parsed_args = PlottingArgumentParser(
@@ -1450,25 +1450,25 @@ def plot_roc(
 
     Parameters
     ----------
-        samples : list of rnavigate Samples
-            samples used to retrieve data
-        structure : data keyword string or data object
-            secondary structure to use as classifier (paired or unpaired)
-            profile data for each sample is first aligned to this structure
-        profile : data keyword string or data object
-            per-nucleotide data to perform ROC analysis
-        labels : list of strings, defaults to sample.sample for each sample
-            list containing Labels to be used in plot legends
-        nts : string, defaults to "AUCG"
-            which nucleotides to plot nucleotide-type ROC plots
-        plot_kwargs : dict, defaults to {}
-            Keyword-arguments passed to matplotlib.pyplot.subplots
+    samples : list of rnavigate Samples
+        samples used to retrieve data
+    structure : data keyword string or data object
+        secondary structure to use as classifier (paired or unpaired)
+        profile data for each sample is first aligned to this structure
+    profile : data keyword string or data object
+        per-nucleotide data to perform ROC analysis
+    labels : list of strings, defaults to sample.sample for each sample
+        list containing Labels to be used in plot legends
+    nts : string, defaults to "AUCG"
+        which nucleotides to plot nucleotide-type ROC plots
+    plot_kwargs : dict, defaults to {}
+        Keyword-arguments passed to matplotlib.pyplot.subplots
 
     Returns
     -------
-        rnavigate.plots.ROC
-            object containing matplotlib figure and axes with additional plotting and
-            file saving methods
+    rnavigate.plots.ROC
+        object containing matplotlib figure and axes with additional plotting and
+        file saving methods
     """
     parsed_args = PlottingArgumentParser(
         samples=samples,
@@ -1508,50 +1508,50 @@ def plot_disthist(
 
     Parameters
     ----------
-        samples : list of rnavigate Samples
-            Samples from which to retreive data
-            There will be one panel for each sample unless same_axis is True
-        structure : data keyword string or data object
-            secondary structure or 3D structure to calculate inter-nucleotide
-            contact distance or 3D distance, respectively
-        interactions : one of the formats below, defaults to None
-            format 1 (data or data keyword)
-                Interactions used to calculate distance histogram, no filtering
-            format 2 (dictionary)
-                e.g. {"interactions": format 1}
-                additional filtering options can be added to the dictionary
-            format 3 (list of format 2 dictionaries)
-                This format allows multiple filtering schemes to be applied,
-                each will be plotted on a seperate axis
-        bg_interactions : one of the formats below, defaults to None
-            format 1 (data or data keyword)
-                Interactions to calculate background distance histogram, no
-                filtering is performed
-            format 2 (dictionary)
-                e.g. {"interactions": format 1}
-                additional filtering options can be added to the dictionary
-            if not provided, background distance histogram is calculated from
-            all pairwise distances in structure
-        labels : list of strings, defaults to sample.sample for each sample
-            Labels to be used as titles, must be same length as samples list
-            Defaults to sample.sample for each sample
-        atom : string or dictionary, defaults to "O2'"
-            from which atoms to calculate distances
-            for DMS reactive atoms (N1 for A and G, N3 for U and C) use "DMS"
-            use a dictionary to specify a different atom for each nucleotide
-                e.g. "DMS" == {"A": "N1", "G": "N1", "U": "N3", "C": "N3"}
-        rows : integer, defaults to None (determined automatically)
-            number of rows of plots
-        cols : integer, defaults to None (determined automatically)
-            number of columns of plots
-        plot_kwargs : dictionary, defaults to {}
-            Keyword-arguments passed to matplotlib.pyplot.subplots
+    samples : list of rnavigate Samples
+        Samples from which to retreive data
+        There will be one panel for each sample unless same_axis is True
+    structure : data keyword string or data object
+        secondary structure or 3D structure to calculate inter-nucleotide
+        contact distance or 3D distance, respectively
+    interactions : one of the formats below, defaults to None
+        format 1 (data or data keyword)
+            Interactions used to calculate distance histogram, no filtering
+        format 2 (dictionary)
+            e.g. {"interactions": format 1}
+            additional filtering options can be added to the dictionary
+        format 3 (list of format 2 dictionaries)
+            This format allows multiple filtering schemes to be applied,
+            each will be plotted on a seperate axis
+    bg_interactions : one of the formats below, defaults to None
+        format 1 (data or data keyword)
+            Interactions to calculate background distance histogram, no
+            filtering is performed
+        format 2 (dictionary)
+            e.g. {"interactions": format 1}
+            additional filtering options can be added to the dictionary
+        if not provided, background distance histogram is calculated from
+        all pairwise distances in structure
+    labels : list of strings, defaults to sample.sample for each sample
+        Labels to be used as titles, must be same length as samples list
+        Defaults to sample.sample for each sample
+    atom : string or dictionary, defaults to "O2'"
+        from which atoms to calculate distances
+        for DMS reactive atoms (N1 for A and G, N3 for U and C) use "DMS"
+        use a dictionary to specify a different atom for each nucleotide
+            e.g. "DMS" == {"A": "N1", "G": "N1", "U": "N3", "C": "N3"}
+    rows : integer, defaults to None (determined automatically)
+        number of rows of plots
+    cols : integer, defaults to None (determined automatically)
+        number of columns of plots
+    plot_kwargs : dictionary, defaults to {}
+        Keyword-arguments passed to matplotlib.pyplot.subplots
 
     Returns
     -------
-        rnavigate.plots.DistHist
-            object containing matplotlib figure and axes with additional plotting and
-            file saving methods
+    rnavigate.plots.DistHist
+        object containing matplotlib figure and axes with additional plotting and
+        file saving methods
     """
     parsed_args = PlottingArgumentParser(
         samples=samples,
@@ -1594,22 +1594,22 @@ def plot_ntdist(
 
     Parameters
     ----------
-        samples : list of rnavigate Samples
-            samples used to retrieve data
-        profile : data keyword string or data object
-            per-nucleotide data to plot per-nt-identity distributions
-        labels : list of strings, defaults to sample.sample for each sample
-            list containing Labels to be used in plot legends
-        column : string, defaults to profile.metric
-            which column of data to use for KDE
-        plot_kwargs : dict, defaults to {}
-            Keyword-arguments passed to matplotlib.pyplot.subplots
+    samples : list of rnavigate Samples
+        samples used to retrieve data
+    profile : data keyword string or data object
+        per-nucleotide data to plot per-nt-identity distributions
+    labels : list of strings, defaults to sample.sample for each sample
+        list containing Labels to be used in plot legends
+    column : string, defaults to profile.metric
+        which column of data to use for KDE
+    plot_kwargs : dict, defaults to {}
+        Keyword-arguments passed to matplotlib.pyplot.subplots
 
     Returns
     -------
-        rnavigate.plots.NucleotideDistribution
-            object containing matplotlib figure and axes with additional
-            plotting and file saving methods
+    rnavigate.plots.NucleotideDistribution
+        object containing matplotlib figure and axes with additional
+        plotting and file saving methods
     """
     parsed_args = PlottingArgumentParser(
         samples=samples,

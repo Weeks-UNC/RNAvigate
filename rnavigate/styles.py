@@ -1,4 +1,5 @@
 """Contains global plot display settings."""
+
 from functools import wraps
 import matplotlib as mpl
 import seaborn as sns
@@ -63,17 +64,17 @@ def update_copy(original_settings, user_settings):
 
     Parameters
     ----------
-        original_settings (dict)
-            a default settings dictionary, usually rnav.settings
-        user_settings (dict)
-            a dictionary with only the fields from the original_settings that
-            are to be changed
+    original_settings (dict)
+        a default settings dictionary, usually rnav.settings
+    user_settings (dict)
+        a dictionary with only the fields from the original_settings that
+        are to be changed
 
     Returns
     -------
-        settings dict
-            the original_settings dictionary with the new_settings dictionary
-            values recursively applied
+    settings dict
+        the original_settings dictionary with the new_settings dictionary
+        values recursively applied
     """
     new_settings = dict()
     for k, v in original_settings.items():
@@ -95,9 +96,9 @@ class Settings(dict):
 
     Parameters
     ----------
-        user_settings : dict
-            a dictionary with only the fields from the original_settings that
-            are to be changed
+    user_settings : dict
+        a dictionary with only the fields from the original_settings that
+        are to be changed
     """
 
     def __init__(self, user_settings):
@@ -116,15 +117,15 @@ def set_defaults(context="paper", style="ticks", colors="default", dpi=140):
 
     Parameters
     ----------
-        context : str, defaults to "paper"
-            Passed to seaborn.set_context
-            Defaults to "paper"
-        style : str, defaults to "ticks"
-            Passed to seaborn.set_style
-        colors : str, defaults to "default"
-            Passed to seaborn.set_palette
-        dpi : int, defaults to 140
-            Sets the dots-per-inch for inline and exported images
+    context : str, defaults to "paper"
+        Passed to seaborn.set_context
+        Defaults to "paper"
+    style : str, defaults to "ticks"
+        Passed to seaborn.set_style
+    colors : str, defaults to "default"
+        Passed to seaborn.set_palette
+    dpi : int, defaults to 140
+        Sets the dots-per-inch for inline and exported images
     """
     if colors == "default":
         colors = [
@@ -150,15 +151,15 @@ def get_nt_color(nt, colors=None):
 
     Parameters
     ----------
-        nt : str
-            a nucleotide letter
-        colors "rnavigate" or "old", defaults to settings["sequence_colors"]
-            "rnavigate" uses blue, light blue, red, light red for "AUCG"
-            "old" uses traditional red, yellow, blue, green for "AUCG"
+    nt : str
+        a nucleotide letter
+    colors "rnavigate" or "old", defaults to settings["sequence_colors"]
+        "rnavigate" uses blue, light blue, red, light red for "AUCG"
+        "old" uses traditional red, yellow, blue, green for "AUCG"
 
     Returns:
-        color : str
-            a hex color string
+    color : str
+        a hex color string
     """
     if colors is None:
         colors = settings["sequence_colors"]
@@ -186,14 +187,14 @@ def get_nt_cmap(colors=None):
 
     Parameters
     ----------
-        colors "rnavigate" or "old", defaults to settings["sequence_colors"]
-            "rnavigate" uses blue, light blue, red, light red for "AUCG"
-            "old" uses traditional red, yellow, blue, green for "AUCG"
+    colors "rnavigate" or "old", defaults to settings["sequence_colors"]
+        "rnavigate" uses blue, light blue, red, light red for "AUCG"
+        "old" uses traditional red, yellow, blue, green for "AUCG"
 
     Returns
     -------
-        cmap : rnavigate.data.colors.ScalarMappable (matplotlib.cm.ScalarMappable)
-            a color map for nucleotides
+    cmap : rnavigate.data.colors.ScalarMappable (matplotlib.cm.ScalarMappable)
+        a color map for nucleotides
     """
     return data.ScalarMappable(
         cmap=[get_nt_color(nt, colors=colors) for nt in "AUGC"],

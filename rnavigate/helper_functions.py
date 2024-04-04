@@ -25,15 +25,15 @@ def fit_data(data_object, alignment):
 
     Parameters
     ----------
-        data_object : Data object or list or dict of Data objects
-            Data object to be mapped to sequence
-        alignment : SequenceAlignment
-            SequenceAlignment object to be used for mapping
+    data_object : Data object or list or dict of Data objects
+        Data object to be mapped to sequence
+    alignment : SequenceAlignment
+        SequenceAlignment object to be used for mapping
 
     Returns
     -------
-        Data object or list or dict of Data objects
-            A new copy of each Data object mapped to a new sequence
+    Data object or list or dict of Data objects
+        A new copy of each Data object mapped to a new sequence
     """
     if alignment is None:
         return data_object
@@ -152,14 +152,14 @@ class PlottingArgumentParser:
 
         Parameters
         ----------
-            annotations : None, list of str or rnav.data.Annotations
-                None is converted to []
-                a single string or data object is enclosed in a list
+        annotations : None, list of str or rnav.data.Annotations
+            None is converted to []
+            a single string or data object is enclosed in a list
 
         Returns
         -------
-            annotations list
-                a list of annotations data or data keywords (or an empty list)
+        annotations list
+            a list of annotations data or data keywords (or an empty list)
         """
         error = ValueError(
             "annotations must be a list containing data keywords or objects"
@@ -189,16 +189,16 @@ class PlottingArgumentParser:
 
         Parameters
         ----------
-            interactions : format 1, 2, or 3
-            return_list : bool, defaults to True
-                Whether to return format 3, otherwise returns format 2
+        interactions : format 1, 2, or 3
+        return_list : bool, defaults to True
+            Whether to return format 3, otherwise returns format 2
 
         Returns
         -------
-            interactions dict
-                format 2 if return_list is False
-            interactions list
-                format 3 if return_list is True
+        interactions dict
+            format 2 if return_list is False
+        interactions list
+            format 3 if return_list is True
         """
         error = ValueError(
             "interactions must follow one of the following formats:\n"

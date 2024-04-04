@@ -99,13 +99,14 @@ class Sample:
     def inherit_data(self, inherit, keep_inherited_defaults, overwrite):
         """retrieves and stores data and data keywords from other samples
 
-        Parameters:
-            inherit : Sample or list of Samples
-                Other samples from which to inherit data and data keywords
-            keep_inherited_defaults : bool
-                Use default values from inherited samples
-            overwrite : bool
-                whether to overwrite any existing keywords with inherited keywords
+        Parameters
+        ----------
+        inherit : Sample or list of Samples
+            Other samples from which to inherit data and data keywords
+        keep_inherited_defaults : bool
+            Use default values from inherited samples
+        overwrite : bool
+            whether to overwrite any existing keywords with inherited keywords
         """
         if isinstance(inherit, (list, tuple)):
             for inherit_sample in inherit[::-1]:
@@ -145,12 +146,12 @@ class Sample:
 
         Parameters
         ----------
-            data_keyword : str
-                a data keyword used to store and/or parse the inputs
-            inputs : dict or rnavigate.data.Data
-                a dictionary used to create the data object or a data object itself
-            overwrite : bool, defaults to False
-                whether to overwrite a pre-existing data_keyword
+        data_keyword : str
+            a data keyword used to store and/or parse the inputs
+        inputs : dict or rnavigate.data.Data
+            a dictionary used to create the data object or a data object itself
+        overwrite : bool, defaults to False
+            whether to overwrite a pre-existing data_keyword
         """
         if (data_keyword in self.data) and not overwrite:
             raise ValueError(
@@ -170,26 +171,26 @@ class Sample:
 
         Parameters
         ----------
-            data_keyword : rnavigate.data.Data or data keyword or list/dict of these
-                If None, returns None.
-                If a data keyword, returns associated data from sample
-                If Data, returns that data.
-                If a list or dictionary, returns list or dictionary with
-                    data keyword values replaced with associated Data
-            data_class : rnavigate.data.Data class or subclass, optional
-                If provided, ensures that returned data is of this type.
+        data_keyword : rnavigate.data.Data or data keyword or list/dict of these
+            If None, returns None.
+            If a data keyword, returns associated data from sample
+            If Data, returns that data.
+            If a list or dictionary, returns list or dictionary with
+                data keyword values replaced with associated Data
+        data_class : rnavigate.data.Data class or subclass, optional
+            If provided, ensures that returned data is of this type.
 
         Returns
         -------
-            Same type as data_keyword argument, but data keywords are replaced
-                with associated data
+        Same type as data_keyword argument, but data keywords are replaced
+            with associated data
 
         Raises
         ------
-            ValueError:
-                if data is not found in sample
-            ValueError:
-                if the data retrieved is not of the specified data_class
+        ValueError:
+            if data is not found in sample
+        ValueError:
+            if the data retrieved is not of the specified data_class
         """
         # handle special cases
         not_in_sample = ValueError(f"{data_keyword} not in {self.sample}.")
@@ -227,10 +228,10 @@ class Sample:
 
         Parameters
         ----------
-            data_keyword : str
-                The data keyword to set as the default
-            overwrite : bool, defaults to ``True``
-                whether to overwrite a pre-existing default data keyword
+        data_keyword : str
+            The data keyword to set as the default
+        overwrite : bool, defaults to ``True``
+            whether to overwrite a pre-existing default data keyword
         """
         data_object = self.data[data_keyword]
         if isinstance(data_object, data.Annotation):
@@ -261,32 +262,32 @@ class Sample:
 
         Parameters
         ----------
-            interactions : rnavigate.data.Interactions or data keyword string
-                Interactions object to be filtered. If a string, value is
-                replaced with self.get_data(interactions)
-            metric : str, optional
-                column of interactions data to be used as metric for coloring
-                interactions.
-                "Distance" will compute 3D distance in "pdb", defaulting to
-                2'OH atom. "Distance_DMS" or "Distance_[atom id]" will use
-                those atoms to compute distance.
-            cmap (str | list, optional):
-                sets the interactions colormap, used to color interactions
-                according to metric values.
-            normalization (str, optional):
-                `"norm"`: extreme values in colormap are given to the extreme
-                    values of interactions metric data
-                `"bins"`: data are colored according to which bin they fall in
-                    `values` defines bins (list, length = 2 less than cmap)
-                `"min_max"`: extreme values in cmap are given to values beyond
-                    minimum and maximum, defined by `values`
-            values:
-                behavior depends on normalization
-                `"norm"`: values are not needed
-                `"bins"`: list of floats containing the boundaries between bins
-                    One fewer than the number of categories
-                `"min_max"`: list of floats containing the minimum and maximum
-            **kwargs: Other arguments are passed to interactions.filter()
+        interactions : rnavigate.data.Interactions or data keyword string
+            Interactions object to be filtered. If a string, value is
+            replaced with self.get_data(interactions)
+        metric : str, optional
+            column of interactions data to be used as metric for coloring
+            interactions.
+            "Distance" will compute 3D distance in "pdb", defaulting to
+            2'OH atom. "Distance_DMS" or "Distance_[atom id]" will use
+            those atoms to compute distance.
+        cmap (str | list, optional):
+            sets the interactions colormap, used to color interactions
+            according to metric values.
+        normalization (str, optional):
+            `"norm"`: extreme values in colormap are given to the extreme
+                values of interactions metric data
+            `"bins"`: data are colored according to which bin they fall in
+                `values` defines bins (list, length = 2 less than cmap)
+            `"min_max"`: extreme values in cmap are given to values beyond
+                minimum and maximum, defined by `values`
+        values:
+            behavior depends on normalization
+            `"norm"`: values are not needed
+            `"bins"`: list of floats containing the boundaries between bins
+                One fewer than the number of categories
+            `"min_max"`: list of floats containing the minimum and maximum
+        **kwargs: Other arguments are passed to interactions.filter()
         """
         # check for valid interactions data
         if interactions is None:

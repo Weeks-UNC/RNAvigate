@@ -32,20 +32,23 @@ from scipy.stats import zscore
 class DeltaSHAPE(Sample):
     """Detects meaningful differences in chemical probing reactivity
 
-    Citation: (doi:10.1021/acs.biochem.5b00977)
+    References
+    ----------
+    doi:10.1021/acs.biochem.5b00977
 
-    Algorithm:
-        1. Extract SHAPE-MaP sequence, normalized profile, and normalized
-           standard error from given samples
-        2. Calculated smoothed profiles (mean) and propagate standard errors
-           over rolling windows
-        3. Subtract raw and smoothed normalized profiles and propogate errors
-        4. Calculate Z-factors for smoothed data. This is the magnitude of the
-           difference relative to the standard error
-        5. Calculate Z-scores for smoothed data. This is the magnitude of the
-           difference in standard deviations from the mean difference
-        6. Call sites. Called sites must have # nucleotides that pass Z-factor
-           and Z-score thresholds per window.
+    Algorithm
+    ---------
+    1. Extract SHAPE-MaP sequence, normalized profile, and normalized
+        standard error from given samples
+    2. Calculated smoothed profiles (mean) and propagate standard errors
+        over rolling windows
+    3. Subtract raw and smoothed normalized profiles and propogate errors
+    4. Calculate Z-factors for smoothed data. This is the magnitude of the
+        difference relative to the standard error
+    5. Calculate Z-scores for smoothed data. This is the magnitude of the
+        difference in standard deviations from the mean difference
+    6. Call sites. Called sites must have # nucleotides that pass Z-factor
+        and Z-score thresholds per window.
 
     Smoothing window size, Z factor threshold, Z score threshold, site-calling
     window size and minimum nucleotides per site can be specified.
@@ -64,32 +67,25 @@ class DeltaSHAPE(Sample):
     ):
         """Performs DeltaSHAPE analysis between samples 1 and 2
 
-        Required Arguments:
-            sample1 (rnavigate.Sample)
-                First sample to compare
-            sample2 (rnavigate.Sample)
-                Second sample to compare
-
-        Optional Arguments:
-            profile (string)
-                Data keyword pointing to SHAPE-MaP data in samples 1 and 2
-                Defaults to "shapemap"
-            smoothing_window (integer)
-                Size of windows for data smoothing
-                Defaults to 3
-            zf_coeff (float)
-                Sites must have a difference more than zf_coeff standard errors
-                Defaults to 1.96 (95% confidence interval)
-            ss_thresh (float)
-                Sites must have a difference that is ss_thresh standard
-                deviations from the mean difference
-                Defaults to 1
-            site_window (integer)
-                Number of nucleotides to include when calling sites
-                Defaults to 3
-            site_nts (integer)
-                Number of nts within site_window that must pass thresholds
-                Defaults to 2
+        Parameters
+        ----------
+        sample1 : rnavigate.Sample
+            First sample to compare
+        sample2 : rnavigate.Sample
+            Second sample to compare
+        profile : str, default="shapemap"
+            Data keyword pointing to SHAPE-MaP data in samples 1 and 2
+        smoothing_window : int, default=3
+            Size of windows for data smoothing
+        zf_coeff : float, default=1.96
+            Sites must have a difference more than zf_coeff standard errors
+        ss_thresh : int, default=1
+            Sites must have a difference that is ss_thresh standard
+            deviations from the mean difference
+        site_window : int, default=3
+            Number of nucleotides to include when calling sites
+        site_nts : int, default=2
+            Number of nts within site_window that must pass thresholds
         """
         self.parameters = {}
         profile_1 = sample1.get_data(profile)
@@ -120,23 +116,19 @@ class DeltaSHAPE(Sample):
     ):
         """Calculate or recalculate deltaSHAPE profile and called sites
 
-        Optional Arguments:
-            smoothing_window (integer)
-                Size of windows for data smoothing
-                Defaults to 3
-            zf_coeff (float)
-                Sites must have a difference more than zf_coeff standard errors
-                Defaults to 1.96 (95% confidence interval)
-            ss_thresh (float)
-                Sites must have a difference that is ss_thresh standard
-                deviations from the mean difference
-                Defaults to 1
-            site_window (integer)
-                Number of nucleotides to include when calling sites
-                Defaults to 3
-            site_nts (integer)
-                Number of nts within site_window that must pass thresholds
-                Defaults to 2
+        Parameters
+        ----------
+        smoothing_window : int, default=3
+            Size of windows for data smoothing
+        zf_coeff : float, default=1.96
+            Sites must have a difference more than zf_coeff standard errors
+        ss_thresh : int, default=1
+            Sites must have a difference that is ss_thresh standard
+            deviations from the mean difference
+        site_window : int, default=3
+            Number of nucleotides to include when calling sites
+        site_nts : int, default=2
+            Number of nts within site_window that must pass thresholds
         """
         self.parameters = {
             "smoothing_window": smoothing_window,
@@ -159,13 +151,15 @@ class DeltaSHAPE(Sample):
     def plot(self, region="all"):
         """Plot the deltaSHAPE result
 
-        Optional arguments:
-            region (list of 2 integers)
-                start and end positions to plot
-                Defaults to "all".
+        Parameters
+        ----------
+        region : list of 2 integers, default="all"
+            start and end positions to plot
 
-        Returns:
-            rnav.plots.Profile: The plot object
+        Returns
+        -------
+        rnav.plots.Profile
+            The plot object
         """
         plot = plots.Profile(1, self.data["deltashape"].length, region=region)
         plot.plot_data(
@@ -193,9 +187,20 @@ class DeltaSHAPEProfile(data.Profile):
     ):
         """Create the deltaSHAPE Profile
 
-        Args:
-            input_data (tuple of RNAvigate Profiles or Pandas Dataframe)
-                if tuple of Profiles, the unified Dataframe will be created
+        Parameters
+        ----------
+        input_data : tuple of rnavigate.Profile or pd.DataFrame
+            If tuple of Profiles, the unified Dataframe will be created
+        metric : str, default="Smooth_diff"
+            The metric to use for the profile
+        metric_defaults : dict, default=None
+            Default settings for the metric
+        sequence : str, default=None
+            The sequence of the profile
+        name : str, default=None
+            The name of the profile
+        **kwargs
+            Additional keyword arguments to pass to data.Profile
         """
         # STEP ONE
         # extract relevant information from sample 1 and 2 profiles
@@ -239,12 +244,19 @@ class DeltaSHAPEProfile(data.Profile):
     ):
         """Calculate the deltaSHAPE profile metrics
 
-        Args:
-            smoothing_window (int, optional): Defaults to 3.
-            zf_coeff (float, optional): Defaults to 1.96.
-            ss_thresh (int, optional): Defaults to 1.
-            site_window (int, optional): Defaults to 3.
-            site_nts (int, optional): Defaults to 2.
+        Parameters
+        ----------
+        smoothing_window : int, default=3
+            Size of windows for data smoothing
+        zf_coeff : float, default=1.96
+            Sites must have a difference more than zf_coeff standard errors
+        ss_thresh : int, default=1
+            Sites must have a difference that is ss_thresh standard
+            deviations from the mean difference
+        site_window : int, default=3
+            Number of nucleotides to include when calling sites
+        site_nts : int, default=2
+            Number of nts within site_window that must pass thresholds
         """
 
         # STEP TWO

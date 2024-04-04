@@ -1,9 +1,11 @@
 """Windowed AUROC assesses agreement between reactivities and base-pairing."""
+
 from rnavigate import plots
 from sklearn.metrics import roc_curve, auc
 import numpy as np
 
 
+# TODO: refactor as subclass of rnavigate.Sample
 class WindowedAUROC:
     """Compute and display windowed AUROC analysis.
 
@@ -19,25 +21,33 @@ class WindowedAUROC:
     profile does not fit the structure prediction well. These regions are good
     candidates for further investigation with ensemble deconvolution.
 
-    Citation:
+    References
+    ----------
     Lan, T.C.T., Allan, M.F., Malsick, L.E. et al. Secondary structural
         ensembles of the SARS-CoV-2 RNA genome in infected cells. Nat Commun
         13, 1128 (2022). https://doi.org/10.1038/s41467-022-28603-2
 
-    Methods:
-        __init__: Computes the AUROC array and AUROC median.
-        plot_auroc: Displays the AUROC analysis over the given region.
-            Returns Plot object
+    Methods
+    -------
+    __init__: Computes the AUROC array and AUROC median.
+    plot_auroc: Displays the AUROC analysis over the given region.
+        Returns Plot object
 
-    Attributes:
-        sample: an rnavigate.Sample to retrieve profile and secondary structure
-        structure: sample.data[structure]
-        profile: sample.data[profile]
-        sequence: the sequence string of sample.data[structure]
-        window: the size of the windows
-        nt_length: the length of sequence string
-        auroc: the auroc numpy array, length = nt_length, padded with np.nan
-        median_auroc: the median of the auroc array
+    Attributes
+    ----------
+    sample : rnavigate.Sample
+        sample to retrieve profile and secondary structure
+    structure : str
+        Data keyword of sample pointing to secondary structure
+        e.g. sample.data[structure]
+    profile : str
+        Data keyword of sample pointing to profile
+        e.g. sample.data[profile]
+    sequence : the sequence string of sample.data[structure]
+    window: the size of the windows
+    nt_length: the length of sequence string
+    auroc: the auroc numpy array, length = nt_length, padded with np.nan
+    median_auroc: the median of the auroc array
     """
 
     def __init__(
@@ -50,16 +60,19 @@ class WindowedAUROC:
         """Compute the AUROC for all windows. AUROC is a measure of how well a
         reactivity profile predicts paired vs. unpaired nucleotide status.
 
-        Args:
-            sample (rnav.Sample): Your rnavigate sample
-            window (int, optional): number of nucleotides to include in window
-                Defaults to 81.
-            profile (str, optional): data keyword of provided sample pointing
-                to a profile.
-                Defaults to "default_profile"
-            structure (str, optional): data keyword of provided sample pointing
-                to a secondary structure.
-                Defaults to "default_structure"
+        Parameters
+        ----------
+        sample : rnav.Sample
+            Your rnavigate sample
+        window : int, optional
+            number of nucleotides to include in window
+            Defaults to 81.
+        profile (str, optional): data keyword of provided sample pointing
+            to a profile.
+            Defaults to "default_profile"
+        structure (str, optional): data keyword of provided sample pointing
+            to a secondary structure.
+            Defaults to "default_structure"
         """
         # ensure sample contains profile and structure data
         for data in [profile, structure]:

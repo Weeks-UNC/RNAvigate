@@ -4,6 +4,7 @@ Given a list of samples, we can inspect which data keywords belong to the
 samples, which sequences match up perfectly, and inspect the differences
 between sequences.
 """
+
 import pandas as pd
 import numpy as np
 from rnavigate import data
@@ -12,21 +13,26 @@ from rnavigate import data
 class SequenceChecker:
     """Check the sequences stored in a list of samples.
 
-    Attributes:
-        samples: the list of samples
-        sequences: a list of all unique sequence strings stored in the list of
-            samples. These are converted to an all uppercase RNA alphabet.
-        keywords: a list of unique data keywords stored in the list of samples.
-        which_sequences: a dataframe of samples and keywords and which
-            sequences each contains.
+    Attributes
+    ----------
+    samples : list
+        samples in which to check sequences
+    sequences : list
+        all unique sequence strings stored in the list of samples. These are converted
+        to an all uppercase RNA alphabet.
+    keywords : list
+        all unique data keywords stored in the list of samples.
+    which_sequences : Pandas.DataFrame
+        each row is a sample, keyword, and index of self.sequences
     """
 
     def __init__(self, samples):
         """Creates an instance of SequenceChecker given a list of samples
 
-        Arguments:
-            samples (list of rnav.Sample)
-                samples for which to compare data keywords and sequences.
+        Parameters
+        ----------
+        samples : list of rnav.Sample
+            samples for which to compare data keywords and sequences.
         """
         self.samples = samples
         self.keywords = self.get_keywords()
@@ -86,17 +92,16 @@ class SequenceChecker:
     def print_alignments(self, print_format="long", which="all"):
         """Print alignments in the given format for sequence IDs provided.
 
-        Optional arguments:
-            print_format (string)
-                What format to print the alignments in:
-                "cigar" prints the cigar string
-                "short" prints the numbers of mismatches and indels
-                "long" prints the location and nucleotide identity of all
-                    mismatches, insertions and deletions.
-                Defaults to "long".
-            which (pair of integers)
-                two sequence IDs to compare.
-                Defaults to every pairwise comparison.
+        Parameters
+        ----------
+        print_format : string, defaults to "long"
+            What format to print the alignments in:
+            "cigar" prints the cigar string
+            "short" prints the numbers of mismatches and indels
+            "long" prints the location and nucleotide identity of all
+                mismatches, insertions and deletions.
+        which : tuple of two of integers, defaults to "all" (every pairwise comparison)
+            two sequence IDs to compare.
         """
         kwargs = {"print_format": print_format}
         if which == "all":
@@ -116,11 +121,12 @@ class SequenceChecker:
     def print_mulitple_sequence_alignment(self, base_sequence):
         """Print the multiple sequence alignment with nice formatting.
 
-        Required arguments:
-            base_sequence (string)
-                a sequence string that represents the longest common sequence.
-                Usually, this is the return value from:
-                    rnav.data.set_multiple_sequence_alignment()
+        Parameters
+        ----------
+        base_sequence : string
+            a sequence string that represents the longest common sequence.
+            Usually, this is the return value from:
+                rnav.data.set_multiple_sequence_alignment()
         """
         print("Multiple sequence alignment")
         alignments = [
@@ -149,13 +155,12 @@ class SequenceChecker:
             6) download the alignment fasta file
             7) use rnav.data.set_multiple_sequence_alignment()
 
-        Required arguments:
-            filename (string)
-                path to a new file to which fasta entries are written
-
-        Optional arguments:
-            which (list of integers)
-                Sequence IDs to write to file.
+        Parameters
+        ----------
+        filename : string
+            path to a new file to which fasta entries are written
+        which : list of integers, defaults to "all" (every sequence)
+            Sequence IDs to write to file.
         """
         if which == "all":
             which = range(len(self.sequences))

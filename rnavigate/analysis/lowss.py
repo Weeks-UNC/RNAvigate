@@ -28,17 +28,25 @@ class LowSS(Sample):
     low Shannon entropy regions (LowSS) given a sample containing SHAPE
     reactivities, pairing probabilities, and MFE structure.
 
-    Methods:
-        __init__: performs the analysis
-        plot_lowss: displays the result and returns plot object
+    Methods
+    -------
+    __init__: performs the analysis
+    plot_lowss: displays the result and returns plot object
 
-    Attributes:
-        sample (str): the new label for this Sample's data on plots
-        parent (rnavigate.Sample): the sample from which data is retrieved
-        window (int): size of the windows, must be odd
-        median_shape (float): global median SHAPE reactivity
-        median_entropy (float): global median Shannon entropy
-        data (dictionary): dictionary of data keyword: Data objects, keys are:
+    Attributes
+    ----------
+    sample : str
+        the new label for this Sample's data on plots
+    parent : rnavigate.Sample
+        the sample from which data is retrieved
+    window : int
+        size of the windows, must be odd
+    median_shape : float
+        global median SHAPE reactivity
+    median_entropy : float
+        global median Shannon entropy
+    data : dictionary
+        dictionary of data keyword: Data objects, keys are:
             "structure" (rnav.data.SecondaryStructure)
                 copy of provided MFE structure
             "shapemap" (rnav.data.SHAPEMaP)
@@ -59,26 +67,25 @@ class LowSS(Sample):
         pairprob="pairprob",
         structure="ss",
     ):
-        """Perform Low SHAPE, low Shannon entropy analysis given a sample with
-        1) reactivities 2) MFE structure 3) pairing probabilities.
+        """Perform Low SHAPE, low Shannon entropy analysis on the given sample.
 
-        Required arguments:
-            sample (rnav.Sample)
-                sample with shapemap, pairing probabilities and MFE structure
+        Sample must contain:
+            1) reactivities
+            2) MFE structure
+            3) pairing probabilities.
 
-        Optional arguments:
-            window (integer)
-                Window size for calculating median SHAPE and Shannon entropy
-                Defaults to 55
-            shapemap (data keyword)
-                data keyword that points to SHAPE-MaP data
-                defaults to "shapemap"
-            pairprob (data keyword)
-                data keyword that points to pairing probabilities data
-                defaults to "pairprob"
-            structure (data keyword)
-                data keyword that points to MFE structure data
-                defaults to "ss"
+        Parameters
+        ----------
+        sample : rnavigate.Sample
+            sample with shapemap, pairing probabilities and MFE structure
+        window : int, default=55
+            window size for calculating median SHAPE and Shannon entropy
+        shapemap : str, default="shapemap"
+            data keyword that points to SHAPE-MaP data
+        pairprob : str, default="pairprob"
+            data keyword that points to pairing probabilities data
+        structure : str, default="ss"
+            data keyword that points to MFE structure data
         """
         # store values
         structure = sample.get_data(structure, data.SecondaryStructure)
@@ -108,11 +115,12 @@ class LowSS(Sample):
     def reset_lowss(self, maximum_shape=None, maximum_entropy=0.08):
         """Generates an annotation of lowSS regions. Stored as self.lowSS
 
-        Args:
-            maximum_shape (float, optional): maximum normalized SHAPE
-                reactivity to be called lowSS. Defaults to median reactivity.
-            maximum_entropy (float, optional): maximum shannon entropy to be
-                called lowSS. Defaults to 0.8.
+        Parameters
+        ----------
+        maximum_shape : float, default=None (median SHAPE reactivity)
+            maximum normalized SHAPE reactivity to be called lowSS.
+        maximum_entropy : float, default=0.08
+            maximum shannon entropy to be called lowSS.
         """
         if maximum_shape is None:
             maximum_shape = self.median_shape
@@ -136,10 +144,10 @@ class LowSS(Sample):
         """Resets the window size and recalculates windowed SHAPE reactivities
         and shannon entropies and lowSS region annotations.
 
-        Optional arguments:
-            window (integer)
-                window size, must be an odd integer
-                Defaults to value of window attribute
+        Parameters
+        ----------
+        window : int, default=None (self.window)
+            window size for calculating median SHAPE and Shannon entropy, must be odd
         """
         if window is None:
             window = self.window
@@ -165,16 +173,18 @@ class LowSS(Sample):
     def plot_lowss(self, region=None, colorbars=True):
         """Visualize LowSS analysis over the given region.
 
-        Optional arguments:
-            region (integer or list of 2 integers)
-                lowSS region number or start and end positions to plot.
-                For region numbers, +/- 150 nts are shown.
-                Defaults to entire sequence.
-            colorbars (True or False)
-                whether to plot colorbars for pairing probability
+        Parameters
+        ----------
+        region : integer or list of 2 integers, default=None (entire sequence)
+            If list: lowSS start and end positions to plot.
+            If integer: region number, +/- 150 nts are shown.
+        colorbars : bool, default=True
+            whether to plot colorbars for pairing probability
 
-        Returns:
-            rnavigate.plots.AP: LowSS visualization
+        Returns
+        -------
+        rnavigate.plots.AP
+            LowSS visualization
         """
         shapemap = self.data["shapemap"]
         structure = self.data["structure"]
