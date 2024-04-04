@@ -22,26 +22,43 @@ from rnavigate import data
 class SecondaryStructure(data.Sequence):
     """Base class for secondary structures.
 
-    Parent classes:
-        rnav.data.Data(rnav.data.Sequence)
+    Parameters
+    ----------
+    input_data : str or pandas.DataFrame
+        A dataframe or filepath containing a secondary structure
+        DataFrame should contain these columns:
+            ["Nucleotide", "Sequence", "Pair"]
+        "Pair" column must be redundant.
+        Filepath parsing is determined by file extension:
+            varna, xrna, nsd, cte, ct, dbn, bracket, json (R2DT), forna
+    extension : str, optional
+        The file extension of the input_data file. If not provided, the
+        extension will be inferred from the input_data filepath.
+    autoscale : bool, optional
+        Whether to automatically scale the x and y coordinates. Defaults to True.
+    name : str, optional
+        The name of the RNA sequence. Defaults to None.
 
-    Attributes:
-        data (str | pandas.DataFrame): dataframe storing base-pairs
-            One row for every nucleotide position
-            Required columns:
-                "Nucleotide"   the nucleotide position
-                "Sequence"     the nucleotide letter
-                "Pair"         the nucleotide position of the base-pair
-                               0 indicates a single stranded nucleotide
-            Optional columns:
-                "X_coordinate" the x position of the nucleotide in the drawing
-                "Y_coordinate" the y position of the nucleotide in the drawing
-        sequence (str): sequence string
-        nts (numpy.array): "Nucleotide" column of data
-        pair_nts (numpy.array): "Pair" column of data
-        header (str): header information from CT file
-        xcoordinates (numpy array): "X_coordinate" column of data
-        ycoordinates (numpy array): "X_coordinate" column of data
+    Attributes
+    ----------
+    data : pandas.DataFrame
+        DataFrame storing base-pairs
+    filepath : str
+        The path to the input file, if provided, otherwise "dataframe"
+    sequence : str
+        The RNA sequence
+    nts : numpy.array
+        The "Nucleotide" column of data
+    pair_nts : numpy.array
+        The "Pair" column of data
+    header : str
+        Header information from CT file
+    xcoordinates : numpy.array
+        The "X_coordinate" column of data
+    ycoordinates : numpy.array
+        The "X_coordinate" column of data
+    distance_matrix : numpy.array
+        The contact distance matrix of the RNA structure
     """
 
     ###########################################################################
@@ -49,17 +66,7 @@ class SecondaryStructure(data.Sequence):
     ###########################################################################
 
     def __init__(self, input_data, extension=None, autoscale=True, name=None, **kwargs):
-        """Creates a SecondaryStructure object from a given file or dataframe.
-
-        Args:
-            input_data (str | pandas.DataFrame):
-                A dataframe or filepath containing a secondary structure
-                DataFrame should contain these columns:
-                    ["Nucleotide", "Sequence", "Pair"]
-                "Pair" column must be redundant.
-                Filepath parsing is determined by file extension:
-                    varna, xrna, nsd, cte, ct, dbn, bracket, json (R2DT), forna
-        """
+        """Creates a SecondaryStructure object from a given file or dataframe."""
         if isinstance(input_data, pd.DataFrame):
             self.data = input_data
             self.filepath = "dataframe"
@@ -87,6 +94,11 @@ class SecondaryStructure(data.Sequence):
 
     @classmethod
     def from_sequence(cls, input_data):
+        """Creates a SecondaryStructure from a sequence string.
+
+        This structure is initialized with no base pairs. If base pairs are
+        needed, use SecondaryStructure.from_pairs_list().
+        """
         seq = data.Sequence(input_data=input_data)
         df = pd.DataFrame(
             data={
@@ -104,9 +116,12 @@ class SecondaryStructure(data.Sequence):
     def from_pairs_list(cls, input_data, sequence):
         """Creates a SecondaryStructure from a list of pairs and a sequence.
 
-        Args:
-            pairs (list): 1-indexed list of base pairs. e.g. [(1, 20), (2, 19)]
-            sequence (str): sequence string. e.g., "AUCGUGUCAUGCUA"
+        Parameters
+        ----------
+        input_data : list
+            1-indexed list of base pairs. e.g. [(1, 20), (2, 19)]
+        sequence : str
+            The RNA sequence. e.g., "AUCGUGUCAUGCUA"
         """
         structure = cls.from_sequence(sequence)
         structure.add_pairs(input_data)
@@ -151,11 +166,12 @@ class SecondaryStructure(data.Sequence):
     def read_ct(self, structure_number=0):
         """Loads secondary structure information from a given ct file.
 
-        Requires a properly formatted header!
+        Requires a properly formatted header.
 
-        Args:
-            structure_number (int, optional): If ct file contains multiple structures,
-                uses the given structure. Defaults to 0.
+        Parameters
+        ----------
+        structure_number : int, defaults to 0
+            0-indexed structure number to load from the ct file.
         """
         fIN = self.filepath
         num, seq, bp, mask = [], "", [], []
@@ -202,8 +218,10 @@ class SecondaryStructure(data.Sequence):
         )
 
     def read_varna(self):
-        """Generates SecondaryStructure object data from a VARNA file,
-        including nucleotide x and y coordinates.
+        """Generates SecondaryStructure object data from a VARNA file.
+
+        Resulting SecondaryStructure object will include nucleotide x and y
+        coordinates and is compatible with plot_ss.
         """
         # Parse file and get sequence, xcoords, ycoords, and list of pairs.
         tree = xmlet.parse(self.filepath)
@@ -239,8 +257,10 @@ class SecondaryStructure(data.Sequence):
         )
 
     def read_xrna(self):
-        """Generates SecondaryStructure object data from an XRNA file,
-        including nucleotide x and y coordinates.
+        """Generates SecondaryStructure object data from an XRNA file.
+
+        Resulting SecondaryStructure object will include nucleotide x and y
+        coordinates and is compatible with plot_ss.
         """
         # Parse file and get sequence, xcoords, ycoords, and list of pairs.
         tree = xmlet.parse(self.filepath)
@@ -283,8 +303,10 @@ class SecondaryStructure(data.Sequence):
         )
 
     def read_cte(self):
-        """Generates SecondaryStructure object data from a CTE file, including
-        nucleotide x and y coordinates.
+        """Generates SecondaryStructure object data from a CTE file
+
+        Resulting SecondaryStructure object will include nucleotide x and y
+        coordinates and is compatible with plot_ss.
         """
         # Parse file and get sequence, xcoords, ycoords, and list of pairs.
         return pd.read_table(
@@ -296,9 +318,10 @@ class SecondaryStructure(data.Sequence):
         )
 
     def read_nsd(self):
-        """Generates SecondaryStructure object data from an NSD file
-        (format for RNAStructure StructureEditor), including nucleotide x and
-        y coordinates.
+        """Generates SecondaryStructure object data from an NSD file.
+
+        Resulting SecondaryStructure object will include nucleotide x and y
+        coordinates and is compatible with plot_ss.
         """
         # Parse file and get sequence, xcoords, ycoords, and list of pairs.
         basepairs, sequence, xcoords, ycoords = [], "", [], []
@@ -344,14 +367,14 @@ class SecondaryStructure(data.Sequence):
         )
 
     def read_dotbracket(self):
-        """Generates SecondaryStructure object data from a dot-bracket notation
-        file, including nucleotide x and y coordinates.
+        """Generates SecondaryStructure object data from a dot-bracket file.
+
+        Resulting SecondaryStructure object will include nucleotide x and y
+        coordinates and is compatible with plot_ss.
         """
-        header, seq, bp_str, = (
-            "",
-            "",
-            "",
-        )
+        header = ""
+        seq = ""
+        bp_str = ""
         with open(self.filepath) as f:
             for line in f:
                 if line[0] in ">#":
@@ -383,8 +406,10 @@ class SecondaryStructure(data.Sequence):
         )
 
     def read_r2dt(self):
-        """Generates SecondaryStructure object data from an R2DT JSON file,
-        including nucleotide x and y coordinates.
+        """Generates SecondaryStructure object data from an R2DT JSON file.
+
+        Resulting SecondaryStructure object will include nucleotide x and y
+        coordinates and is compatible with plot_ss.
         """
         # Parse file and get sequence, xcoords, ycoords, and list of pairs.
         basepairs, sequence, xcoords, ycoords = [], "", [], []
@@ -417,8 +442,10 @@ class SecondaryStructure(data.Sequence):
         )
 
     def read_forna(self):
-        """Generates SecondaryStructure object data from a FORNA JSON file,
-        including nucleotide x and y coordinates.
+        """Generates SecondaryStructure object data from a FORNA JSON file.
+
+        Resulting SecondaryStructure object will include nucleotide x and y
+        coordinates and is compatible with plot_ss.
         """
         # Parse file and get sequence, xcoords, ycoords, and list of pairs.
         basepairs, sequence, xcoords, ycoords = [], [], [], []
@@ -455,10 +482,9 @@ class SecondaryStructure(data.Sequence):
     # writing files
     ###########################################################################
 
-    def write_sto(self, outfile, name="seq"):
-        """ "write structure file out into Stockholm (STO) file format
-        for use for infernal searches"""
-        with open(outfile, "w") as out:
+    def write_sto(self, out_file, name="seq"):
+        """Write structure to Stockholm (STO) file to use in infernal searches."""
+        with open(out_file, "w") as out:
             # write header
             out.write("# STOCKHOLM 1.0\n\n")
             namelen = max(len(name), 12)
@@ -479,7 +505,7 @@ class SecondaryStructure(data.Sequence):
             out.write("\n//\n")
 
     def write_ct(self, out_file):
-        """Writes a ct file from the SecondaryStructure object."""
+        """Write structure to a ct file."""
         with open(out_file, "w") as write_file:
             write_file.write(f"{len(self.nts):6d} {self.filepath}\n")
             for nt, seq, pair in zip(self.nts, self.sequence, self.pair_nts):
@@ -489,12 +515,8 @@ class SecondaryStructure(data.Sequence):
                     f"{nt:5d} {seq} {prev:5d} {next:5d} {pair:5d} {nt:5d}\n"
                 )
 
-    def write_cte(self, outputPath):
-        """writes the current structure out to CTE format for Structure Editor.
-
-        Args:
-            outputPath (string): path to output cte file to be created
-        """
+    def write_cte(self, out_file):
+        """Write structure to CTE format for Structure Editor."""
         # set scaling factors based on data source.
         xscale = {"xrna": 1.525 * 20, "varna": 0.469 * 65, "nsd": 30.5, "cte": 30.5}[
             self.ss_type
@@ -502,7 +524,7 @@ class SecondaryStructure(data.Sequence):
         yscale = {"xrna": -1.525 * 20, "varna": 0.469 * 65, "nsd": 30.5, "cte": 30.5}[
             self.ss_type
         ]
-        w = open(outputPath, "w")
+        w = open(out_file, "w")
         w.write("{0:6d} {1}\n".format(self.length, self.filepath))
         line = "{0:5d} {1} {2:5d} {3:5d} {4:5d} {0:5d} " + ";! X: {5:1f} Y: {6:1f}\n"
         for i in range(self.length):
@@ -515,14 +537,9 @@ class SecondaryStructure(data.Sequence):
             w.write(line.format(*cols))
         w.close()
 
-    def write_dbn(self, filename, rna_name):
-        """Writes dot-bracket notation of current structure to a new file.
-
-        Args:
-            filename (str): name of new file
-            rna_name (str): name of this RNA for the dbn header
-        """
-        with open(filename, "w") as write_file:
+    def write_dbn(self, out_file, rna_name):
+        """Write structure to dot-bracket file."""
+        with open(out_file, "w") as write_file:
             write_file.write(f">{rna_name}\n")
             write_file.write(self.sequence + "\n")
             write_file.write(self.get_dotbracket())
@@ -532,9 +549,12 @@ class SecondaryStructure(data.Sequence):
     ###########################################################################
 
     def get_pairs(self):
-        """
-        Returns a non-redundant list of base pairs i < j as a array of tuples.
-        e.g., [(19,50),(20,49)....]
+        """Get a non-redundant list of base pairs i < j as a array of tuples.
+
+        Returns
+        -------
+        list
+            A list of 1-indexed positions. e.g., [(1, 50), (2, 49), ...]
         """
         out = []
         for left, right in zip(self.nts, self.pair_nts):
@@ -543,21 +563,36 @@ class SecondaryStructure(data.Sequence):
         return out
 
     def get_paired_nts(self):
-        """Returns a list of residues that are paired."""
+        """Get a list of residues that are paired.
+
+        Returns
+        -------
+        list
+            A list of 1-indexed positions of paired nucleotides
+        """
         paired_idx = self.pair_nts != 0
         paired_nts = self.data.loc[paired_idx, "Nucleotide"].values.tolist()
         return paired_nts
 
     def get_unpaired_nts(self):
-        """Returns a list of residues that are paired."""
+        """Get a list of residues that are unpaired.
+
+        Returns
+        -------
+        list
+            A list of 1-indexed positions of unpaired nucleotides
+        """
         unpaired_idx = self.pair_nts == 0
         unpaired_nts = self.data.loc[unpaired_idx, "Nucleotide"].values.tolist()
         return unpaired_nts
 
     def get_junction_nts(self):
-        """
-        Returns a list of residues at junctions (paired, but adjacent to
-        an unpaired residue or the end of a chain)
+        """Get a list of junction nucleotides (paired, but at the end of a chain).
+
+        Returns
+        -------
+        list
+            A list of 1-indexed positions of junction nucleotides
         """
         junction_residues = []
         for i, nt in enumerate(self.pair_nts):
@@ -572,7 +607,20 @@ class SecondaryStructure(data.Sequence):
         return junction_residues
 
     def get_nonredundant_ct(self):
-        """Returns the ct attribute in non-redundant form - only pairs i<j"""
+        """Returns the ct attribute in a non-redundant form.
+
+        Only returns pairs in which i < j
+        For example:
+            self.ct[i-1] == j
+            self.ct[j-1] == i
+            BUT
+            self.get_nonredundant_ct()[j-1] == 0
+
+        Returns
+        -------
+        numpy.array
+            A non-redundant array of base pairs
+        """
         pairs = self.get_pairs()
         halfPlexCT = np.zeros_like(self.pair_nts)
         for i, j in pairs:
@@ -580,20 +628,24 @@ class SecondaryStructure(data.Sequence):
         return halfPlexCT
 
     def get_helices(self, fill_mismatches=True, split_bulge=True, keep_singles=False):
-        """Returns a dictionary of helices from the secondary structure.
+        """Get a dictionary of helices from the secondary structure.
+
         Keys are equivalent to list indices. Values are lists of paired
         nucleotides (1-indexed) in that helix. e.g. {0:[(1,50),(2,49),(3,48)}
 
-        Args:
-            fill_mismatches (bool, optional):
-                Whether 1-1 and 2-2 bulges are replaced with base pairs.
-                Defaults to True.
-            split_bulge (bool, optional):
-                Whether to split helices on bulges.
-                Defaults to True.
-            keep_singles (bool, optional):
-                Whether to return helices that contain only 1 base-pair.
-                Defaults to False.
+        Parameters
+        ----------
+        fill_mismatches : bool, defaults to True
+            Whether 1-1 and 2-2 bulges are replaced with base pairs
+        split_bulge : bool, defaults to True
+            Whether to split helices on bulges
+        keep_singles : bool, defaults to False
+            Whether to return helices that contain only 1 base-pair
+
+        Returns
+        -------
+        dict
+            A dictionary of helices
         """
         # first step is to find all the helices
         rna = self.copy()
@@ -648,12 +700,22 @@ class SecondaryStructure(data.Sequence):
                 heNum += 1
         return helices
 
-    def extractPK(self, fill_mismatches=True):
-        """Returns the pk1 and pk2 pairs from the secondary structure.
+    def get_pseudoknots(self, fill_mismatches=True):
+        """Get the pk1 and pk2 pairs from the secondary structure.
 
         Ignores single base pairs. PK1 is defined as the helix crossing the
-        most other bps. if there is a tie, the most 5' helix is called pk1
+        most other bps. If there is a tie, the most 5' helix is called pk1
         returns pk1 and pk2 as a list of base pairs e.g [(1,10),(2,9)...
+
+        Parameters
+        ----------
+        fill_mismatches : bool, defaults to True
+            Whether 1-1 and 2-2 bulges are replaced with base pairs
+
+        Returns
+        -------
+        list of 2 lists of 2-tuples
+            A list of base pairs for pk1 and pk2
         """
 
         def check_overlap(h1, h2):
@@ -709,8 +771,7 @@ class SecondaryStructure(data.Sequence):
         return pk1, pk2
 
     def get_dotbracket(self):
-        """Returns a dotbracket notation representation of the secondary
-        structure.
+        """Get a dotbracket notation string representing the secondary structure.
 
         Pseudoknot levels:
             1: ()
@@ -721,6 +782,11 @@ class SecondaryStructure(data.Sequence):
             6: Bb
             7: Cc
             etc...
+
+        Returns
+        -------
+        str
+            A dot-bracket representation of the secondary structure
         """
         dbn = ["."] * self.length
         pair_list = self.get_pairs()
@@ -748,10 +814,10 @@ class SecondaryStructure(data.Sequence):
         return dbn
 
     def get_human_dotbracket(self):
-        """Returns dotbracket notation string representing SecondaryStructure
-        object. This is an experimental format designed to be more human
-        readable, i.e. no counting of brackets required.
+        """Get a human-readable dotbracket string representing the secondary structure.
 
+        This is an experimental format designed to be more human readable, i.e. no
+        counting of brackets required.
 
         1)  Letters, instead of brackets, are used to denote nested base pairs.
         2)  Each helix is assigned a letter, which is incremented one letter
@@ -764,6 +830,11 @@ class SecondaryStructure(data.Sequence):
             ((((....(((.[[..)))))(((...(((..]].))))))))
         Same question, new format:
             AABB....CCC.[[..cccbbBBB...CCC..]].cccbbbaa
+        Read this as:
+            ((_______________________________________)) (level 1 = A)
+              ((_______________))(((______________)))   (level 2 = B)
+                    (((_____)))        (((_____)))      (level 3 = C)
+                        [[__________________]]          (pseudoknot = [])
 
         Pseudoknot levels:
             1: Aa, Bb, Cc, etc.
@@ -788,6 +859,7 @@ class SecondaryStructure(data.Sequence):
         dbn = "".join(dbn)
         return dbn
 
+    # TODO: implement this
     def get_structure_elements(self):
         """This code is not yet implemented.
 
@@ -804,17 +876,21 @@ class SecondaryStructure(data.Sequence):
             External Loops (X)
             Pseudoknot (P)
         """
+        return
 
     ###########################################################################
     # edit base pairs
     ###########################################################################
 
     def add_pairs(self, pairs, break_conflicting_pairs=False):
-        """Add base pairs to current secondary structure
+        """Add base pairs to current secondary structure.
 
-        Args:
-            pairs (list): 1-indexed list of paired residues.
-                e.g. [(1, 20), (2, 19)]
+        Parameters
+        ----------
+        pairs : list
+            1-indexed list of paired residues. e.g. [(1, 20), (2, 19)]
+        break_conflicting_pairs : bool, defaults to False
+            Whether to break existing pairs if there is a conflict
         """
         # get a non-redundant list of non-zero pairs
         pairs = list(set([tuple(sorted(p)) for p in pairs if 0 not in p]))
@@ -861,16 +937,20 @@ class SecondaryStructure(data.Sequence):
             self.pair_nts[j - 1] = i
 
     def break_pairs_region(self, start, end, break_crossing=True, inverse=False):
-        """Removes pairs from the specified region (1-indexed, inclusive)
+        """Removes pairs from the specified region (1-indexed, inclusive).
 
         WARNING: this deletes information
 
-        Args:
-            start (int): start position
-            end (int): end position
-            break_crossing (bool, optional): whether to keep pairs that cross
-                over the specified region. Defaults to True.
-            inverse (bool, optional): invert the behavior. Defaults to False.
+        Parameters
+        ----------
+        start : int
+            start position (1-indexed, inclusive)
+        end : int
+            end position (1-indexed, inclusive)
+        break_crossing : bool, defaults to True
+            Whether to keep pairs that cross over the specified region
+        inverse : bool, defaults to False
+            Invert the behavior, i.e. remove pairs that are not in this region
         """
         region = pd.Interval(left=start, right=end, closed="both")
         for nt1, nt2 in self.get_pairs():
@@ -885,8 +965,11 @@ class SecondaryStructure(data.Sequence):
     def fill_mismatches(self, mismatch=1):
         """Adds base pairs to fill 1,1 and optionally 2,2 mismatches.
 
-        mismatch = 1 will fill only 1,1 mismatches
-        mismatch = 2 will fill 1,1 and 2,2
+        Parameters
+        ----------
+        mismatch : int, defaults to 1
+            1 will fill only 1,1 mismatches
+            2 will fill 1,1 and 2,2 mismatches
         """
         for i in range(len(self.pair_nts) - 3):
             if self.pair_nts[i + 1] == 0:
@@ -901,8 +984,12 @@ class SecondaryStructure(data.Sequence):
     def break_pairs_nts(self, nt_positions):
         """break base pairs at the given list of positions.
 
-        Args:
-            nt_positions (list of int): 1-indexed positions
+        WARNING: this deletes information.
+
+        Parameters
+        ----------
+        nt_positions : list of int
+            1-indexed positions to break pairs
         """
         nt_idx = self.data["Nucleotide"].isin(nt_positions)
         pair_nts = self.data.loc[nt_idx, "Pair"].to_numpy()
@@ -937,18 +1024,26 @@ class SecondaryStructure(data.Sequence):
     ###########################################################################
 
     def get_distance_matrix(self, recalculate=False):
-        """Based on Tom's contact_distance function, but instead returns
-        the all pairs shortest paths matrix, and stores it as an attribute. If
-        the attribute has already been set, it returns the attribute. This is
-        faster than calling contact_distance pairwise to fill the matrix.
+        """Get a matrix of pair-wise shortest path distances through the structure.
 
-        Args:
-            recalculate (bool, optional): Set to true to recalculate the matrix
-                even if the attribute is set. In case changes to the structure
-                have been made.
+        This function uses a BFS algorithm. The structure is represented as a complete
+        graph with nucleotides as vertices and base-pairs and backbone as edges. All
+        edges are length 1. Matrix is stored as an attribute for future use.
+
+        If the attribute is set (not None) and recalculate is False, the attribute
+        will be returned.
+
+        Based on Tom's contact_distance, but expanded to return the pairwise matrix.
+        New contact_distance method added to return the distance between two positions.
+
+        Parameters
+        ----------
+        recalculate : bool, defaults to False
+            Set to True to recalculate the matrix even if the attribute is set.
         """
         if (self.distance_matrix is not None) and not recalculate:
             return self.distance_matrix
+
         # this method will be used later to make sure a nucleotide hasn't
         # been visited and is within the bounds of the RNA
         def viable(nt):
@@ -999,17 +1094,30 @@ class SecondaryStructure(data.Sequence):
         return self.distance_matrix[i - 1, j - 1]
 
     def compute_ppv_sens(self, structure2, exact=True):
-        """Compute the PPV and sensitivity between self and another
-        SecondaryStructure object.
+        """Compute the PPV and sensitivity between this and another structure.
 
-        Args:
-            structure2 (SecondaryStructure): The SecondaryStructure to compare to.
-            exact (bool, optional): True requires BPs to be exactly correct.
-                                    False allows +/-1 bp slippage.
-                                    Defaults to True.
+        True and False are determined from this structure.
+        Positive and Negative are determined from structure2.
 
-        Returns:
-            float, float, tuple: sensitivity, PPV, (TP, TP+FP, TP+FN)
+        PPV = TP / (TP + FP)
+        Sensitivity = TP / (TP + FN)
+
+        Parameters
+        ----------
+        structure2 : SecondaryStructure
+            The SecondaryStructure to compare to.
+        exact : bool, defaults to True
+            True requires BPs to be exactly correct.
+            False allows +/-1 bp slippage.
+
+        Returns
+        -------
+        float
+            sensitivity
+        float
+            PPV
+        2-tuple of floats
+            (TP, TP+FP, TP+FN)
         """
         if len(self.pair_nts) != len(structure2.pair_nts):
             raise ValueError("sequence lengths must be the same")
@@ -1048,10 +1156,12 @@ class SecondaryStructure(data.Sequence):
         return self.get_aligned_data(self.null_alignment)
 
     def get_aligned_data(self, alignment):
-        """Returns a new SecondaryStructure matching the alignment target.
+        """Returns a new SecondaryStructure object matching the alignment target.
 
-        Args:
-            alignment (data.Alignment): an alignment object used to map values
+        Parameters
+        ----------
+        alignment : data.Alignment
+            An alignment object used to map values
         """
         df = alignment.map_nucleotide_dataframe(self.data)
         df["Pair"].fillna(0, inplace=True)
@@ -1064,6 +1174,16 @@ class SecondaryStructure(data.Sequence):
         )
 
     def get_interactions_df(self):
+        """Returns a DataFrame of i, j basepairs.
+
+        Returns
+        -------
+        pandas.DataFrame
+            A DataFrame with columns:
+                i: the 5' (1-indexed) position of the base pair
+                j: the 3' (1-indexed) position of the base pair
+                Structure: always 1
+        """
         mask = self.data.eval("Pair != 0 & Pair > Nucleotide")
         df = self.data.loc[mask, ["Nucleotide", "Pair"]].copy()
         df["Structure"] = 1
@@ -1076,13 +1196,13 @@ class SecondaryStructure(data.Sequence):
         return df
 
     def as_interactions(self, structure2=None):
-        """returns list of i, j basepairs as rnavigate.Interactions data.
+        """Returns rnavigate.Interactions representation of this, or more, structures.
 
-        Args:
-            structure2 (rnavigate.data.SecondaryStructure, optional):
-                If provided, basepairs from both structures are included and
-                colored by structure (left, right, or both)
-                defaults to None.
+        Parameters
+        ----------
+        structure2 : SecondaryStructure or list of these, defaults to None
+            If provided, basepairs from all structures are included and labeled by
+            which structures contain them and how many structures contain them.
         """
         if structure2 is None:
             return data.StructureAsInteractions(
@@ -1108,27 +1228,27 @@ class SecondaryStructure(data.Sequence):
     ###########################################################################
 
     def normalize_sequence(self, t_or_u="U", uppercase=True):
+        """Normalize the sequence attribute (fix case and/or U <-> T)."""
         super().normalize_sequence(t_or_u=t_or_u, uppercase=uppercase)
         self.data["Sequence"] = list(self.sequence)
 
     def transform_coordinates(
         self, flip=None, scale=None, center=None, rotate_degrees=None
     ):
-        """Perform transformation of structure coordinates
+        """Perform transformations on X and Y structure coordinates.
 
-        Args:
-            flip (str, optional):
-                "horizontal" or "vertical".
-                Defaults to None.
-            scale (float, optional):
-                new median distance of basepairs.
-                Defaults to None.
-            center (tuple of floats, optional):
-                new center x and y coordinate.
-                Defaults to None.
-            rotate_degrees (float, optional):
-                number of degrees to rotate structure.
-                Defaults to None.
+        To acheive vertical and horizontal flip together, rotate 180 degrees.
+
+        Parameters
+        ----------
+        flip : str, optional
+            "horizontal" or "vertical"
+        scale : float, optional
+            new median distance of basepairs
+        center : tuple of floats, optional
+            new center x and y coordinate
+        rotate_degrees : float, optional
+            number of degrees to rotate structure
         """
         structure = StructureCoordinates(
             self.xcoordinates, self.ycoordinates, self.get_pairs()
@@ -1151,38 +1271,46 @@ class SecondaryStructure(data.Sequence):
 
 
 class StructureCoordinates:
-    """Helper class to perform structure coordinate transformations"""
+    """Helper class to perform structure coordinate transformations
+
+    Parameters
+    ----------
+    x : numpy.array
+        x coordinates
+    y : numpy.array
+        y coordinates
+    pairs : list of pairs, optional
+        list of base-paired positions
+        required if scaling coordinates
+    """
 
     def __init__(self, x, y, pairs=None):
-        """initialize structure with arrays holding x and y coordinates. A list
-        of base-paired positions is required only if scaling coordinates.
-
-        Args:
-            x (numpy.array): x coordinates
-            y (numpy.array): y coordinates
-            pairs (list of pairs, optional): list of base-paired positions.
-        """
+        """initialize structure coordinates."""
         self.x = x
         self.y = y
         self.pairs = pairs
 
     def get_center_point(self):
-        """return the x, y coordinates for the center of structure
+        """Get the x, y coordinates for the center of structure.
 
-        Returns:
-            tuple: x and y coordinates of structure center as floats
+        Returns
+        -------
+        float
+            x coordinate of structure center
+        float
+            y coordinate of structure center
         """
         x_center = (max(self.x) + min(self.x)) / 2
         y_center = (max(self.y) + min(self.y)) / 2
         return (x_center, y_center)
 
-    def scale(self, median_bp_distance=1):
+    def scale(self, median_bp_distance=1.0):
         """Scale structure such that median base-pair distance is constant.
 
-        Args:
-            median_bp_distance (int, optional):
-                New median distance between all base-paired nucleotides.
-                Defaults to 1.
+        Parameters
+        ----------
+        median_bp_distance : float, defaults to 1.0
+            New median distance between all base-paired nucleotides.
         """
         bp_distances = []
         for bp in self.pairs:
@@ -1194,12 +1322,12 @@ class StructureCoordinates:
         self.x *= median_bp_distance / scale_factor
 
     def flip(self, horizontal=True):
-        """Flip structure vertically or horizontally
+        """Flip structure vertically or horizontally.
 
-        Args:
-            horizontal (bool, optional):
-                whether to flip structure horizontally, otherwise vertically
-                Defaults to True.
+        Parameters
+        ----------
+        horizontal : bool, defaults to True
+            whether to flip structure horizontally, otherwise vertically
         """
         if horizontal:
             self.x *= -1
@@ -1207,21 +1335,26 @@ class StructureCoordinates:
             self.y *= -1
 
     def center(self, x=0, y=0):
-        """Center structure on given x, y coordinate
+        """Center structure on the given x, y coordinate
 
-        Args:
-            x (int, optional): x coordinate of structure center. Defaults to 0.
-            y (int, optional): y coordinate of structure center. Defaults to 0.
+        Parameters
+        ----------
+        x : int, defaults to 0
+            x coordinate of structure center
+        y : int, defaults to 0
+            y coordinate of structure center
         """
         x_center, y_center = self.get_center_point()
         self.x -= x_center + x
         self.y -= y_center + y
 
     def rotate(self, degrees):
-        """Rotate structure on current center point
+        """Rotate structure on current center point.
 
-        Args:
-            degrees (float): number of degrees to rotate structure
+        Parameters
+        ----------
+        degrees : float
+            number of degrees to rotate structure
         """
         radians = math.radians(degrees)
         center_x, center_y = self.get_center_point()
@@ -1237,6 +1370,8 @@ class StructureCoordinates:
 
 
 class SequenceCircle(SecondaryStructure):
+    """A circular SecondaryStructure-like representation of RNA sequence."""
+
     def __init__(self, input_data, gap=30, name=None, **kwargs):
         length = input_data.length
         df = pd.DataFrame(

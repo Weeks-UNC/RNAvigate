@@ -927,6 +927,30 @@ class DanceMaP(SHAPEMaP):
 
 
 class RNPMaP(Profile):
+    """Represents per-nucleotide RNPMaP data.
+
+    Parameters
+    ----------
+    input_data : str or pandas.DataFrame
+        path to an RNAModMapper reactivities.txt file or a pandas DataFrame
+    read_table_kw : dict, optional
+        Keyword arguments to pass to pandas.read_table. These are not necessary for
+        reactivities.txt files.
+        Defaults to None.
+    sequence : rnavigate.Sequence or str, optional
+        A sequence to use as the reference sequence. This is not necessary for
+        reactivities.txt files.
+        Defaults to None.
+    metric : str, defaults to "NormedP"
+        The name of the set of value-to-color options to use.
+    metric_defaults : dict, optional
+        Keys are metric names, to be used with `metric`.
+        Values are dictionaries of plotting parameters.
+        Defaults to None.
+    name : str, optional
+        A name for the data set. Defaults to None.
+    """
+
     def __init__(
         self,
         input_data,
@@ -961,6 +985,25 @@ class RNPMaP(Profile):
 
 
 class DeltaProfile(Profile):
+    """A class to represent the difference between two profiles.
+
+    Parameters
+    ----------
+    profile1 : Profile
+        The first profile to compare.
+    profile2 : Profile
+        The second profile to compare.
+    metric : str, optional
+        The name of the metric to use.
+        Defaults to the metric of profile1.
+    metric_defaults : dict, optional
+        Keys are metric names, to be used with `metric`.
+        Values are dictionaries of plotting parameters.
+        Defaults to None.
+    name : str, optional
+        A name for the data set. Defaults to None.
+    """
+
     def __init__(
         self,
         profile1,

@@ -129,13 +129,13 @@ class ScalarMappable(cm.ScalarMappable):
 
         Parameters
         ----------
-            cmap : string, tuple, float, or list
-                A valid mpl color, list of valid colors or a valid colormap name
+        cmap : string, tuple, float, or list
+            A valid mpl color, list of valid colors or a valid colormap name
 
         Returns
         -------
-            matplotlib colormap
-                a colormap matching the input
+        matplotlib colormap
+            a colormap matching the input
         """
         if mpc.is_color_like(cmap):
             cmap = mpc.ListedColormap([cmap])
