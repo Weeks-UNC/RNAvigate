@@ -548,8 +548,8 @@ class Interactions(data.Data):
         """
         ascending = self.metric not in ["Distance"]  # high distance is bad
         dataframe = self.data[["i", "j", self.metric]].copy()
-        dataframe.sort_values(
-            by=self.metric, ascending=ascending, inplace=True, na_position="first"
+        dataframe = dataframe.sort_values(
+            by=self.metric, ascending=ascending, na_position="first"
         )
         return dataframe
 
@@ -564,7 +564,7 @@ class Interactions(data.Data):
         data = self.data.copy()
         data = data[data["mask"]]
         if "Sign" in data.columns:
-            data.rename({"Sign": "+/-"}, inplace=True)
+            data = data.rename({"Sign": "+/-"})
         csv = data.to_csv(
             columns=self.columns, sep="\t", index=False, line_terminator="\n"
         )
@@ -924,7 +924,7 @@ class RINGMaP(Interactions):
         window = split_header[1].split("=")[1]
         self.window = int(window)
         dataframe = pd.read_table(filepath, header=1, **read_table_kw)
-        dataframe.rename(columns={"+/-": "Sign"}, inplace=True)
+        dataframe = dataframe.rename(columns={"+/-": "Sign"})
         return dataframe
 
     def data_specific_filter(self, positive_only=False, negative_only=False, **kwargs):
@@ -966,8 +966,8 @@ class RINGMaP(Interactions):
             return super().get_sorted_data()
         columns = ["i", "j", self.metric]
         dataframe = self.data[columns + ["Sign"]].copy()
-        dataframe.eval(f"{self.metric} = {self.metric} * Sign", inplace=True)
-        dataframe.sort_values(by=self.metric, ascending=True, inplace=True)
+        dataframe[self.metric] = dataframe.eval(f"{self.metric} * Sign")
+        dataframe = dataframe.sort_values(by=self.metric, ascending=True)
         return dataframe[columns]
 
 
@@ -1068,7 +1068,7 @@ class PAIRMaP(RINGMaP):
             self.header = file.readline()
         self.window = int(self.header.split("\t")[1].split("=")[1])
         dataframe = pd.read_table(filepath, header=1)
-        dataframe.rename(columns={"Sig.": "Statistic"}, inplace=True)
+        dataframe = dataframe.rename(columns={"Sig.": "Statistic"})
         dataframe["Sign"] = 1
         return dataframe
 
@@ -1252,7 +1252,7 @@ class PairingProbability(Interactions):
         rnavigate.data.Profile
             a Profile object containing the entropy data
         """
-        self.data.eval("nlogn = log10p * 10 ** ( - log10p )", inplace=True)
+        self.data["nlogn"] = self.data.eval("log10p * 10 ** ( - log10p )")
         entropy = np.zeros(self.length)
         args = {"labels": np.arange(self.length) + 1, "fill_value": 0}
         i_sum = self.data[["i", "nlogn"]].groupby("i").sum().reindex(**args)

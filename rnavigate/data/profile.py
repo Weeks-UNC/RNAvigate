@@ -1025,7 +1025,7 @@ class DeltaProfile(Profile):
             on=["Nucleotide"],
             suffixes=["_1", "_2"],
         )
-        new_data.eval(f"Delta_profile = {metric}_1 - {metric}_2", inplace=True)
+        new_data["Delta_profile"] = new_data.eval(f"{metric}_1 - {metric}_2")
         metric_defaults = {
             "Delta_profile": {
                 "metric_column": "Delta_profile",

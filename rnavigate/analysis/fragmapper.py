@@ -128,9 +128,9 @@ class FragMaP(data.Profile):
         )
 
         # Frag-MaP profile is the difference in Z-scores
-        dataframe.eval("Fragmap_profile = zscore_1 - zscore_2", inplace=True)
-        dataframe.eval(
-            "Fragmap_err = sqrt(zscore_1_err ** 2 + zscore_2_err ** 2)", inplace=True
+        dataframe["Fragmap_profile"] = dataframe.eval("zscore_1 - zscore_2")
+        dataframe["Fragmap_err"] = dataframe.eval(
+            "sqrt(zscore_1_err ** 2 + zscore_2_err ** 2)"
         )
 
         dataframe["Fragmap_pvalue"] = stats.norm.sf(dataframe["Fragmap_profile"])
@@ -151,7 +151,7 @@ class FragMaP(data.Profile):
         dataframe["Significant"] = dataframe["pvalue"] < p_significant
 
         # Calculate Delta rate
-        dataframe.eval("Delta_rate = Modified_rate_1 - Modified_rate_2", inplace=True)
+        dataframe["Delta_rate"] = dataframe.eval("Modified_rate_1 - Modified_rate_2")
         dataframe["Delta_rate_zscore"] = stats.zscore(dataframe["Delta_rate"])
 
         # Perform False Discovery Rate (FDR) correction

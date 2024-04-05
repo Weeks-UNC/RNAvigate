@@ -201,6 +201,7 @@ def get_nt_cmap(colors=None):
         normalization="none",
         values=None,
         title="sequence",
+        ticks=[0, 1, 2, 3],
         tick_labels=["A", "U", "G", "C"],
     )
 

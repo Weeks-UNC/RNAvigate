@@ -1164,7 +1164,7 @@ class SecondaryStructure(data.Sequence):
             An alignment object used to map values
         """
         df = alignment.map_nucleotide_dataframe(self.data)
-        df["Pair"].fillna(0, inplace=True)
+        df["Pair"] = df["Pair"].fillna(0)
         mask = df["Pair"] != 0
         df.loc[mask, "Pair"] = alignment.map_positions(df.loc[mask, "Pair"].values)
         return SecondaryStructure(
