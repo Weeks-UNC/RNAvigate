@@ -2,10 +2,9 @@
 RNAvigate full API
 ==================
 
-This is RNAvigate's (mostly) full API.
-It is a bit ugly at the moment, and some docstrings are missing.
-Good documentation is the current top priority for RNAvigate's development.
-I plan to tackle this process in this order:
+This is RNAvigate's (mostly) full API. I apologize that it is a bit ugly at the
+moment, and that some docstrings are missing. Good documentation is the current top
+priority for RNAvigate's development. I plan to tackle this process in this order:
 
 1. Add tutorials for common tasks
 2. Fill in any missing docstrings and update to Numpy style
@@ -16,6 +15,7 @@ Table of contents:
 
 - rnavigate
     - [Sample](#rnavigatesample)
+    - [plot_options](#rnavigateplot_options)
     - [plot_alignment](#rnavigateplot_alignment)
     - [plot_arcs](#rnavigateplot_arcs)
     - [plot_arcs_compare](#rnavigateplot_arcs_compare)
@@ -208,72 +208,76 @@ class Sample(builtins.object)
  |      
  |      Parameters
  |      ----------
- |          interactions : rnavigate.data.Interactions or data keyword string
- |              Interactions object to be filtered. If a string, value is
- |              replaced with self.get_data(interactions)
- |          metric : str, optional
- |              column of interactions data to be used as metric for coloring
- |              interactions.
- |              "Distance" will compute 3D distance in "pdb", defaulting to
- |              2'OH atom. "Distance_DMS" or "Distance_[atom id]" will use
- |              those atoms to compute distance.
- |          cmap (str | list, optional):
- |              sets the interactions colormap, used to color interactions
- |              according to metric values.
- |          normalization (str, optional):
- |              `"norm"`: extreme values in colormap are given to the extreme
- |                  values of interactions metric data
- |              `"bins"`: data are colored according to which bin they fall in
- |                  `values` defines bins (list, length = 2 less than cmap)
- |              `"min_max"`: extreme values in cmap are given to values beyond
- |                  minimum and maximum, defined by `values`
- |          values:
- |              behavior depends on normalization
- |              `"norm"`: values are not needed
- |              `"bins"`: list of floats containing the boundaries between bins
- |                  One fewer than the number of categories
- |              `"min_max"`: list of floats containing the minimum and maximum
- |          **kwargs: Other arguments are passed to interactions.filter()
+ |      interactions : rnavigate.data.Interactions or data keyword string
+ |          Interactions object to be filtered. If a string, value is
+ |          replaced with self.get_data(interactions)
+ |      metric : str, optional
+ |          column of interactions data to be used as metric for coloring
+ |          interactions.
+ |          "Distance" will compute 3D distance in "pdb", defaulting to
+ |          2'OH atom. "Distance_DMS" or "Distance_[atom id]" will use
+ |          those atoms to compute distance.
+ |      cmap (str | list, optional):
+ |          sets the interactions colormap, used to color interactions
+ |          according to metric values.
+ |      normalization (str, optional):
+ |          `"norm"`: extreme values in colormap are given to the extreme
+ |              values of interactions metric data
+ |          `"bins"`: data are colored according to which bin they fall in
+ |              `values` defines bins (list, length = 2 less than cmap)
+ |          `"min_max"`: extreme values in cmap are given to values beyond
+ |              minimum and maximum, defined by `values`
+ |      values:
+ |          behavior depends on normalization
+ |          `"norm"`: values are not needed
+ |          `"bins"`: list of floats containing the boundaries between bins
+ |              One fewer than the number of categories
+ |          `"min_max"`: list of floats containing the minimum and maximum
+ |      **kwargs: Other arguments are passed to interactions.filter()
  |  
  |  get_data(self, data_keyword, data_class=None)
  |      Replaces data keyword with data object, even if nested.
  |      
  |      Parameters
  |      ----------
- |          data_keyword : rnavigate.data.Data or data keyword or list/dict of these
- |              If None, returns None.
- |              If a data keyword, returns associated data from sample
- |              If Data, returns that data.
- |              If a list or dictionary, returns list or dictionary with
- |                  data keyword values replaced with associated Data
- |          data_class : rnavigate.data.Data class or subclass, optional
- |              If provided, ensures that returned data is of this type.
+ |      data_keyword : rnavigate.data.Data or data keyword or list/dict of these
+ |          If None, returns None.
+ |          If a data keyword, returns associated data from sample
+ |          If Data, returns that data.
+ |          If a list or dictionary, returns list or dictionary with
+ |              data keyword values replaced with associated Data
+ |      data_class : rnavigate.data.Data class or subclass, optional
+ |          If provided, ensures that returned data is of this type.
  |      
  |      Returns
  |      -------
- |          Same type as data_keyword argument, but data keywords are replaced
- |              with associated data
+ |      Same type as data_keyword argument, but data keywords are replaced
+ |          with associated data
  |      
  |      Raises
  |      ------
- |          ValueError:
- |              if data is not found in sample
- |          ValueError:
- |              if the data retrieved is not of the specified data_class
+ |      ValueError:
+ |          if data is not found in sample
+ |      ValueError:
+ |          if the data retrieved is not of the specified data_class
  |  
  |  inherit_data(self, inherit, keep_inherited_defaults, overwrite)
  |      retrieves and stores data and data keywords from other samples
  |      
- |      Parameters:
- |          inherit : Sample or list of Samples
- |              Other samples from which to inherit data and data keywords
- |          keep_inherited_defaults : bool
- |              Use default values from inherited samples
- |          overwrite : bool
- |              whether to overwrite any existing keywords with inherited keywords
+ |      Parameters
+ |      ----------
+ |      inherit : Sample or list of Samples
+ |          Other samples from which to inherit data and data keywords
+ |      keep_inherited_defaults : bool
+ |          Use default values from inherited samples
+ |      overwrite : bool
+ |          whether to overwrite any existing keywords with inherited keywords
  |  
- |  print_data_keywords(self)
+ |  print_data_keywords(self, return_dict=False)
  |      Print a nicely formatted, organized list of data keywords.
+ |      
+ |      Returns a dictionary of data keywords, organized by data type, if
+ |      return_dict is True.
  |  
  |  set_as_default(self, data_keyword, overwrite=True)
  |      Set the given data keyword as the default for its data class
@@ -283,10 +287,10 @@ class Sample(builtins.object)
  |      
  |      Parameters
  |      ----------
- |          data_keyword : str
- |              The data keyword to set as the default
- |          overwrite : bool, defaults to ``True``
- |              whether to overwrite a pre-existing default data keyword
+ |      data_keyword : str
+ |          The data keyword to set as the default
+ |      overwrite : bool, defaults to ``True``
+ |          whether to overwrite a pre-existing default data keyword
  |  
  |  set_data(self, data_keyword, inputs, overwrite=False)
  |      Add data to Sample using the given data keyword and inputs
@@ -307,12 +311,12 @@ class Sample(builtins.object)
  |      
  |      Parameters
  |      ----------
- |          data_keyword : str
- |              a data keyword used to store and/or parse the inputs
- |          inputs : dict or rnavigate.data.Data
- |              a dictionary used to create the data object or a data object itself
- |          overwrite : bool, defaults to False
- |              whether to overwrite a pre-existing data_keyword
+ |      data_keyword : str
+ |          a data keyword used to store and/or parse the inputs
+ |      inputs : dict or rnavigate.data.Data
+ |          a dictionary used to create the data object or a data object itself
+ |      overwrite : bool, defaults to False
+ |          whether to overwrite a pre-existing data_keyword
  |  
  |  ----------------------------------------------------------------------
  |  Data descriptors defined here:
@@ -322,6 +326,26 @@ class Sample(builtins.object)
  |  
  |  __weakref__
  |      list of weak references to the object (if defined)
+```
+
+## rnavigate.plot_options
+
+[back to top](#rnavigate-full-api)
+
+```text
+Python Library Documentation: function plot_options in module rnavigate.plotting_functions
+
+plot_options(samples)
+    Prints a list of plotting functions compatible with a sample or list of samples.
+    
+    Some plotting functions require specific data classes to be loaded into the
+    sample. For plotting multiple samples, data keywords that are not shared, or are
+    shared, but are not of the same data class, are considered invalid.
+    
+    Parameters
+    ----------
+    samples : rnavigate.Sample or list of rnavigate.Sample
+        samples to check for compatible plotting functions
 ```
 
 ## rnavigate.plot_alignment
@@ -336,19 +360,19 @@ plot_alignment(data1, data2, labels=None, plot_kwargs=None)
     
     Parameters
     ----------
-        data1 : tuple (rnavigate Sample, data keyword string)
-            a sample and data keyword to retrieve a sequence
-        data2 : tuple (rnavigate Sample, data keyword string)
-            another sample and data keyword to retrieve a second sequence
-        labels : list of 2 strings, defaults to "sample.sample: data keyword" for each
-            Labels used for each sample
-        plot_kwargs : dict, defaults to {}
-            passed to matplotlib.pyplot.subplots()
+    data1 : tuple (rnavigate Sample, data keyword string)
+        a sample and data keyword to retrieve a sequence
+    data2 : tuple (rnavigate Sample, data keyword string)
+        another sample and data keyword to retrieve a second sequence
+    labels : list of 2 strings, defaults to "sample.sample: data keyword" for each
+        Labels used for each sample
+    plot_kwargs : dict, defaults to {}
+        passed to matplotlib.pyplot.subplots()
     
     Returns
     -------
-        rnavigate.plots.Alignment
-            the Alignment plot object
+    rnavigate.plots.Alignment
+        the Alignment plot object
 ```
 
 ## rnavigate.plot_arcs
@@ -363,75 +387,75 @@ plot_arcs(samples, sequence, structure=None, structure2=None, interactions=None,
     
     Parameters
     ----------
-        samples : list of rnavigate Samples
-            samples used to retrieve data
-        sequence : data keyword string, data object, or sequence string
-            All data are mapped to this sequence before plotting
-            If a data keyword string, data from the first sample will be used
-        structure : data keyword string or data object, defaults to None
-            secondary structure to plot as arcs
-        structure2 : data keyword string or data object, defaults to None
-            another secondary structure to compare with the first structure
-            arcs will be colored depending on which structure they are in
-            Defaults to None
-        interactions : one of the formats below, defaults to None
-            format 1 (data or data keyword)
-                Interactions to plot as arcs, no filtering performed
-            format 2 (dictionary)
-                e.g. {"interactions": format 1}
-                additional filtering options can be added to the dictionary
-            format 3 (list of format 2 dictionaries)
-                This format allows multiple filtering schemes to be applied,
-                each will be plotted on a seperate axis
-        interactions2 : one of the formats below, defaults to None
-            format 1 (data or data keyword)
-                Interactions to plot as arcs, no filtering performed
-            format 2 (dictionary)
-                e.g. {"interactions": format 1}
-                additional filtering options can be added to the dictionary
-        profile : data or data keyword, defaults to None
-            Profile from which values will be plotted
-        annotations : list of data keyword strings or data objects, defaults to []
-            Annotations used to highlight regions or sites of interest
-        domains : data keyword string or data object, defaults to None
-            domains to label along x-axis
-        labels : list of strings, defaults to sample.sample for each sample
-            list containing Labels to be used in plot legends
-        nt_ticks : tuple of two integers, defaults to (20, 5)
-            first integer is the gap between major tick marks
-            second integer is the gap between minor tick marks
-        profile_scale_factor : number, defaults to 1
-            small profile values will be hard to see
-            large profile values will overwhelm the plot
-            e.g. use 1/10 to scale values down 10-fold, use 10 to scale up
-        plot_error : bool, defaults to False
-            Whether to plot error bars, values are determined by profile.metric
-        annotation_mode : "track" or "bars", defaults to "track"
-            "track" will highlight annotations along the x-axis
-            "bars" will use a vertical transparent bar over the plot
-        panels : dict, optional
-            a dictionary of whether plot elements are displayed on the "top"
-            (above x-axis) or "bottom" (below x-axis)
-            Only the values you wish to change from the default are needed
-            defaults to {"interactions": "bottom",
-                         "interactions2": "bottom",
-                         "structure": "top",
-                         "profile": "top"}
-        seqbar : bool, defaults to ``True``
-            whether to display the sequence along the x-axis
-        region : list of 2 integers, defaults to [1, length of sequence]
-            start and end positions to plot. 1-indexed, inclusive.
-        colorbars : bool, defaults to True
-            Whether to plot colorbars for all plot elements
-        title : bool, defaults to True
-            Whether to display titles for each axis
-        plot_kwargs : dict, defaults to {}
-            Keyword-arguments passed to matplotlib.pyplot.subplots
+    samples : list of rnavigate Samples
+        samples used to retrieve data
+    sequence : data keyword string, data object, or sequence string
+        All data are mapped to this sequence before plotting
+        If a data keyword string, data from the first sample will be used
+    structure : data keyword string or data object, defaults to None
+        secondary structure to plot as arcs
+    structure2 : data keyword string or data object, defaults to None
+        another secondary structure to compare with the first structure
+        arcs will be colored depending on which structure they are in
+        Defaults to None
+    interactions : one of the formats below, defaults to None
+        format 1 (data or data keyword)
+            Interactions to plot as arcs, no filtering performed
+        format 2 (dictionary)
+            e.g. {"interactions": format 1}
+            additional filtering options can be added to the dictionary
+        format 3 (list of format 2 dictionaries)
+            This format allows multiple filtering schemes to be applied,
+            each will be plotted on a seperate axis
+    interactions2 : one of the formats below, defaults to None
+        format 1 (data or data keyword)
+            Interactions to plot as arcs, no filtering performed
+        format 2 (dictionary)
+            e.g. {"interactions": format 1}
+            additional filtering options can be added to the dictionary
+    profile : data or data keyword, defaults to None
+        Profile from which values will be plotted
+    annotations : list of data keyword strings or data objects, defaults to []
+        Annotations used to highlight regions or sites of interest
+    domains : data keyword string or data object, defaults to None
+        domains to label along x-axis
+    labels : list of strings, defaults to sample.sample for each sample
+        list containing Labels to be used in plot legends
+    nt_ticks : tuple of two integers, defaults to (20, 5)
+        first integer is the gap between major tick marks
+        second integer is the gap between minor tick marks
+    profile_scale_factor : number, defaults to 1
+        small profile values will be hard to see
+        large profile values will overwhelm the plot
+        e.g. use 1/10 to scale values down 10-fold, use 10 to scale up
+    plot_error : bool, defaults to False
+        Whether to plot error bars, values are determined by profile.metric
+    annotation_mode : "track" or "bars", defaults to "track"
+        "track" will highlight annotations along the x-axis
+        "bars" will use a vertical transparent bar over the plot
+    panels : dict, optional
+        a dictionary of whether plot elements are displayed on the "top"
+        (above x-axis) or "bottom" (below x-axis)
+        Only the values you wish to change from the default are needed
+        defaults to {"interactions": "bottom",
+                        "interactions2": "bottom",
+                        "structure": "top",
+                        "profile": "top"}
+    seqbar : bool, defaults to ``True``
+        whether to display the sequence along the x-axis
+    region : list of 2 integers, defaults to [1, length of sequence]
+        start and end positions to plot. 1-indexed, inclusive.
+    colorbars : bool, defaults to True
+        Whether to plot colorbars for all plot elements
+    title : bool, defaults to True
+        Whether to display titles for each axis
+    plot_kwargs : dict, defaults to {}
+        Keyword-arguments passed to matplotlib.pyplot.subplots
     
     Returns
     -------
-        rnavigate.plots.AP
-            the ArcPlot object
+    rnavigate.plots.AP
+        the ArcPlot object
 ```
 
 ## rnavigate.plot_arcs_compare
@@ -449,54 +473,54 @@ plot_arcs_compare(samples, sequence, structure=None, structure2=None, interactio
     
     Parameters
     ----------
-        samples : list of 2 rnavigate Samples
-            samples used to retrieve data
-            This plotting function can only compare two samples at a time
-        sequence : data keyword string, data object, or sequence string
-            All data are mapped to this sequence taken from their respective
-            sample before plotting
-        structure : data keyword string or data object, defaults to None
-            secondary structure to plot as arcs
-        structure2 : data keyword string or data object, defaults to None
-            another secondary structure to compare with the first structure
-            arcs will be colored depending on which structure they are in
-        interactions : one of the formats below, defaults to None
-            format 1 (data or data keyword)
-                Interactions to plot as arcs, no filtering performed
-            format 2 (dictionary)
-                e.g. {"interactions": format 1}
-                additional filtering options can be added to the dictionary
-            format 3 (list of format 2 dictionaries)
-                This format allows multiple filtering schemes to be applied,
-                each will be plotted on a seperate axis
-        interactions2 : one of the formats below, defaults to None
-            format 1 (data or data keyword)
-                Interactions to plot as arcs, no filtering performed
-            format 2 (dictionary)
-                e.g. {"interactions": format 1}
-                additional filtering options can be added to the dictionary
-        profile : data keyword string or data object, defaults to None
-            Profile from which values will be plotted
-        labels : list of strings, defaults to sample.sample for each sample
-            list containing Labels to be used in plot legends
-        profile_scale_factor : number, defaults to 1
-            small profile values will be hard to see
-            large profile values will overwhelm the plot
-            e.g. use 1/10 to scale values down 10-fold, use 10 to scale up
-        plot_error : bool, defaults to ``False``
-            Whether to plot error bars, values are determined by profile.metric
-        region : list of 2 integers, defaults to [1, length of sequence]
-            start and end positions to plot. 1-indexed, inclusive.
-        colorbars : bool, defaults to ``True``
-            Whether to plot color scales for all plot elements
-        plot_kwargs : dict, defaults to {}
-            Keyword-arguments passed to matplotlib.pyplot.subplots
+    samples : list of 2 rnavigate Samples
+        samples used to retrieve data
+        This plotting function can only compare two samples at a time
+    sequence : data keyword string, data object, or sequence string
+        All data are mapped to this sequence taken from their respective
+        sample before plotting
+    structure : data keyword string or data object, defaults to None
+        secondary structure to plot as arcs
+    structure2 : data keyword string or data object, defaults to None
+        another secondary structure to compare with the first structure
+        arcs will be colored depending on which structure they are in
+    interactions : one of the formats below, defaults to None
+        format 1 (data or data keyword)
+            Interactions to plot as arcs, no filtering performed
+        format 2 (dictionary)
+            e.g. {"interactions": format 1}
+            additional filtering options can be added to the dictionary
+        format 3 (list of format 2 dictionaries)
+            This format allows multiple filtering schemes to be applied,
+            each will be plotted on a seperate axis
+    interactions2 : one of the formats below, defaults to None
+        format 1 (data or data keyword)
+            Interactions to plot as arcs, no filtering performed
+        format 2 (dictionary)
+            e.g. {"interactions": format 1}
+            additional filtering options can be added to the dictionary
+    profile : data keyword string or data object, defaults to None
+        Profile from which values will be plotted
+    labels : list of strings, defaults to sample.sample for each sample
+        list containing Labels to be used in plot legends
+    profile_scale_factor : number, defaults to 1
+        small profile values will be hard to see
+        large profile values will overwhelm the plot
+        e.g. use 1/10 to scale values down 10-fold, use 10 to scale up
+    plot_error : bool, defaults to ``False``
+        Whether to plot error bars, values are determined by profile.metric
+    region : list of 2 integers, defaults to [1, length of sequence]
+        start and end positions to plot. 1-indexed, inclusive.
+    colorbars : bool, defaults to ``True``
+        Whether to plot color scales for all plot elements
+    plot_kwargs : dict, defaults to {}
+        Keyword-arguments passed to matplotlib.pyplot.subplots
     
     Returns
     -------
-        rnavigate.plots.AP plot
-            object containing matplotlib figure and axes with additional plotting
-            and file saving methods
+    rnavigate.plots.AP plot
+        object containing matplotlib figure and axes with additional plotting
+        and file saving methods
 ```
 
 ## rnavigate.plot_circle
@@ -517,72 +541,72 @@ plot_circle(samples, sequence, structure=None, structure2=None, interactions=Non
     
     Parameters
     ----------
-        samples : list of rnavigate Samples
-            samples used to retrieve data
-        sequence : data or data keyword
-            All data are mapped to this sequence before plotting
-        structure : data keyword string or data object, defaults to None
-            Structure used to plot base-pairs on circle plot
-        structure2 : data keyword str, data obj or list of either, defaults to None
-            Structures to compare with Structure. Each base-pair is colored by
-            which structure contains it or how many structures contain it.
-        interactions : one of the formats below, defaults to None
-            format 1 (data or data keyword)
-                Interactions to plot on cirle plot, no filtering
-            format 2 (dictionary)
-                e.g. {"interactions": format 1}
-                additional filtering options can be added to the dictionary
-            format 3 (list of format 2 dictionaries)
-                This format allows multiple filtering schemes to be applied,
-                each will be plotted on a seperate axis
-        interactions2 : one of the formats below, defaults to None
-            format 1 (data or data keyword)
-                Interactions to plot on circle plot, no filtering
-            format 2 (dictionary)
-                e.g. {"interactions": format 1}
-                additional filtering options can be added to the dictionary
-        annotations : list of data keyword strings or data objects, defaults to []
-            Annotations used to highlight regions or sites of interest
-        profile : data keyword string or data object, defaults to None
-            Profile used for coloring if "profile" used in colors dictionary
-        labels : list of strings, defaults to sample.sample for each sample
-            list containing Labels to be used in plot legends
-        colors : dictionary, optional
-            a dictionary of element: value pairs that determines how colors
-            will be applied to each plot element and if that element is plotted
-            only the elements you wish to change need to be included
-            Defaults to {"sequence": None,  # sequence not shown
-                         "nucleotides": "sequence",
-                         "structure": "grey"}
-            value options and what the colors represent:
-                None: don't plot this elelement
-                "sequence": nucleotide identity
-                "position": position in sequence
-                "annotations": sequence annotations
-                "profile": per-nucleotide data from profile
-                    profile argument must be provided
-                "structure": base-pairing status
-                matplotlib color: all positions plotted in this color
-                array of colors: a different color for each position
-                    must be the same length as structure
-            "sequence" may also use "contrast" which automatically chooses
-                white or black, which ever contrasts better with "nucleotide"
-                color
-        nt_ticks : tuple of two integers, defaults to (20, 5)
-            first integer is the gap between major tick marks
-            second integer is the gap between minor tick marks
-        gap : integer, defaults to 30
-            Width of gap between 5' and 3' end in degrees
-        colorbars : bool, defaults to True
-            Whether to plot color scales for all plot elements
-        plot_kwargs : dict, defaults to {}
-            Keyword-arguments passed to matplotlib.pyplot.subplots
+    samples : list of rnavigate Samples
+        samples used to retrieve data
+    sequence : data or data keyword
+        All data are mapped to this sequence before plotting
+    structure : data keyword string or data object, defaults to None
+        Structure used to plot base-pairs on circle plot
+    structure2 : data keyword str, data obj or list of either, defaults to None
+        Structures to compare with Structure. Each base-pair is colored by
+        which structure contains it or how many structures contain it.
+    interactions : one of the formats below, defaults to None
+        format 1 (data or data keyword)
+            Interactions to plot on cirle plot, no filtering
+        format 2 (dictionary)
+            e.g. {"interactions": format 1}
+            additional filtering options can be added to the dictionary
+        format 3 (list of format 2 dictionaries)
+            This format allows multiple filtering schemes to be applied,
+            each will be plotted on a seperate axis
+    interactions2 : one of the formats below, defaults to None
+        format 1 (data or data keyword)
+            Interactions to plot on circle plot, no filtering
+        format 2 (dictionary)
+            e.g. {"interactions": format 1}
+            additional filtering options can be added to the dictionary
+    annotations : list of data keyword strings or data objects, defaults to []
+        Annotations used to highlight regions or sites of interest
+    profile : data keyword string or data object, defaults to None
+        Profile used for coloring if "profile" used in colors dictionary
+    labels : list of strings, defaults to sample.sample for each sample
+        list containing Labels to be used in plot legends
+    colors : dictionary, optional
+        a dictionary of element: value pairs that determines how colors
+        will be applied to each plot element and if that element is plotted
+        only the elements you wish to change need to be included
+        Defaults to {"sequence": None,  # sequence not shown
+                        "nucleotides": "sequence",
+                        "structure": "grey"}
+        value options and what the colors represent:
+            None: don't plot this elelement
+            "sequence": nucleotide identity
+            "position": position in sequence
+            "annotations": sequence annotations
+            "profile": per-nucleotide data from profile
+                profile argument must be provided
+            "structure": base-pairing status
+            matplotlib color: all positions plotted in this color
+            array of colors: a different color for each position
+                must be the same length as structure
+        "sequence" may also use "contrast" which automatically chooses
+            white or black, which ever contrasts better with "nucleotide"
+            color
+    nt_ticks : tuple of two integers, defaults to (20, 5)
+        first integer is the gap between major tick marks
+        second integer is the gap between minor tick marks
+    gap : integer, defaults to 30
+        Width of gap between 5' and 3' end in degrees
+    colorbars : bool, defaults to True
+        Whether to plot color scales for all plot elements
+    plot_kwargs : dict, defaults to {}
+        Keyword-arguments passed to matplotlib.pyplot.subplots
     
     Returns
     -------
-        rnavigate.plots.Circle
-            object containing matplotlib figure and axes with additional plotting and
-            file saving methods
+    rnavigate.plots.Circle
+        object containing matplotlib figure and axes with additional plotting and
+        file saving methods
 ```
 
 ## rnavigate.plot_disthist
@@ -600,50 +624,50 @@ plot_disthist(samples, structure, interactions, bg_interactions=None, labels=Non
     
     Parameters
     ----------
-        samples : list of rnavigate Samples
-            Samples from which to retreive data
-            There will be one panel for each sample unless same_axis is True
-        structure : data keyword string or data object
-            secondary structure or 3D structure to calculate inter-nucleotide
-            contact distance or 3D distance, respectively
-        interactions : one of the formats below, defaults to None
-            format 1 (data or data keyword)
-                Interactions used to calculate distance histogram, no filtering
-            format 2 (dictionary)
-                e.g. {"interactions": format 1}
-                additional filtering options can be added to the dictionary
-            format 3 (list of format 2 dictionaries)
-                This format allows multiple filtering schemes to be applied,
-                each will be plotted on a seperate axis
-        bg_interactions : one of the formats below, defaults to None
-            format 1 (data or data keyword)
-                Interactions to calculate background distance histogram, no
-                filtering is performed
-            format 2 (dictionary)
-                e.g. {"interactions": format 1}
-                additional filtering options can be added to the dictionary
-            if not provided, background distance histogram is calculated from
-            all pairwise distances in structure
-        labels : list of strings, defaults to sample.sample for each sample
-            Labels to be used as titles, must be same length as samples list
-            Defaults to sample.sample for each sample
-        atom : string or dictionary, defaults to "O2'"
-            from which atoms to calculate distances
-            for DMS reactive atoms (N1 for A and G, N3 for U and C) use "DMS"
-            use a dictionary to specify a different atom for each nucleotide
-                e.g. "DMS" == {"A": "N1", "G": "N1", "U": "N3", "C": "N3"}
-        rows : integer, defaults to None (determined automatically)
-            number of rows of plots
-        cols : integer, defaults to None (determined automatically)
-            number of columns of plots
-        plot_kwargs : dictionary, defaults to {}
-            Keyword-arguments passed to matplotlib.pyplot.subplots
+    samples : list of rnavigate Samples
+        Samples from which to retreive data
+        There will be one panel for each sample unless same_axis is True
+    structure : data keyword string or data object
+        secondary structure or 3D structure to calculate inter-nucleotide
+        contact distance or 3D distance, respectively
+    interactions : one of the formats below, defaults to None
+        format 1 (data or data keyword)
+            Interactions used to calculate distance histogram, no filtering
+        format 2 (dictionary)
+            e.g. {"interactions": format 1}
+            additional filtering options can be added to the dictionary
+        format 3 (list of format 2 dictionaries)
+            This format allows multiple filtering schemes to be applied,
+            each will be plotted on a seperate axis
+    bg_interactions : one of the formats below, defaults to None
+        format 1 (data or data keyword)
+            Interactions to calculate background distance histogram, no
+            filtering is performed
+        format 2 (dictionary)
+            e.g. {"interactions": format 1}
+            additional filtering options can be added to the dictionary
+        if not provided, background distance histogram is calculated from
+        all pairwise distances in structure
+    labels : list of strings, defaults to sample.sample for each sample
+        Labels to be used as titles, must be same length as samples list
+        Defaults to sample.sample for each sample
+    atom : string or dictionary, defaults to "O2'"
+        from which atoms to calculate distances
+        for DMS reactive atoms (N1 for A and G, N3 for U and C) use "DMS"
+        use a dictionary to specify a different atom for each nucleotide
+            e.g. "DMS" == {"A": "N1", "G": "N1", "U": "N3", "C": "N3"}
+    rows : integer, defaults to None (determined automatically)
+        number of rows of plots
+    cols : integer, defaults to None (determined automatically)
+        number of columns of plots
+    plot_kwargs : dictionary, defaults to {}
+        Keyword-arguments passed to matplotlib.pyplot.subplots
     
     Returns
     -------
-        rnavigate.plots.DistHist
-            object containing matplotlib figure and axes with additional plotting and
-            file saving methods
+    rnavigate.plots.DistHist
+        object containing matplotlib figure and axes with additional plotting and
+        file saving methods
 ```
 
 ## rnavigate.plot_heatmap
@@ -660,65 +684,65 @@ plot_heatmap(samples, sequence, structure=None, interactions=None, regions=None,
     
     Parameters
     ----------
-        samples : list of rnavigate Samples
-            samples used to retrieve data
-        sequence : data keyword string, data object, or sequence string
-            All data are mapped to this sequence before plotting
-        structure : data keyword string or data object, defaults to None
-            secondary structure or 3D structure used to plot contour lines
-            contour lines are drawn according to levels argument
-        interactions : one of the formats below, defaults to None
-            format 1 (data or data keyword)
-                Interactions to plot as a heatmap, no filtering performed
-            format 2 (dictionary)
-                e.g. {"interactions": format 1}
-                additional filtering options can be added to the dictionary
-            format 3 (list of format 2 dictionaries)
-                This format allows multiple filtering schemes to be applied,
-                each will be plotted on a seperate axis
-        regions : list of lists of 4 integers, defaults to None (no boxes)
-            each inner list defines two regions of the RNA that are interacting
-            a box will be drawn around this interaction on the heatmap
-            e.g. [[10, 20, 50, 60], [35, 45, 70, 80]] draws 2 boxes
-                the first box will connect nucleotides 10-20 and 50-60
-                the second box will connect nucleotides 35-45 and 70-80
-        labels : list of strings, defaults to sample.sample for each sample
-            Labels to be used as titles, must be same length as samples list
-        levels : list of floats, defaults to [5] contact distance or [20] 3D distance
-            contours are drawn separating nucleotides above and below these
-            distances
-            if structure argument is a secondary structure
-                distance refers to contact distance
-            if structure argument is a 3D structure
-                distance refers to spatial distance in angstroms
-        interpolation : string, defaults to "nearest"
-            one of matplotlib's interpolations for heatmap (used with imshow)
-            "nearest" works well for shorter RNAs (under 300 nt)
-            "none" works well for longer RNAs (over 1200 nt)
-        atom : string or dictionary, defaults to "O2'"
-            from which atoms to calculate distances
-            for DMS reactive atoms (N1 for A and G, N3 for U and C) use "DMS"
-            use a dictionary to specify a different atom for each nucleotide
-                e.g. "DMS" == {"A": "N1", "G": "N1", "U": "N3", "C": "N3"}
-        plot_type : "heatmap" or "kde", defaults to "heatmap"
-            how to plot interactions data
-            "heatmap" will plot raw data, each interaction is a pixel in a grid
-            "kde" will calculate a kernel density estimate and plot 5 levels
-        weights : string, defaults to None (no weights)
-            weights to be used in kernel density estimation
-            must be a column of interactions data
-        rows : integer, defaults to None (determined automatically)
-            number of rows of plots
-        cols : integer, defaults to None (determined automatically)
-            number of columns of plots
-        plot_kwargs : dictionary, defaults to {}
-            Keyword-arguments passed to matplotlib.pyplot.subplots
+    samples : list of rnavigate Samples
+        samples used to retrieve data
+    sequence : data keyword string, data object, or sequence string
+        All data are mapped to this sequence before plotting
+    structure : data keyword string or data object, defaults to None
+        secondary structure or 3D structure used to plot contour lines
+        contour lines are drawn according to levels argument
+    interactions : one of the formats below, defaults to None
+        format 1 (data or data keyword)
+            Interactions to plot as a heatmap, no filtering performed
+        format 2 (dictionary)
+            e.g. {"interactions": format 1}
+            additional filtering options can be added to the dictionary
+        format 3 (list of format 2 dictionaries)
+            This format allows multiple filtering schemes to be applied,
+            each will be plotted on a seperate axis
+    regions : list of lists of 4 integers, defaults to None (no boxes)
+        each inner list defines two regions of the RNA that are interacting
+        a box will be drawn around this interaction on the heatmap
+        e.g. [[10, 20, 50, 60], [35, 45, 70, 80]] draws 2 boxes
+            the first box will connect nucleotides 10-20 and 50-60
+            the second box will connect nucleotides 35-45 and 70-80
+    labels : list of strings, defaults to sample.sample for each sample
+        Labels to be used as titles, must be same length as samples list
+    levels : list of floats, defaults to [5] contact distance or [20] 3D distance
+        contours are drawn separating nucleotides above and below these
+        distances
+        if structure argument is a secondary structure
+            distance refers to contact distance
+        if structure argument is a 3D structure
+            distance refers to spatial distance in angstroms
+    interpolation : string, defaults to "nearest"
+        one of matplotlib's interpolations for heatmap (used with imshow)
+        "nearest" works well for shorter RNAs (under 300 nt)
+        "none" works well for longer RNAs (over 1200 nt)
+    atom : string or dictionary, defaults to "O2'"
+        from which atoms to calculate distances
+        for DMS reactive atoms (N1 for A and G, N3 for U and C) use "DMS"
+        use a dictionary to specify a different atom for each nucleotide
+            e.g. "DMS" == {"A": "N1", "G": "N1", "U": "N3", "C": "N3"}
+    plot_type : "heatmap" or "kde", defaults to "heatmap"
+        how to plot interactions data
+        "heatmap" will plot raw data, each interaction is a pixel in a grid
+        "kde" will calculate a kernel density estimate and plot 5 levels
+    weights : string, defaults to None (no weights)
+        weights to be used in kernel density estimation
+        must be a column of interactions data
+    rows : integer, defaults to None (determined automatically)
+        number of rows of plots
+    cols : integer, defaults to None (determined automatically)
+        number of columns of plots
+    plot_kwargs : dictionary, defaults to {}
+        Keyword-arguments passed to matplotlib.pyplot.subplots
     
     Returns
     -------
-        rnavigate.plots.Heatmap
-            object containing matplotlib figure and axes with additional plotting and
-            file saving methods
+    rnavigate.plots.Heatmap
+        object containing matplotlib figure and axes with additional plotting and
+        file saving methods
 ```
 
 ## rnavigate.plot_linreg
@@ -735,54 +759,54 @@ plot_linreg(samples, profile, sequence=None, structure=None, annotations=None, l
     
     Parameters
     ----------
-        samples : list of rnavigate Samples
-            samples used to retrieve data
-        profile : data keyword string or data object
-            per-nucleotide data to perform linear regression
-            all data are mapped to the sequence of the profile data from the
-            first sample before plotting, unless sequence is supplied
-        sequence : data keyword str, data obj, or sequence str, defaults to None
-            a sequence from which to align all profiles
-            if a data keyword, uses data from the first sample
-        structure : data keyword string or data object, defaults to None
-            Structure used for coloring if colors argument is "structure"
-        annotations : list of data keyword strings or data objects, defaults to []
-            Annotations used for coloring if colors argument is "annotations"
-        labels : list of strings, defaults to sample.sample for each sample
-            list containing Labels to be used in plot legends
-        kde : bool, defaults to False
-            whether to plot kde (density) instead of a scatter plot
-        scale : "linear" or "log", defaults to "linear"
-            "linear" performs regression on raw values, displays linear units
-            "log" performs regression on log10(values), displays log10 units
-        regression : "pearson" or "spearman", defaults to "pearson"
-            "pearson" calculates Pearson R-squared (standard)
-            "spearman" calculates Spearman R-squared (rank-order)
-        colors : string or list of colors, defaults to "sequence"
-            value options and what the colors represent:
-                "sequence": nucleotide identity
-                "position": position in sequence
-                "annotations": sequence annotations
-                "profile": per-nucleotide data from profile
-                    profile argument must be provided
-                "structure": base-pairing status
-                matplotlib color: all positions plotted in this color
-                array of colors: a different color for each position
-                    must be the same length as structure
-        column : string, defaults to profile.metric
-            column name of values from profile to use in regression
-        region : list of 2 integers, defaults to [1, length of sequence]
-            start and end nucleotide positions to include. 1-indexed, inclusive
-        colorbars : bool, defaults to ``True``
-            Whether to plot colorbars for scatter plot colors
-        plot_kwargs : dict, defaults to {}
-            Keyword-arguments passed to matplotlib.pyplot.subplots
+    samples : list of rnavigate Samples
+        samples used to retrieve data
+    profile : data keyword string or data object
+        per-nucleotide data to perform linear regression
+        all data are mapped to the sequence of the profile data from the
+        first sample before plotting, unless sequence is supplied
+    sequence : data keyword str, data obj, or sequence str, defaults to None
+        a sequence from which to align all profiles
+        if a data keyword, uses data from the first sample
+    structure : data keyword string or data object, defaults to None
+        Structure used for coloring if colors argument is "structure"
+    annotations : list of data keyword strings or data objects, defaults to []
+        Annotations used for coloring if colors argument is "annotations"
+    labels : list of strings, defaults to sample.sample for each sample
+        list containing Labels to be used in plot legends
+    kde : bool, defaults to False
+        whether to plot kde (density) instead of a scatter plot
+    scale : "linear" or "log", defaults to "linear"
+        "linear" performs regression on raw values, displays linear units
+        "log" performs regression on log10(values), displays log10 units
+    regression : "pearson" or "spearman", defaults to "pearson"
+        "pearson" calculates Pearson R-squared (standard)
+        "spearman" calculates Spearman R-squared (rank-order)
+    colors : string or list of colors, defaults to "sequence"
+        value options and what the colors represent:
+            "sequence": nucleotide identity
+            "position": position in sequence
+            "annotations": sequence annotations
+            "profile": per-nucleotide data from profile
+                profile argument must be provided
+            "structure": base-pairing status
+            matplotlib color: all positions plotted in this color
+            array of colors: a different color for each position
+                must be the same length as structure
+    column : string, defaults to profile.metric
+        column name of values from profile to use in regression
+    region : list of 2 integers, defaults to [1, length of sequence]
+        start and end nucleotide positions to include. 1-indexed, inclusive
+    colorbars : bool, defaults to ``True``
+        Whether to plot colorbars for scatter plot colors
+    plot_kwargs : dict, defaults to {}
+        Keyword-arguments passed to matplotlib.pyplot.subplots
     
     Returns
     -------
-        rnavigate.plots.LinReg
-            object containing matplotlib figure and axes with additional plotting and
-            file saving methods
+    rnavigate.plots.LinReg
+        object containing matplotlib figure and axes with additional plotting and
+        file saving methods
 ```
 
 ## rnavigate.plot_mol
@@ -801,79 +825,79 @@ plot_mol(samples, structure, profile=None, interactions=None, labels=None, style
     
     Parameters
     ----------
-        samples : list of rnavigate Samples
-            samples used to retrieve data
-        structure : data keyword string or data object
-            3D structure to view as interactive molecule
-            All data are mapped to this sequence before plotting
-        profile : data keyword string or data object, defaults to None
-            Profile used to color nucleotides if colors="profile"
-        interactions : one of the formats below, defaults to None
-            format 1 (data or data keyword)
-                Interactions to plot on molecule, no filtering performed
-            format 2 (dictionary)
-                e.g. {"interactions": format 1}
-                additional filtering options can be added to the dictionary
-            format 3 (list of format 2 dictionaries)
-                This format allows multiple filtering schemes to be applied,
-                each will be plotted on a seperate axis
-        labels : list of strings, defaults to sample.sample for each sample
-            list containing Labels to be used in plot titles
-        style : "cartoon", "cross", "line", "sphere" or "stick", defaults to "cartoon"
-            sets the py3Dmol style for drawing the molecule
-        hide_cylinders : bool, defaults to False
-            whether to hide nucleotide cylinders (only shows backbone ribbon)
-        colors : string or list of colors, defaults to "grey"
-            "sequence": color by nucleotide identity
-            "position": color by position in sequence
-            "annotations": color by sequence annotations from `annotations`
-            "profile": color by per-nucleotide data from `profile`
-            "structure": color by base-pairing status
-            matplotlib color: all positions plotted in this color
-            array of colors: a different color for each position
-                must be the same length as structure
-        atom : string or dictionary, defaults to "O2'"
-            which atoms to draw interactions between
-            for DMS reactive atoms (N1 for A and G, N3 for U and C) use "DMS"
-            use a dictionary to specify a different atom for each nucleotide
-                e.g. "DMS" == {"A": "N1", "G": "N1", "U": "N3", "C": "N3"}
-        rotation : dictionary, defaults to {"x": 0, "y": 0, "z": 0}
-            axis-degrees pairs for setting the starting orientation of the
-            molecule, only the axes to be rotated are needed
-            e.g. {"x": 180} flips the molecule on the x-axis
-        orientation : list of 9 floats, defaults to None
-            set the precise starting orientation
-            see get_orientation for more details
-        get_orientation : bool, defaults to False
-            allows getting the orientation for use with orientation argument
-            all other arguments will be ignored and a larger, single panel view
-            window is displayed with no title
-                1. adjust the molecule to the desired orientation
-                2. click on the molecule to display the orientation vector
-                3. copy this orientation vector (manually)
-                4. provide this list of values to the orientation argument
-        title : bool, defaults to True
-            whether to display the title
-        colorbars : bool, defaults to True
-            Whether to plot color scales for all plot elements
-        width : integer, defaults to 400
-            width of view window in pixels
-        height : integer, defaults to 400
-            height of view window in pixels
-        rows : integer, defaults to None (set automatically)
-            the number of rows in the view window
-        cols : integer, defaults to None (set automatically)
-            the number of columns in the view window
-        background_alpha : float, defaults to 1 (completely opaque)
-            the opacity of the view window, must be between 0 and 1
-        show : bool, defaults to True
-            whether to display the viewer object
+    samples : list of rnavigate Samples
+        samples used to retrieve data
+    structure : data keyword string or data object
+        3D structure to view as interactive molecule
+        All data are mapped to this sequence before plotting
+    profile : data keyword string or data object, defaults to None
+        Profile used to color nucleotides if colors="profile"
+    interactions : one of the formats below, defaults to None
+        format 1 (data or data keyword)
+            Interactions to plot on molecule, no filtering performed
+        format 2 (dictionary)
+            e.g. {"interactions": format 1}
+            additional filtering options can be added to the dictionary
+        format 3 (list of format 2 dictionaries)
+            This format allows multiple filtering schemes to be applied,
+            each will be plotted on a seperate axis
+    labels : list of strings, defaults to sample.sample for each sample
+        list containing Labels to be used in plot titles
+    style : "cartoon", "cross", "line", "sphere" or "stick", defaults to "cartoon"
+        sets the py3Dmol style for drawing the molecule
+    hide_cylinders : bool, defaults to False
+        whether to hide nucleotide cylinders (only shows backbone ribbon)
+    colors : string or list of colors, defaults to "grey"
+        "sequence": color by nucleotide identity
+        "position": color by position in sequence
+        "annotations": color by sequence annotations from `annotations`
+        "profile": color by per-nucleotide data from `profile`
+        "structure": color by base-pairing status
+        matplotlib color: all positions plotted in this color
+        array of colors: a different color for each position
+            must be the same length as structure
+    atom : string or dictionary, defaults to "O2'"
+        which atoms to draw interactions between
+        for DMS reactive atoms (N1 for A and G, N3 for U and C) use "DMS"
+        use a dictionary to specify a different atom for each nucleotide
+            e.g. "DMS" == {"A": "N1", "G": "N1", "U": "N3", "C": "N3"}
+    rotation : dictionary, defaults to {"x": 0, "y": 0, "z": 0}
+        axis-degrees pairs for setting the starting orientation of the
+        molecule, only the axes to be rotated are needed
+        e.g. {"x": 180} flips the molecule on the x-axis
+    orientation : list of 9 floats, defaults to None
+        set the precise starting orientation
+        see get_orientation for more details
+    get_orientation : bool, defaults to False
+        allows getting the orientation for use with orientation argument
+        all other arguments will be ignored and a larger, single panel view
+        window is displayed with no title
+            1. adjust the molecule to the desired orientation
+            2. click on the molecule to display the orientation vector
+            3. copy this orientation vector (manually)
+            4. provide this list of values to the orientation argument
+    title : bool, defaults to True
+        whether to display the title
+    colorbars : bool, defaults to True
+        Whether to plot color scales for all plot elements
+    width : integer, defaults to 400
+        width of view window in pixels
+    height : integer, defaults to 400
+        height of view window in pixels
+    rows : integer, defaults to None (set automatically)
+        the number of rows in the view window
+    cols : integer, defaults to None (set automatically)
+        the number of columns in the view window
+    background_alpha : float, defaults to 1 (completely opaque)
+        the opacity of the view window, must be between 0 and 1
+    show : bool, defaults to True
+        whether to display the viewer object
     
     Returns
     -------
-        rnavigate.plots.Mol:
-            object containing py3dmol viewer with additional plotting and file saving
-            methods
+    rnavigate.plots.Mol:
+        object containing py3dmol viewer with additional plotting and file saving
+        methods
 ```
 
 ## rnavigate.plot_ntdist
@@ -891,22 +915,22 @@ plot_ntdist(samples, profile, labels=None, column=None, plot_kwargs=None)
     
     Parameters
     ----------
-        samples : list of rnavigate Samples
-            samples used to retrieve data
-        profile : data keyword string or data object
-            per-nucleotide data to plot per-nt-identity distributions
-        labels : list of strings, defaults to sample.sample for each sample
-            list containing Labels to be used in plot legends
-        column : string, defaults to profile.metric
-            which column of data to use for KDE
-        plot_kwargs : dict, defaults to {}
-            Keyword-arguments passed to matplotlib.pyplot.subplots
+    samples : list of rnavigate Samples
+        samples used to retrieve data
+    profile : data keyword string or data object
+        per-nucleotide data to plot per-nt-identity distributions
+    labels : list of strings, defaults to sample.sample for each sample
+        list containing Labels to be used in plot legends
+    column : string, defaults to profile.metric
+        which column of data to use for KDE
+    plot_kwargs : dict, defaults to {}
+        Keyword-arguments passed to matplotlib.pyplot.subplots
     
     Returns
     -------
-        rnavigate.plots.NucleotideDistribution
-            object containing matplotlib figure and axes with additional
-            plotting and file saving methods
+    rnavigate.plots.NucleotideDistribution
+        object containing matplotlib figure and axes with additional
+        plotting and file saving methods
 ```
 
 ## rnavigate.plot_profile
@@ -921,42 +945,42 @@ plot_profile(samples, profile, sequence=None, annotations=None, domains=None, la
     
     Parameters
     ----------
-        samples : list of rnavigate Samples
-            samples used to retrieve data
-        profile : data keyword string or data object
-            Profile from which values will be plotted
-        sequence : data keyword str, data obj, or sequence str, defaults to `profile`
-            All data are mapped to this sequence before plotting
-            If a data keyword, data from the first sample will be used
-        annotations : list of data keyword strings or data objects, defaults to []
-            Annotations used to highlight regions or sites of interest
-        domains : data keyword string or data object, defaults to None
-            domains to label along x-axis
-        labels : list of strings, defaults to sample.sample for each sample
-            list containing Labels to be used in plot legends
-        nt_ticks : tuple of two integers, defaults to (20, 5)
-            first integer is the gap between major tick marks
-            second integer is the gap between minor tick marks
-        column : string, defaults to profile.metric
-            column name of values from profile to plot
-        plot_error : bool, defaults to True
-            Whether to plot error bars, values are determined by profile.metric
-        annotations_mode : "track" or "bars", defaults to "track"
-            "track" will highlight annotations along the x-axis
-            "bars" will use a vertical transparent bar over the plot
-        seqbar : bool, defaults to ``True``
-            whether to display the sequence along the x-axis
-        region : list of 2 integers, defaults to [1, length of sequence]
-            start and end positions to plot. 1-indexed, inclusive.
-        colorbars : bool, defaults to True
-            Whether to plot color scales for per-nucleotide data
-        plot_kwargs : dictionary, defaults to {}
-            Keyword-arguments passed to matplotlib.pyplot.subplots
+    samples : list of rnavigate Samples
+        samples used to retrieve data
+    profile : data keyword string or data object
+        Profile from which values will be plotted
+    sequence : data keyword str, data obj, or sequence str, defaults to `profile`
+        All data are mapped to this sequence before plotting
+        If a data keyword, data from the first sample will be used
+    annotations : list of data keyword strings or data objects, defaults to []
+        Annotations used to highlight regions or sites of interest
+    domains : data keyword string or data object, defaults to None
+        domains to label along x-axis
+    labels : list of strings, defaults to sample.sample for each sample
+        list containing Labels to be used in plot legends
+    nt_ticks : tuple of two integers, defaults to (20, 5)
+        first integer is the gap between major tick marks
+        second integer is the gap between minor tick marks
+    column : string, defaults to profile.metric
+        column name of values from profile to plot
+    plot_error : bool, defaults to True
+        Whether to plot error bars, values are determined by profile.metric
+    annotations_mode : "track" or "bars", defaults to "track"
+        "track" will highlight annotations along the x-axis
+        "bars" will use a vertical transparent bar over the plot
+    seqbar : bool, defaults to ``True``
+        whether to display the sequence along the x-axis
+    region : list of 2 integers, defaults to [1, length of sequence]
+        start and end positions to plot. 1-indexed, inclusive.
+    colorbars : bool, defaults to True
+        Whether to plot color scales for per-nucleotide data
+    plot_kwargs : dictionary, defaults to {}
+        Keyword-arguments passed to matplotlib.pyplot.subplots
     
     Returns
     -------
-        rnavigate.plots.Profile
-            the Profile plot object
+    rnavigate.plots.Profile
+        the Profile plot object
 ```
 
 ## rnavigate.plot_qc
@@ -973,18 +997,18 @@ plot_qc(samples, profile, labels=None)
     
     Parameters
     ----------
-        samples : list of rnavigate.Sample
-            samples to retrieve data from
-        profile : data keyword string or data object
-            ShapeMaP or similar data for plotting reactivity distributions
-            Must contain data from ShapeMapper log file
-        labels : list of str, defaults to sample.sample for each sample in `samples`
-            labels to be used on legends, must be same length as samples list
+    samples : list of rnavigate.Sample
+        samples to retrieve data from
+    profile : data keyword string or data object
+        ShapeMaP or similar data for plotting reactivity distributions
+        Must contain data from ShapeMapper log file
+    labels : list of str, defaults to sample.sample for each sample in `samples`
+        labels to be used on legends, must be same length as samples list
     
     Returns
     -------
-        rnavigate.plots.QC
-            the quality control plot object
+    rnavigate.plots.QC
+        the quality control plot object
 ```
 
 ## rnavigate.plot_roc
@@ -1003,25 +1027,25 @@ plot_roc(samples, structure, profile, labels=None, nts='AUCG', plot_kwargs=None)
     
     Parameters
     ----------
-        samples : list of rnavigate Samples
-            samples used to retrieve data
-        structure : data keyword string or data object
-            secondary structure to use as classifier (paired or unpaired)
-            profile data for each sample is first aligned to this structure
-        profile : data keyword string or data object
-            per-nucleotide data to perform ROC analysis
-        labels : list of strings, defaults to sample.sample for each sample
-            list containing Labels to be used in plot legends
-        nts : string, defaults to "AUCG"
-            which nucleotides to plot nucleotide-type ROC plots
-        plot_kwargs : dict, defaults to {}
-            Keyword-arguments passed to matplotlib.pyplot.subplots
+    samples : list of rnavigate Samples
+        samples used to retrieve data
+    structure : data keyword string or data object
+        secondary structure to use as classifier (paired or unpaired)
+        profile data for each sample is first aligned to this structure
+    profile : data keyword string or data object
+        per-nucleotide data to perform ROC analysis
+    labels : list of strings, defaults to sample.sample for each sample
+        list containing Labels to be used in plot legends
+    nts : string, defaults to "AUCG"
+        which nucleotides to plot nucleotide-type ROC plots
+    plot_kwargs : dict, defaults to {}
+        Keyword-arguments passed to matplotlib.pyplot.subplots
     
     Returns
     -------
-        rnavigate.plots.ROC
-            object containing matplotlib figure and axes with additional plotting and
-            file saving methods
+    rnavigate.plots.ROC
+        object containing matplotlib figure and axes with additional plotting and
+        file saving methods
 ```
 
 ## rnavigate.plot_shapemapper
@@ -1037,19 +1061,19 @@ plot_shapemapper(sample, profile, label=None, panels=None)
     
     Parameters
     ----------
-        sample : rnavigate Sample
-            The sample from which data profile and label will be retreived
-        profile : data keyword string or data object
-            ShapeMaP or similar data for plotting profiles
-        label : str, defaults to sample.sample
-            A label to use as the title of the figure
-        panels : list of str, defaults to ["profile", "rates", "depth"]
-            Which panels to include: options are "profile", "rates", and "depth"
+    sample : rnavigate Sample
+        The sample from which data profile and label will be retreived
+    profile : data keyword string or data object
+        ShapeMaP or similar data for plotting profiles
+    label : str, defaults to sample.sample
+        A label to use as the title of the figure
+    panels : list of str, defaults to ["profile", "rates", "depth"]
+        Which panels to include: options are "profile", "rates", and "depth"
     
     Returns
     -------
-        rnavigate.plots.SM
-            the ShapeMapper2 plot object
+    rnavigate.plots.SM
+        the ShapeMapper2 plot object
 ```
 
 ## rnavigate.plot_skyline
@@ -1064,40 +1088,40 @@ plot_skyline(samples, profile, sequence=None, annotations=None, domains=None, la
     
     Parameters
     ----------
-        samples : list of rnavigate Samples
-            samples used to retrieve data
-        profile : data keyword string or data object
-            Profile from which values will be plotted
-        sequence : data keyword str, data obj, or sequence str, defaults to `profile`
-            All data are mapped to this sequence before plotting
-            If a data keyword, data from the first sample will be used
-        annotations : list of data keyword strings or data objects, defaults to []
-            Annotations used to highlight regions or sites of interest
-        domains : data keyword string or data object, defaults to None
-            domains to label along x-axis
-        labels : list of str, defaults to sample.sample for each sample
-            list containing Labels to be used in plot legends
-        nt_ticks : tuple of two integers, defaults to (20, 5)
-            first integer is the gap between major tick marks
-            second integer is the gap between minor tick marks
-        columns : string or list of strings, defaults to profile.metric
-            columns names of values from profile to plot
-        errors : string or list of strings, defaults to None (no error bars)
-            column names of error values for plotting error bars
-        annotations_mode : "track" or "bars", defaults to "track"
-            "track" will highlight annotations along the x-axis
-            "bars" will use a vertical transparent bar over the plot
-        seqbar : bool, defaults to ``True``
-            whether to display the sequence along the x-axis
-        region : list of 2 integers, defaults to [1, length of sequence]
-            start and end positions to plot. 1-indexed, inclusive.
-        plot_kwargs : dictionary, defaults to {}
-            Keyword-arguments passed to matplotlib.pyplot.subplots
+    samples : list of rnavigate Samples
+        samples used to retrieve data
+    profile : data keyword string or data object
+        Profile from which values will be plotted
+    sequence : data keyword str, data obj, or sequence str, defaults to `profile`
+        All data are mapped to this sequence before plotting
+        If a data keyword, data from the first sample will be used
+    annotations : list of data keyword strings or data objects, defaults to []
+        Annotations used to highlight regions or sites of interest
+    domains : data keyword string or data object, defaults to None
+        domains to label along x-axis
+    labels : list of str, defaults to sample.sample for each sample
+        list containing Labels to be used in plot legends
+    nt_ticks : tuple of two integers, defaults to (20, 5)
+        first integer is the gap between major tick marks
+        second integer is the gap between minor tick marks
+    columns : string or list of strings, defaults to profile.metric
+        columns names of values from profile to plot
+    errors : string or list of strings, defaults to None (no error bars)
+        column names of error values for plotting error bars
+    annotations_mode : "track" or "bars", defaults to "track"
+        "track" will highlight annotations along the x-axis
+        "bars" will use a vertical transparent bar over the plot
+    seqbar : bool, defaults to ``True``
+        whether to display the sequence along the x-axis
+    region : list of 2 integers, defaults to [1, length of sequence]
+        start and end positions to plot. 1-indexed, inclusive.
+    plot_kwargs : dictionary, defaults to {}
+        Keyword-arguments passed to matplotlib.pyplot.subplots
     
     Returns
     -------
-        rnavigate.plots.Skyline
-            the skyline plot object
+    rnavigate.plots.Skyline
+        the skyline plot object
 ```
 
 ## rnavigate.plot_ss
@@ -1115,72 +1139,72 @@ plot_ss(samples, structure, profile=None, annotations=None, interactions=None, i
     
     Parameters
     ----------
-        samples : list of rnavigate Samples
-            samples used to retrieve data
-        structure : data keyword string or data object
-            secondary structure to plot as arcs
-            All data are mapped to this sequence before plotting
-        profile : data keyword string or data object, defaults to None
-            Profile used for coloring if "profile" used in colors dictionary
-        annotations : list of data keyword strings or data objects, defaults to []
-            Annotations used to highlight regions or sites of interest
-        interactions : one of the formats below, defaults to None
-            format 1 (data or data keyword)
-                Interactions to plot on secondary structure, no filtering
-            format 2 (dictionary)
-                e.g. {"interactions": format 1}
-                additional filtering options can be added to the dictionary
-            format 3 (list of format 2 dictionaries)
-                This format allows multiple filtering schemes to be applied,
-                each will be plotted on a seperate axis
-        interactions2 : one of the formats below, defaults to None
-            format 1 (data or data keyword)
-                Interactions to plot on secondary structure, no filtering
-            format 2 (dictionary)
-                e.g. {"interactions": format 1}
-                additional filtering options can be added to the dictionary
-        labels : list of strings, defaults to sample.sample for each sample
-            list containing Labels to be used in plot legends
-            Defaults to sample.sample for each sample
-        colors : dictionary, optional
-            a dictionary of element: value pairs that determines how colors
-            will be applied to each plot element and if that element is plotted
-            only the elements you wish to change need to be included
-            value options and what the colors represent:
-                None: don"t plot this elelement
-                "sequence": nucleotide identity
-                "position": position in sequence
-                "annotations": sequence annotations
-                "profile": per-nucleotide data from profile
-                    profile argument must be provided
-                "structure": base-pairing status
-                matplotlib color: all positions plotted in this color
-                array of colors: a different color for each position
-                    must be the same length as structure
-            "sequence" may also use "contrast" which automatically chooses
-                white or black, which ever contrasts better with "nucleotide"
-                color
-            Defaults to {"sequence": None,
-                         "nucleotides": "sequence",
-                         "structure": "grey",
-                         "basepairs": "grey"}
-        nt_ticks : integer, defaults to None (no labels)
-            gap between major tick marks
-        bp_style : "dotted", "line", or "conventional", defaults to "dotted"
-            "dotted" plots basepairs as a dotted line
-            "line" plots basepairs as a solid line
-            "conventional" plots basepairs using Leontis-Westhof conventions
-                for canonical and wobble pairs ("G-A" plotted as solid dot)
-        colorbars : bool, defaults to True
-            Whether to plot color scales for all plot elements
-        plot_kwargs : dict, defaults to {}
-            Keyword-arguments passed to matplotlib.pyplot.subplots
+    samples : list of rnavigate Samples
+        samples used to retrieve data
+    structure : data keyword string or data object
+        secondary structure to plot as arcs
+        All data are mapped to this sequence before plotting
+    profile : data keyword string or data object, defaults to None
+        Profile used for coloring if "profile" used in colors dictionary
+    annotations : list of data keyword strings or data objects, defaults to []
+        Annotations used to highlight regions or sites of interest
+    interactions : one of the formats below, defaults to None
+        format 1 (data or data keyword)
+            Interactions to plot on secondary structure, no filtering
+        format 2 (dictionary)
+            e.g. {"interactions": format 1}
+            additional filtering options can be added to the dictionary
+        format 3 (list of format 2 dictionaries)
+            This format allows multiple filtering schemes to be applied,
+            each will be plotted on a seperate axis
+    interactions2 : one of the formats below, defaults to None
+        format 1 (data or data keyword)
+            Interactions to plot on secondary structure, no filtering
+        format 2 (dictionary)
+            e.g. {"interactions": format 1}
+            additional filtering options can be added to the dictionary
+    labels : list of strings, defaults to sample.sample for each sample
+        list containing Labels to be used in plot legends
+        Defaults to sample.sample for each sample
+    colors : dictionary, optional
+        a dictionary of element: value pairs that determines how colors
+        will be applied to each plot element and if that element is plotted
+        only the elements you wish to change need to be included
+        value options and what the colors represent:
+            None: don"t plot this elelement
+            "sequence": nucleotide identity
+            "position": position in sequence
+            "annotations": sequence annotations
+            "profile": per-nucleotide data from profile
+                profile argument must be provided
+            "structure": base-pairing status
+            matplotlib color: all positions plotted in this color
+            array of colors: a different color for each position
+                must be the same length as structure
+        "sequence" may also use "contrast" which automatically chooses
+            white or black, which ever contrasts better with "nucleotide"
+            color
+        Defaults to {"sequence": None,
+                        "nucleotides": "sequence",
+                        "structure": "grey",
+                        "basepairs": "grey"}
+    nt_ticks : integer, defaults to None (no labels)
+        gap between major tick marks
+    bp_style : "dotted", "line", or "conventional", defaults to "dotted"
+        "dotted" plots basepairs as a dotted line
+        "line" plots basepairs as a solid line
+        "conventional" plots basepairs using Leontis-Westhof conventions
+            for canonical and wobble pairs ("G-A" plotted as solid dot)
+    colorbars : bool, defaults to True
+        Whether to plot color scales for all plot elements
+    plot_kwargs : dict, defaults to {}
+        Keyword-arguments passed to matplotlib.pyplot.subplots
     
     Returns
     -------
-        rnavigate.plots.SS plot
-            object containing matplotlib figure and axes with additional plotting and
-            file saving methods
+    rnavigate.plots.SS plot
+        object containing matplotlib figure and axes with additional plotting and
+        file saving methods
 ```
 
 ## rnavigate.analysis
@@ -1196,15 +1220,23 @@ class LogCompare(builtins.object)
  |  LogCompare(samples1, samples2, name1, name2, data='profile', region='all')
  |  
  |  Compares 2 experimental samples, given replicates of each sample.
- |  First, the log10(modified/untreated) rate is calculated. These values a
- |  scaled to minimize the median of the absolute value of the difference
- |  between samples. The standard error in these values is computed for each
- |  replicate. Z-scores between samples are calculated. The results are plotted
- |  in two panels: (1) the scaled log10(modified/untreated) rate for each
- |  sample with error bars, and (2) the difference between samples, colored by
- |  z-score.
  |  
- |  Methods:
+ |  Algorithm
+ |  ---------
+ |  1. Calculate the log10(modified/untreated) rate for each replicate.
+ |  2. Scale these values to minimize the median of the absolute difference
+ |  between samples.
+ |  3. Calculate the standard error in these values for each replicate.
+ |  4. Calculate the difference between samples.
+ |  5. Calculate z-scores between samples.
+ |  6. Plot the results in two panels:
+ |      (1) the scaled log10(modified/untreated) rate for each sample with
+ |      error bars, and
+ |      (2) the difference between samples, colored by z-score.
+ |  
+ |  Methods
+ |  -------
+ |  
  |      __init__: computes log10(modified/untreated) rates, rescales the data,
  |          then calls make_plot()
  |      get_profile_sequence: gets log10(m/u) rate and sequence from sample
@@ -1303,17 +1335,25 @@ class LowSS(rnavigate.rnavigate.Sample)
  |  low Shannon entropy regions (LowSS) given a sample containing SHAPE
  |  reactivities, pairing probabilities, and MFE structure.
  |  
- |  Methods:
- |      __init__: performs the analysis
- |      plot_lowss: displays the result and returns plot object
+ |  Methods
+ |  -------
+ |  __init__: performs the analysis
+ |  plot_lowss: displays the result and returns plot object
  |  
- |  Attributes:
- |      sample (str): the new label for this Sample's data on plots
- |      parent (rnavigate.Sample): the sample from which data is retrieved
- |      window (int): size of the windows, must be odd
- |      median_shape (float): global median SHAPE reactivity
- |      median_entropy (float): global median Shannon entropy
- |      data (dictionary): dictionary of data keyword: Data objects, keys are:
+ |  Attributes
+ |  ----------
+ |  sample : str
+ |      the new label for this Sample's data on plots
+ |  parent : rnavigate.Sample
+ |      the sample from which data is retrieved
+ |  window : int
+ |      size of the windows, must be odd
+ |  median_shape : float
+ |      global median SHAPE reactivity
+ |  median_entropy : float
+ |      global median Shannon entropy
+ |  data : dictionary
+ |      dictionary of data keyword: Data objects, keys are:
  |          "structure" (rnav.data.SecondaryStructure)
  |              copy of provided MFE structure
  |          "shapemap" (rnav.data.SHAPEMaP)
@@ -1333,58 +1373,60 @@ class LowSS(rnavigate.rnavigate.Sample)
  |  Methods defined here:
  |  
  |  __init__(self, sample, window=55, shapemap='shapemap', pairprob='pairprob', structure='ss')
- |      Perform Low SHAPE, low Shannon entropy analysis given a sample with
- |      1) reactivities 2) MFE structure 3) pairing probabilities.
+ |      Perform Low SHAPE, low Shannon entropy analysis on the given sample.
  |      
- |      Required arguments:
- |          sample (rnav.Sample)
- |              sample with shapemap, pairing probabilities and MFE structure
+ |      Sample must contain:
+ |          1) reactivities
+ |          2) MFE structure
+ |          3) pairing probabilities.
  |      
- |      Optional arguments:
- |          window (integer)
- |              Window size for calculating median SHAPE and Shannon entropy
- |              Defaults to 55
- |          shapemap (data keyword)
- |              data keyword that points to SHAPE-MaP data
- |              defaults to "shapemap"
- |          pairprob (data keyword)
- |              data keyword that points to pairing probabilities data
- |              defaults to "pairprob"
- |          structure (data keyword)
- |              data keyword that points to MFE structure data
- |              defaults to "ss"
+ |      Parameters
+ |      ----------
+ |      sample : rnavigate.Sample
+ |          sample with shapemap, pairing probabilities and MFE structure
+ |      window : int, default=55
+ |          window size for calculating median SHAPE and Shannon entropy
+ |      shapemap : str, default="shapemap"
+ |          data keyword that points to SHAPE-MaP data
+ |      pairprob : str, default="pairprob"
+ |          data keyword that points to pairing probabilities data
+ |      structure : str, default="ss"
+ |          data keyword that points to MFE structure data
  |  
  |  plot_lowss(self, region=None, colorbars=True)
  |      Visualize LowSS analysis over the given region.
  |      
- |      Optional arguments:
- |          region (integer or list of 2 integers)
- |              lowSS region number or start and end positions to plot.
- |              For region numbers, +/- 150 nts are shown.
- |              Defaults to entire sequence.
- |          colorbars (True or False)
- |              whether to plot colorbars for pairing probability
+ |      Parameters
+ |      ----------
+ |      region : integer or list of 2 integers, default=None (entire sequence)
+ |          If list: lowSS start and end positions to plot.
+ |          If integer: region number, +/- 150 nts are shown.
+ |      colorbars : bool, default=True
+ |          whether to plot colorbars for pairing probability
  |      
- |      Returns:
- |          rnavigate.plots.AP: LowSS visualization
+ |      Returns
+ |      -------
+ |      rnavigate.plots.AP
+ |          LowSS visualization
  |  
  |  reset_lowss(self, maximum_shape=None, maximum_entropy=0.08)
  |      Generates an annotation of lowSS regions. Stored as self.lowSS
  |      
- |      Args:
- |          maximum_shape (float, optional): maximum normalized SHAPE
- |              reactivity to be called lowSS. Defaults to median reactivity.
- |          maximum_entropy (float, optional): maximum shannon entropy to be
- |              called lowSS. Defaults to 0.8.
+ |      Parameters
+ |      ----------
+ |      maximum_shape : float, default=None (median SHAPE reactivity)
+ |          maximum normalized SHAPE reactivity to be called lowSS.
+ |      maximum_entropy : float, default=0.08
+ |          maximum shannon entropy to be called lowSS.
  |  
  |  reset_window(self, window=None)
  |      Resets the window size and recalculates windowed SHAPE reactivities
  |      and shannon entropies and lowSS region annotations.
  |      
- |      Optional arguments:
- |          window (integer)
- |              window size, must be an odd integer
- |              Defaults to value of window attribute
+ |      Parameters
+ |      ----------
+ |      window : int, default=None (self.window)
+ |          window size for calculating median SHAPE and Shannon entropy, must be odd
  |  
  |  ----------------------------------------------------------------------
  |  Methods inherited from rnavigate.rnavigate.Sample:
@@ -1394,72 +1436,76 @@ class LowSS(rnavigate.rnavigate.Sample)
  |      
  |      Parameters
  |      ----------
- |          interactions : rnavigate.data.Interactions or data keyword string
- |              Interactions object to be filtered. If a string, value is
- |              replaced with self.get_data(interactions)
- |          metric : str, optional
- |              column of interactions data to be used as metric for coloring
- |              interactions.
- |              "Distance" will compute 3D distance in "pdb", defaulting to
- |              2'OH atom. "Distance_DMS" or "Distance_[atom id]" will use
- |              those atoms to compute distance.
- |          cmap (str | list, optional):
- |              sets the interactions colormap, used to color interactions
- |              according to metric values.
- |          normalization (str, optional):
- |              `"norm"`: extreme values in colormap are given to the extreme
- |                  values of interactions metric data
- |              `"bins"`: data are colored according to which bin they fall in
- |                  `values` defines bins (list, length = 2 less than cmap)
- |              `"min_max"`: extreme values in cmap are given to values beyond
- |                  minimum and maximum, defined by `values`
- |          values:
- |              behavior depends on normalization
- |              `"norm"`: values are not needed
- |              `"bins"`: list of floats containing the boundaries between bins
- |                  One fewer than the number of categories
- |              `"min_max"`: list of floats containing the minimum and maximum
- |          **kwargs: Other arguments are passed to interactions.filter()
+ |      interactions : rnavigate.data.Interactions or data keyword string
+ |          Interactions object to be filtered. If a string, value is
+ |          replaced with self.get_data(interactions)
+ |      metric : str, optional
+ |          column of interactions data to be used as metric for coloring
+ |          interactions.
+ |          "Distance" will compute 3D distance in "pdb", defaulting to
+ |          2'OH atom. "Distance_DMS" or "Distance_[atom id]" will use
+ |          those atoms to compute distance.
+ |      cmap (str | list, optional):
+ |          sets the interactions colormap, used to color interactions
+ |          according to metric values.
+ |      normalization (str, optional):
+ |          `"norm"`: extreme values in colormap are given to the extreme
+ |              values of interactions metric data
+ |          `"bins"`: data are colored according to which bin they fall in
+ |              `values` defines bins (list, length = 2 less than cmap)
+ |          `"min_max"`: extreme values in cmap are given to values beyond
+ |              minimum and maximum, defined by `values`
+ |      values:
+ |          behavior depends on normalization
+ |          `"norm"`: values are not needed
+ |          `"bins"`: list of floats containing the boundaries between bins
+ |              One fewer than the number of categories
+ |          `"min_max"`: list of floats containing the minimum and maximum
+ |      **kwargs: Other arguments are passed to interactions.filter()
  |  
  |  get_data(self, data_keyword, data_class=None)
  |      Replaces data keyword with data object, even if nested.
  |      
  |      Parameters
  |      ----------
- |          data_keyword : rnavigate.data.Data or data keyword or list/dict of these
- |              If None, returns None.
- |              If a data keyword, returns associated data from sample
- |              If Data, returns that data.
- |              If a list or dictionary, returns list or dictionary with
- |                  data keyword values replaced with associated Data
- |          data_class : rnavigate.data.Data class or subclass, optional
- |              If provided, ensures that returned data is of this type.
+ |      data_keyword : rnavigate.data.Data or data keyword or list/dict of these
+ |          If None, returns None.
+ |          If a data keyword, returns associated data from sample
+ |          If Data, returns that data.
+ |          If a list or dictionary, returns list or dictionary with
+ |              data keyword values replaced with associated Data
+ |      data_class : rnavigate.data.Data class or subclass, optional
+ |          If provided, ensures that returned data is of this type.
  |      
  |      Returns
  |      -------
- |          Same type as data_keyword argument, but data keywords are replaced
- |              with associated data
+ |      Same type as data_keyword argument, but data keywords are replaced
+ |          with associated data
  |      
  |      Raises
  |      ------
- |          ValueError:
- |              if data is not found in sample
- |          ValueError:
- |              if the data retrieved is not of the specified data_class
+ |      ValueError:
+ |          if data is not found in sample
+ |      ValueError:
+ |          if the data retrieved is not of the specified data_class
  |  
  |  inherit_data(self, inherit, keep_inherited_defaults, overwrite)
  |      retrieves and stores data and data keywords from other samples
  |      
- |      Parameters:
- |          inherit : Sample or list of Samples
- |              Other samples from which to inherit data and data keywords
- |          keep_inherited_defaults : bool
- |              Use default values from inherited samples
- |          overwrite : bool
- |              whether to overwrite any existing keywords with inherited keywords
+ |      Parameters
+ |      ----------
+ |      inherit : Sample or list of Samples
+ |          Other samples from which to inherit data and data keywords
+ |      keep_inherited_defaults : bool
+ |          Use default values from inherited samples
+ |      overwrite : bool
+ |          whether to overwrite any existing keywords with inherited keywords
  |  
- |  print_data_keywords(self)
+ |  print_data_keywords(self, return_dict=False)
  |      Print a nicely formatted, organized list of data keywords.
+ |      
+ |      Returns a dictionary of data keywords, organized by data type, if
+ |      return_dict is True.
  |  
  |  set_as_default(self, data_keyword, overwrite=True)
  |      Set the given data keyword as the default for its data class
@@ -1469,10 +1515,10 @@ class LowSS(rnavigate.rnavigate.Sample)
  |      
  |      Parameters
  |      ----------
- |          data_keyword : str
- |              The data keyword to set as the default
- |          overwrite : bool, defaults to ``True``
- |              whether to overwrite a pre-existing default data keyword
+ |      data_keyword : str
+ |          The data keyword to set as the default
+ |      overwrite : bool, defaults to ``True``
+ |          whether to overwrite a pre-existing default data keyword
  |  
  |  set_data(self, data_keyword, inputs, overwrite=False)
  |      Add data to Sample using the given data keyword and inputs
@@ -1493,12 +1539,12 @@ class LowSS(rnavigate.rnavigate.Sample)
  |      
  |      Parameters
  |      ----------
- |          data_keyword : str
- |              a data keyword used to store and/or parse the inputs
- |          inputs : dict or rnavigate.data.Data
- |              a dictionary used to create the data object or a data object itself
- |          overwrite : bool, defaults to False
- |              whether to overwrite a pre-existing data_keyword
+ |      data_keyword : str
+ |          a data keyword used to store and/or parse the inputs
+ |      inputs : dict or rnavigate.data.Data
+ |          a dictionary used to create the data object or a data object itself
+ |      overwrite : bool, defaults to False
+ |          whether to overwrite a pre-existing data_keyword
  |  
  |  ----------------------------------------------------------------------
  |  Data descriptors inherited from rnavigate.rnavigate.Sample:
@@ -1522,20 +1568,23 @@ class DeltaSHAPE(rnavigate.rnavigate.Sample)
  |  
  |  Detects meaningful differences in chemical probing reactivity
  |  
- |  Citation: (doi:10.1021/acs.biochem.5b00977)
+ |  References
+ |  ----------
+ |  doi:10.1021/acs.biochem.5b00977
  |  
- |  Algorithm:
- |      1. Extract SHAPE-MaP sequence, normalized profile, and normalized
- |         standard error from given samples
- |      2. Calculated smoothed profiles (mean) and propagate standard errors
- |         over rolling windows
- |      3. Subtract raw and smoothed normalized profiles and propogate errors
- |      4. Calculate Z-factors for smoothed data. This is the magnitude of the
- |         difference relative to the standard error
- |      5. Calculate Z-scores for smoothed data. This is the magnitude of the
- |         difference in standard deviations from the mean difference
- |      6. Call sites. Called sites must have # nucleotides that pass Z-factor
- |         and Z-score thresholds per window.
+ |  Algorithm
+ |  ---------
+ |  1. Extract SHAPE-MaP sequence, normalized profile, and normalized
+ |      standard error from given samples
+ |  2. Calculated smoothed profiles (mean) and propagate standard errors
+ |      over rolling windows
+ |  3. Subtract raw and smoothed normalized profiles and propogate errors
+ |  4. Calculate Z-factors for smoothed data. This is the magnitude of the
+ |      difference relative to the standard error
+ |  5. Calculate Z-scores for smoothed data. This is the magnitude of the
+ |      difference in standard deviations from the mean difference
+ |  6. Call sites. Called sites must have # nucleotides that pass Z-factor
+ |      and Z-score thresholds per window.
  |  
  |  Smoothing window size, Z factor threshold, Z score threshold, site-calling
  |  window size and minimum nucleotides per site can be specified.
@@ -1550,64 +1599,55 @@ class DeltaSHAPE(rnavigate.rnavigate.Sample)
  |  __init__(self, sample1, sample2, profile='shapemap', smoothing_window=3, zf_coeff=1.96, ss_thresh=1, site_window=3, site_nts=2)
  |      Performs DeltaSHAPE analysis between samples 1 and 2
  |      
- |      Required Arguments:
- |          sample1 (rnavigate.Sample)
- |              First sample to compare
- |          sample2 (rnavigate.Sample)
- |              Second sample to compare
- |      
- |      Optional Arguments:
- |          profile (string)
- |              Data keyword pointing to SHAPE-MaP data in samples 1 and 2
- |              Defaults to "shapemap"
- |          smoothing_window (integer)
- |              Size of windows for data smoothing
- |              Defaults to 3
- |          zf_coeff (float)
- |              Sites must have a difference more than zf_coeff standard errors
- |              Defaults to 1.96 (95% confidence interval)
- |          ss_thresh (float)
- |              Sites must have a difference that is ss_thresh standard
- |              deviations from the mean difference
- |              Defaults to 1
- |          site_window (integer)
- |              Number of nucleotides to include when calling sites
- |              Defaults to 3
- |          site_nts (integer)
- |              Number of nts within site_window that must pass thresholds
- |              Defaults to 2
+ |      Parameters
+ |      ----------
+ |      sample1 : rnavigate.Sample
+ |          First sample to compare
+ |      sample2 : rnavigate.Sample
+ |          Second sample to compare
+ |      profile : str, default="shapemap"
+ |          Data keyword pointing to SHAPE-MaP data in samples 1 and 2
+ |      smoothing_window : int, default=3
+ |          Size of windows for data smoothing
+ |      zf_coeff : float, default=1.96
+ |          Sites must have a difference more than zf_coeff standard errors
+ |      ss_thresh : int, default=1
+ |          Sites must have a difference that is ss_thresh standard
+ |          deviations from the mean difference
+ |      site_window : int, default=3
+ |          Number of nucleotides to include when calling sites
+ |      site_nts : int, default=2
+ |          Number of nts within site_window that must pass thresholds
  |  
  |  calculate_deltashape(self, smoothing_window=3, zf_coeff=1.96, ss_thresh=1, site_window=2, site_nts=3)
  |      Calculate or recalculate deltaSHAPE profile and called sites
  |      
- |      Optional Arguments:
- |          smoothing_window (integer)
- |              Size of windows for data smoothing
- |              Defaults to 3
- |          zf_coeff (float)
- |              Sites must have a difference more than zf_coeff standard errors
- |              Defaults to 1.96 (95% confidence interval)
- |          ss_thresh (float)
- |              Sites must have a difference that is ss_thresh standard
- |              deviations from the mean difference
- |              Defaults to 1
- |          site_window (integer)
- |              Number of nucleotides to include when calling sites
- |              Defaults to 3
- |          site_nts (integer)
- |              Number of nts within site_window that must pass thresholds
- |              Defaults to 2
+ |      Parameters
+ |      ----------
+ |      smoothing_window : int, default=3
+ |          Size of windows for data smoothing
+ |      zf_coeff : float, default=1.96
+ |          Sites must have a difference more than zf_coeff standard errors
+ |      ss_thresh : int, default=1
+ |          Sites must have a difference that is ss_thresh standard
+ |          deviations from the mean difference
+ |      site_window : int, default=3
+ |          Number of nucleotides to include when calling sites
+ |      site_nts : int, default=2
+ |          Number of nts within site_window that must pass thresholds
  |  
  |  plot(self, region='all')
  |      Plot the deltaSHAPE result
  |      
- |      Optional arguments:
- |          region (list of 2 integers)
- |              start and end positions to plot
- |              Defaults to "all".
+ |      Parameters
+ |      ----------
+ |      region : list of 2 integers, default="all"
+ |          start and end positions to plot
  |      
- |      Returns:
- |          rnav.plots.Profile: The plot object
+ |      Returns
+ |      -------
+ |      rnav.plots.Profile
+ |          The plot object
  |  
  |  ----------------------------------------------------------------------
  |  Methods inherited from rnavigate.rnavigate.Sample:
@@ -1617,72 +1657,76 @@ class DeltaSHAPE(rnavigate.rnavigate.Sample)
  |      
  |      Parameters
  |      ----------
- |          interactions : rnavigate.data.Interactions or data keyword string
- |              Interactions object to be filtered. If a string, value is
- |              replaced with self.get_data(interactions)
- |          metric : str, optional
- |              column of interactions data to be used as metric for coloring
- |              interactions.
- |              "Distance" will compute 3D distance in "pdb", defaulting to
- |              2'OH atom. "Distance_DMS" or "Distance_[atom id]" will use
- |              those atoms to compute distance.
- |          cmap (str | list, optional):
- |              sets the interactions colormap, used to color interactions
- |              according to metric values.
- |          normalization (str, optional):
- |              `"norm"`: extreme values in colormap are given to the extreme
- |                  values of interactions metric data
- |              `"bins"`: data are colored according to which bin they fall in
- |                  `values` defines bins (list, length = 2 less than cmap)
- |              `"min_max"`: extreme values in cmap are given to values beyond
- |                  minimum and maximum, defined by `values`
- |          values:
- |              behavior depends on normalization
- |              `"norm"`: values are not needed
- |              `"bins"`: list of floats containing the boundaries between bins
- |                  One fewer than the number of categories
- |              `"min_max"`: list of floats containing the minimum and maximum
- |          **kwargs: Other arguments are passed to interactions.filter()
+ |      interactions : rnavigate.data.Interactions or data keyword string
+ |          Interactions object to be filtered. If a string, value is
+ |          replaced with self.get_data(interactions)
+ |      metric : str, optional
+ |          column of interactions data to be used as metric for coloring
+ |          interactions.
+ |          "Distance" will compute 3D distance in "pdb", defaulting to
+ |          2'OH atom. "Distance_DMS" or "Distance_[atom id]" will use
+ |          those atoms to compute distance.
+ |      cmap (str | list, optional):
+ |          sets the interactions colormap, used to color interactions
+ |          according to metric values.
+ |      normalization (str, optional):
+ |          `"norm"`: extreme values in colormap are given to the extreme
+ |              values of interactions metric data
+ |          `"bins"`: data are colored according to which bin they fall in
+ |              `values` defines bins (list, length = 2 less than cmap)
+ |          `"min_max"`: extreme values in cmap are given to values beyond
+ |              minimum and maximum, defined by `values`
+ |      values:
+ |          behavior depends on normalization
+ |          `"norm"`: values are not needed
+ |          `"bins"`: list of floats containing the boundaries between bins
+ |              One fewer than the number of categories
+ |          `"min_max"`: list of floats containing the minimum and maximum
+ |      **kwargs: Other arguments are passed to interactions.filter()
  |  
  |  get_data(self, data_keyword, data_class=None)
  |      Replaces data keyword with data object, even if nested.
  |      
  |      Parameters
  |      ----------
- |          data_keyword : rnavigate.data.Data or data keyword or list/dict of these
- |              If None, returns None.
- |              If a data keyword, returns associated data from sample
- |              If Data, returns that data.
- |              If a list or dictionary, returns list or dictionary with
- |                  data keyword values replaced with associated Data
- |          data_class : rnavigate.data.Data class or subclass, optional
- |              If provided, ensures that returned data is of this type.
+ |      data_keyword : rnavigate.data.Data or data keyword or list/dict of these
+ |          If None, returns None.
+ |          If a data keyword, returns associated data from sample
+ |          If Data, returns that data.
+ |          If a list or dictionary, returns list or dictionary with
+ |              data keyword values replaced with associated Data
+ |      data_class : rnavigate.data.Data class or subclass, optional
+ |          If provided, ensures that returned data is of this type.
  |      
  |      Returns
  |      -------
- |          Same type as data_keyword argument, but data keywords are replaced
- |              with associated data
+ |      Same type as data_keyword argument, but data keywords are replaced
+ |          with associated data
  |      
  |      Raises
  |      ------
- |          ValueError:
- |              if data is not found in sample
- |          ValueError:
- |              if the data retrieved is not of the specified data_class
+ |      ValueError:
+ |          if data is not found in sample
+ |      ValueError:
+ |          if the data retrieved is not of the specified data_class
  |  
  |  inherit_data(self, inherit, keep_inherited_defaults, overwrite)
  |      retrieves and stores data and data keywords from other samples
  |      
- |      Parameters:
- |          inherit : Sample or list of Samples
- |              Other samples from which to inherit data and data keywords
- |          keep_inherited_defaults : bool
- |              Use default values from inherited samples
- |          overwrite : bool
- |              whether to overwrite any existing keywords with inherited keywords
+ |      Parameters
+ |      ----------
+ |      inherit : Sample or list of Samples
+ |          Other samples from which to inherit data and data keywords
+ |      keep_inherited_defaults : bool
+ |          Use default values from inherited samples
+ |      overwrite : bool
+ |          whether to overwrite any existing keywords with inherited keywords
  |  
- |  print_data_keywords(self)
+ |  print_data_keywords(self, return_dict=False)
  |      Print a nicely formatted, organized list of data keywords.
+ |      
+ |      Returns a dictionary of data keywords, organized by data type, if
+ |      return_dict is True.
  |  
  |  set_as_default(self, data_keyword, overwrite=True)
  |      Set the given data keyword as the default for its data class
@@ -1692,10 +1736,10 @@ class DeltaSHAPE(rnavigate.rnavigate.Sample)
  |      
  |      Parameters
  |      ----------
- |          data_keyword : str
- |              The data keyword to set as the default
- |          overwrite : bool, defaults to ``True``
- |              whether to overwrite a pre-existing default data keyword
+ |      data_keyword : str
+ |          The data keyword to set as the default
+ |      overwrite : bool, defaults to ``True``
+ |          whether to overwrite a pre-existing default data keyword
  |  
  |  set_data(self, data_keyword, inputs, overwrite=False)
  |      Add data to Sample using the given data keyword and inputs
@@ -1716,12 +1760,12 @@ class DeltaSHAPE(rnavigate.rnavigate.Sample)
  |      
  |      Parameters
  |      ----------
- |          data_keyword : str
- |              a data keyword used to store and/or parse the inputs
- |          inputs : dict or rnavigate.data.Data
- |              a dictionary used to create the data object or a data object itself
- |          overwrite : bool, defaults to False
- |              whether to overwrite a pre-existing data_keyword
+ |      data_keyword : str
+ |          a data keyword used to store and/or parse the inputs
+ |      inputs : dict or rnavigate.data.Data
+ |          a dictionary used to create the data object or a data object itself
+ |      overwrite : bool, defaults to False
+ |          whether to overwrite a pre-existing data_keyword
  |  
  |  ----------------------------------------------------------------------
  |  Data descriptors inherited from rnavigate.rnavigate.Sample:
@@ -1757,19 +1801,37 @@ class DeltaSHAPEProfile(rnavigate.data.profile.Profile)
  |  __init__(self, input_data, metric='Smooth_diff', metric_defaults=None, sequence=None, name=None, **kwargs)
  |      Create the deltaSHAPE Profile
  |      
- |      Args:
- |          input_data (tuple of RNAvigate Profiles or Pandas Dataframe)
- |              if tuple of Profiles, the unified Dataframe will be created
+ |      Parameters
+ |      ----------
+ |      input_data : tuple of rnavigate.Profile or pd.DataFrame
+ |          If tuple of Profiles, the unified Dataframe will be created
+ |      metric : str, default="Smooth_diff"
+ |          The metric to use for the profile
+ |      metric_defaults : dict, default=None
+ |          Default settings for the metric
+ |      sequence : str, default=None
+ |          The sequence of the profile
+ |      name : str, default=None
+ |          The name of the profile
+ |      **kwargs
+ |          Additional keyword arguments to pass to data.Profile
  |  
  |  calculate_deltashape(self, smoothing_window=3, zf_coeff=1.96, ss_thresh=1, site_window=3, site_nts=2)
  |      Calculate the deltaSHAPE profile metrics
  |      
- |      Args:
- |          smoothing_window (int, optional): Defaults to 3.
- |          zf_coeff (float, optional): Defaults to 1.96.
- |          ss_thresh (int, optional): Defaults to 1.
- |          site_window (int, optional): Defaults to 3.
- |          site_nts (int, optional): Defaults to 2.
+ |      Parameters
+ |      ----------
+ |      smoothing_window : int, default=3
+ |          Size of windows for data smoothing
+ |      zf_coeff : float, default=1.96
+ |          Sites must have a difference more than zf_coeff standard errors
+ |      ss_thresh : int, default=1
+ |          Sites must have a difference that is ss_thresh standard
+ |          deviations from the mean difference
+ |      site_window : int, default=3
+ |          Number of nucleotides to include when calling sites
+ |      site_nts : int, default=2
+ |          Number of nts within site_window that must pass thresholds
  |  
  |  get_enhancements_annotation(self)
  |      Get an annotations object for the significant enhancements
@@ -2076,13 +2138,15 @@ class DeltaSHAPEProfile(rnavigate.data.profile.Profile)
  |      colormap : rnavigate.data.ScalarMappable
  |          a colormap used for creating a colorbar
  |  
- |  get_colors_from_annotations(self, annotations)
+ |  get_colors_from_annotations(self, annotations, default_color='gray')
  |      Get colors and colormap representing sequence annotations.
  |      
  |      Parameters
  |      ----------
  |      annotations : list of rnavigate.data.Annotations
  |          the annotations to use to get colors.
+ |      default_color : matplotlib color-like, defaults to "gray"
+ |          the color to use for nucleotides not in any annotation
  |      
  |      Returns
  |      -------
@@ -2207,25 +2271,33 @@ class WindowedAUROC(builtins.object)
  |  profile does not fit the structure prediction well. These regions are good
  |  candidates for further investigation with ensemble deconvolution.
  |  
- |  Citation:
+ |  References
+ |  ----------
  |  Lan, T.C.T., Allan, M.F., Malsick, L.E. et al. Secondary structural
  |      ensembles of the SARS-CoV-2 RNA genome in infected cells. Nat Commun
  |      13, 1128 (2022). https://doi.org/10.1038/s41467-022-28603-2
  |  
- |  Methods:
- |      __init__: Computes the AUROC array and AUROC median.
- |      plot_auroc: Displays the AUROC analysis over the given region.
- |          Returns Plot object
+ |  Methods
+ |  -------
+ |  __init__: Computes the AUROC array and AUROC median.
+ |  plot_auroc: Displays the AUROC analysis over the given region.
+ |      Returns Plot object
  |  
- |  Attributes:
- |      sample: an rnavigate.Sample to retrieve profile and secondary structure
- |      structure: sample.data[structure]
- |      profile: sample.data[profile]
- |      sequence: the sequence string of sample.data[structure]
- |      window: the size of the windows
- |      nt_length: the length of sequence string
- |      auroc: the auroc numpy array, length = nt_length, padded with np.nan
- |      median_auroc: the median of the auroc array
+ |  Attributes
+ |  ----------
+ |  sample : rnavigate.Sample
+ |      sample to retrieve profile and secondary structure
+ |  structure : str
+ |      Data keyword of sample pointing to secondary structure
+ |      e.g. sample.data[structure]
+ |  profile : str
+ |      Data keyword of sample pointing to profile
+ |      e.g. sample.data[profile]
+ |  sequence : the sequence string of sample.data[structure]
+ |  window: the size of the windows
+ |  nt_length: the length of sequence string
+ |  auroc: the auroc numpy array, length = nt_length, padded with np.nan
+ |  median_auroc: the median of the auroc array
  |  
  |  Methods defined here:
  |  
@@ -2233,16 +2305,19 @@ class WindowedAUROC(builtins.object)
  |      Compute the AUROC for all windows. AUROC is a measure of how well a
  |      reactivity profile predicts paired vs. unpaired nucleotide status.
  |      
- |      Args:
- |          sample (rnav.Sample): Your rnavigate sample
- |          window (int, optional): number of nucleotides to include in window
- |              Defaults to 81.
- |          profile (str, optional): data keyword of provided sample pointing
- |              to a profile.
- |              Defaults to "default_profile"
- |          structure (str, optional): data keyword of provided sample pointing
- |              to a secondary structure.
- |              Defaults to "default_structure"
+ |      Parameters
+ |      ----------
+ |      sample : rnav.Sample
+ |          Your rnavigate sample
+ |      window : int, optional
+ |          number of nucleotides to include in window
+ |          Defaults to 81.
+ |      profile (str, optional): data keyword of provided sample pointing
+ |          to a profile.
+ |          Defaults to "default_profile"
+ |      structure (str, optional): data keyword of provided sample pointing
+ |          to a secondary structure.
+ |          Defaults to "default_structure"
  |  
  |  plot_auroc(self, region=None)
  |      Plot the result of the windowed AUROC analysis, with arc plot of
@@ -2589,13 +2664,15 @@ class FragMaP(rnavigate.data.profile.Profile)
  |      colormap : rnavigate.data.ScalarMappable
  |          a colormap used for creating a colorbar
  |  
- |  get_colors_from_annotations(self, annotations)
+ |  get_colors_from_annotations(self, annotations, default_color='gray')
  |      Get colors and colormap representing sequence annotations.
  |      
  |      Parameters
  |      ----------
  |      annotations : list of rnavigate.data.Annotations
  |          the annotations to use to get colors.
+ |      default_color : matplotlib color-like, defaults to "gray"
+ |          the color to use for nucleotides not in any annotation
  |      
  |      Returns
  |      -------
@@ -2739,72 +2816,76 @@ class Fragmapper(rnavigate.rnavigate.Sample)
  |      
  |      Parameters
  |      ----------
- |          interactions : rnavigate.data.Interactions or data keyword string
- |              Interactions object to be filtered. If a string, value is
- |              replaced with self.get_data(interactions)
- |          metric : str, optional
- |              column of interactions data to be used as metric for coloring
- |              interactions.
- |              "Distance" will compute 3D distance in "pdb", defaulting to
- |              2'OH atom. "Distance_DMS" or "Distance_[atom id]" will use
- |              those atoms to compute distance.
- |          cmap (str | list, optional):
- |              sets the interactions colormap, used to color interactions
- |              according to metric values.
- |          normalization (str, optional):
- |              `"norm"`: extreme values in colormap are given to the extreme
- |                  values of interactions metric data
- |              `"bins"`: data are colored according to which bin they fall in
- |                  `values` defines bins (list, length = 2 less than cmap)
- |              `"min_max"`: extreme values in cmap are given to values beyond
- |                  minimum and maximum, defined by `values`
- |          values:
- |              behavior depends on normalization
- |              `"norm"`: values are not needed
- |              `"bins"`: list of floats containing the boundaries between bins
- |                  One fewer than the number of categories
- |              `"min_max"`: list of floats containing the minimum and maximum
- |          **kwargs: Other arguments are passed to interactions.filter()
+ |      interactions : rnavigate.data.Interactions or data keyword string
+ |          Interactions object to be filtered. If a string, value is
+ |          replaced with self.get_data(interactions)
+ |      metric : str, optional
+ |          column of interactions data to be used as metric for coloring
+ |          interactions.
+ |          "Distance" will compute 3D distance in "pdb", defaulting to
+ |          2'OH atom. "Distance_DMS" or "Distance_[atom id]" will use
+ |          those atoms to compute distance.
+ |      cmap (str | list, optional):
+ |          sets the interactions colormap, used to color interactions
+ |          according to metric values.
+ |      normalization (str, optional):
+ |          `"norm"`: extreme values in colormap are given to the extreme
+ |              values of interactions metric data
+ |          `"bins"`: data are colored according to which bin they fall in
+ |              `values` defines bins (list, length = 2 less than cmap)
+ |          `"min_max"`: extreme values in cmap are given to values beyond
+ |              minimum and maximum, defined by `values`
+ |      values:
+ |          behavior depends on normalization
+ |          `"norm"`: values are not needed
+ |          `"bins"`: list of floats containing the boundaries between bins
+ |              One fewer than the number of categories
+ |          `"min_max"`: list of floats containing the minimum and maximum
+ |      **kwargs: Other arguments are passed to interactions.filter()
  |  
  |  get_data(self, data_keyword, data_class=None)
  |      Replaces data keyword with data object, even if nested.
  |      
  |      Parameters
  |      ----------
- |          data_keyword : rnavigate.data.Data or data keyword or list/dict of these
- |              If None, returns None.
- |              If a data keyword, returns associated data from sample
- |              If Data, returns that data.
- |              If a list or dictionary, returns list or dictionary with
- |                  data keyword values replaced with associated Data
- |          data_class : rnavigate.data.Data class or subclass, optional
- |              If provided, ensures that returned data is of this type.
+ |      data_keyword : rnavigate.data.Data or data keyword or list/dict of these
+ |          If None, returns None.
+ |          If a data keyword, returns associated data from sample
+ |          If Data, returns that data.
+ |          If a list or dictionary, returns list or dictionary with
+ |              data keyword values replaced with associated Data
+ |      data_class : rnavigate.data.Data class or subclass, optional
+ |          If provided, ensures that returned data is of this type.
  |      
  |      Returns
  |      -------
- |          Same type as data_keyword argument, but data keywords are replaced
- |              with associated data
+ |      Same type as data_keyword argument, but data keywords are replaced
+ |          with associated data
  |      
  |      Raises
  |      ------
- |          ValueError:
- |              if data is not found in sample
- |          ValueError:
- |              if the data retrieved is not of the specified data_class
+ |      ValueError:
+ |          if data is not found in sample
+ |      ValueError:
+ |          if the data retrieved is not of the specified data_class
  |  
  |  inherit_data(self, inherit, keep_inherited_defaults, overwrite)
  |      retrieves and stores data and data keywords from other samples
  |      
- |      Parameters:
- |          inherit : Sample or list of Samples
- |              Other samples from which to inherit data and data keywords
- |          keep_inherited_defaults : bool
- |              Use default values from inherited samples
- |          overwrite : bool
- |              whether to overwrite any existing keywords with inherited keywords
+ |      Parameters
+ |      ----------
+ |      inherit : Sample or list of Samples
+ |          Other samples from which to inherit data and data keywords
+ |      keep_inherited_defaults : bool
+ |          Use default values from inherited samples
+ |      overwrite : bool
+ |          whether to overwrite any existing keywords with inherited keywords
  |  
- |  print_data_keywords(self)
+ |  print_data_keywords(self, return_dict=False)
  |      Print a nicely formatted, organized list of data keywords.
+ |      
+ |      Returns a dictionary of data keywords, organized by data type, if
+ |      return_dict is True.
  |  
  |  set_as_default(self, data_keyword, overwrite=True)
  |      Set the given data keyword as the default for its data class
@@ -2814,10 +2895,10 @@ class Fragmapper(rnavigate.rnavigate.Sample)
  |      
  |      Parameters
  |      ----------
- |          data_keyword : str
- |              The data keyword to set as the default
- |          overwrite : bool, defaults to ``True``
- |              whether to overwrite a pre-existing default data keyword
+ |      data_keyword : str
+ |          The data keyword to set as the default
+ |      overwrite : bool, defaults to ``True``
+ |          whether to overwrite a pre-existing default data keyword
  |  
  |  set_data(self, data_keyword, inputs, overwrite=False)
  |      Add data to Sample using the given data keyword and inputs
@@ -2838,12 +2919,12 @@ class Fragmapper(rnavigate.rnavigate.Sample)
  |      
  |      Parameters
  |      ----------
- |          data_keyword : str
- |              a data keyword used to store and/or parse the inputs
- |          inputs : dict or rnavigate.data.Data
- |              a dictionary used to create the data object or a data object itself
- |          overwrite : bool, defaults to False
- |              whether to overwrite a pre-existing data_keyword
+ |      data_keyword : str
+ |          a data keyword used to store and/or parse the inputs
+ |      inputs : dict or rnavigate.data.Data
+ |          a dictionary used to create the data object or a data object itself
+ |      overwrite : bool, defaults to False
+ |          whether to overwrite a pre-existing data_keyword
  |  
  |  ----------------------------------------------------------------------
  |  Data descriptors inherited from rnavigate.rnavigate.Sample:
@@ -2867,22 +2948,27 @@ class SequenceChecker(builtins.object)
  |  
  |  Check the sequences stored in a list of samples.
  |  
- |  Attributes:
- |      samples: the list of samples
- |      sequences: a list of all unique sequence strings stored in the list of
- |          samples. These are converted to an all uppercase RNA alphabet.
- |      keywords: a list of unique data keywords stored in the list of samples.
- |      which_sequences: a dataframe of samples and keywords and which
- |          sequences each contains.
+ |  Attributes
+ |  ----------
+ |  samples : list
+ |      samples in which to check sequences
+ |  sequences : list
+ |      all unique sequence strings stored in the list of samples. These are converted
+ |      to an all uppercase RNA alphabet.
+ |  keywords : list
+ |      all unique data keywords stored in the list of samples.
+ |  which_sequences : Pandas.DataFrame
+ |      each row is a sample, keyword, and index of self.sequences
  |  
  |  Methods defined here:
  |  
  |  __init__(self, samples)
  |      Creates an instance of SequenceChecker given a list of samples
  |      
- |      Arguments:
- |          samples (list of rnav.Sample)
- |              samples for which to compare data keywords and sequences.
+ |      Parameters
+ |      ----------
+ |      samples : list of rnav.Sample
+ |          samples for which to compare data keywords and sequences.
  |  
  |  get_keywords(self)
  |      A list of all unique data keywords across samples.
@@ -2896,26 +2982,26 @@ class SequenceChecker(builtins.object)
  |  print_alignments(self, print_format='long', which='all')
  |      Print alignments in the given format for sequence IDs provided.
  |      
- |      Optional arguments:
- |          print_format (string)
- |              What format to print the alignments in:
- |              "cigar" prints the cigar string
- |              "short" prints the numbers of mismatches and indels
- |              "long" prints the location and nucleotide identity of all
- |                  mismatches, insertions and deletions.
- |              Defaults to "long".
- |          which (pair of integers)
- |              two sequence IDs to compare.
- |              Defaults to every pairwise comparison.
+ |      Parameters
+ |      ----------
+ |      print_format : string, defaults to "long"
+ |          What format to print the alignments in:
+ |          "cigar" prints the cigar string
+ |          "short" prints the numbers of mismatches and indels
+ |          "long" prints the location and nucleotide identity of all
+ |              mismatches, insertions and deletions.
+ |      which : tuple of two of integers, defaults to "all" (every pairwise comparison)
+ |          two sequence IDs to compare.
  |  
  |  print_mulitple_sequence_alignment(self, base_sequence)
  |      Print the multiple sequence alignment with nice formatting.
  |      
- |      Required arguments:
- |          base_sequence (string)
- |              a sequence string that represents the longest common sequence.
- |              Usually, this is the return value from:
- |                  rnav.data.set_multiple_sequence_alignment()
+ |      Parameters
+ |      ----------
+ |      base_sequence : string
+ |          a sequence string that represents the longest common sequence.
+ |          Usually, this is the return value from:
+ |              rnav.data.set_multiple_sequence_alignment()
  |  
  |  print_which_sequences(self)
  |      Print sequence ID (integer) for each data keyword and sample.
@@ -2936,13 +3022,12 @@ class SequenceChecker(builtins.object)
  |          6) download the alignment fasta file
  |          7) use rnav.data.set_multiple_sequence_alignment()
  |      
- |      Required arguments:
- |          filename (string)
- |              path to a new file to which fasta entries are written
- |      
- |      Optional arguments:
- |          which (list of integers)
- |              Sequence IDs to write to file.
+ |      Parameters
+ |      ----------
+ |      filename : string
+ |          path to a new file to which fasta entries are written
+ |      which : list of integers, defaults to "all" (every sequence)
+ |          Sequence IDs to write to file.
  |  
  |  ----------------------------------------------------------------------
  |  Data descriptors defined here:
@@ -3037,13 +3122,15 @@ class Sequence(builtins.object)
  |      colormap : rnavigate.data.ScalarMappable
  |          a colormap used for creating a colorbar
  |  
- |  get_colors_from_annotations(self, annotations)
+ |  get_colors_from_annotations(self, annotations, default_color='gray')
  |      Get colors and colormap representing sequence annotations.
  |      
  |      Parameters
  |      ----------
  |      annotations : list of rnavigate.data.Annotations
  |          the annotations to use to get colors.
+ |      default_color : matplotlib color-like, defaults to "gray"
+ |          the color to use for nucleotides not in any annotation
  |      
  |      Returns
  |      -------
@@ -3295,13 +3382,15 @@ class Data(Sequence)
  |      colormap : rnavigate.data.ScalarMappable
  |          a colormap used for creating a colorbar
  |  
- |  get_colors_from_annotations(self, annotations)
+ |  get_colors_from_annotations(self, annotations, default_color='gray')
  |      Get colors and colormap representing sequence annotations.
  |      
  |      Parameters
  |      ----------
  |      annotations : list of rnavigate.data.Annotations
  |          the annotations to use to get colors.
+ |      default_color : matplotlib color-like, defaults to "gray"
+ |          the color to use for nucleotides not in any annotation
  |      
  |      Returns
  |      -------
@@ -3426,26 +3515,43 @@ class SecondaryStructure(rnavigate.data.data.Sequence)
  |  
  |  Base class for secondary structures.
  |  
- |  Parent classes:
- |      rnav.data.Data(rnav.data.Sequence)
+ |  Parameters
+ |  ----------
+ |  input_data : str or pandas.DataFrame
+ |      A dataframe or filepath containing a secondary structure
+ |      DataFrame should contain these columns:
+ |          ["Nucleotide", "Sequence", "Pair"]
+ |      "Pair" column must be redundant.
+ |      Filepath parsing is determined by file extension:
+ |          varna, xrna, nsd, cte, ct, dbn, bracket, json (R2DT), forna
+ |  extension : str, optional
+ |      The file extension of the input_data file. If not provided, the
+ |      extension will be inferred from the input_data filepath.
+ |  autoscale : bool, optional
+ |      Whether to automatically scale the x and y coordinates. Defaults to True.
+ |  name : str, optional
+ |      The name of the RNA sequence. Defaults to None.
  |  
- |  Attributes:
- |      data (str | pandas.DataFrame): dataframe storing base-pairs
- |          One row for every nucleotide position
- |          Required columns:
- |              "Nucleotide"   the nucleotide position
- |              "Sequence"     the nucleotide letter
- |              "Pair"         the nucleotide position of the base-pair
- |                             0 indicates a single stranded nucleotide
- |          Optional columns:
- |              "X_coordinate" the x position of the nucleotide in the drawing
- |              "Y_coordinate" the y position of the nucleotide in the drawing
- |      sequence (str): sequence string
- |      nts (numpy.array): "Nucleotide" column of data
- |      pair_nts (numpy.array): "Pair" column of data
- |      header (str): header information from CT file
- |      xcoordinates (numpy array): "X_coordinate" column of data
- |      ycoordinates (numpy array): "X_coordinate" column of data
+ |  Attributes
+ |  ----------
+ |  data : pandas.DataFrame
+ |      DataFrame storing base-pairs
+ |  filepath : str
+ |      The path to the input file, if provided, otherwise "dataframe"
+ |  sequence : str
+ |      The RNA sequence
+ |  nts : numpy.array
+ |      The "Nucleotide" column of data
+ |  pair_nts : numpy.array
+ |      The "Pair" column of data
+ |  header : str
+ |      Header information from CT file
+ |  xcoordinates : numpy.array
+ |      The "X_coordinate" column of data
+ |  ycoordinates : numpy.array
+ |      The "X_coordinate" column of data
+ |  distance_matrix : numpy.array
+ |      The contact distance matrix of the RNA structure
  |  
  |  Method resolution order:
  |      SecondaryStructure
@@ -3456,34 +3562,28 @@ class SecondaryStructure(rnavigate.data.data.Sequence)
  |  
  |  __init__(self, input_data, extension=None, autoscale=True, name=None, **kwargs)
  |      Creates a SecondaryStructure object from a given file or dataframe.
- |      
- |      Args:
- |          input_data (str | pandas.DataFrame):
- |              A dataframe or filepath containing a secondary structure
- |              DataFrame should contain these columns:
- |                  ["Nucleotide", "Sequence", "Pair"]
- |              "Pair" column must be redundant.
- |              Filepath parsing is determined by file extension:
- |                  varna, xrna, nsd, cte, ct, dbn, bracket, json (R2DT), forna
  |  
  |  __str__(self)
  |      print the filepath and length of the RNA
  |  
  |  add_pairs(self, pairs, break_conflicting_pairs=False)
- |      Add base pairs to current secondary structure
+ |      Add base pairs to current secondary structure.
  |      
- |      Args:
- |          pairs (list): 1-indexed list of paired residues.
- |              e.g. [(1, 20), (2, 19)]
+ |      Parameters
+ |      ----------
+ |      pairs : list
+ |          1-indexed list of paired residues. e.g. [(1, 20), (2, 19)]
+ |      break_conflicting_pairs : bool, defaults to False
+ |          Whether to break existing pairs if there is a conflict
  |  
  |  as_interactions(self, structure2=None)
- |      returns list of i, j basepairs as rnavigate.Interactions data.
+ |      Returns rnavigate.Interactions representation of this, or more, structures.
  |      
- |      Args:
- |          structure2 (rnavigate.data.SecondaryStructure, optional):
- |              If provided, basepairs from both structures are included and
- |              colored by structure (left, right, or both)
- |              defaults to None.
+ |      Parameters
+ |      ----------
+ |      structure2 : SecondaryStructure or list of these, defaults to None
+ |          If provided, basepairs from all structures are included and labeled by
+ |          which structures contain them and how many structures contain them.
  |  
  |  break_noncanonical_pairs(self)
  |      Removes non-canonical basepairs from the secondary structure.
@@ -3493,20 +3593,28 @@ class SecondaryStructure(rnavigate.data.data.Sequence)
  |  break_pairs_nts(self, nt_positions)
  |      break base pairs at the given list of positions.
  |      
- |      Args:
- |          nt_positions (list of int): 1-indexed positions
+ |      WARNING: this deletes information.
+ |      
+ |      Parameters
+ |      ----------
+ |      nt_positions : list of int
+ |          1-indexed positions to break pairs
  |  
  |  break_pairs_region(self, start, end, break_crossing=True, inverse=False)
- |      Removes pairs from the specified region (1-indexed, inclusive)
+ |      Removes pairs from the specified region (1-indexed, inclusive).
  |      
  |      WARNING: this deletes information
  |      
- |      Args:
- |          start (int): start position
- |          end (int): end position
- |          break_crossing (bool, optional): whether to keep pairs that cross
- |              over the specified region. Defaults to True.
- |          inverse (bool, optional): invert the behavior. Defaults to False.
+ |      Parameters
+ |      ----------
+ |      start : int
+ |          start position (1-indexed, inclusive)
+ |      end : int
+ |          end position (1-indexed, inclusive)
+ |      break_crossing : bool, defaults to True
+ |          Whether to keep pairs that cross over the specified region
+ |      inverse : bool, defaults to False
+ |          Invert the behavior, i.e. remove pairs that are not in this region
  |  
  |  break_singleton_pairs(self)
  |      Removes singleton basepairs from the secondary structure.
@@ -3514,56 +3622,73 @@ class SecondaryStructure(rnavigate.data.data.Sequence)
  |      WARNING: This deletes information.
  |  
  |  compute_ppv_sens(self, structure2, exact=True)
- |      Compute the PPV and sensitivity between self and another
- |      SecondaryStructure object.
+ |      Compute the PPV and sensitivity between this and another structure.
  |      
- |      Args:
- |          structure2 (SecondaryStructure): The SecondaryStructure to compare to.
- |          exact (bool, optional): True requires BPs to be exactly correct.
- |                                  False allows +/-1 bp slippage.
- |                                  Defaults to True.
+ |      True and False are determined from this structure.
+ |      Positive and Negative are determined from structure2.
  |      
- |      Returns:
- |          float, float, tuple: sensitivity, PPV, (TP, TP+FP, TP+FN)
+ |      PPV = TP / (TP + FP)
+ |      Sensitivity = TP / (TP + FN)
+ |      
+ |      Parameters
+ |      ----------
+ |      structure2 : SecondaryStructure
+ |          The SecondaryStructure to compare to.
+ |      exact : bool, defaults to True
+ |          True requires BPs to be exactly correct.
+ |          False allows +/-1 bp slippage.
+ |      
+ |      Returns
+ |      -------
+ |      float
+ |          sensitivity
+ |      float
+ |          PPV
+ |      2-tuple of floats
+ |          (TP, TP+FP, TP+FN)
  |  
  |  contact_distance(self, i, j)
  |      Returns the contact distance between positions i and j
  |  
  |  copy(self)
  |  
- |  extractPK(self, fill_mismatches=True)
- |      Returns the pk1 and pk2 pairs from the secondary structure.
- |      
- |      Ignores single base pairs. PK1 is defined as the helix crossing the
- |      most other bps. if there is a tie, the most 5' helix is called pk1
- |      returns pk1 and pk2 as a list of base pairs e.g [(1,10),(2,9)...
- |  
  |  fill_mismatches(self, mismatch=1)
  |      Adds base pairs to fill 1,1 and optionally 2,2 mismatches.
  |      
- |      mismatch = 1 will fill only 1,1 mismatches
- |      mismatch = 2 will fill 1,1 and 2,2
+ |      Parameters
+ |      ----------
+ |      mismatch : int, defaults to 1
+ |          1 will fill only 1,1 mismatches
+ |          2 will fill 1,1 and 2,2 mismatches
  |  
  |  get_aligned_data(self, alignment)
- |      Returns a new SecondaryStructure matching the alignment target.
+ |      Returns a new SecondaryStructure object matching the alignment target.
  |      
- |      Args:
- |          alignment (data.Alignment): an alignment object used to map values
+ |      Parameters
+ |      ----------
+ |      alignment : data.Alignment
+ |          An alignment object used to map values
  |  
  |  get_distance_matrix(self, recalculate=False)
- |      Based on Tom's contact_distance function, but instead returns
- |      the all pairs shortest paths matrix, and stores it as an attribute. If
- |      the attribute has already been set, it returns the attribute. This is
- |      faster than calling contact_distance pairwise to fill the matrix.
+ |      Get a matrix of pair-wise shortest path distances through the structure.
  |      
- |      Args:
- |          recalculate (bool, optional): Set to true to recalculate the matrix
- |              even if the attribute is set. In case changes to the structure
- |              have been made.
+ |      This function uses a BFS algorithm. The structure is represented as a complete
+ |      graph with nucleotides as vertices and base-pairs and backbone as edges. All
+ |      edges are length 1. Matrix is stored as an attribute for future use.
+ |      
+ |      If the attribute is set (not None) and recalculate is False, the attribute
+ |      will be returned.
+ |      
+ |      Based on Tom's contact_distance, but expanded to return the pairwise matrix.
+ |      New contact_distance method added to return the distance between two positions.
+ |      
+ |      Parameters
+ |      ----------
+ |      recalculate : bool, defaults to False
+ |          Set to True to recalculate the matrix even if the attribute is set.
  |  
  |  get_dotbracket(self)
- |      Returns a dotbracket notation representation of the secondary
- |      structure.
+ |      Get a dotbracket notation string representing the secondary structure.
  |      
  |      Pseudoknot levels:
  |          1: ()
@@ -3574,28 +3699,37 @@ class SecondaryStructure(rnavigate.data.data.Sequence)
  |          6: Bb
  |          7: Cc
  |          etc...
+ |      
+ |      Returns
+ |      -------
+ |      str
+ |          A dot-bracket representation of the secondary structure
  |  
  |  get_helices(self, fill_mismatches=True, split_bulge=True, keep_singles=False)
- |      Returns a dictionary of helices from the secondary structure.
+ |      Get a dictionary of helices from the secondary structure.
+ |      
  |      Keys are equivalent to list indices. Values are lists of paired
  |      nucleotides (1-indexed) in that helix. e.g. {0:[(1,50),(2,49),(3,48)}
  |      
- |      Args:
- |          fill_mismatches (bool, optional):
- |              Whether 1-1 and 2-2 bulges are replaced with base pairs.
- |              Defaults to True.
- |          split_bulge (bool, optional):
- |              Whether to split helices on bulges.
- |              Defaults to True.
- |          keep_singles (bool, optional):
- |              Whether to return helices that contain only 1 base-pair.
- |              Defaults to False.
+ |      Parameters
+ |      ----------
+ |      fill_mismatches : bool, defaults to True
+ |          Whether 1-1 and 2-2 bulges are replaced with base pairs
+ |      split_bulge : bool, defaults to True
+ |          Whether to split helices on bulges
+ |      keep_singles : bool, defaults to False
+ |          Whether to return helices that contain only 1 base-pair
+ |      
+ |      Returns
+ |      -------
+ |      dict
+ |          A dictionary of helices
  |  
  |  get_human_dotbracket(self)
- |      Returns dotbracket notation string representing SecondaryStructure
- |      object. This is an experimental format designed to be more human
- |      readable, i.e. no counting of brackets required.
+ |      Get a human-readable dotbracket string representing the secondary structure.
  |      
+ |      This is an experimental format designed to be more human readable, i.e. no
+ |      counting of brackets required.
  |      
  |      1)  Letters, instead of brackets, are used to denote nested base pairs.
  |      2)  Each helix is assigned a letter, which is incremented one letter
@@ -3608,26 +3742,82 @@ class SecondaryStructure(rnavigate.data.data.Sequence)
  |          ((((....(((.[[..)))))(((...(((..]].))))))))
  |      Same question, new format:
  |          AABB....CCC.[[..cccbbBBB...CCC..]].cccbbbaa
+ |      Read this as:
+ |          ((_______________________________________)) (level 1 = A)
+ |            ((_______________))(((______________)))   (level 2 = B)
+ |                  (((_____)))        (((_____)))      (level 3 = C)
+ |                      [[__________________]]          (pseudoknot = [])
  |      
  |      Pseudoknot levels:
  |          1: Aa, Bb, Cc, etc.
  |          2: [], 3: {}, 4: <>
  |  
  |  get_interactions_df(self)
+ |      Returns a DataFrame of i, j basepairs.
+ |      
+ |      Returns
+ |      -------
+ |      pandas.DataFrame
+ |          A DataFrame with columns:
+ |              i: the 5' (1-indexed) position of the base pair
+ |              j: the 3' (1-indexed) position of the base pair
+ |              Structure: always 1
  |  
  |  get_junction_nts(self)
- |      Returns a list of residues at junctions (paired, but adjacent to
- |      an unpaired residue or the end of a chain)
+ |      Get a list of junction nucleotides (paired, but at the end of a chain).
+ |      
+ |      Returns
+ |      -------
+ |      list
+ |          A list of 1-indexed positions of junction nucleotides
  |  
  |  get_nonredundant_ct(self)
- |      Returns the ct attribute in non-redundant form - only pairs i<j
+ |      Returns the ct attribute in a non-redundant form.
+ |      
+ |      Only returns pairs in which i < j
+ |      For example:
+ |          self.ct[i-1] == j
+ |          self.ct[j-1] == i
+ |          BUT
+ |          self.get_nonredundant_ct()[j-1] == 0
+ |      
+ |      Returns
+ |      -------
+ |      numpy.array
+ |          A non-redundant array of base pairs
  |  
  |  get_paired_nts(self)
- |      Returns a list of residues that are paired.
+ |      Get a list of residues that are paired.
+ |      
+ |      Returns
+ |      -------
+ |      list
+ |          A list of 1-indexed positions of paired nucleotides
  |  
  |  get_pairs(self)
- |      Returns a non-redundant list of base pairs i < j as a array of tuples.
- |      e.g., [(19,50),(20,49)....]
+ |      Get a non-redundant list of base pairs i < j as a array of tuples.
+ |      
+ |      Returns
+ |      -------
+ |      list
+ |          A list of 1-indexed positions. e.g., [(1, 50), (2, 49), ...]
+ |  
+ |  get_pseudoknots(self, fill_mismatches=True)
+ |      Get the pk1 and pk2 pairs from the secondary structure.
+ |      
+ |      Ignores single base pairs. PK1 is defined as the helix crossing the
+ |      most other bps. If there is a tie, the most 5' helix is called pk1
+ |      returns pk1 and pk2 as a list of base pairs e.g [(1,10),(2,9)...
+ |      
+ |      Parameters
+ |      ----------
+ |      fill_mismatches : bool, defaults to True
+ |          Whether 1-1 and 2-2 bulges are replaced with base pairs
+ |      
+ |      Returns
+ |      -------
+ |      list of 2 lists of 2-tuples
+ |          A list of base pairs for pk1 and pk2
  |  
  |  get_structure_elements(self)
  |      This code is not yet implemented.
@@ -3646,94 +3836,95 @@ class SecondaryStructure(rnavigate.data.data.Sequence)
  |          Pseudoknot (P)
  |  
  |  get_unpaired_nts(self)
- |      Returns a list of residues that are paired.
+ |      Get a list of residues that are unpaired.
+ |      
+ |      Returns
+ |      -------
+ |      list
+ |          A list of 1-indexed positions of unpaired nucleotides
  |  
  |  normalize_sequence(self, t_or_u='U', uppercase=True)
- |      Converts sequence to all uppercase nucleotides and corrects T or U.
- |      
- |      Parameters
- |      ----------
- |      t_or_u : "T", "U", or False, defaults to "U"
- |          "T" converts "U"s to "T"s
- |          "U" converts "T"s to "U"s
- |          False does nothing.
- |      uppercase : bool, defaults to True
- |          Whether to make sequence all uppercase
+ |      Normalize the sequence attribute (fix case and/or U <-> T).
  |  
  |  read_ct(self, structure_number=0)
  |      Loads secondary structure information from a given ct file.
  |      
- |      Requires a properly formatted header!
+ |      Requires a properly formatted header.
  |      
- |      Args:
- |          structure_number (int, optional): If ct file contains multiple structures,
- |              uses the given structure. Defaults to 0.
+ |      Parameters
+ |      ----------
+ |      structure_number : int, defaults to 0
+ |          0-indexed structure number to load from the ct file.
  |  
  |  read_cte(self)
- |      Generates SecondaryStructure object data from a CTE file, including
- |      nucleotide x and y coordinates.
+ |      Generates SecondaryStructure object data from a CTE file
+ |      
+ |      Resulting SecondaryStructure object will include nucleotide x and y
+ |      coordinates and is compatible with plot_ss.
  |  
  |  read_dotbracket(self)
- |      Generates SecondaryStructure object data from a dot-bracket notation
- |      file, including nucleotide x and y coordinates.
+ |      Generates SecondaryStructure object data from a dot-bracket file.
+ |      
+ |      Resulting SecondaryStructure object will include nucleotide x and y
+ |      coordinates and is compatible with plot_ss.
  |  
  |  read_forna(self)
- |      Generates SecondaryStructure object data from a FORNA JSON file,
- |      including nucleotide x and y coordinates.
+ |      Generates SecondaryStructure object data from a FORNA JSON file.
+ |      
+ |      Resulting SecondaryStructure object will include nucleotide x and y
+ |      coordinates and is compatible with plot_ss.
  |  
  |  read_nsd(self)
- |      Generates SecondaryStructure object data from an NSD file
- |      (format for RNAStructure StructureEditor), including nucleotide x and
- |      y coordinates.
+ |      Generates SecondaryStructure object data from an NSD file.
+ |      
+ |      Resulting SecondaryStructure object will include nucleotide x and y
+ |      coordinates and is compatible with plot_ss.
  |  
  |  read_r2dt(self)
- |      Generates SecondaryStructure object data from an R2DT JSON file,
- |      including nucleotide x and y coordinates.
+ |      Generates SecondaryStructure object data from an R2DT JSON file.
+ |      
+ |      Resulting SecondaryStructure object will include nucleotide x and y
+ |      coordinates and is compatible with plot_ss.
  |  
  |  read_varna(self)
- |      Generates SecondaryStructure object data from a VARNA file,
- |      including nucleotide x and y coordinates.
+ |      Generates SecondaryStructure object data from a VARNA file.
+ |      
+ |      Resulting SecondaryStructure object will include nucleotide x and y
+ |      coordinates and is compatible with plot_ss.
  |  
  |  read_xrna(self)
- |      Generates SecondaryStructure object data from an XRNA file,
- |      including nucleotide x and y coordinates.
+ |      Generates SecondaryStructure object data from an XRNA file.
+ |      
+ |      Resulting SecondaryStructure object will include nucleotide x and y
+ |      coordinates and is compatible with plot_ss.
  |  
  |  transform_coordinates(self, flip=None, scale=None, center=None, rotate_degrees=None)
- |      Perform transformation of structure coordinates
+ |      Perform transformations on X and Y structure coordinates.
  |      
- |      Args:
- |          flip (str, optional):
- |              "horizontal" or "vertical".
- |              Defaults to None.
- |          scale (float, optional):
- |              new median distance of basepairs.
- |              Defaults to None.
- |          center (tuple of floats, optional):
- |              new center x and y coordinate.
- |              Defaults to None.
- |          rotate_degrees (float, optional):
- |              number of degrees to rotate structure.
- |              Defaults to None.
+ |      To acheive vertical and horizontal flip together, rotate 180 degrees.
+ |      
+ |      Parameters
+ |      ----------
+ |      flip : str, optional
+ |          "horizontal" or "vertical"
+ |      scale : float, optional
+ |          new median distance of basepairs
+ |      center : tuple of floats, optional
+ |          new center x and y coordinate
+ |      rotate_degrees : float, optional
+ |          number of degrees to rotate structure
  |  
  |  write_ct(self, out_file)
- |      Writes a ct file from the SecondaryStructure object.
+ |      Write structure to a ct file.
  |  
- |  write_cte(self, outputPath)
- |      writes the current structure out to CTE format for Structure Editor.
- |      
- |      Args:
- |          outputPath (string): path to output cte file to be created
+ |  write_cte(self, out_file)
+ |      Write structure to CTE format for Structure Editor.
  |  
- |  write_dbn(self, filename, rna_name)
- |      Writes dot-bracket notation of current structure to a new file.
- |      
- |      Args:
- |          filename (str): name of new file
- |          rna_name (str): name of this RNA for the dbn header
+ |  write_dbn(self, out_file, rna_name)
+ |      Write structure to dot-bracket file.
  |  
- |  write_sto(self, outfile, name='seq')
- |      "write structure file out into Stockholm (STO) file format
- |      for use for infernal searches
+ |  write_sto(self, out_file, name='seq')
+ |      Write structure to Stockholm (STO) file to use in infernal searches.
  |  
  |  ----------------------------------------------------------------------
  |  Class methods defined here:
@@ -3741,11 +3932,18 @@ class SecondaryStructure(rnavigate.data.data.Sequence)
  |  from_pairs_list(input_data, sequence) from builtins.type
  |      Creates a SecondaryStructure from a list of pairs and a sequence.
  |      
- |      Args:
- |          pairs (list): 1-indexed list of base pairs. e.g. [(1, 20), (2, 19)]
- |          sequence (str): sequence string. e.g., "AUCGUGUCAUGCUA"
+ |      Parameters
+ |      ----------
+ |      input_data : list
+ |          1-indexed list of base pairs. e.g. [(1, 20), (2, 19)]
+ |      sequence : str
+ |          The RNA sequence. e.g., "AUCGUGUCAUGCUA"
  |  
  |  from_sequence(input_data) from builtins.type
+ |      Creates a SecondaryStructure from a sequence string.
+ |      
+ |      This structure is initialized with no base pairs. If base pairs are
+ |      needed, use SecondaryStructure.from_pairs_list().
  |  
  |  ----------------------------------------------------------------------
  |  Readonly properties defined here:
@@ -3793,13 +3991,15 @@ class SecondaryStructure(rnavigate.data.data.Sequence)
  |      colormap : rnavigate.data.ScalarMappable
  |          a colormap used for creating a colorbar
  |  
- |  get_colors_from_annotations(self, annotations)
+ |  get_colors_from_annotations(self, annotations, default_color='gray')
  |      Get colors and colormap representing sequence annotations.
  |      
  |      Parameters
  |      ----------
  |      annotations : list of rnavigate.data.Annotations
  |          the annotations to use to get colors.
+ |      default_color : matplotlib color-like, defaults to "gray"
+ |          the color to use for nucleotides not in any annotation
  |      
  |      Returns
  |      -------
@@ -3912,51 +4112,64 @@ class StructureCoordinates(builtins.object)
  |  
  |  Helper class to perform structure coordinate transformations
  |  
+ |  Parameters
+ |  ----------
+ |  x : numpy.array
+ |      x coordinates
+ |  y : numpy.array
+ |      y coordinates
+ |  pairs : list of pairs, optional
+ |      list of base-paired positions
+ |      required if scaling coordinates
+ |  
  |  Methods defined here:
  |  
  |  __init__(self, x, y, pairs=None)
- |      initialize structure with arrays holding x and y coordinates. A list
- |      of base-paired positions is required only if scaling coordinates.
- |      
- |      Args:
- |          x (numpy.array): x coordinates
- |          y (numpy.array): y coordinates
- |          pairs (list of pairs, optional): list of base-paired positions.
+ |      initialize structure coordinates.
  |  
  |  center(self, x=0, y=0)
- |      Center structure on given x, y coordinate
+ |      Center structure on the given x, y coordinate
  |      
- |      Args:
- |          x (int, optional): x coordinate of structure center. Defaults to 0.
- |          y (int, optional): y coordinate of structure center. Defaults to 0.
+ |      Parameters
+ |      ----------
+ |      x : int, defaults to 0
+ |          x coordinate of structure center
+ |      y : int, defaults to 0
+ |          y coordinate of structure center
  |  
  |  flip(self, horizontal=True)
- |      Flip structure vertically or horizontally
+ |      Flip structure vertically or horizontally.
  |      
- |      Args:
- |          horizontal (bool, optional):
- |              whether to flip structure horizontally, otherwise vertically
- |              Defaults to True.
+ |      Parameters
+ |      ----------
+ |      horizontal : bool, defaults to True
+ |          whether to flip structure horizontally, otherwise vertically
  |  
  |  get_center_point(self)
- |      return the x, y coordinates for the center of structure
+ |      Get the x, y coordinates for the center of structure.
  |      
- |      Returns:
- |          tuple: x and y coordinates of structure center as floats
+ |      Returns
+ |      -------
+ |      float
+ |          x coordinate of structure center
+ |      float
+ |          y coordinate of structure center
  |  
  |  rotate(self, degrees)
- |      Rotate structure on current center point
+ |      Rotate structure on current center point.
  |      
- |      Args:
- |          degrees (float): number of degrees to rotate structure
+ |      Parameters
+ |      ----------
+ |      degrees : float
+ |          number of degrees to rotate structure
  |  
- |  scale(self, median_bp_distance=1)
+ |  scale(self, median_bp_distance=1.0)
  |      Scale structure such that median base-pair distance is constant.
  |      
- |      Args:
- |          median_bp_distance (int, optional):
- |              New median distance between all base-paired nucleotides.
- |              Defaults to 1.
+ |      Parameters
+ |      ----------
+ |      median_bp_distance : float, defaults to 1.0
+ |          New median distance between all base-paired nucleotides.
  |  
  |  ----------------------------------------------------------------------
  |  Data descriptors defined here:
@@ -3978,6 +4191,8 @@ Python Library Documentation: class SequenceCircle in module rnavigate.data.seco
 class SequenceCircle(SecondaryStructure)
  |  SequenceCircle(input_data, gap=30, name=None, **kwargs)
  |  
+ |  A circular SecondaryStructure-like representation of RNA sequence.
+ |  
  |  Method resolution order:
  |      SequenceCircle
  |      SecondaryStructure
@@ -3988,15 +4203,6 @@ class SequenceCircle(SecondaryStructure)
  |  
  |  __init__(self, input_data, gap=30, name=None, **kwargs)
  |      Creates a SecondaryStructure object from a given file or dataframe.
- |      
- |      Args:
- |          input_data (str | pandas.DataFrame):
- |              A dataframe or filepath containing a secondary structure
- |              DataFrame should contain these columns:
- |                  ["Nucleotide", "Sequence", "Pair"]
- |              "Pair" column must be redundant.
- |              Filepath parsing is determined by file extension:
- |                  varna, xrna, nsd, cte, ct, dbn, bracket, json (R2DT), forna
  |  
  |  ----------------------------------------------------------------------
  |  Methods inherited from SecondaryStructure:
@@ -4005,20 +4211,23 @@ class SequenceCircle(SecondaryStructure)
  |      print the filepath and length of the RNA
  |  
  |  add_pairs(self, pairs, break_conflicting_pairs=False)
- |      Add base pairs to current secondary structure
+ |      Add base pairs to current secondary structure.
  |      
- |      Args:
- |          pairs (list): 1-indexed list of paired residues.
- |              e.g. [(1, 20), (2, 19)]
+ |      Parameters
+ |      ----------
+ |      pairs : list
+ |          1-indexed list of paired residues. e.g. [(1, 20), (2, 19)]
+ |      break_conflicting_pairs : bool, defaults to False
+ |          Whether to break existing pairs if there is a conflict
  |  
  |  as_interactions(self, structure2=None)
- |      returns list of i, j basepairs as rnavigate.Interactions data.
+ |      Returns rnavigate.Interactions representation of this, or more, structures.
  |      
- |      Args:
- |          structure2 (rnavigate.data.SecondaryStructure, optional):
- |              If provided, basepairs from both structures are included and
- |              colored by structure (left, right, or both)
- |              defaults to None.
+ |      Parameters
+ |      ----------
+ |      structure2 : SecondaryStructure or list of these, defaults to None
+ |          If provided, basepairs from all structures are included and labeled by
+ |          which structures contain them and how many structures contain them.
  |  
  |  break_noncanonical_pairs(self)
  |      Removes non-canonical basepairs from the secondary structure.
@@ -4028,20 +4237,28 @@ class SequenceCircle(SecondaryStructure)
  |  break_pairs_nts(self, nt_positions)
  |      break base pairs at the given list of positions.
  |      
- |      Args:
- |          nt_positions (list of int): 1-indexed positions
+ |      WARNING: this deletes information.
+ |      
+ |      Parameters
+ |      ----------
+ |      nt_positions : list of int
+ |          1-indexed positions to break pairs
  |  
  |  break_pairs_region(self, start, end, break_crossing=True, inverse=False)
- |      Removes pairs from the specified region (1-indexed, inclusive)
+ |      Removes pairs from the specified region (1-indexed, inclusive).
  |      
  |      WARNING: this deletes information
  |      
- |      Args:
- |          start (int): start position
- |          end (int): end position
- |          break_crossing (bool, optional): whether to keep pairs that cross
- |              over the specified region. Defaults to True.
- |          inverse (bool, optional): invert the behavior. Defaults to False.
+ |      Parameters
+ |      ----------
+ |      start : int
+ |          start position (1-indexed, inclusive)
+ |      end : int
+ |          end position (1-indexed, inclusive)
+ |      break_crossing : bool, defaults to True
+ |          Whether to keep pairs that cross over the specified region
+ |      inverse : bool, defaults to False
+ |          Invert the behavior, i.e. remove pairs that are not in this region
  |  
  |  break_singleton_pairs(self)
  |      Removes singleton basepairs from the secondary structure.
@@ -4049,56 +4266,73 @@ class SequenceCircle(SecondaryStructure)
  |      WARNING: This deletes information.
  |  
  |  compute_ppv_sens(self, structure2, exact=True)
- |      Compute the PPV and sensitivity between self and another
- |      SecondaryStructure object.
+ |      Compute the PPV and sensitivity between this and another structure.
  |      
- |      Args:
- |          structure2 (SecondaryStructure): The SecondaryStructure to compare to.
- |          exact (bool, optional): True requires BPs to be exactly correct.
- |                                  False allows +/-1 bp slippage.
- |                                  Defaults to True.
+ |      True and False are determined from this structure.
+ |      Positive and Negative are determined from structure2.
  |      
- |      Returns:
- |          float, float, tuple: sensitivity, PPV, (TP, TP+FP, TP+FN)
+ |      PPV = TP / (TP + FP)
+ |      Sensitivity = TP / (TP + FN)
+ |      
+ |      Parameters
+ |      ----------
+ |      structure2 : SecondaryStructure
+ |          The SecondaryStructure to compare to.
+ |      exact : bool, defaults to True
+ |          True requires BPs to be exactly correct.
+ |          False allows +/-1 bp slippage.
+ |      
+ |      Returns
+ |      -------
+ |      float
+ |          sensitivity
+ |      float
+ |          PPV
+ |      2-tuple of floats
+ |          (TP, TP+FP, TP+FN)
  |  
  |  contact_distance(self, i, j)
  |      Returns the contact distance between positions i and j
  |  
  |  copy(self)
  |  
- |  extractPK(self, fill_mismatches=True)
- |      Returns the pk1 and pk2 pairs from the secondary structure.
- |      
- |      Ignores single base pairs. PK1 is defined as the helix crossing the
- |      most other bps. if there is a tie, the most 5' helix is called pk1
- |      returns pk1 and pk2 as a list of base pairs e.g [(1,10),(2,9)...
- |  
  |  fill_mismatches(self, mismatch=1)
  |      Adds base pairs to fill 1,1 and optionally 2,2 mismatches.
  |      
- |      mismatch = 1 will fill only 1,1 mismatches
- |      mismatch = 2 will fill 1,1 and 2,2
+ |      Parameters
+ |      ----------
+ |      mismatch : int, defaults to 1
+ |          1 will fill only 1,1 mismatches
+ |          2 will fill 1,1 and 2,2 mismatches
  |  
  |  get_aligned_data(self, alignment)
- |      Returns a new SecondaryStructure matching the alignment target.
+ |      Returns a new SecondaryStructure object matching the alignment target.
  |      
- |      Args:
- |          alignment (data.Alignment): an alignment object used to map values
+ |      Parameters
+ |      ----------
+ |      alignment : data.Alignment
+ |          An alignment object used to map values
  |  
  |  get_distance_matrix(self, recalculate=False)
- |      Based on Tom's contact_distance function, but instead returns
- |      the all pairs shortest paths matrix, and stores it as an attribute. If
- |      the attribute has already been set, it returns the attribute. This is
- |      faster than calling contact_distance pairwise to fill the matrix.
+ |      Get a matrix of pair-wise shortest path distances through the structure.
  |      
- |      Args:
- |          recalculate (bool, optional): Set to true to recalculate the matrix
- |              even if the attribute is set. In case changes to the structure
- |              have been made.
+ |      This function uses a BFS algorithm. The structure is represented as a complete
+ |      graph with nucleotides as vertices and base-pairs and backbone as edges. All
+ |      edges are length 1. Matrix is stored as an attribute for future use.
+ |      
+ |      If the attribute is set (not None) and recalculate is False, the attribute
+ |      will be returned.
+ |      
+ |      Based on Tom's contact_distance, but expanded to return the pairwise matrix.
+ |      New contact_distance method added to return the distance between two positions.
+ |      
+ |      Parameters
+ |      ----------
+ |      recalculate : bool, defaults to False
+ |          Set to True to recalculate the matrix even if the attribute is set.
  |  
  |  get_dotbracket(self)
- |      Returns a dotbracket notation representation of the secondary
- |      structure.
+ |      Get a dotbracket notation string representing the secondary structure.
  |      
  |      Pseudoknot levels:
  |          1: ()
@@ -4109,28 +4343,37 @@ class SequenceCircle(SecondaryStructure)
  |          6: Bb
  |          7: Cc
  |          etc...
+ |      
+ |      Returns
+ |      -------
+ |      str
+ |          A dot-bracket representation of the secondary structure
  |  
  |  get_helices(self, fill_mismatches=True, split_bulge=True, keep_singles=False)
- |      Returns a dictionary of helices from the secondary structure.
+ |      Get a dictionary of helices from the secondary structure.
+ |      
  |      Keys are equivalent to list indices. Values are lists of paired
  |      nucleotides (1-indexed) in that helix. e.g. {0:[(1,50),(2,49),(3,48)}
  |      
- |      Args:
- |          fill_mismatches (bool, optional):
- |              Whether 1-1 and 2-2 bulges are replaced with base pairs.
- |              Defaults to True.
- |          split_bulge (bool, optional):
- |              Whether to split helices on bulges.
- |              Defaults to True.
- |          keep_singles (bool, optional):
- |              Whether to return helices that contain only 1 base-pair.
- |              Defaults to False.
+ |      Parameters
+ |      ----------
+ |      fill_mismatches : bool, defaults to True
+ |          Whether 1-1 and 2-2 bulges are replaced with base pairs
+ |      split_bulge : bool, defaults to True
+ |          Whether to split helices on bulges
+ |      keep_singles : bool, defaults to False
+ |          Whether to return helices that contain only 1 base-pair
+ |      
+ |      Returns
+ |      -------
+ |      dict
+ |          A dictionary of helices
  |  
  |  get_human_dotbracket(self)
- |      Returns dotbracket notation string representing SecondaryStructure
- |      object. This is an experimental format designed to be more human
- |      readable, i.e. no counting of brackets required.
+ |      Get a human-readable dotbracket string representing the secondary structure.
  |      
+ |      This is an experimental format designed to be more human readable, i.e. no
+ |      counting of brackets required.
  |      
  |      1)  Letters, instead of brackets, are used to denote nested base pairs.
  |      2)  Each helix is assigned a letter, which is incremented one letter
@@ -4143,26 +4386,82 @@ class SequenceCircle(SecondaryStructure)
  |          ((((....(((.[[..)))))(((...(((..]].))))))))
  |      Same question, new format:
  |          AABB....CCC.[[..cccbbBBB...CCC..]].cccbbbaa
+ |      Read this as:
+ |          ((_______________________________________)) (level 1 = A)
+ |            ((_______________))(((______________)))   (level 2 = B)
+ |                  (((_____)))        (((_____)))      (level 3 = C)
+ |                      [[__________________]]          (pseudoknot = [])
  |      
  |      Pseudoknot levels:
  |          1: Aa, Bb, Cc, etc.
  |          2: [], 3: {}, 4: <>
  |  
  |  get_interactions_df(self)
+ |      Returns a DataFrame of i, j basepairs.
+ |      
+ |      Returns
+ |      -------
+ |      pandas.DataFrame
+ |          A DataFrame with columns:
+ |              i: the 5' (1-indexed) position of the base pair
+ |              j: the 3' (1-indexed) position of the base pair
+ |              Structure: always 1
  |  
  |  get_junction_nts(self)
- |      Returns a list of residues at junctions (paired, but adjacent to
- |      an unpaired residue or the end of a chain)
+ |      Get a list of junction nucleotides (paired, but at the end of a chain).
+ |      
+ |      Returns
+ |      -------
+ |      list
+ |          A list of 1-indexed positions of junction nucleotides
  |  
  |  get_nonredundant_ct(self)
- |      Returns the ct attribute in non-redundant form - only pairs i<j
+ |      Returns the ct attribute in a non-redundant form.
+ |      
+ |      Only returns pairs in which i < j
+ |      For example:
+ |          self.ct[i-1] == j
+ |          self.ct[j-1] == i
+ |          BUT
+ |          self.get_nonredundant_ct()[j-1] == 0
+ |      
+ |      Returns
+ |      -------
+ |      numpy.array
+ |          A non-redundant array of base pairs
  |  
  |  get_paired_nts(self)
- |      Returns a list of residues that are paired.
+ |      Get a list of residues that are paired.
+ |      
+ |      Returns
+ |      -------
+ |      list
+ |          A list of 1-indexed positions of paired nucleotides
  |  
  |  get_pairs(self)
- |      Returns a non-redundant list of base pairs i < j as a array of tuples.
- |      e.g., [(19,50),(20,49)....]
+ |      Get a non-redundant list of base pairs i < j as a array of tuples.
+ |      
+ |      Returns
+ |      -------
+ |      list
+ |          A list of 1-indexed positions. e.g., [(1, 50), (2, 49), ...]
+ |  
+ |  get_pseudoknots(self, fill_mismatches=True)
+ |      Get the pk1 and pk2 pairs from the secondary structure.
+ |      
+ |      Ignores single base pairs. PK1 is defined as the helix crossing the
+ |      most other bps. If there is a tie, the most 5' helix is called pk1
+ |      returns pk1 and pk2 as a list of base pairs e.g [(1,10),(2,9)...
+ |      
+ |      Parameters
+ |      ----------
+ |      fill_mismatches : bool, defaults to True
+ |          Whether 1-1 and 2-2 bulges are replaced with base pairs
+ |      
+ |      Returns
+ |      -------
+ |      list of 2 lists of 2-tuples
+ |          A list of base pairs for pk1 and pk2
  |  
  |  get_structure_elements(self)
  |      This code is not yet implemented.
@@ -4181,94 +4480,95 @@ class SequenceCircle(SecondaryStructure)
  |          Pseudoknot (P)
  |  
  |  get_unpaired_nts(self)
- |      Returns a list of residues that are paired.
+ |      Get a list of residues that are unpaired.
+ |      
+ |      Returns
+ |      -------
+ |      list
+ |          A list of 1-indexed positions of unpaired nucleotides
  |  
  |  normalize_sequence(self, t_or_u='U', uppercase=True)
- |      Converts sequence to all uppercase nucleotides and corrects T or U.
- |      
- |      Parameters
- |      ----------
- |      t_or_u : "T", "U", or False, defaults to "U"
- |          "T" converts "U"s to "T"s
- |          "U" converts "T"s to "U"s
- |          False does nothing.
- |      uppercase : bool, defaults to True
- |          Whether to make sequence all uppercase
+ |      Normalize the sequence attribute (fix case and/or U <-> T).
  |  
  |  read_ct(self, structure_number=0)
  |      Loads secondary structure information from a given ct file.
  |      
- |      Requires a properly formatted header!
+ |      Requires a properly formatted header.
  |      
- |      Args:
- |          structure_number (int, optional): If ct file contains multiple structures,
- |              uses the given structure. Defaults to 0.
+ |      Parameters
+ |      ----------
+ |      structure_number : int, defaults to 0
+ |          0-indexed structure number to load from the ct file.
  |  
  |  read_cte(self)
- |      Generates SecondaryStructure object data from a CTE file, including
- |      nucleotide x and y coordinates.
+ |      Generates SecondaryStructure object data from a CTE file
+ |      
+ |      Resulting SecondaryStructure object will include nucleotide x and y
+ |      coordinates and is compatible with plot_ss.
  |  
  |  read_dotbracket(self)
- |      Generates SecondaryStructure object data from a dot-bracket notation
- |      file, including nucleotide x and y coordinates.
+ |      Generates SecondaryStructure object data from a dot-bracket file.
+ |      
+ |      Resulting SecondaryStructure object will include nucleotide x and y
+ |      coordinates and is compatible with plot_ss.
  |  
  |  read_forna(self)
- |      Generates SecondaryStructure object data from a FORNA JSON file,
- |      including nucleotide x and y coordinates.
+ |      Generates SecondaryStructure object data from a FORNA JSON file.
+ |      
+ |      Resulting SecondaryStructure object will include nucleotide x and y
+ |      coordinates and is compatible with plot_ss.
  |  
  |  read_nsd(self)
- |      Generates SecondaryStructure object data from an NSD file
- |      (format for RNAStructure StructureEditor), including nucleotide x and
- |      y coordinates.
+ |      Generates SecondaryStructure object data from an NSD file.
+ |      
+ |      Resulting SecondaryStructure object will include nucleotide x and y
+ |      coordinates and is compatible with plot_ss.
  |  
  |  read_r2dt(self)
- |      Generates SecondaryStructure object data from an R2DT JSON file,
- |      including nucleotide x and y coordinates.
+ |      Generates SecondaryStructure object data from an R2DT JSON file.
+ |      
+ |      Resulting SecondaryStructure object will include nucleotide x and y
+ |      coordinates and is compatible with plot_ss.
  |  
  |  read_varna(self)
- |      Generates SecondaryStructure object data from a VARNA file,
- |      including nucleotide x and y coordinates.
+ |      Generates SecondaryStructure object data from a VARNA file.
+ |      
+ |      Resulting SecondaryStructure object will include nucleotide x and y
+ |      coordinates and is compatible with plot_ss.
  |  
  |  read_xrna(self)
- |      Generates SecondaryStructure object data from an XRNA file,
- |      including nucleotide x and y coordinates.
+ |      Generates SecondaryStructure object data from an XRNA file.
+ |      
+ |      Resulting SecondaryStructure object will include nucleotide x and y
+ |      coordinates and is compatible with plot_ss.
  |  
  |  transform_coordinates(self, flip=None, scale=None, center=None, rotate_degrees=None)
- |      Perform transformation of structure coordinates
+ |      Perform transformations on X and Y structure coordinates.
  |      
- |      Args:
- |          flip (str, optional):
- |              "horizontal" or "vertical".
- |              Defaults to None.
- |          scale (float, optional):
- |              new median distance of basepairs.
- |              Defaults to None.
- |          center (tuple of floats, optional):
- |              new center x and y coordinate.
- |              Defaults to None.
- |          rotate_degrees (float, optional):
- |              number of degrees to rotate structure.
- |              Defaults to None.
+ |      To acheive vertical and horizontal flip together, rotate 180 degrees.
+ |      
+ |      Parameters
+ |      ----------
+ |      flip : str, optional
+ |          "horizontal" or "vertical"
+ |      scale : float, optional
+ |          new median distance of basepairs
+ |      center : tuple of floats, optional
+ |          new center x and y coordinate
+ |      rotate_degrees : float, optional
+ |          number of degrees to rotate structure
  |  
  |  write_ct(self, out_file)
- |      Writes a ct file from the SecondaryStructure object.
+ |      Write structure to a ct file.
  |  
- |  write_cte(self, outputPath)
- |      writes the current structure out to CTE format for Structure Editor.
- |      
- |      Args:
- |          outputPath (string): path to output cte file to be created
+ |  write_cte(self, out_file)
+ |      Write structure to CTE format for Structure Editor.
  |  
- |  write_dbn(self, filename, rna_name)
- |      Writes dot-bracket notation of current structure to a new file.
- |      
- |      Args:
- |          filename (str): name of new file
- |          rna_name (str): name of this RNA for the dbn header
+ |  write_dbn(self, out_file, rna_name)
+ |      Write structure to dot-bracket file.
  |  
- |  write_sto(self, outfile, name='seq')
- |      "write structure file out into Stockholm (STO) file format
- |      for use for infernal searches
+ |  write_sto(self, out_file, name='seq')
+ |      Write structure to Stockholm (STO) file to use in infernal searches.
  |  
  |  ----------------------------------------------------------------------
  |  Class methods inherited from SecondaryStructure:
@@ -4276,11 +4576,18 @@ class SequenceCircle(SecondaryStructure)
  |  from_pairs_list(input_data, sequence) from builtins.type
  |      Creates a SecondaryStructure from a list of pairs and a sequence.
  |      
- |      Args:
- |          pairs (list): 1-indexed list of base pairs. e.g. [(1, 20), (2, 19)]
- |          sequence (str): sequence string. e.g., "AUCGUGUCAUGCUA"
+ |      Parameters
+ |      ----------
+ |      input_data : list
+ |          1-indexed list of base pairs. e.g. [(1, 20), (2, 19)]
+ |      sequence : str
+ |          The RNA sequence. e.g., "AUCGUGUCAUGCUA"
  |  
  |  from_sequence(input_data) from builtins.type
+ |      Creates a SecondaryStructure from a sequence string.
+ |      
+ |      This structure is initialized with no base pairs. If base pairs are
+ |      needed, use SecondaryStructure.from_pairs_list().
  |  
  |  ----------------------------------------------------------------------
  |  Readonly properties inherited from SecondaryStructure:
@@ -4328,13 +4635,15 @@ class SequenceCircle(SecondaryStructure)
  |      colormap : rnavigate.data.ScalarMappable
  |          a colormap used for creating a colorbar
  |  
- |  get_colors_from_annotations(self, annotations)
+ |  get_colors_from_annotations(self, annotations, default_color='gray')
  |      Get colors and colormap representing sequence annotations.
  |      
  |      Parameters
  |      ----------
  |      annotations : list of rnavigate.data.Annotations
  |          the annotations to use to get colors.
+ |      default_color : matplotlib color-like, defaults to "gray"
+ |          the color to use for nucleotides not in any annotation
  |      
  |      Returns
  |      -------
@@ -5150,13 +5459,13 @@ class ScalarMappable(matplotlib.cm.ScalarMappable)
  |      
  |      Parameters
  |      ----------
- |          cmap : string, tuple, float, or list
- |              A valid mpl color, list of valid colors or a valid colormap name
+ |      cmap : string, tuple, float, or list
+ |          A valid mpl color, list of valid colors or a valid colormap name
  |      
  |      Returns
  |      -------
- |          matplotlib colormap
- |              a colormap matching the input
+ |      matplotlib colormap
+ |          a colormap matching the input
  |  
  |  get_norm(self, normalization, values, cmap)
  |      Given a normalization type and values, return a normalization object.
@@ -5754,13 +6063,15 @@ class Interactions(rnavigate.data.data.Data)
  |      colormap : rnavigate.data.ScalarMappable
  |          a colormap used for creating a colorbar
  |  
- |  get_colors_from_annotations(self, annotations)
+ |  get_colors_from_annotations(self, annotations, default_color='gray')
  |      Get colors and colormap representing sequence annotations.
  |      
  |      Parameters
  |      ----------
  |      annotations : list of rnavigate.data.Annotations
  |          the annotations to use to get colors.
+ |      default_color : matplotlib color-like, defaults to "gray"
+ |          the color to use for nucleotides not in any annotation
  |      
  |      Returns
  |      -------
@@ -6301,13 +6612,15 @@ class SHAPEJuMP(Interactions)
  |      colormap : rnavigate.data.ScalarMappable
  |          a colormap used for creating a colorbar
  |  
- |  get_colors_from_annotations(self, annotations)
+ |  get_colors_from_annotations(self, annotations, default_color='gray')
  |      Get colors and colormap representing sequence annotations.
  |      
  |      Parameters
  |      ----------
  |      annotations : list of rnavigate.data.Annotations
  |          the annotations to use to get colors.
+ |      default_color : matplotlib color-like, defaults to "gray"
+ |          the color to use for nucleotides not in any annotation
  |      
  |      Returns
  |      -------
@@ -6861,13 +7174,15 @@ class RINGMaP(Interactions)
  |      colormap : rnavigate.data.ScalarMappable
  |          a colormap used for creating a colorbar
  |  
- |  get_colors_from_annotations(self, annotations)
+ |  get_colors_from_annotations(self, annotations, default_color='gray')
  |      Get colors and colormap representing sequence annotations.
  |      
  |      Parameters
  |      ----------
  |      annotations : list of rnavigate.data.Annotations
  |          the annotations to use to get colors.
+ |      default_color : matplotlib color-like, defaults to "gray"
+ |          the color to use for nucleotides not in any annotation
  |      
  |      Returns
  |      -------
@@ -7415,13 +7730,15 @@ class PAIRMaP(RINGMaP)
  |      colormap : rnavigate.data.ScalarMappable
  |          a colormap used for creating a colorbar
  |  
- |  get_colors_from_annotations(self, annotations)
+ |  get_colors_from_annotations(self, annotations, default_color='gray')
  |      Get colors and colormap representing sequence annotations.
  |      
  |      Parameters
  |      ----------
  |      annotations : list of rnavigate.data.Annotations
  |          the annotations to use to get colors.
+ |      default_color : matplotlib color-like, defaults to "gray"
+ |          the color to use for nucleotides not in any annotation
  |      
  |      Returns
  |      -------
@@ -7978,13 +8295,15 @@ class PairingProbability(Interactions)
  |      colormap : rnavigate.data.ScalarMappable
  |          a colormap used for creating a colorbar
  |  
- |  get_colors_from_annotations(self, annotations)
+ |  get_colors_from_annotations(self, annotations, default_color='gray')
  |      Get colors and colormap representing sequence annotations.
  |      
  |      Parameters
  |      ----------
  |      annotations : list of rnavigate.data.Annotations
  |          the annotations to use to get colors.
+ |      default_color : matplotlib color-like, defaults to "gray"
+ |          the color to use for nucleotides not in any annotation
  |      
  |      Returns
  |      -------
@@ -8518,13 +8837,15 @@ class AllPossible(Interactions)
  |      colormap : rnavigate.data.ScalarMappable
  |          a colormap used for creating a colorbar
  |  
- |  get_colors_from_annotations(self, annotations)
+ |  get_colors_from_annotations(self, annotations, default_color='gray')
  |      Get colors and colormap representing sequence annotations.
  |      
  |      Parameters
  |      ----------
  |      annotations : list of rnavigate.data.Annotations
  |          the annotations to use to get colors.
+ |      default_color : matplotlib color-like, defaults to "gray"
+ |          the color to use for nucleotides not in any annotation
  |      
  |      Returns
  |      -------
@@ -9063,13 +9384,15 @@ class StructureAsInteractions(Interactions)
  |      colormap : rnavigate.data.ScalarMappable
  |          a colormap used for creating a colorbar
  |  
- |  get_colors_from_annotations(self, annotations)
+ |  get_colors_from_annotations(self, annotations, default_color='gray')
  |      Get colors and colormap representing sequence annotations.
  |      
  |      Parameters
  |      ----------
  |      annotations : list of rnavigate.data.Annotations
  |          the annotations to use to get colors.
+ |      default_color : matplotlib color-like, defaults to "gray"
+ |          the color to use for nucleotides not in any annotation
  |      
  |      Returns
  |      -------
@@ -9608,13 +9931,15 @@ class StructureCompareMany(Interactions)
  |      colormap : rnavigate.data.ScalarMappable
  |          a colormap used for creating a colorbar
  |  
- |  get_colors_from_annotations(self, annotations)
+ |  get_colors_from_annotations(self, annotations, default_color='gray')
  |      Get colors and colormap representing sequence annotations.
  |      
  |      Parameters
  |      ----------
  |      annotations : list of rnavigate.data.Annotations
  |          the annotations to use to get colors.
+ |      default_color : matplotlib color-like, defaults to "gray"
+ |          the color to use for nucleotides not in any annotation
  |      
  |      Returns
  |      -------
@@ -10153,13 +10478,15 @@ class StructureCompareTwo(Interactions)
  |      colormap : rnavigate.data.ScalarMappable
  |          a colormap used for creating a colorbar
  |  
- |  get_colors_from_annotations(self, annotations)
+ |  get_colors_from_annotations(self, annotations, default_color='gray')
  |      Get colors and colormap representing sequence annotations.
  |      
  |      Parameters
  |      ----------
  |      annotations : list of rnavigate.data.Annotations
  |          the annotations to use to get colors.
+ |      default_color : matplotlib color-like, defaults to "gray"
+ |          the color to use for nucleotides not in any annotation
  |      
  |      Returns
  |      -------
@@ -10493,13 +10820,15 @@ class PDB(rnavigate.data.data.Sequence)
  |      colormap : rnavigate.data.ScalarMappable
  |          a colormap used for creating a colorbar
  |  
- |  get_colors_from_annotations(self, annotations)
+ |  get_colors_from_annotations(self, annotations, default_color='gray')
  |      Get colors and colormap representing sequence annotations.
  |      
  |      Parameters
  |      ----------
  |      annotations : list of rnavigate.data.Annotations
  |          the annotations to use to get colors.
+ |      default_color : matplotlib color-like, defaults to "gray"
+ |          the color to use for nucleotides not in any annotation
  |      
  |      Returns
  |      -------
@@ -11026,13 +11355,15 @@ class Profile(rnavigate.data.data.Data)
  |      colormap : rnavigate.data.ScalarMappable
  |          a colormap used for creating a colorbar
  |  
- |  get_colors_from_annotations(self, annotations)
+ |  get_colors_from_annotations(self, annotations, default_color='gray')
  |      Get colors and colormap representing sequence annotations.
  |      
  |      Parameters
  |      ----------
  |      annotations : list of rnavigate.data.Annotations
  |          the annotations to use to get colors.
+ |      default_color : matplotlib color-like, defaults to "gray"
+ |          the color to use for nucleotides not in any annotation
  |      
  |      Returns
  |      -------
@@ -11608,13 +11939,15 @@ class SHAPEMaP(Profile)
  |      colormap : rnavigate.data.ScalarMappable
  |          a colormap used for creating a colorbar
  |  
- |  get_colors_from_annotations(self, annotations)
+ |  get_colors_from_annotations(self, annotations, default_color='gray')
  |      Get colors and colormap representing sequence annotations.
  |      
  |      Parameters
  |      ----------
  |      annotations : list of rnavigate.data.Annotations
  |          the annotations to use to get colors.
+ |      default_color : matplotlib color-like, defaults to "gray"
+ |          the color to use for nucleotides not in any annotation
  |      
  |      Returns
  |      -------
@@ -12109,13 +12442,15 @@ class DanceMaP(SHAPEMaP)
  |      colormap : rnavigate.data.ScalarMappable
  |          a colormap used for creating a colorbar
  |  
- |  get_colors_from_annotations(self, annotations)
+ |  get_colors_from_annotations(self, annotations, default_color='gray')
  |      Get colors and colormap representing sequence annotations.
  |      
  |      Parameters
  |      ----------
  |      annotations : list of rnavigate.data.Annotations
  |          the annotations to use to get colors.
+ |      default_color : matplotlib color-like, defaults to "gray"
+ |          the color to use for nucleotides not in any annotation
  |      
  |      Returns
  |      -------
@@ -12225,6 +12560,29 @@ Python Library Documentation: class RNPMaP in module rnavigate.data.profile
 
 class RNPMaP(Profile)
  |  RNPMaP(input_data, read_table_kw=None, sequence=None, metric='NormedP', metric_defaults=None, name=None)
+ |  
+ |  Represents per-nucleotide RNPMaP data.
+ |  
+ |  Parameters
+ |  ----------
+ |  input_data : str or pandas.DataFrame
+ |      path to an RNAModMapper reactivities.txt file or a pandas DataFrame
+ |  read_table_kw : dict, optional
+ |      Keyword arguments to pass to pandas.read_table. These are not necessary for
+ |      reactivities.txt files.
+ |      Defaults to None.
+ |  sequence : rnavigate.Sequence or str, optional
+ |      A sequence to use as the reference sequence. This is not necessary for
+ |      reactivities.txt files.
+ |      Defaults to None.
+ |  metric : str, defaults to "NormedP"
+ |      The name of the set of value-to-color options to use.
+ |  metric_defaults : dict, optional
+ |      Keys are metric names, to be used with `metric`.
+ |      Values are dictionaries of plotting parameters.
+ |      Defaults to None.
+ |  name : str, optional
+ |      A name for the data set. Defaults to None.
  |  
  |  Method resolution order:
  |      RNPMaP
@@ -12537,13 +12895,15 @@ class RNPMaP(Profile)
  |      colormap : rnavigate.data.ScalarMappable
  |          a colormap used for creating a colorbar
  |  
- |  get_colors_from_annotations(self, annotations)
+ |  get_colors_from_annotations(self, annotations, default_color='gray')
  |      Get colors and colormap representing sequence annotations.
  |      
  |      Parameters
  |      ----------
  |      annotations : list of rnavigate.data.Annotations
  |          the annotations to use to get colors.
+ |      default_color : matplotlib color-like, defaults to "gray"
+ |          the color to use for nucleotides not in any annotation
  |      
  |      Returns
  |      -------
@@ -12653,6 +13013,24 @@ Python Library Documentation: class DeltaProfile in module rnavigate.data.profil
 
 class DeltaProfile(Profile)
  |  DeltaProfile(profile1, profile2, metric=None, metric_defaults=None, name=None)
+ |  
+ |  A class to represent the difference between two profiles.
+ |  
+ |  Parameters
+ |  ----------
+ |  profile1 : Profile
+ |      The first profile to compare.
+ |  profile2 : Profile
+ |      The second profile to compare.
+ |  metric : str, optional
+ |      The name of the metric to use.
+ |      Defaults to the metric of profile1.
+ |  metric_defaults : dict, optional
+ |      Keys are metric names, to be used with `metric`.
+ |      Values are dictionaries of plotting parameters.
+ |      Defaults to None.
+ |  name : str, optional
+ |      A name for the data set. Defaults to None.
  |  
  |  Method resolution order:
  |      DeltaProfile
@@ -12965,13 +13343,15 @@ class DeltaProfile(Profile)
  |      colormap : rnavigate.data.ScalarMappable
  |          a colormap used for creating a colorbar
  |  
- |  get_colors_from_annotations(self, annotations)
+ |  get_colors_from_annotations(self, annotations, default_color='gray')
  |      Get colors and colormap representing sequence annotations.
  |      
  |      Parameters
  |      ----------
  |      annotations : list of rnavigate.data.Annotations
  |          the annotations to use to get colors.
+ |      default_color : matplotlib color-like, defaults to "gray"
+ |          the color to use for nucleotides not in any annotation
  |      
  |      Returns
  |      -------
@@ -13233,13 +13613,15 @@ class Annotation(rnavigate.data.data.Sequence)
  |      colormap : rnavigate.data.ScalarMappable
  |          a colormap used for creating a colorbar
  |  
- |  get_colors_from_annotations(self, annotations)
+ |  get_colors_from_annotations(self, annotations, default_color='gray')
  |      Get colors and colormap representing sequence annotations.
  |      
  |      Parameters
  |      ----------
  |      annotations : list of rnavigate.data.Annotations
  |          the annotations to use to get colors.
+ |      default_color : matplotlib color-like, defaults to "gray"
+ |          the color to use for nucleotides not in any annotation
  |      
  |      Returns
  |      -------
@@ -13519,13 +13901,15 @@ class Motif(Annotation)
  |      colormap : rnavigate.data.ScalarMappable
  |          a colormap used for creating a colorbar
  |  
- |  get_colors_from_annotations(self, annotations)
+ |  get_colors_from_annotations(self, annotations, default_color='gray')
  |      Get colors and colormap representing sequence annotations.
  |      
  |      Parameters
  |      ----------
  |      annotations : list of rnavigate.data.Annotations
  |          the annotations to use to get colors.
+ |      default_color : matplotlib color-like, defaults to "gray"
+ |          the color to use for nucleotides not in any annotation
  |      
  |      Returns
  |      -------
@@ -13804,13 +14188,15 @@ class ORFs(Annotation)
  |      colormap : rnavigate.data.ScalarMappable
  |          a colormap used for creating a colorbar
  |  
- |  get_colors_from_annotations(self, annotations)
+ |  get_colors_from_annotations(self, annotations, default_color='gray')
  |      Get colors and colormap representing sequence annotations.
  |      
  |      Parameters
  |      ----------
  |      annotations : list of rnavigate.data.Annotations
  |          the annotations to use to get colors.
+ |      default_color : matplotlib color-like, defaults to "gray"
+ |          the color to use for nucleotides not in any annotation
  |      
  |      Returns
  |      -------
@@ -14013,23 +14399,11 @@ class Alignment(rnavigate.plots.plots.Plot)
  |          The axes containing the plot.
  |          Defaults to None.
  |  
- |  set_figure_size(self, fig=None, ax=None, rows=None, cols=None, height_ax_rel=0.03, width_ax_rel=0.03, width_ax_in=None, height_ax_in=None, height_gap_in=1, width_gap_in=0.5, top_in=1, bottom_in=0.5, left_in=0.5, right_in=0.5)
+ |  set_figure_size(self, height_ax_rel=0.03, width_ax_rel=0.03, width_ax_in=None, height_ax_in=None, height_gap_in=1, width_gap_in=0.5, top_in=1, bottom_in=0.5, left_in=0.5, right_in=0.5)
  |      Set the figure size for the plot.
  |      
  |      Parameters
  |      ----------
- |      fig : matplotlib.figure.Figure, optional
- |          The figure containing the plot.
- |          Defaults to None.
- |      ax : matplotlib.axes.Axes, optional
- |          The axes containing the plot.
- |          Defaults to None.
- |      rows : int, optional
- |          The number of rows of plots.
- |          Defaults to None.
- |      cols : int, optional
- |          The number of columns of plots.
- |          Defaults to None.
  |      height_ax_rel : float, optional
  |          The relative height of each axes.
  |          Defaults to 0.03.
@@ -16156,7 +16530,7 @@ class QC(rnavigate.plots.plots.Plot)
  |      upper_limit : int, optional
  |          Upper limit of the x-axis.
  |  
- |  set_figure_size(self, height_ax_rel=None, width_ax_rel=None, width_ax_in=2, height_ax_in=2, height_gap_in=1, width_gap_in=1, top_in=1, bottom_in=0.5, left_in=0.5, right_in=0.5)
+ |  set_figure_size(self, height_ax_rel=None, width_ax_rel=None, width_ax_in=2, height_ax_in=2, height_gap_in=1, width_gap_in=1, top_in=1, bottom_in=0.5, left_in=1, right_in=0.5)
  |      Set the size of the figure.
  |      
  |      Parameters
@@ -17486,17 +17860,17 @@ update_copy(original_settings, user_settings)
     
     Parameters
     ----------
-        original_settings (dict)
-            a default settings dictionary, usually rnav.settings
-        user_settings (dict)
-            a dictionary with only the fields from the original_settings that
-            are to be changed
+    original_settings (dict)
+        a default settings dictionary, usually rnav.settings
+    user_settings (dict)
+        a dictionary with only the fields from the original_settings that
+        are to be changed
     
     Returns
     -------
-        settings dict
-            the original_settings dictionary with the new_settings dictionary
-            values recursively applied
+    settings dict
+        the original_settings dictionary with the new_settings dictionary
+        values recursively applied
 ```
 
 ### rnavigate.styles.Settings
@@ -17513,9 +17887,9 @@ class Settings(builtins.dict)
  |  
  |  Parameters
  |  ----------
- |      user_settings : dict
- |          a dictionary with only the fields from the original_settings that
- |          are to be changed
+ |  user_settings : dict
+ |      a dictionary with only the fields from the original_settings that
+ |      are to be changed
  |  
  |  Method resolution order:
  |      Settings
@@ -17673,15 +18047,15 @@ set_defaults(context='paper', style='ticks', colors='default', dpi=140)
     
     Parameters
     ----------
-        context : str, defaults to "paper"
-            Passed to seaborn.set_context
-            Defaults to "paper"
-        style : str, defaults to "ticks"
-            Passed to seaborn.set_style
-        colors : str, defaults to "default"
-            Passed to seaborn.set_palette
-        dpi : int, defaults to 140
-            Sets the dots-per-inch for inline and exported images
+    context : str, defaults to "paper"
+        Passed to seaborn.set_context
+        Defaults to "paper"
+    style : str, defaults to "ticks"
+        Passed to seaborn.set_style
+    colors : str, defaults to "default"
+        Passed to seaborn.set_palette
+    dpi : int, defaults to 140
+        Sets the dots-per-inch for inline and exported images
 ```
 
 ### rnavigate.styles.get_nt_color
@@ -17698,15 +18072,15 @@ get_nt_color(nt, colors=None)
     
     Parameters
     ----------
-        nt : str
-            a nucleotide letter
-        colors "rnavigate" or "old", defaults to settings["sequence_colors"]
-            "rnavigate" uses blue, light blue, red, light red for "AUCG"
-            "old" uses traditional red, yellow, blue, green for "AUCG"
+    nt : str
+        a nucleotide letter
+    colors "rnavigate" or "old", defaults to settings["sequence_colors"]
+        "rnavigate" uses blue, light blue, red, light red for "AUCG"
+        "old" uses traditional red, yellow, blue, green for "AUCG"
     
     Returns:
-        color : str
-            a hex color string
+    color : str
+        a hex color string
 ```
 
 ### rnavigate.styles.get_nt_cmap
@@ -17721,14 +18095,14 @@ get_nt_cmap(colors=None)
     
     Parameters
     ----------
-        colors "rnavigate" or "old", defaults to settings["sequence_colors"]
-            "rnavigate" uses blue, light blue, red, light red for "AUCG"
-            "old" uses traditional red, yellow, blue, green for "AUCG"
+    colors "rnavigate" or "old", defaults to settings["sequence_colors"]
+        "rnavigate" uses blue, light blue, red, light red for "AUCG"
+        "old" uses traditional red, yellow, blue, green for "AUCG"
     
     Returns
     -------
-        cmap : rnavigate.data.colors.ScalarMappable (matplotlib.cm.ScalarMappable)
-            a color map for nucleotides
+    cmap : rnavigate.data.colors.ScalarMappable (matplotlib.cm.ScalarMappable)
+        a color map for nucleotides
 ```
 
 ### rnavigate.styles.apply_style
@@ -17826,11 +18200,11 @@ class NarrowPeak(BedFile)
 Python Library Documentation: class Transcriptome in module rnavigate.transcriptomics.transcriptome
 
 class Transcriptome(builtins.object)
- |  Transcriptome(genome, annotation, path=WindowsPath('D:/OneDrive - University of North Carolina at Chapel Hill/GitHub/RNAvigate/reference_data'), chr_ids=None)
+ |  Transcriptome(genome, annotation, path=WindowsPath('C:/Users/psirv/OneDrive - University of North Carolina at Chapel Hill/GitHub/RNAvigate/reference_data'), chr_ids=None)
  |  
  |  Methods defined here:
  |  
- |  __init__(self, genome, annotation, path=WindowsPath('D:/OneDrive - University of North Carolina at Chapel Hill/GitHub/RNAvigate/reference_data'), chr_ids=None)
+ |  __init__(self, genome, annotation, path=WindowsPath('C:/Users/psirv/OneDrive - University of North Carolina at Chapel Hill/GitHub/RNAvigate/reference_data'), chr_ids=None)
  |      Initialize self.  See help(type(self)) for accurate signature.
  |  
  |  get_sequence(self, chromosome, coordinates, strand)
@@ -17935,13 +18309,15 @@ class Transcript(rnavigate.data.data.Sequence)
  |      colormap : rnavigate.data.ScalarMappable
  |          a colormap used for creating a colorbar
  |  
- |  get_colors_from_annotations(self, annotations)
+ |  get_colors_from_annotations(self, annotations, default_color='gray')
  |      Get colors and colormap representing sequence annotations.
  |      
  |      Parameters
  |      ----------
  |      annotations : list of rnavigate.data.Annotations
  |          the annotations to use to get colors.
+ |      default_color : matplotlib color-like, defaults to "gray"
+ |          the color to use for nucleotides not in any annotation
  |      
  |      Returns
  |      -------
@@ -18092,7 +18468,7 @@ class eCLIPDatabase(builtins.object)
 ```text
 Python Library Documentation: function download_eclip_peaks in module rnavigate.transcriptomics.eclip
 
-download_eclip_peaks(assembly='GRCh38', outpath=WindowsPath('D:/OneDrive - University of North Carolina at Chapel Hill/GitHub/RNAvigate/reference_data/eCLIP_downloads'))
+download_eclip_peaks(assembly='GRCh38', outpath=WindowsPath('C:/Users/psirv/OneDrive - University of North Carolina at Chapel Hill/GitHub/RNAvigate/reference_data/eCLIP_downloads'))
     download eCLIP bed files from ENCODE database
     
     Args:
@@ -18101,3 +18477,4 @@ download_eclip_peaks(assembly='GRCh38', outpath=WindowsPath('D:/OneDrive - Unive
         outpath (string, optional): output directory path
             Defaults to "eCLIP_downloads".
 ```
+
