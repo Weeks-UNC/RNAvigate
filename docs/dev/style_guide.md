@@ -12,6 +12,8 @@ modifications:
   - `disable=unspecified-encoding`
 - indent string is 4 spaces (Google uses 2). Black enforces 4 spaces anyway.
   - `indent-string='    '`
+- Pylint recommends 80 character line limit. Black uses 88.
+  - `max-line-length=88`
 
 In general, keep things as simple as possible, human readable, and consistent.
 
