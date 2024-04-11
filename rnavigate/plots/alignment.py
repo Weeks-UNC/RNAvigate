@@ -55,10 +55,6 @@ class Alignment(plots.Plot):
 
     def set_figure_size(
         self,
-        fig=None,
-        ax=None,
-        rows=None,
-        cols=None,
         height_ax_rel=0.03,
         width_ax_rel=0.03,
         width_ax_in=None,
@@ -74,18 +70,6 @@ class Alignment(plots.Plot):
 
         Parameters
         ----------
-        fig : matplotlib.figure.Figure, optional
-            The figure containing the plot.
-            Defaults to None.
-        ax : matplotlib.axes.Axes, optional
-            The axes containing the plot.
-            Defaults to None.
-        rows : int, optional
-            The number of rows of plots.
-            Defaults to None.
-        cols : int, optional
-            The number of columns of plots.
-            Defaults to None.
         height_ax_rel : float, optional
             The relative height of each axes.
             Defaults to 0.03.
@@ -118,10 +102,6 @@ class Alignment(plots.Plot):
             Defaults to 0.5.
         """
         super().set_figure_size(
-            fig=fig,
-            ax=ax,
-            rows=rows,
-            cols=cols,
             height_ax_rel=height_ax_rel,
             width_ax_rel=width_ax_rel,
             width_ax_in=width_ax_in,

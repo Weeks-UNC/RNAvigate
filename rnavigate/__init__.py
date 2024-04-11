@@ -1,7 +1,8 @@
-"""RNA visualization and graphical analysis toolset
-RNA vi                g         a        t    e
+"""RNAvigate
 
-A Jupyter-compatible toolset for the exploration of RNA structure and chemical
+RNA visualization and graphical analysis toolset
+
+A Jupyter-compatible toolset for visually exploring RNA structure and chemical
 probing data.
 """
 

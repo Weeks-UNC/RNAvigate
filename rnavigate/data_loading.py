@@ -72,25 +72,27 @@ data_keyword_defaults = {
 
 
 def create_data(data_keyword, inputs, sample=None):
-    """Convenience function for creating rnavigate.data objects. This function
-    is used to parse **data_keywords passed to rnavigate.Sample, but can also
-    be used on it's own using the same syntax.
+    """Convenience function for creating rnavigate.data objects.
+
+    This function is used to parse \*\*data_keywords passed to
+    rnavigate.Sample, but can also be used on it's own using the same syntax.
 
     Parameters
     ----------
     data_keyword : string
-        a data keyword sting
-        if inputs is a dictionary, this argument is ignored
+        A data keyword sting. If inputs is a dictionary, this argument is ignored.
     inputs : any
-        If a dictionary, the first key must be the standard data keyword
-        Otherwise, the expected type depends on `data_keyword`
-    sample : rnavigate.Sample, optional
-        Requried only if inputs is a dictionary containing a "sequence" key
-        with a value that is an assigned data keyword
-            {"sequence": "data_keyword"}
-                is replaced with:
-            {"sequence": sample.get_data("data_keyword").sequence}
-        Defaults to None.
+        If a dictionary, the first key must be the standard data keyword.
+        Otherwise, the expected type depends on `data_keyword`.
+    sample : rnavigate.Sample, default=None
+        Requried only if inputs is a dictionary containing a "sequence" key with
+        a value that is an assigned data keyword::
+
+            inputs={"sequence": "data_keyword"}
+
+        is replaced with::
+
+            inputs={"sequence": sample.get_data("data_keyword").sequence}
 
     Returns
     -------
@@ -100,21 +102,21 @@ def create_data(data_keyword, inputs, sample=None):
     Examples
     --------
     In this example we create a Sequence object from a fasta file. There are
-    two valid syntaxes:
+    two valid syntaxes::
 
         create_data(
             data_keyword="sequence",
             inputs="my_sequence.fa"
             )
 
-    OR
+    OR::
 
         create_data(
             data_keyword="arbitrary_string",
             inputs={"sequence": "my_sequence.fa"}
             )
 
-    Returns: rnavigate.data.Sequence(input_data="my_sequence.fa")
+    Both return: `rnavigate.data.Sequence(input_data="my_sequence.fa")`
     """
     if sample is not None:
         label = f"{sample.sample} ({data_keyword})"

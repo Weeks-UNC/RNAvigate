@@ -41,6 +41,7 @@ plot = rnav.plot_arcs(
     interactions="ringmap",
     )
 """
+
 import rnavigate as rnav
 from importlib import resources
 from rnavigate.examples import (
@@ -54,10 +55,14 @@ from rnavigate.examples import (
 _rnasep_common = None
 _rrna_fragmap_common = None
 
+tpp_dir = resources.files(tpp_data)
+rmrp_dir = resources.files(rmrp_data)
+rnasep_dir = resources.files(rnasep_data)
+rrna_fragmap_dir = resources.files(rrna_fragmap_data)
+
 
 def __getattr__(name):  # pylint: disable=invalid-name
     if name == "tpp":
-        tpp_dir = resources.files(tpp_data)
         return rnav.Sample(
             sample="TPP in-vitro DMS-MaP",
             pdb={"pdb": str(tpp_dir / "2gdi.pdb"), "chain": "X"},
@@ -67,7 +72,6 @@ def __getattr__(name):  # pylint: disable=invalid-name
             pairprob=str(tpp_dir / "TPP-dms-bp.dp"),
         )
     if name == "rmrp":
-        rmrp_dir = resources.files(rmrp_data)
         return rnav.Sample(
             sample="RMRP in-vitro DMS-MaP",
             rnpmap=str(rmrp_dir / "RMRP-RNPMaP-Example_RESULTS.csv"),
@@ -75,7 +79,6 @@ def __getattr__(name):  # pylint: disable=invalid-name
         )
     if name in ["rnasep_1", "rnasep_2", "rnasep_3", "rnasep_4"]:
         global _rnasep_common
-        rnasep_dir = resources.files(rnasep_data)
         if _rnasep_common is None:
             _rnasep_common = rnav.Sample(
                 sample="common data",
@@ -141,7 +144,6 @@ def __getattr__(name):  # pylint: disable=invalid-name
         )
     if name in ["linezolid", "quinoxoline", "methyl"]:
         global _rrna_fragmap_common
-        rrna_fragmap_dir = resources.files(rrna_fragmap_data)
         if _rrna_fragmap_common is None:
             _rrna_fragmap_common = rnav.Sample(
                 sample="6HA1 - LSU",

@@ -2,23 +2,33 @@
 
 This analysis requires replicates.
 """
+
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize_scalar
 from rnavigate.plots import Plot
 
 
+# TODO: refactor as a subclass of rnavigate.Sample
 class LogCompare:
     """Compares 2 experimental samples, given replicates of each sample.
-    First, the log10(modified/untreated) rate is calculated. These values a
-    scaled to minimize the median of the absolute value of the difference
-    between samples. The standard error in these values is computed for each
-    replicate. Z-scores between samples are calculated. The results are plotted
-    in two panels: (1) the scaled log10(modified/untreated) rate for each
-    sample with error bars, and (2) the difference between samples, colored by
-    z-score.
 
-    Methods:
+    Algorithm
+    ---------
+    1. Calculate the log10(modified/untreated) rate for each replicate.
+    2. Scale these values to minimize the median of the absolute difference
+    between samples.
+    3. Calculate the standard error in these values for each replicate.
+    4. Calculate the difference between samples.
+    5. Calculate z-scores between samples.
+    6. Plot the results in two panels:
+        (1) the scaled log10(modified/untreated) rate for each sample with
+        error bars, and
+        (2) the difference between samples, colored by z-score.
+
+    Methods
+    -------
+
         __init__: computes log10(modified/untreated) rates, rescales the data,
             then calls make_plot()
         get_profile_sequence: gets log10(m/u) rate and sequence from sample

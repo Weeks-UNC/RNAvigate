@@ -626,22 +626,20 @@ def plot_arcs(
         e.g. use 1/10 to scale values down 10-fold, use 10 to scale up
     plot_error : bool, defaults to False
         Whether to plot error bars, values are determined by profile.metric
-    annotation_mode : "track" or "bars", defaults to "track"
+    annotation_mode : { "track" | "bars"}, default "track"
         "track" will highlight annotations along the x-axis
         "bars" will use a vertical transparent bar over the plot
     panels : dict, optional
         a dictionary of whether plot elements are displayed on the "top"
         (above x-axis) or "bottom" (below x-axis)
         Only the values you wish to change from the default are needed
-        defaults to {"interactions": "bottom",
-                        "interactions2": "bottom",
-                        "structure": "top",
-                        "profile": "top"}
-    seqbar : bool, defaults to ``True``
+        defaults to {"interactions": "bottom", "interactions2": "bottom",
+        "structure": "top", "profile": "top"}
+    seqbar : bool, default ``True``
         whether to display the sequence along the x-axis
     region : list of 2 integers, defaults to [1, length of sequence]
         start and end positions to plot. 1-indexed, inclusive.
-    colorbars : bool, defaults to True
+    colorbars : bool, default ``True``
         Whether to plot colorbars for all plot elements
     title : bool, defaults to True
         Whether to display titles for each axis

@@ -27,8 +27,7 @@ class Sample:
         whether to keep inherited default keywords
     **data_keywords:
         There are many built-in data keywords with different expectations and
-        behaviors. For a full list with input formats and output behavior, visit:
-        https://rnavigate.readthedocs.io/en/latest/loading-data/
+        behaviors. See :doc:`/get_started/loading_data` for more information.
 
     Attributes
     ----------
