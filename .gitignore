@@ -1,7 +1,6 @@
 under_development/
 *.egg-info/
 __pycache__/
-.vscode/
 .ipynb_checkpoints/
 reference_data/
-.devcontainer/
+docs/build/
