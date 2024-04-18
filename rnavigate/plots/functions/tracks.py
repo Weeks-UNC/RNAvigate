@@ -192,6 +192,8 @@ def plot_domain_track(ax, spans, yvalue, height, region="all", ytrans="data"):
     name = spans.name
     color = spans.color
     for start, end in spans:
+        if start > mx or end < mn:
+            continue
         start = max([mn, start])
         end = min([mx, end])
         rect = mp_patches.Rectangle(

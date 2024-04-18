@@ -222,7 +222,7 @@ def plot_interactions_arcs(ax, interactions, panel, yvalue=0, region="all"):
     for i, j, color in zip(*ij_colors):
         if j < i:  # flip the order
             i, j = j, i
-        if not (mn < i < mx) and not (mn < j < mx):
+        if not (mn <= i <= mx) and not (mn <= j <= mx):
             continue
         center = ((i + j) / 2.0, yvalue)
         if panel == "top":
