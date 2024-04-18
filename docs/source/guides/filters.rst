@@ -205,6 +205,7 @@ Filtering on structure
 
 - A minimum or maximum contact distance between *i* and *j*.
 - Contact distance is the shortest path distance through the secondary structure graph.
+- NOTE: Contact distance calculations can take a long time for large structures.
 
 ``"paired_only": False``
 ~~~~~~~~~~~~~~~~~~~~~~~~
