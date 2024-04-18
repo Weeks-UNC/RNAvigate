@@ -83,7 +83,8 @@ class Sequence:
             self.sequence = self.get_seq_from_dataframe(input_data)
         elif isinstance(input_data, Sequence):
             self.sequence = input_data.sequence
-        self.null_alignment = data.SequenceAlignment(self, self)
+        if "-" not in self.sequence:
+            self.null_alignment = data.SequenceAlignment(self, self)
 
     def __str__(self):
         """Return the name of the sequence."""
@@ -124,6 +125,31 @@ class Sequence:
             the length of self.sequence
         """
         return len(self.sequence)
+
+    def get_region(self, region="all"):
+        """Checks region input for validity and returns start and end positions.
+
+        If region is "all", returns 1, self.length. Otherwise, ensures that region
+        is between these values and returns the values, sorted.
+
+        Parameters
+        ----------
+        region : list of 2 int
+            start and end positions of the region
+
+        Returns
+        -------
+        start, end : int, int
+            the starting and ending positions
+        """
+        if region == "all":
+            return 1, self.length
+        start, end = region
+        if not (1 <= start <= self.length) or not (1 <= end <= self.length):
+            raise ValueError(
+                f"Region {region} is outside of sequence range (1, {self.length})"
+            )
+        return sorted([start, end])
 
     def normalize_sequence(self, t_or_u="U", uppercase=True):
         """Converts sequence to all uppercase nucleotides and corrects T or U.
@@ -400,8 +426,10 @@ class Data(Sequence):
         elif isfile(input_data):
             self.data = self.read_file(input_data, read_table_kw)
             self.filepath = input_data
+        elif isinstance(input_data, str):
+            raise ValueError(f"file path ({input_data}) not found.")
         else:
-            print(f"{self} initialized without data.")
+            raise ValueError("input_data must be pandas DataFrame or valid file path")
         # assign sequence
         if sequence is None:
             sequence = self.data

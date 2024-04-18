@@ -91,13 +91,12 @@ def get_nt_ticks(sequence, region, gap):
     ticks, labels : tuple of list of int
         The ticks and labels for the given region of the sequence.
     """
-    if isinstance(sequence, data.Sequence):
-        sequence = sequence.sequence
-    start, end = region
+    sequence = data.Sequence(sequence)
+    start, end = sequence.get_region(region)
     labels = []
     ticks = []
     pos = 0
-    for i, nt in enumerate(sequence):
+    for i, nt in enumerate(sequence.sequence):
         valid = nt != "-"
         if valid:
             pos += 1
@@ -217,9 +216,7 @@ def plot_interactions_arcs(ax, interactions, panel, yvalue=0, region="all"):
     region : tuple of int, optional
         The region of the sequence to plot interactions for.
     """
-    if region == "all":
-        region = [1, interactions.length]
-    mn, mx = region
+    mn, mx = interactions.get_region(region)
     ij_colors = interactions.get_ij_colors()
     patch_list = []
     for i, j, color in zip(*ij_colors):
@@ -261,9 +258,7 @@ def plot_profile_bars(
     region : tuple of int, optional
         The region of the sequence to plot bars for.
     """
-    if region == "all":
-        region = [1, profile.length]
-    mn, mx = region
+    mn, mx = profile.get_region(region)
     data = profile.get_plotting_dataframe()
     values = data["Values"]
     colormap = data["Colors"]

@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib as mp
 import matplotlib.patches as mp_patches
-from rnavigate import styles
+from rnavigate import styles, data
 
 
 # 1-dimensional x-axis tracks
@@ -39,9 +39,11 @@ def plot_sequence_track(
     if ytrans == "axes":
         yvalue = (ymax - ymin) * yvalue + ymin
         height = (ymax - ymin) * height
-    if region == "all":
-        region = [1, len(sequence)]
-    sequence = sequence[region[0] - 1 : region[1]]
+
+    sequence = data.Sequence(sequence)
+    mn, mx = sequence.get_region(region)
+    sequence = sequence.sequence[mn - 1 : mx]
+
     if style == "alphabet":
         for i, nt in enumerate(sequence):
             # set font style and colors for each nucleotide
@@ -50,7 +52,7 @@ def plot_sequence_track(
             )
             col = styles.get_nt_color(nt)
             ax.text(
-                i + region[0],
+                i + mn,
                 yvalue,
                 nt,
                 fontproperties=font_prop,
@@ -67,7 +69,7 @@ def plot_sequence_track(
         heights *= np.char.not_equal(sequence, "-")
         if verticalalignment == "top":
             heights *= -1
-        x = np.arange(region[0], region[1] + 1)
+        x = np.arange(mn, mx + 1)
         ax.bar(
             x, heights, bottom=yvalue, width=1, color=colors, ec="none", clip_on=False
         )
@@ -103,9 +105,7 @@ def plot_annotation_track(
     ytrans : "data" or "axes", defaults to "data"
         The y-axis coordinate system.
     """
-    if region == "all":
-        region = [1, annotation.length]
-    mn, mx = region
+    mn, mx = annotation.get_region(region)
     if ytrans == "axes":
         ymin, ymax = ax.get_ylim()
         yvalue = (ymax - ymin) * yvalue + ymin
@@ -182,9 +182,7 @@ def plot_domain_track(ax, spans, yvalue, height, region="all", ytrans="data"):
     ytrans : "data" or "axes", defaults to "data"
         The y-axis coordinate system.
     """
-    if region == "all":
-        region = [1, spans.length]
-    mn, mx = region
+    mn, mx = spans.get_region(region)
     text_height = height
     if ytrans == "axes":
         ymin, ymax = ax.get_ylim()
