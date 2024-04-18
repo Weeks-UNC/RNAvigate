@@ -162,7 +162,7 @@ class Profile(data.Data):
             raise ValueError(message)
         df = pd.DataFrame(
             {
-                "Nucleotide": [i for i in range(sequence.length)],
+                "Nucleotide": [i for i in range(1, sequence.length + 1)],
                 "Sequence": list(sequence.sequence),
                 "Profile": input_data,
             }

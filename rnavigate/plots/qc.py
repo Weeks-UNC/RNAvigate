@@ -250,11 +250,12 @@ class QC(plots.Plot):
             data=data,
             ax=self.ax_boxplot,
             split=True,
-            scale="width",
+            density_norm="width",
         )
         ax.set(
             #    yscale='log',
             #    ylim=(0.00003, 0.3),
             ylabel="Mutation Rate",
+            xticks=range(len(labels)),
             xticklabels=labels,
         )
