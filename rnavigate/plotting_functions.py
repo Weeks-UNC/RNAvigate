@@ -807,7 +807,7 @@ def plot_arcs_compare(
         data_dict = fit_data(data_dict, alignment)
         plot.plot_data(
             ax=0,
-            sequence=seq,
+            sequence=data.Sequence(alignment.target_sequence),
             track_height=6,
             label="",
             seqbar=False,
@@ -818,7 +818,7 @@ def plot_arcs_compare(
         )
     plots.plot_sequence_alignment(
         ax=plot.axes[0, 0],
-        alignment=alignment.get_inverse_alignment(),
+        alignment=alignment,
         labels=labels[::-1],
         top=6,
         bottom=0,
