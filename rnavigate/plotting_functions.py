@@ -706,6 +706,7 @@ def plot_arcs_compare(
     labels=None,
     profile_scale_factor=1,
     plot_error=False,
+    region="all",
     # optional plot display
     colorbars=True,
     plot_kwargs=None,
@@ -753,6 +754,8 @@ def plot_arcs_compare(
         e.g. use 1/10 to scale values down 10-fold, use 10 to scale up
     plot_error : bool, defaults to ``False``
         Whether to plot error bars, values are determined by profile.metric
+    region : list of 2 integers, defaults to [1, length of sequence]
+        start and end positions to plot. 1-indexed, inclusive.
     colorbars : bool, defaults to ``True``
         Whether to plot color scales for all plot elements
     plot_kwargs : dict, defaults to {}
@@ -783,6 +786,7 @@ def plot_arcs_compare(
     plot = plots.AP(
         num_samples=1,
         nt_length=len(alignment.target_sequence),
+        region=region,
         **plot_kwargs,
     )
     # loop through samples and filters, adding each as a new axis
@@ -803,7 +807,7 @@ def plot_arcs_compare(
         data_dict = fit_data(data_dict, alignment)
         plot.plot_data(
             ax=0,
-            sequence=data.Sequence(alignment.target_sequence),
+            sequence=seq,
             track_height=6,
             label="",
             seqbar=False,
@@ -814,7 +818,7 @@ def plot_arcs_compare(
         )
     plots.plot_sequence_alignment(
         ax=plot.axes[0, 0],
-        alignment=alignment,
+        alignment=alignment.get_inverse_alignment(),
         labels=labels[::-1],
         top=6,
         bottom=0,
