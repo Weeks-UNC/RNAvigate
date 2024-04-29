@@ -37,6 +37,57 @@ class Profile(plots.Plot):
         super().__init__(num_samples, sharey=True, **kwargs)
         self.track_height = 0
 
+    def set_figure_size(
+        self,
+        height_ax_rel=None,
+        width_ax_rel=0.03,
+        width_ax_in=None,
+        height_ax_in=2,
+        height_gap_in=1,
+        width_gap_in=0.5,
+        top_in=1,
+        bottom_in=1,
+        left_in=1,
+        right_in=1,
+    ):
+        """Set the size of the figure.
+
+        Parameters
+        ----------
+        height_ax_rel : float, optional
+            Height of the axes relative to the y-axis limits.
+        width_ax_rel : float, defaults to 0.03
+            Width of the axes relative to the x-axis limits.
+        width_ax_in : float, optional
+            Width of the axes in inches.
+        height_ax_in : float, defaults to 2
+            Height of the axes in inches.
+        height_gap_in : float, defaults to 1
+            Height of the gap between axes in inches.
+        width_gap_in : float, defaults to 0.5
+            Width of the gap between axes in inches.
+        top_in : float, defaults to 1
+            Height of the top margin in inches.
+        bottom_in : float, defaults to 1
+            Height of the bottom margin in inches.
+        left_in : float, defaults to 1
+            Width of the left margin in inches.
+        right_in : float, defaults to 1
+            Width of the right margin in inches.
+        """
+        super().set_figure_size(
+            height_ax_rel=height_ax_rel,
+            width_ax_rel=width_ax_rel,
+            width_ax_in=width_ax_in,
+            height_ax_in=height_ax_in,
+            height_gap_in=height_gap_in + 2 * self.track_height,
+            width_gap_in=width_gap_in,
+            top_in=top_in,
+            bottom_in=bottom_in + 2 * self.track_height,
+            left_in=left_in,
+            right_in=right_in,
+        )
+
     def get_rows_columns(self, rows=None, cols=None):
         """Get the number of rows and columns in the plot.
 
@@ -55,30 +106,6 @@ class Profile(plots.Plot):
             Number of columns in the plot.
         """
         return super().get_rows_columns(rows=rows, cols=1)
-
-    def set_labels(
-        self,
-        ax,
-        axis_title="Reactivity Profile",
-        xlabel="Nucleotide Position",
-        ylabel="Reactivity",
-    ):
-        """Set the labels of the plot.
-
-        Parameters
-        ----------
-        ax : matplotlib.axes.Axes
-            Axes object.
-        axis_title : str, optional
-            Title of the axis.
-        xlabel : str, optional
-            Label of the x-axis.
-        ylabel : str, optional
-            Label of the y-axis.
-        """
-        ax.set_title(axis_title, loc="left")
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel(ylabel)
 
     def plot_data(
         self,
@@ -159,7 +186,7 @@ class Profile(plots.Plot):
                     sequence_track
                     + domains_track
                     - self.track_height
-                    + (i + 0.5) * (4 * track_unit)
+                    + (i + 0.5) * (2 * track_unit)
                 ),
                 height=2 * track_unit,
                 ytrans="axes",
@@ -170,57 +197,6 @@ class Profile(plots.Plot):
         ylabel = column.replace("_", " ")
         self.set_labels(ax=ax, ylabel=ylabel, axis_title=label)
         self.set_axis(ax=ax, sequence=profile.sequence, nt_ticks=nt_ticks)
-
-    def set_figure_size(
-        self,
-        height_ax_rel=None,
-        width_ax_rel=0.03,
-        width_ax_in=None,
-        height_ax_in=2,
-        height_gap_in=1,
-        width_gap_in=0.5,
-        top_in=1,
-        bottom_in=1,
-        left_in=1,
-        right_in=1,
-    ):
-        """Set the size of the figure.
-
-        Parameters
-        ----------
-        height_ax_rel : float, optional
-            Height of the axes relative to the y-axis limits.
-        width_ax_rel : float, defaults to 0.03
-            Width of the axes relative to the x-axis limits.
-        width_ax_in : float, optional
-            Width of the axes in inches.
-        height_ax_in : float, defaults to 2
-            Height of the axes in inches.
-        height_gap_in : float, defaults to 1
-            Height of the gap between axes in inches.
-        width_gap_in : float, defaults to 0.5
-            Width of the gap between axes in inches.
-        top_in : float, defaults to 1
-            Height of the top margin in inches.
-        bottom_in : float, defaults to 1
-            Height of the bottom margin in inches.
-        left_in : float, defaults to 1
-            Width of the left margin in inches.
-        right_in : float, defaults to 1
-            Width of the right margin in inches.
-        """
-        super().set_figure_size(
-            height_ax_rel=height_ax_rel,
-            width_ax_rel=width_ax_rel,
-            width_ax_in=width_ax_in,
-            height_ax_in=height_ax_in,
-            height_gap_in=height_gap_in + 2 * self.track_height,
-            width_gap_in=width_gap_in,
-            top_in=top_in,
-            bottom_in=bottom_in + 2 * self.track_height,
-            left_in=left_in,
-            right_in=right_in,
-        )
 
     def set_axis(self, ax, sequence, nt_ticks=(20, 5)):
         """Set up axis properties for aesthetics.
@@ -250,3 +226,27 @@ class Profile(plots.Plot):
         ax.grid(axis="y", visible=True)
         ax.tick_params(axis="y", length=0, grid_alpha=0.4)
         sns.despine(ax=ax, bottom=True, left=True)
+
+    def set_labels(
+        self,
+        ax,
+        axis_title="Reactivity Profile",
+        xlabel="Nucleotide Position",
+        ylabel="Reactivity",
+    ):
+        """Set the labels of the plot.
+
+        Parameters
+        ----------
+        ax : matplotlib.axes.Axes
+            Axes object.
+        axis_title : str, optional
+            Title of the axis.
+        xlabel : str, optional
+            Label of the x-axis.
+        ylabel : str, optional
+            Label of the y-axis.
+        """
+        ax.set_title(axis_title, loc="left")
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
