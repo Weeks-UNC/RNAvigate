@@ -4,11 +4,7 @@ import requests
 from pathlib import Path
 
 
-data_path = Path(__file__).parent.parent.parent
-data_path /= "reference_data/eCLIP_downloads"
-
-
-def download_eclip_peaks(assembly="GRCh38", outpath=data_path):
+def download_eclip_peaks(assembly="GRCh38", outpath):
     """download eCLIP bed files from ENCODE database
 
     Args:
@@ -17,12 +13,8 @@ def download_eclip_peaks(assembly="GRCh38", outpath=data_path):
         outpath (string, optional): output directory path
             Defaults to "eCLIP_downloads".
     """
-    if Path.is_dir(outpath):
-        print(
-            f"{outpath} folder already exists. "
-            "Files will be downloaded the same folder."
-        )
-    else:
+    outpath = Path(outpath)
+    if not Path.is_dir(outpath):
         Path.mkdir(outpath, parents=True)
         print(f"Created {outpath} folder.")
 
@@ -70,20 +62,20 @@ def download_eclip_peaks(assembly="GRCh38", outpath=data_path):
 
     # download all IDR bed files in accession
     for acc in bed_accession:
-        download_url = f"https://www.encodeproject.org/files/{acc}/@@download/{acc}.bed.gz"  # noqa: E501 pylint: disable=line-too-long
-        bedgzfile = requests.get(download_url, timeout=21.1)
-        if outpath:
-            outfile = outpath + f"/{acc}.bed.gz"
-        else:
-            outfile = f"/{acc}.bed.gz"
-        open(outfile, "wb").write(bedgzfile.content)
+        bedgzfile = requests.get(
+            f"https://www.encodeproject.org/files/{acc}/@@download/{acc}.bed.gz",
+            timeout=21.1,
+        )
+        with open(outpath / f"{acc}.bed.gz", "wb") as outfile:
+            outfile.write(bedgzfile.content)
     print(f"Download finished. All files are stored in {outpath} dir.")
 
+
+def create_eclip_table(inpath, outpath):
     # create a table to look up eCLIP files using target and cell type.
-    files = Path.iterdir(outpath)
     codes = {"accession": [], "target": [], "cell_line": []}
-    for file in files:
-        if not file.endswith("bed.gz"):
+    for file in Path(inpath).iterdir():
+        if not file.match("*.bed.gz"):
             continue
         df = pd.read_table(file, compression="gzip", header=None)
         label = df.iloc[0, 3]
@@ -92,25 +84,36 @@ def download_eclip_peaks(assembly="GRCh38", outpath=data_path):
             label = ["", "", ""]
         elif len(label) == 4:
             label = [label[0], f"{label[1]}_{label[2]}", label[3]]
-        codes["accession"].append(file.rstrip(".bed.gz"))
+        codes["accession"].append(file.name.rstrip(".bed.gz"))
         codes["target"].append(label[0])
         codes["cell_line"].append(label[1])
     codes = pd.DataFrame(codes)
-    k562 = codes[codes["cell_line"] == "K562", ["target", "accession"]]
+    k562 = codes.loc[codes["cell_line"] == "K562", ["target", "accession"]]
     k562.columns = ["target", "K562"]
-    hepg2 = codes[codes["cell_line"] == "HepG2", ["target", "accession"]]
+    hepg2 = codes.loc[codes["cell_line"] == "HepG2", ["target", "accession"]]
     hepg2.columns = ["target", "HepG2"]
     df = pd.merge(k562, hepg2, how="outer", on="target")
-    df["target", "K562", "HepG2"].to_csv(
-        outpath / "eclip_codes.txt", index=False, sep="\t"
+    df[["target", "K562", "HepG2"]].to_csv(
+        Path(outpath) / "eclip_codes.txt", index=False, sep="\t"
     )
 
 
 class eCLIPDatabase:  # pylint disable=invalid-name
-    def __init__(self):
-        self.path = data_path
+    def __init__(self, inpath):
+        self.path = Path(inpath)
         self.eclip_codes = pd.read_table(self.path / "eclip_codes.txt")
         self.eclip_data = self.get_eclip_data()
+
+    def get_cell_target_data(self, cell_line, target):
+        try:
+            cell_target = self.eclip_data[cell_line]
+        except KeyError:
+            raise ValueError(f"Cell line {cell_line} not found.")
+        try:
+            cell_target = cell_target[target]
+        except KeyError:
+            raise ValueError(f"Target {target} not found for cell line {cell_line}.")
+        return cell_target
 
     def get_eclip_data(self):
         eclip_data = {"HepG2": {}, "K562": {}}
@@ -135,12 +138,31 @@ class eCLIPDatabase:  # pylint disable=invalid-name
             metric="eCLIP_density",
         )
         for value in eclip_data.values():
-            values = value.get_profile(transcript).data.eval("Value != 0.0")
+            values = value.get_profile(transcript).data.eval("value != 0.0")
             eclip_density.data["eCLIP_density"] += values
         return eclip_density
 
-    def get_annotation(self, transcript, cell_line, target):
-        self.eclip_data[cell_line][target].get_annotation(transcript)
+    def get_annotation(self, transcript, cell_line, target, **kwargs):
+        cell_target = self.get_cell_target_data(cell_line, target)
+        return cell_target.get_annotation(transcript, **kwargs)
 
     def get_profile(self, transcript, cell_line, target):
-        self.eclip_data[cell_line][target].get_profile(transcript)
+        cell_target = self.get_cell_target_data(cell_line, target)
+        return cell_target.get_profile(transcript)
+
+    def print_all_peaks(self, transcript):
+        for target in self.eclip_codes["target"]:
+            for cell_line in ["K562", "HepG2"]:
+                self.print_peaks(transcript, cell_line, target)
+
+    def print_peaks(self, transcript, cell_line, target):
+        try:
+            annotation = self.get_annotation(
+                transcript=transcript, cell_line=cell_line, target=target
+            )
+            if len(annotation.data) != 0:
+                df = annotation.data.sort_values("start")
+                spans = [f"{mn}-{mx}" for _, (mn, mx) in df.iterrows()]
+                print(f"{cell_line:<8} {target:<8} {' '.join(spans)}")
+        except ValueError as e:
+            pass

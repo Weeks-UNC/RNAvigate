@@ -9,7 +9,6 @@ It can be used with Bed objects to convert genome coordinate data to transcript
 coordinate RNAvigate data classes.
 """
 
-
 import pandas as pd
 import numpy as np
 from Bio import SeqIO
@@ -193,11 +192,10 @@ class Transcriptome:
 
         with open(self.annotation) as txome:
             tx_info, chromosome, strand = {}, {}, {}
-            tx_lists = {tx_id: [] for tx_id in transcript_ids}
-            start_coors = tx_lists.copy()
-            stop_coors = tx_lists.copy()
-            cds_coors = tx_lists.copy()
-            other_features = tx_lists.copy()
+            start_coors = {tx_id: [] for tx_id in transcript_ids}
+            stop_coors = {tx_id: [] for tx_id in transcript_ids}
+            cds_coors = {tx_id: [] for tx_id in transcript_ids}
+            other_features = {tx_id: [] for tx_id in transcript_ids}
             for entry in txome.readlines():
                 tx_id = None
                 for this_id in transcript_ids:
@@ -205,42 +203,41 @@ class Transcriptome:
                         tx_id = this_id
                 if tx_id is None:
                     continue
-                tx = parse_entry(entry)
-                if tx["feature"] == "transcript":
-                    tx_info[tx_id] = tx["info"]
-                    chromosome[tx_id] = tx["chromosome"]
-                    strand[tx_id] = tx["strand"]
-                elif tx["feature"] == "exon":
-                    start_coors[tx_id].append(int(tx["start"]))
-                    stop_coors[tx_id].append(int(tx["stop"]))
-                elif tx["feature"] in ["start_codon", "stop_codon"]:
-                    cds_coors[tx_id].append(int(tx["start"]))
-                    cds_coors[tx_id].append(int(tx["stop"]))
-                elif tx["feature"] in ["UTR", "CDS"]:
+                entry = parse_entry(entry)
+                if entry["feature"] == "transcript":
+                    tx_info[tx_id] = entry["info"]
+                    chromosome[tx_id] = entry["chromosome"]
+                    strand[tx_id] = entry["strand"]
+                elif entry["feature"] == "exon":
+                    start_coors[tx_id].append(int(entry["start"]))
+                    stop_coors[tx_id].append(int(entry["stop"]))
+                elif entry["feature"] in ["start_codon", "stop_codon"]:
+                    cds_coors[tx_id].append(int(entry["start"]))
+                    cds_coors[tx_id].append(int(entry["stop"]))
+                elif entry["feature"] in ["UTR", "CDS"]:
                     continue
                 else:
                     other_features[tx_id].append(
-                        {key: tx[key] for key in ["feature", "start", "stop"]}
+                        {key: entry[key] for key in ["feature", "start", "stop"]}
                     )
-        transcripts = []
-        coordinates = [
-            (sorted(start_coors[id]), sorted(stop_coors[id])) for id in transcript_ids
-        ]
+        transcripts = {}
+        coordinates = {
+            id: (sorted(start_coors[id]), sorted(stop_coors[id]))
+            for id in transcript_ids
+        }
         sequences = self.get_sequences(chromosome, coordinates, strand)
         for tx_id in transcript_ids:
             cds_coors[tx_id] = [min(cds_coors[tx_id]), max(cds_coors[tx_id])]
-            transcripts.append(
-                Transcript(
-                    parent=self,
-                    name=tx_id,
-                    sequence=sequences[tx_id],
-                    chromosome=chromosome[tx_id],
-                    strand=strand[tx_id],
-                    coordinates=coordinates,
-                    tx_info=tx_info[tx_id],
-                    cds_coors=cds_coors[tx_id],
-                    other_features=other_features[tx_id],
-                )
+            transcripts[tx_id] = Transcript(
+                parent=self,
+                name=tx_id,
+                sequence=sequences[tx_id],
+                chromosome=chromosome[tx_id],
+                strand=strand[tx_id],
+                coordinates=coordinates[tx_id],
+                tx_info=tx_info[tx_id],
+                cds_coors=cds_coors[tx_id],
+                other_features=other_features[tx_id],
             )
         return transcripts
 
@@ -251,7 +248,7 @@ class Transcriptome:
                 if record.id.startswith(self.chr_ids[chromosome]):
                     for start, end in zip(*coordinates[tx_id]):
                         sequences[tx_id] += str(record.seq[start - 1 : end])
-        for tx_id, seq in sequences.values():
+        for tx_id, seq in sequences.items():
             seq = seq.upper().replace("T", "U")
             # reverse compliment if on minus strand
             if strands[tx_id] == "-":

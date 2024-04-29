@@ -4,8 +4,9 @@ from rnavigate.transcriptomics.transcriptome import (
     Transcriptome,
 )
 from rnavigate.transcriptomics.eclip import (
-    eCLIPDatabase,
+    create_eclip_table,
     download_eclip_peaks,
+    eCLIPDatabase,
 )
 
 __all__ = [

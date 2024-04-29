@@ -21,7 +21,7 @@ class BedFile:
         }
         if self.bedfile.endswith(".gz"):
             self.read_kwargs["compression"] = "gzip"
-        self.profile_cols = ["Score"]
+        self.profile_cols = ["score"]
 
     def get_annotation(self, transcript, **kwargs):
         return self.get_annotations([transcript], **kwargs)[transcript]
@@ -33,11 +33,10 @@ class BedFile:
         for tx in transcripts:
             chrom = tx.chromosome
             strand = tx.strand
-            tx_coordinates = tx.coordinate_df["Coordinate"]
-            mn = tx_coordinates.min()
-            mx = tx_coordinates.max()
-            if strand == "-":
-                mn, mx = mx, mn
+            mn = tx.coordinate_df["Coordinate"].min()
+            mx = tx.coordinate_df["Coordinate"].max()
+            # if strand == "-":
+            #     mn, mx = mx, mn
             tx_df = bed_df.query(
                 f'(chr == "{chrom}") '
                 f'& (strand == "{strand}") '
@@ -77,7 +76,7 @@ class BedFile:
             )
             for col in self.profile_cols:
                 profile.loc[site, col] = row[col]
-        return data.Profile(input_data=profile, metric="Value", **kwargs)
+        return data.Profile(input_data=profile, metric="value", **kwargs)
 
     def get_density_profile(self, transcript, **kwargs):
         bed_df = pd.read_table(self.bedfile, **self.read_kwargs)
@@ -105,8 +104,8 @@ class NarrowPeak(BedFile):
     def __init__(self, bedfile):
         super().__init__(bedfile=bedfile)
         self.read_kwargs["usecols"].extend([6, 7, 8, 9])
-        self.read_kwargs["names"].extend(["Value", "P_value", "Q_value", "Peak"])
+        self.read_kwargs["names"].extend(["value", "p_value", "q_value", "peak"])
         self.read_kwargs["dtype"].update(
-            {"Value": float, "P_value": float, "Q_value": float, "Peak": int}
+            {"value": float, "p_value": float, "q_value": float, "peak": int}
         )
-        self.profile_cols = ["Score", "Value", "P_value", "Q_value", "Peak"]
+        self.profile_cols = ["score", "value", "p_value", "q_value", "peak"]
