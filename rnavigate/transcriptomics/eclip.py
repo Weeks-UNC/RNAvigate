@@ -4,7 +4,7 @@ import requests
 from pathlib import Path
 
 
-def download_eclip_peaks(assembly="GRCh38", outpath):
+def download_eclip_peaks(outpath, assembly="GRCh38"):
     """download eCLIP bed files from ENCODE database
 
     Args:
