@@ -278,5 +278,5 @@ class LinReg(plots.Plot):
             elif self.scale == "linear":
                 sns.kdeplot(ax=ax, x=p1, y=p2, fill=True, levels=np.arange(1, 11) / 10)
         else:
-            ax.scatter(p2, p1, c=colors, marker=".")
+            ax.scatter(x=p1, y=p2, c=colors, marker=".")
             ax.set(xscale=self.scale, yscale=self.scale)
