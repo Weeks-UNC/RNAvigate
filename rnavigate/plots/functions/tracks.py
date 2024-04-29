@@ -114,7 +114,15 @@ def plot_annotation_track(
     modes = ["track", "bar"]
 
     def plot_track(*s, alpha=1):
-        start, end = min(s) - 0.5, max(s) + 0.5
+        start, end = min(s), max(s)
+        if end < mn or start > mx:
+            return
+        if end > mx:
+            end = mx
+        if start < mn:
+            start = mn
+        start -= 0.5
+        end += 0.5
         if mode == "track":
             ax.plot(
                 [start, end],
