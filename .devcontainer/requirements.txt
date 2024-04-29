@@ -10,7 +10,7 @@
 
 biopython == 1.78
 ipykernel
-matplotlib == 3.7
+matplotlib == 3.8
 openpyxl == 3.1.2
 pandas == 1.4.4
 py3dmol == 2.0.0
