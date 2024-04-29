@@ -1,4 +1,4 @@
-name: RNAvigate_v1.0.0
+name: RNAvigate
 channels:
   - conda-forge
   - bioconda
