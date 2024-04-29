@@ -3,7 +3,16 @@ from rnavigate import data
 
 
 class BedFile:
+    """Reads a BED6 file and extracts annotations and profiles.
+
+    Parameters
+    ----------
+    bedfile : str
+        Path to the bed file.
+    """
+
     def __init__(self, bedfile):
+        """Initialize the BedFile object."""
         self.bedfile = bedfile
         self.read_kwargs = {
             "header": None,
@@ -24,9 +33,37 @@ class BedFile:
         self.profile_cols = ["score"]
 
     def get_annotation(self, transcript, **kwargs):
+        """Get annotations for a single transcript.
+
+        Parameters
+        ----------
+        transcript : data.Transcript
+            The transcript for which annotations are to be extracted.
+        **kwargs
+            Additional keyword arguments to be passed to the data.Annotation object.
+
+        Returns
+        -------
+        data.Annotation
+            An Annotation object containing the extracted annotations.
+        """
         return self.get_annotations([transcript], **kwargs)[transcript]
 
     def get_annotations(self, transcripts, **kwargs):
+        """Get annotations for a list of transcripts.
+
+        Parameters
+        ----------
+        transcripts
+            A list of data.Transcript objects for which annotations are to be extracted.
+        **kwargs
+            Additional keyword arguments to be passed to the data.Annotation object.
+
+        Returns
+        -------
+        dict
+            A dictionary of data.Annotation objects with the transcripts as keys.
+        """
         bed_df = pd.read_table(self.bedfile, **self.read_kwargs)
         bed_df["start"] += 1  # bed files are 0-indexed, closed right
         tx_annotations = {}
@@ -59,6 +96,20 @@ class BedFile:
         return tx_annotations
 
     def get_profile(self, transcript, **kwargs):
+        """Get a profile for a single transcript.
+
+        Parameters
+        ----------
+        transcript : data.Transcript
+            The transcript for which the profile is to be extracted.
+        **kwargs
+            Additional keyword arguments to be passed to the data.Profile object.
+
+        Returns
+        -------
+        data.Profile
+            A Profile object containing the extracted profile.
+        """
         bed_df = pd.read_table(self.bedfile, **self.read_kwargs)
         chrom = transcript.chromosome
         strand = transcript.strand
@@ -79,6 +130,20 @@ class BedFile:
         return data.Profile(input_data=profile, metric="value", **kwargs)
 
     def get_density_profile(self, transcript, **kwargs):
+        """Get a density profile for a single transcript.
+
+        Parameters
+        ----------
+        transcript : data.Transcript
+            The transcript for which the profile is to be extracted.
+        **kwargs
+            Additional keyword arguments to be passed to the data.Profile object.
+
+        Returns
+        -------
+        data.Profile
+            A Profile object containing the extracted profile.
+        """
         bed_df = pd.read_table(self.bedfile, **self.read_kwargs)
         chrom = transcript.chromosome
         strand = transcript.strand
@@ -101,6 +166,14 @@ class BedFile:
 
 
 class NarrowPeak(BedFile):
+    """Reads a narrowPeak (BED6+4) file and extracts annotations and profiles.
+
+    Parameters
+    ----------
+    bedfile : str
+        Path to the narrowPeak file.
+    """
+
     def __init__(self, bedfile):
         super().__init__(bedfile=bedfile)
         self.read_kwargs["usecols"].extend([6, 7, 8, 9])

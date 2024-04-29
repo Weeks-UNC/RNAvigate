@@ -16,7 +16,6 @@ from rnavigate import data
 from pathlib import Path
 
 
-data_path = Path(__file__).parent.parent.parent / "reference_data"
 human_chromosome_ids = {
     "chr1": "NC_000001",
     "chr2": "NC_000002",
@@ -47,6 +46,31 @@ human_chromosome_ids = {
 
 
 class Transcript(data.Sequence):
+    """Transcript object for a single transcript.
+
+    Parameters
+    ----------
+    parent : Transcriptome
+        Parent Transcriptome object
+    name : str
+        Transcript ID
+    sequence : str
+        Transcript sequence
+    chromosome : str
+        Chromosome ID
+    strand : str
+        Strand of the transcript
+    coordinates : tuple
+        Tuple of two lists of genome coordinates for the transcript, e.g.:
+        [(start1, start2, ...), (stop1, stop2, ...)]
+    tx_info : dict
+        Dictionary of transcript information from the GTF file
+    cds_coors : list
+        List of genome coordinates for the CDS
+    other_features : list
+        List of dictionaries of other features from the GTF file
+    """
+
     def __init__(
         self,
         parent,
@@ -59,6 +83,7 @@ class Transcript(data.Sequence):
         cds_coors=None,
         other_features=None,
     ):
+        """Initialize the Transcript object."""
         super().__init__(sequence)
         self.name = name
         self.parent = parent
@@ -71,6 +96,7 @@ class Transcript(data.Sequence):
         self.coordinate_df = self.get_coordinate_df()
 
     def get_coordinate_df(self):
+        """Return a DataFrame of transcript coordinates."""
         coordinates = [np.arange(x, y + 1) for x, y in zip(*self.coordinates)]
         coordinates = np.concatenate(coordinates)
         if self.strand == "-":
@@ -85,6 +111,7 @@ class Transcript(data.Sequence):
         return df
 
     def get_tx_coordinate(self, coordinate):
+        """Return the transcript coordinate for a genome coordinate."""
         df = self.coordinate_df
         coordinate = df["Coordinate"] == coordinate
         if sum(coordinate) == 0:
@@ -92,11 +119,19 @@ class Transcript(data.Sequence):
         return df.loc[coordinate, "Nucleotide"].values[0]
 
     def get_tx_range(self, start, stop):
+        """Return the transcript coordinates for a genome range."""
         df = self.coordinate_df
         nts = df.loc[df["Coordinate"].between(start, stop), "Nucleotide"]
         return [nts.min(), nts.max()]
 
     def get_cds_annotation(self, **kwargs):
+        """Return an Annotation object for the CDS.
+
+        Parameters
+        ----------
+        **kwargs
+            Additional keyword arguments for the Annotation object
+        """
         cds = self.get_tx_range(*sorted(self.cds_coors))
         return data.Annotation(
             input_data=[cds],
@@ -107,6 +142,7 @@ class Transcript(data.Sequence):
         )
 
     def get_cds_domains(self):
+        """Return a Domains object for the 5' UTR, CDS and 3' UTR."""
         cds = self.get_tx_range(*sorted(self.cds_coors))
         spans = [[1, cds[0] - 1], cds, [cds[1] + 1, self.length]]
         data.domains(
@@ -117,6 +153,13 @@ class Transcript(data.Sequence):
         )
 
     def get_junctions_annotation(self, **kwargs):
+        """Return an Annotation object for the exon junctions.
+
+        Parameters
+        ----------
+        **kwargs
+            Additional keyword arguments for the Annotation object
+        """
         junctions = [self.coordinates[0][1:], self.coordinates[1][:-1]]
         junctions = [
             self.get_tx_range(*sorted(junction)) for junction in zip(*junctions)
@@ -130,6 +173,15 @@ class Transcript(data.Sequence):
         )
 
     def get_exon_annotation(self, exon_number, **kwargs):
+        """Return an Annotation object for a single exon.
+
+        Parameters
+        ----------
+        exon_number : int
+            Exon number
+        **kwargs
+            Additional keyword arguments for the Annotation object
+        """
         if self.strand == "-":
             exon_number = len(self.coordinates[0]) + 1 - exon_number
         try:
@@ -149,6 +201,7 @@ class Transcript(data.Sequence):
         )
 
     def get_exon_domains(self):
+        """Return a Domains object for the exons."""
         exons = [self.get_tx_range(*sorted(e)) for e in zip(*self.coordinates)]
         data.domains(
             input_data=exons,
@@ -159,19 +212,36 @@ class Transcript(data.Sequence):
 
 
 class Transcriptome:
-    def __init__(self, genome, annotation, path=data_path, chr_ids=None):
-        if path is not data_path:
-            path = Path(path)
+    """Transcriptome object for a genome and annotation file.
+
+    Parameters
+    ----------
+    genome : str
+        Path to the genome fasta file
+    annotation : str
+        Path to the annotation gtf file
+    path : str or Path
+        Path to the genome and annotation files
+    chr_ids : dict
+        Dictionary of chromosome IDs
+    """
+
+    def __init__(self, genome, annotation, path, chr_ids=None):
+        """Initialize the Transcriptome object."""
+        path = Path(path)
         if chr_ids is None:
             chr_ids = human_chromosome_ids
-        self.genome = data_path / genome
-        self.annotation = data_path / annotation
+        self.genome = path / genome
+        self.annotation = path / annotation
         self.chr_ids = chr_ids
 
     def get_transcript(self, transcript_id):
+        """Return a Transcript object for a single transcript ID."""
         return self.get_transcripts([transcript_id])[transcript_id]
 
     def get_transcripts(self, transcript_ids):
+        """Return a dictionary of Transcript objects for a list of transcript IDs."""
+
         def parse_entry(entry):
             entry = entry.strip().split("\t")
             if entry[2] == "transcript":
@@ -242,6 +312,7 @@ class Transcriptome:
         return transcripts
 
     def get_sequences(self, chromosomes, coordinates, strands):
+        """Return a dictionary of transcript sequences."""
         sequences = {tx_id: "" for tx_id in chromosomes}
         for record in SeqIO.parse(self.genome, "fasta"):
             for tx_id, chromosome in chromosomes.items():
@@ -257,6 +328,7 @@ class Transcriptome:
         return sequences
 
     def get_sequence(self, chromosome, coordinates, strand):
+        """Return a transcript sequence for a single transcript."""
         seq = ""
         chromosome = self.chr_ids[chromosome]
         for record in SeqIO.parse(self.genome, "fasta"):

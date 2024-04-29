@@ -5,13 +5,14 @@ from pathlib import Path
 
 
 def download_eclip_peaks(outpath, assembly="GRCh38"):
-    """download eCLIP bed files from ENCODE database
+    """Download eCLIP narrowPeak files from ENCODE database
 
-    Args:
-        assembly (string, optional): reference genome ("h19" or "GRCh38")
-            Defaults to "GRCh38"
-        outpath (string, optional): output directory path
-            Defaults to "eCLIP_downloads".
+    Parameters
+    ----------
+    outpath : string
+        output directory path
+    assembly : "h19" or "GRCh38", default: "GRCh38"
+        reference genome assembly
     """
     outpath = Path(outpath)
     if not Path.is_dir(outpath):
@@ -72,7 +73,15 @@ def download_eclip_peaks(outpath, assembly="GRCh38"):
 
 
 def create_eclip_table(inpath, outpath):
-    # create a table to look up eCLIP files using target and cell type.
+    """Create a table file to look up eCLIP filenames from target and cell type.
+
+    Parameters
+    ----------
+    inpath : string
+        input directory path containing eCLIP bed files
+    outpath : string
+        output directory path
+    """
     codes = {"accession": [], "target": [], "cell_line": []}
     for file in Path(inpath).iterdir():
         if not file.match("*.bed.gz"):
@@ -99,12 +108,35 @@ def create_eclip_table(inpath, outpath):
 
 
 class eCLIPDatabase:  # pylint disable=invalid-name
+    """Class to handle eCLIP data and to extract annotations and profiles.
+
+    Parameters
+    ----------
+    inpath : string
+        input directory path containing eCLIP bed files and eclip table file.
+    """
+
     def __init__(self, inpath):
+        """Initialize the eCLIPDatabase object."""
         self.path = Path(inpath)
         self.eclip_codes = pd.read_table(self.path / "eclip_codes.txt")
         self.eclip_data = self.get_eclip_data()
 
     def get_cell_target_data(self, cell_line, target):
+        """Get the eCLIP data for a specific cell line and target.
+
+        Parameters
+        ----------
+        cell_line : "K562" or "HepG2"
+            Cell line for which eCLIP data is to be extracted.
+        target : string
+            Target for which eCLIP data is to be extracted.
+
+        Returns
+        -------
+        transcriptomics.NarrowPeak
+            eCLIP data for the specified cell line and target.
+        """
         try:
             cell_target = self.eclip_data[cell_line]
         except KeyError:
@@ -116,6 +148,13 @@ class eCLIPDatabase:  # pylint disable=invalid-name
         return cell_target
 
     def get_eclip_data(self):
+        """Get eCLIP data for all cell lines and targets.
+
+        Returns
+        -------
+        dict
+            A dictionary of eCLIP data with cell lines as keys and targets as subkeys.
+        """
         eclip_data = {"HepG2": {}, "K562": {}}
         hepg2_rows = ~self.eclip_codes["HepG2"].isnull()
         k562_rows = ~self.eclip_codes["K562"].isnull()
@@ -130,6 +169,23 @@ class eCLIPDatabase:  # pylint disable=invalid-name
         return eclip_data
 
     def get_eclip_density(self, transcript, cell_line, targets=None):
+        """Get eCLIP density profile for a transcript.
+
+        Parameters
+        ----------
+        transcript : data.Transcript
+            The transcript for which eCLIP density is to be extracted.
+        cell_line : "K562" or "HepG2"
+            Cell line for which eCLIP density is to be extracted.
+        targets : list of strings, optional
+            Targets for which eCLIP density is to be extracted.
+            By default, all targets are considered.
+
+        Returns
+        -------
+        data.Profile
+            A Profile object containing the eCLIP density values.
+        """
         eclip_data = self.eclip_data[cell_line]
         if targets is not None:
             eclip_data = {target: eclip_data[target] for target in targets}
@@ -143,19 +199,55 @@ class eCLIPDatabase:  # pylint disable=invalid-name
         return eclip_density
 
     def get_annotation(self, transcript, cell_line, target, **kwargs):
+        """Get eCLIP annotation for a transcript.
+
+        Parameters
+        ----------
+        transcript : data.Transcript
+            The transcript for which eCLIP annotation is to be extracted.
+        cell_line : "K562" or "HepG2"
+            Cell line for which eCLIP annotation is to be extracted.
+        target : string
+            Target for which eCLIP annotation is to be extracted.
+        kwargs : dict
+            Additional keyword arguments to be passed to the get_annotation method.
+
+        Returns
+        -------
+        data.Annotation
+            An Annotation object containing the eCLIP annotation.
+        """
         cell_target = self.get_cell_target_data(cell_line, target)
         return cell_target.get_annotation(transcript, **kwargs)
 
     def get_profile(self, transcript, cell_line, target):
+        """Get eCLIP profile for a transcript.
+
+        Parameters
+        ----------
+        transcript : data.Transcript
+            The transcript for which eCLIP profile is to be extracted.
+        cell_line : "K562" or "HepG2"
+            Cell line for which eCLIP profile is to be extracted.
+        target : string
+            Target for which eCLIP profile is to be extracted.
+
+        Returns
+        -------
+        data.Profile
+            A Profile object containing the eCLIP profile values.
+        """
         cell_target = self.get_cell_target_data(cell_line, target)
         return cell_target.get_profile(transcript)
 
     def print_all_peaks(self, transcript):
+        """Print all eCLIP peaks for a transcript."""
         for target in self.eclip_codes["target"]:
             for cell_line in ["K562", "HepG2"]:
                 self.print_peaks(transcript, cell_line, target)
 
     def print_peaks(self, transcript, cell_line, target):
+        """Print eCLIP peaks for a given transcript, cell line, and target."""
         try:
             annotation = self.get_annotation(
                 transcript=transcript, cell_line=cell_line, target=target
