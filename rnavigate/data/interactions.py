@@ -596,7 +596,7 @@ class Interactions(data.Data):
             for jw in range(self.window):
                 io = mapping[i + iw - 1]
                 jo = mapping[j + jw - 1]
-                keeps &= io >= 0 & jo >= 0
+                keeps = keeps & (io >= 0) & (jo >= 0)
                 if len(io) > 0 and len(jo) > 0:
                     distances += distance_matrix[io, jo] / pairs
                 else:
