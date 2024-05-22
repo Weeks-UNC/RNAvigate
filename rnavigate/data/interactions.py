@@ -591,11 +591,17 @@ class Interactions(data.Data):
         j = self.data["j"].values
         distances = np.zeros(len(i))
         pairs = self.window**2
+        keeps = np.ones(len(i), dtype=bool)
         for iw in range(self.window):
             for jw in range(self.window):
                 io = mapping[i + iw - 1]
                 jo = mapping[j + jw - 1]
-                distances += distance_matrix[io, jo] / pairs
+                keeps &= io >= 0 & jo >= 0
+                if len(io) > 0 and len(jo) > 0:
+                    distances += distance_matrix[io, jo] / pairs
+                else:
+                    distances += np.nan
+        distances[~keeps] = np.nan
         self.data["Distance"] = distances
 
     def resolve_conflicts(self, metric=None):
