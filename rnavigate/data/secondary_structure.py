@@ -16,6 +16,7 @@ import pandas as pd
 import math
 import xml.etree.ElementTree as xmlet
 import json
+import re
 from rnavigate import data
 
 
@@ -317,54 +318,47 @@ class SecondaryStructure(data.Sequence):
             header=0,
         )
 
-    def read_nsd(self):
+    def read_nsd(self, structure_number=0):
         """Generates SecondaryStructure object data from an NSD file.
 
         Resulting SecondaryStructure object will include nucleotide x and y
         coordinates and is compatible with plot_ss.
         """
-        # Parse file and get sequence, xcoords, ycoords, and list of pairs.
-        basepairs, sequence, xcoords, ycoords = [], "", [], []
-        with open(self.filepath, "r") as file:
-            item = ""
-            for line in file.readlines():
-                line = line.strip().split(" ")
-                if "Strand:[" in line:
-                    item = "strand"
-                    continue
-                elif "]" in line:
-                    item = ""
-                elif "Pairs:[" in line:
-                    item = "pairs"
-                    continue
-                if item == "strand":
-                    nt = {}
-                    for field in line:
-                        if ":" in field:
-                            key, value = field.split(":")
-                            nt[key] = value
-                    sequence += nt["Base"]
-                    xcoords.append(float(nt["X"]))
-                    ycoords.append(-float(nt["Y"]))
-                elif item == "pairs":
-                    for field in line:
-                        if field.startswith("Pair"):
-                            field = field.strip('Pair:"').split(":")
-                            basepairs.append([int(nuc) for nuc in field])
-        # store attributes
-        pairs = [0] * len(sequence)
-        for i, j in basepairs:
-            pairs[i - 1] = j
-            pairs[j - 1] = i
-        return pd.DataFrame(
-            {
-                "Nucleotide": np.arange(len(sequence)) + 1,
-                "Sequence": list(sequence),
-                "Pair": pairs,
-                "X_coordinate": xcoords,
-                "Y_coordinate": ycoords,
-            }
-        )
+        df = {
+            "Nucleotide": [],
+            "Sequence": [],
+            "X_coordinate": [],
+            "Y_coordinate": [],
+        }
+        with open(self.filepath, "r") as f:
+            file = "".join(line.strip() for line in f.readlines())
+        # Parse the file for this structure number to get list of nucleotides and pairs
+        pos = "(\d+)"
+        coord = "(-?\d+\.\d+)"
+        nuc = "([ACGTUacgtuc])"
+        gap = " .*?"
+        nucleotide = re.compile(f"ID:{pos}{gap}Base:{nuc}{gap}X:{coord}{gap}Y:{coord}")
+        pair = re.compile(f'Pair:"{pos}:{pos}"')
+        structure = r"Strands:\[(.*?)\].*?Pairs:\[(.*?)\]"
+        nucleotides, pairs = re.findall(structure, file)[structure_number]
+        nucleotides = re.findall(nucleotide, nucleotides)
+        pairs = re.findall(pair, pairs)
+
+        # Parse "Strands" entry and get position, sequence, xcoord, ycoord
+        for pos, nt, x, y in nucleotides:
+            df["Nucleotide"].append(int(pos))
+            df["Sequence"].append(nt)
+            df["X_coordinate"].append(float(x))
+            df["Y_coordinate"].append(float(y))
+        # Parse "Pairs" entry and get position, pair
+        df["Pair"] = [0] * len(df["Nucleotide"])
+        for nt1, nt2 in pairs:
+            nt1 = int(nt1)
+            nt2 = int(nt2)
+            df["Pair"][nt1 - 1] = nt2
+            df["Pair"][nt2 - 1] = nt1
+        df = pd.DataFrame(df)
+        return df
 
     def read_dotbracket(self):
         """Generates SecondaryStructure object data from a dot-bracket file.
