@@ -190,6 +190,7 @@ class DistHist(plots.Plot):
         """
         interactions.set_3d_distances(structure, atom)
         ij_dists = interactions.data.loc[interactions.data["mask"], "Distance"]
+        ij_dists = ij_dists.dropna()
         if (len(ij_dists) > 0) and (histtype == "bar"):
             ax.hist(
                 ij_dists, bins=range(0, int(max(ij_dists)) + 5, 5), width=5, ec="none"
