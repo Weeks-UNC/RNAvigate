@@ -328,7 +328,7 @@ def plot_profile_skyline(ax, profile, label, columns, errors):
             ax.fill_between(
                 values["Nucleotide"],
                 values[column] - values[error],
-                values[column] - values[error],
+                values[column] + values[error],
                 step="mid",
                 color=lines[0].get_color(),
                 alpha=0.25,
