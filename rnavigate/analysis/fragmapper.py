@@ -13,9 +13,11 @@ import numpy as np
 from scipy import stats
 from statsmodels.stats.multitest import multipletests
 import matplotlib.pyplot as plt
+import rnavigate as rnav
 from rnavigate import data, Sample
+from textwrap import wrap
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __author__ = "Seth D. Veenbaas"
 __maintainer__ = "Seth D. Veenbaas"
 __email__ = "sethv@live.unc.edu"
@@ -26,7 +28,7 @@ class FragMaP(data.Profile):
         self,
         input_data,
         parameters,
-        metric="Fragmap_profile",
+        metric="Delta_zscore",
         metric_defaults=None,
         read_table_kw=None,
         sequence=None,
@@ -44,11 +46,12 @@ class FragMaP(data.Profile):
         if metric_defaults is None:
             metric_defaults = {}
         metric_defaults = {
-            "Fragmap_profile": {
-                "metric_column": "Fragmap_profile",
-                "error_column": "Fragmap_err",
+            "Delta_zscore": {
+                "metric_column": "Delta_zscore",
+                "error_column": "Delta_zscore_err",
                 "color_column": "Site",
-                "cmap": ["lightgrey", "limegreen"],
+                # "cmap": ["C0", "C1"],
+                "cmap": ["#9FB3B3", "#E86500"],
                 "normalization": "none",
                 "values": None,
                 "extend": "neither",
@@ -70,16 +73,15 @@ class FragMaP(data.Profile):
     @property
     def recreation_kwargs(self):
         return {"parameters": self.parameters}
-
+    
     def get_dataframe(
         self,
         profile1,
         profile2,
         mutation_rate_threshold,
         depth_threshold,
-        p_significant,
-        ss_threshold,
-        correction_method,
+        delta_rate_threshold,
+        zscore_threshold,
     ):
         columns = [
             "Nucleotide",
@@ -98,121 +100,52 @@ class FragMaP(data.Profile):
         )
 
         # Filter data
-        dataframe["filter"] = dataframe.eval(
+        dataframe["Valid"] = dataframe.eval(
             # Effective read depths must be greater than threshold
             f"Modified_effective_depth_1 > {depth_threshold} "
             f"& Modified_effective_depth_2 > {depth_threshold} "
             # Control mutation rate (profile 2) must be less than threshold
             f"& Modified_rate_2 < {mutation_rate_threshold}"
         ).astype(bool)
-        valid = dataframe["filter"]
-
-        # Calculate Z-scores for profile 1 and profile 2
-        dataframe[["zscore_1", "zscore_2"]] = np.nan
-        # Z-scores per nucleotide
-        FragMaP.calc_zscore(
-            self,
-            valid,
-            dataframe,
-            incolumn="Modified_rate_1",
-            outcolumn="zscore_1",
-            base=["A", "U", "C", "G"],
-        )
-        FragMaP.calc_zscore(
-            self,
-            valid,
-            dataframe,
-            incolumn="Modified_rate_2",
-            outcolumn="zscore_2",
-            base=["A", "U", "C", "G"],
-        )
-
-        # Frag-MaP profile is the difference in Z-scores
-        dataframe["Fragmap_profile"] = dataframe.eval("zscore_1 - zscore_2")
-        dataframe["Fragmap_err"] = dataframe.eval(
-            "sqrt(zscore_1_err ** 2 + zscore_2_err ** 2)"
-        )
-
-        dataframe["Fragmap_pvalue"] = stats.norm.sf(dataframe["Fragmap_profile"])
-
-        # Calculate T-statistic and P-value
-        dataframe["tstat"], dataframe["pvalue"] = stats.ttest_ind_from_stats(
-            mean1=dataframe["Modified_rate_1"],
-            std1=dataframe["Std_err_1"],
-            nobs1=dataframe["Modified_effective_depth_1"],
-            mean2=dataframe["Modified_rate_2"],
-            std2=dataframe["Std_err_2"],
-            nobs2=dataframe["Modified_effective_depth_2"],
-            equal_var=False,
-        )
-
-        # Bonferoni p-value correction
-        p_significant = p_significant / len(dataframe)
-        dataframe["Significant"] = dataframe["pvalue"] < p_significant
+        valid = dataframe["Valid"]
 
         # Calculate Delta rate
         dataframe["Delta_rate"] = dataframe.eval("Modified_rate_1 - Modified_rate_2")
-        dataframe["Delta_rate_zscore"] = stats.zscore(dataframe["Delta_rate"])
+        dataframe["Delta_std_err"] = dataframe.eval("Std_err_1 + Std_err_2")
+        dataframe["Delta_rate_min"] = dataframe.eval("Delta_rate - Delta_std_err")
+                     
+        # Calculate rolling Delta rate modified zscore
+        rolling_median = dataframe["Delta_rate"].rolling(window=50, min_periods=25, center=True).median()
+        rolling_mad = dataframe["Delta_rate"].rolling(window=50, min_periods=25, center=True).apply(lambda x: np.median(np.abs(x - np.median(x))), raw=False)
+        
+        # Calculate the rolling modified z-score
+        dataframe["Delta_zscore"] = 0.6745 * (dataframe["Delta_rate"] - rolling_median) / rolling_mad
 
-        # Perform False Discovery Rate (FDR) correction
-        if correction_method is not None:
-            p_values = dataframe["Fragmap_pvalue"].values
-            reject, pvals_corrected, _, _ = multipletests(
-                p_values, alpha=ss_threshold, method=correction_method
-            )
-            dataframe["Reject"] = reject
-            dataframe["Fragmap_pvalue_corrected"] = pvals_corrected
-        else:
-            dataframe["Reject"] = dataframe["Fragmap_pvalue"] < ss_threshold
-            dataframe["Fragmap_pvalue_corrected"] = np.nan
+        # Calculate the minimum rolling modified z-score
+        dataframe["Delta_zscore_min"] = 0.6745 * (dataframe["Delta_rate_min"] - rolling_median) / rolling_mad
 
-        # Called Frag-MaP sites
-        dataframe["Site"] = (dataframe["Reject"]) & (dataframe["Significant"])
+        # Calculate the rolling modified z-score error
+        dataframe["Delta_zscore_err"] = (dataframe["Delta_zscore"] - dataframe["Delta_zscore_min"])
+        
+        # Define peaks based on z-score amplitude
+        dataframe["Site"] = (
+            (dataframe["Delta_rate"] > delta_rate_threshold) &
+            (dataframe["Delta_zscore_min"] > zscore_threshold) &
+            (dataframe["Valid"] == True)
+        )
 
         return dataframe
 
-    def calc_zscore(
-        self, valid, dataframe, incolumn: str, outcolumn: str, base: list
-    ) -> None:
-        sele_data = dataframe.loc[dataframe["Sequence"].isin(base)].copy()
-
-        # Calculate outlier nucleotides
-        Q1 = sele_data[incolumn].quantile(0.25)
-        Q3 = sele_data[incolumn].quantile(0.75)
-        IQR = Q3 - Q1
-        lower_limit = Q1 - 1.5 * IQR
-        upper_limit = Q3 + 1.5 * IQR
-        nonoutlier = dataframe[incolumn].between(lower_limit, upper_limit)
-
-        # Calculate zscore
-        valid_nt = valid & dataframe["Sequence"].isin(base)
-
-        sem_column = f"Std_err_{incolumn.split('_')[-1]}"
-        value = np.log(dataframe.loc[valid_nt, incolumn])
-        sem = np.log(dataframe.loc[valid_nt, sem_column])
-        mean = np.mean(np.log(dataframe.loc[valid_nt & nonoutlier, incolumn]))
-        std = np.std(np.log(dataframe.loc[valid_nt & nonoutlier, incolumn]))
-
-        dataframe.loc[valid_nt, outcolumn] = (value - mean) / std
-
-        # Calculate the partial derivatives
-        dz_dy = (mean * np.log(value)) / std
-        dz_dx = np.log(value) / std
-        dz_ds = -(mean * np.log(value) / (std**2))
-
-        # Propagate error using the error propagation formula
-        # Note: The SEMs for "x" and "s" are assumed to be zero.
-        fragmap_err = np.sqrt((dz_dy * sem) ** 2 + (dz_dx * 0) ** 2 + (dz_ds * 0) ** 2)
-
-        dataframe.loc[valid_nt, f"{outcolumn}_err"] = fragmap_err
 
     def get_annotation(self):
         return data.Annotation(
-            input_data=self.data.loc[self.data["Site"], "Nucleotide"].to_list(),
+            input_data=self.data.loc[
+                self.data["Site"] & self.data["Valid"], "Nucleotide"
+            ].to_list(),
             name="Frag-MaP sites",
             sequence=self.sequence,
             annotation_type="sites",
-            color="green",
+            color="#E86500",
         )
 
 
@@ -224,10 +157,9 @@ class Fragmapper(Sample):
             parameters = {}
         self.parameters = {
             "mutation_rate_threshold": 0.025,
-            "depth_threshold": 5000,
-            "p_significant": 0.001,
-            "ss_threshold": 0.05,
-            "correction_method": None,
+            "depth_threshold": 50000,
+            "delta_rate_threshold": 0.015,
+            "zscore_threshold": 20,
         }
         self.parameters |= parameters
         fragmap = FragMaP(
@@ -262,19 +194,254 @@ class Fragmapper(Sample):
 
         columns = [f"{column}_1", f"{column}_2"]
         scatter_data = self.data["fragmap"].data
-        scatter_data = scatter_data[scatter_data["filter"]].copy()
+        scatter_data = scatter_data[scatter_data["Valid"]].copy()
         sites = scatter_data[scatter_data["Site"]]
         non_sites = scatter_data[~scatter_data["Site"]]
 
         for _, (nt, y, x) in sites[["Nucleotide"] + columns].iterrows():
-            ax.text(x, y, int(nt))
+            ax.text(x, y + 0.002, int(nt), size=6)
 
         ax.scatter(x=non_sites[columns[1]], y=non_sites[columns[0]], s=5, alpha=0.25)
         ax.scatter(x=sites[columns[1]], y=sites[columns[0]], s=25, alpha=1)
 
-        ax.set_xlabel(f"{self.sample2.sample} {column}")
-        ax.set_ylabel(f"{self.sample1.sample} {column}")
+        ax.set_xlabel(f"{self.sample2.sample}: {column}")
+        ax.set_ylabel(f"{self.sample1.sample}: {column}")
 
         plt.legend(["Uncalled Nucleotides", "Frag-MaP Sites"])
+
+        return fig, ax
+
+
+class FragmapperReplicates(Sample):
+    def __init__(
+        self,
+        samples_1 : list,
+        samples_2 : list,
+        parameters=None,
+        profile="shapemap",
+    ):
+
+        # if len(samples_1) != len(samples_2):
+        #     raise ValueError("The samples lists must be the same length.")
+
+        for idx in range(len(samples_1)):
+            sequence_1 = samples_1[idx].data[profile].sequence
+            sequence_2 = samples_2[idx].data[profile].sequence
+            if sequence_1 != sequence_2:
+                raise ValueError(
+                    "Profiles must have the same sequence. "
+                    f"{samples_1[idx]} sequence != {samples_2[idx]} sequence"
+                )
+
+        if parameters is None:
+            parameters = {}
+        self.parameters = {
+            "mutation_rate_threshold": 0.025,
+            "depth_threshold": 50000,
+            "delta_rate_threshold": 0.015,
+            "zscore_threshold": 35,
+        }
+        self.parameters |= parameters
+
+        # Process samples_1
+        merged_1 = self.merge_samples(samples_1, profile)
+        avg_merged_1 = self.average_columns(merged_1)
+        fragmap_rep1 = rnav.Sample(
+            sample=f'fragmap_rep1',
+            shapemap={'shapemap': avg_merged_1}
+        )
+
+        # Process samples_2
+        merged_2 = self.merge_samples(samples_2, profile)
+        avg_merged_2 = self.average_columns(merged_2)
+        fragmap_rep2 = rnav.Sample(
+            sample=f'fragmap_rep2',
+            shapemap={'shapemap': avg_merged_2}
+        )
+
+        fragmap = FragMaP(
+            input_data=[
+                fragmap_rep1.get_data(profile),
+                fragmap_rep2.get_data(profile),
+            ],
+            parameters=self.parameters,
+        )
+
+        super().__init__(
+            sample=f"FragMaP: {samples_1[0].sample}/{samples_2[0].sample}",
+            inherit=samples_1 + samples_2,
+            fragmap=fragmap,
+            fragmap_sites=fragmap.get_annotation(),
+        )
+
+        self.sample1 = samples_1[0]
+        self.sample2 = samples_2[0]
+        
+
+    def merge_samples(
+        self,
+        samples : list,
+        profile : str = 'shapemap',
+        suffix : str = "rep",
+        columns : list = [
+            "Nucleotide",
+            "Sequence",
+            "Modified_mutations",
+            "Modified_effective_depth",
+            "Modified_rate", 
+        ],
+        exceptions : list = [
+            'Nucleotide',
+            'Sequence',
+        ],
+    ):
+
+        for index, sample in enumerate(samples):
+            df = sample.get_data(profile).data[columns]
+            suffix_idx = f"_{suffix}{index+1}"
+            if index == 0:
+                merged_df = df.copy()
+                merged_df = merged_df.rename(
+                    columns={
+                        col: col + suffix_idx for col in df.columns if col not in exceptions
+                    }
+                )
+
+            else:
+                df = df.rename(
+                    columns={
+                        col: col + suffix_idx for col in df.columns if col not in exceptions
+                    }
+                )
+                merged_df = pd.merge(
+                    merged_df,
+                    df,
+                    how="left",
+                    on=["Nucleotide", "Sequence"],
+                )
+
+
+        return merged_df
+
+    
+    def average_columns(
+        self,
+        df : pd.DataFrame,
+        avg_columns : list[str] = [
+            "Modified_mutations",
+            "Modified_effective_depth",
+            "Modified_rate",
+        ],
+        sem_column : list[str] = [
+            "Modified_rate"
+        ],
+    ):
+        avg_df = df[["Nucleotide", "Sequence"]].copy()
+
+        for pattern in avg_columns:
+            matching_cols = [col for col in df.columns if pattern in col]
+            if matching_cols:
+                avg_df[f'{pattern}'] = df[matching_cols].mean(axis=1)
+
+        for pattern in sem_column:
+            matching_cols = [col for col in df.columns if pattern in col]
+            if matching_cols:
+                avg_df['Std_err'] = df[matching_cols].sem(axis=1)
+
+        return avg_df
+
+
+    def plot_scatter(
+        self,
+        column:str="Modified_rate",
+        error:str="Std_err",
+        label_size:int=None,
+        ylabel:str=None,
+        xlabel:str=None,
+    ):
+        """Generates scatter plots useful for fragmapper quality control.
+
+        Args:
+            column (str, optional):
+                Dataframe column containing data to plot (must be avalible for
+                the sample and control).
+                Defaults to "Modified_rate".
+
+        Returns:
+            (matplotlib figure, matplotlib axis)
+                Scatter plot with control values on the x-axis, sample values
+                on the y-axis, and each point representing a nucleotide not
+                filtered out in the fragmapper pipeline.
+        """
+        fig, ax = plt.subplots(1, 1, figsize=(4, 4))
+
+        columns = [f"{column}_1", f"{column}_2"]
+        scatter_data = self.data["fragmap"].data
+        scatter_data = scatter_data[scatter_data["Valid"]].copy()
+        sites = scatter_data[scatter_data["Site"]]
+        non_sites = scatter_data[~scatter_data["Site"]]
+        
+        if error is not None:
+            errors = [f"{error}_1", f"{error}_2"]
+            (_, caps, _) = ax.errorbar(
+                x=sites[columns[1]],
+                y=sites[columns[0]],
+                xerr=sites[errors[1]],
+                yerr=sites[errors[0]],
+                zorder=1,
+                fmt='none',
+                ecolor="#9FB3B3",
+                elinewidth=1,
+                alpha=0.4,
+                capsize=1.25,
+            )
+            for cap in caps:
+                cap.set_markeredgewidth(1)
+                cap.set_alpha(1)
+                cap.set_color("#9FB3B3")
+
+        ax.scatter(
+            x=non_sites[columns[1]],
+            y=non_sites[columns[0]],
+            zorder=2,
+            s=5,
+            alpha=0.25,
+            c="#9FB3B3",
+        )
+        ax.scatter(
+            x=sites[columns[1]],
+            y=sites[columns[0]],
+            zorder=3,
+            s=25,
+            alpha=1,
+            color="#E86500",
+        )
+
+        if label_size is not None:
+            for _, (nt, y, x) in sites[["Nucleotide"] + columns].iterrows():
+                ax.text(x, y+0.001, int(nt), zorder=4, size=label_size)
+
+        if ylabel is None:
+            ylabel = str(self.sample1.sample)
+        if xlabel is None:
+            xlabel = str(self.sample2.sample)
+
+        ax.set_ylabel(f"{ylabel}: {column}")
+        ax.set_xlabel(f"{xlabel}: {column}")
+
+        # legend = plt.legend(["Uncalled Nucleotides", "Frag-MaP Sites"])
+
+        # Add a legend
+        labels = [ '\n'.join(wrap(l, 11)) for l in ["Uncalled Nucleotides", "Frag-MaP Sites"]]
+
+        pos = ax.get_position()
+        ax.set_position([pos.x0, pos.y0, pos.width * 0.9, pos.height])
+        ax.legend(
+            labels,
+            loc='center right',
+            bbox_to_anchor=(1.5, 0.5),
+            fontsize="small",
+        )
+ 
 
         return fig, ax
