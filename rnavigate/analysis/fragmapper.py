@@ -82,6 +82,7 @@ class FragMaP(data.Profile):
         depth_threshold,
         delta_rate_threshold,
         zscore_threshold,
+        zscore_min_threshold
     ):
         columns = [
             "Nucleotide",
@@ -130,7 +131,8 @@ class FragMaP(data.Profile):
         # Define peaks based on z-score amplitude
         dataframe["Site"] = (
             (dataframe["Delta_rate"] > delta_rate_threshold) &
-            (dataframe["Delta_zscore_min"] > zscore_threshold) &
+            (dataframe["Delta_zscore"] > zscore_threshold) &
+            (dataframe["Delta_zscore_min"] > zscore_min_threshold) &
             (dataframe["Valid"] == True)
         )
 
@@ -159,7 +161,8 @@ class Fragmapper(Sample):
             "mutation_rate_threshold": 0.025,
             "depth_threshold": 50000,
             "delta_rate_threshold": 0.015,
-            "zscore_threshold": 20,
+            "zscore_threshold": 30,
+            "zscore_min_threshold": 5,
         }
         self.parameters |= parameters
         fragmap = FragMaP(
@@ -239,21 +242,22 @@ class FragmapperReplicates(Sample):
             "mutation_rate_threshold": 0.025,
             "depth_threshold": 50000,
             "delta_rate_threshold": 0.015,
-            "zscore_threshold": 35,
+            "zscore_threshold": 30,
+            "zscore_min_threshold": 5,
         }
         self.parameters |= parameters
 
         # Process samples_1
-        merged_1 = self.merge_samples(samples_1, profile)
-        avg_merged_1 = self.average_columns(merged_1)
+        self.merged_1 = self.merge_samples(samples_1, profile)
+        avg_merged_1 = self.average_columns(self.merged_1)
         fragmap_rep1 = rnav.Sample(
             sample=f'fragmap_rep1',
             shapemap={'shapemap': avg_merged_1}
         )
 
         # Process samples_2
-        merged_2 = self.merge_samples(samples_2, profile)
-        avg_merged_2 = self.average_columns(merged_2)
+        self.merged_2 = self.merge_samples(samples_2, profile)
+        avg_merged_2 = self.average_columns(self.merged_2)
         fragmap_rep2 = rnav.Sample(
             sample=f'fragmap_rep2',
             shapemap={'shapemap': avg_merged_2}
@@ -443,5 +447,4 @@ class FragmapperReplicates(Sample):
             fontsize="small",
         )
  
-
         return fig, ax
