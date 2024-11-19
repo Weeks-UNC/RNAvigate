@@ -706,7 +706,7 @@ class SequenceAlignment(BaseAlignment):
             return seq1_to_align
         # extra steps to get to sequence 2 positions
         # positions that are removed when plotting on sequence 2
-        align_mask = np.array([nt != "-" for nt in align2])
+        align_mask = np.array([nt != "-" for nt in align2], dtype=bool)
         # an index mapping from the full alignment to position in sequence 2
         align_to_seq2 = np.full(len(align2), -1)
         align_to_seq2[align_mask] = np.arange(len(self.sequence2))
