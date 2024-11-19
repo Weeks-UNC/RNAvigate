@@ -133,7 +133,7 @@ class ROC(plots.Plot):
 
         metric = profile.metric
         valid = ~profile.data[metric].isna()
-        y = structure.pair_nts[valid] == 0
+        y = structure.boolean[valid]
         scores = profile.data.loc[valid, metric]
         y = y.astype(int)
         scores = scores.astype(float)
@@ -159,7 +159,7 @@ class ROC(plots.Plot):
                 print(f"RNAvigate warning: {profile} data is missing for {nt}")
                 ax.plot([], [], label="N/A")
                 continue
-            y = structure.pair_nts[valid] == 0
+            y = structure.boolean[valid]
             scores = profile.data.loc[valid, metric].to_numpy()
             y = y.astype(int)
             scores = scores.astype(float)
