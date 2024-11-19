@@ -97,7 +97,7 @@ def get_nt_ticks(sequence, region, gap):
     ticks = []
     pos = 0
     for i, nt in enumerate(sequence.sequence):
-        valid = nt != "-"
+        valid = nt not in "-."
         if valid:
             pos += 1
         if valid & (pos % gap == 0 or pos == start) and start <= pos <= end:
