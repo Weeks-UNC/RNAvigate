@@ -1660,7 +1660,7 @@ class StructureCompareMany(Interactions):
                 input_data[columns].sum(axis=1, numeric_only=True) - 1
             )  # to index at 0 for coloring
             input_data = input_data.reset_index(drop=True)
-        total_structures = input_data["Num_structures"].max() + 1
+            total_structures = len(input_data)
         metric_defaults = {
             "Num_structures": {
                 "metric_column": "Num_structures",
