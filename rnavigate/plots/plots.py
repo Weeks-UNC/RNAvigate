@@ -139,7 +139,7 @@ class Plot(ABC):
     def plot_data(self):
         pass
 
-    def save(self, filename):
+    def save(self, filename, **kwargs):
         """Saves the figure to a file
 
         Parameters
@@ -147,8 +147,10 @@ class Plot(ABC):
             filename : string
                 A file path to write to. The file format is provided by this
                 file extension (svg, pdf, or png).
+            **kwargs
+                Additional keyword arguments passed to matplotlib.pyplot.savefig.
         """
-        self.fig.savefig(filename)
+        self.fig.savefig(filename, **kwargs)
 
     def set_figure_size(
         self,
