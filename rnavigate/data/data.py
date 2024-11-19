@@ -86,6 +86,26 @@ class Sequence:
         if "-" not in self.sequence:
             self.null_alignment = data.SequenceAlignment(self, self)
 
+    @classmethod
+    def from_fasta(cls, fasta, entry=0):
+        """Create a Sequence object from a fasta file.
+
+        Parameters
+        ----------
+        fasta : string
+            path to fasta file
+        entry : int, defaults to 0
+            the index of the sequence in the fasta file
+
+        Returns
+        -------
+        sequence : rnavigate.data.Sequence
+            the sequence object
+        """
+        with open(fasta, "r") as file:
+            fasta = list(Bio.SeqIO.parse(file, "fasta"))
+        return cls(str(fasta[entry].seq).replace("T", "U"))
+
     def __str__(self):
         """Return the name of the sequence."""
         if self.name is None:
@@ -164,6 +184,30 @@ class Sequence:
             Whether to make sequence all uppercase
         """
         self.sequence = normalize_sequence(self, t_or_u=t_or_u, uppercase=uppercase)
+
+    def get_region_data(self, region="all"):
+        """Get a copy of the data object containing only the specified region.
+
+        Parameters
+        ----------
+        region : list of 2 int, defaults to "all"
+            start and end positions of the region
+
+        Returns
+        -------
+        region_data : rnavigate.data.Sequence
+            the sequence containing only the specified region
+        """
+        start, end = self.get_region(region)
+        target_sequence = self.sequence[start - 1 : end]
+        data.set_alignment(
+            sequence1=self.sequence,
+            sequence2=target_sequence,
+            alignment1=self.sequence,
+            alignment2="-" * (start - 1) + target_sequence + "-" * (self.length - end),
+        )
+        alignment = data.SequenceAlignment(self.sequence, target_sequence)
+        return self.get_aligned_data(alignment)
 
     def get_aligned_data(self, alignment):
         """Get a copy of the sequence positionally aligned to another sequence.
