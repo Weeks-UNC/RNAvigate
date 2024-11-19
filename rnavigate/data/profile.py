@@ -370,6 +370,7 @@ class Profile(data.Data):
             error_column = self.error_column
         if new_error is None:
             new_error = "Norm_error"
+        error_factors = None
         profile = self.data[profile_column]
         norm_sequence = self.sequence.upper().replace("T", "U")
         # initialize the error arrays
@@ -845,6 +846,38 @@ class SHAPEMaP(Profile):
             }
         )
         return read_lengths, mutations_per_molecule
+
+    def write_shape_file(self, output_file):
+        """Write the data to a ShapeMapper2 .shape file (for RNAstructure programs).
+
+        Parameters
+        ----------
+        output_file : str
+            The path to write the output file.
+        """
+        self.data.to_csv(
+            output_file,
+            header=False,
+            index=False,
+            sep="\t",
+            na_rep="-999",
+            columns=["Nucleotide", "Norm_profile"],
+        )
+
+    def write_bpp2seq_file(self, output_file):
+        """Write the data to a ShapeMapper2 .bpp2seq file (for Contra/EternaFold).
+
+        Parameters
+        ----------
+        output_file : str
+            The path to write the output file.
+        """
+        # Extract the necessary columns
+        df_bpp2seq = self.data[["Nucleotide", "Sequence"]].copy()
+        df_bpp2seq["Label"] = "e1"
+        df_bpp2seq["Norm_profile"] = self.data["Norm_profile"]
+        # Save the result to a .bpp2seq file
+        df_bpp2seq.to_csv(output_file, sep="\t", header=False, index=False)
 
 
 class DanceMaP(SHAPEMaP):
