@@ -1,6 +1,8 @@
 """annotations.py contains Annotations and subclasses."""
+
 import re
 import pandas as pd
+import numpy as np
 from rnavigate import data
 
 
@@ -119,6 +121,19 @@ class Annotation(data.Sequence):
             sequence=sequence,
             name=name,
         )
+
+    @property
+    def boolean(self):
+        """Return a boolean array of the annotation on the sequence."""
+        boolean = np.zeros(len(self.sequence), dtype=bool)
+        for _, row in self.data.iterrows():
+            if self.annotation_type in ["spans", "primers"]:
+                boolean[row["start"] - 1 : row["end"]] = [True] * len(
+                    range(row["start"], row["end"])
+                )
+            elif self.annotation_type in ["sites", "group"]:
+                boolean[row["site"] - 1] = True
+        return boolean
 
     def from_spans(self, spans):
         """Create the self.data dataframe from a list of spans."""
