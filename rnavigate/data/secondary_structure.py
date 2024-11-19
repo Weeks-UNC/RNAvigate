@@ -133,6 +133,11 @@ class SecondaryStructure(data.Sequence):
     ###########################################################################
 
     @property
+    def boolean(self):
+        """Return a boolean array of paired and unpaired nucleotides."""
+        return self.pair_nts == 0
+
+    @property
     def nts(self):
         return self.data["Nucleotide"].values
 
@@ -247,7 +252,7 @@ class SecondaryStructure(data.Sequence):
         for i, j in basepairs:
             pairs[i - 1] = j
             pairs[j - 1] = i
-        return pd.DataFrame(
+        df = pd.DataFrame(
             {
                 "Nucleotide": np.arange(len(sequence)) + 1,
                 "Sequence": list(sequence),
@@ -255,7 +260,16 @@ class SecondaryStructure(data.Sequence):
                 "X_coordinate": xcoords,
                 "Y_coordinate": ycoords,
             }
+        ).astype(
+            {
+                "Nucleotide": "Int32",
+                "Sequence": "string",
+                "Pair": "Int32",
+                "X_coordinate": "Float32",
+                "Y_coordinate": "Float32",
+            }
         )
+        return df
 
     def read_xrna(self):
         """Generates SecondaryStructure object data from an XRNA file.
@@ -531,12 +545,26 @@ class SecondaryStructure(data.Sequence):
             w.write(line.format(*cols))
         w.close()
 
-    def write_dbn(self, out_file, rna_name):
-        """Write structure to dot-bracket file."""
-        with open(out_file, "w") as write_file:
-            write_file.write(f">{rna_name}\n")
-            write_file.write(self.sequence + "\n")
-            write_file.write(self.get_dotbracket())
+    def write_dbn(self, rna_name, region="all", out_file=None):
+        """Write the structure to a dot-bracket file.
+
+        Parameters
+        ----------
+        rna_name : str
+            The name of the RNA sequence
+        region : list of 2 integers, optional
+            The region (start and end positions) of the RNA to write to file.
+            Defaults to "all".
+        out_file : str, optional
+            The name of the output file. If not provided, the dbn file is printed.
+        """
+        structure = self.get_region_data(region)
+        dbn = f">{rna_name}\n{structure.sequence}\n{structure.get_dotbracket()}\n"
+        if out_file is None:
+            print(dbn)
+        else:
+            with open(out_file, "w") as write_file:
+                write_file.write(dbn)
 
     ###########################################################################
     # retrieve structure components or alternative representations
@@ -1017,7 +1045,7 @@ class SecondaryStructure(data.Sequence):
     # Make calculations based on structures
     ###########################################################################
 
-    def get_distance_matrix(self, recalculate=False):
+    def get_distance_matrix(self, recalculate=False, max_cd=50):
         """Get a matrix of pair-wise shortest path distances through the structure.
 
         This function uses a BFS algorithm. The structure is represented as a complete
@@ -1030,10 +1058,17 @@ class SecondaryStructure(data.Sequence):
         Based on Tom's contact_distance, but expanded to return the pairwise matrix.
         New contact_distance method added to return the distance between two positions.
 
+        By default, the maximum contact distance is set to 50. This will be the maximum
+        value reported in the matrix, i.e. a value of 50 in the matrix means >= 50.
+        This prevents the algorithm from running for a very long time on long RNAs.
+        If you need a larger value, set max_cd to a higher value.
+
         Parameters
         ----------
         recalculate : bool, defaults to False
             Set to True to recalculate the matrix even if the attribute is set.
+        max_cd : int, defaults to 50
+            The maximum contact distance to calculate.
         """
         if (self.distance_matrix is not None) and not recalculate:
             return self.distance_matrix
@@ -1064,6 +1099,9 @@ class SecondaryStructure(data.Sequence):
             while len(queue) > 0:
                 current_nt = queue.pop(0)
                 current_i = np.where(self.nts == current_nt)[0][0]
+                # if the search has reached the maximum distance, stop searching
+                if level[current_i] >= max_cd:
+                    continue
                 # Find all the neighbors of the current NT
                 NTBack = current_nt - 1
                 NTUp = current_nt + 1
@@ -1078,6 +1116,8 @@ class SecondaryStructure(data.Sequence):
                         )
             # set row of distance matrix for nt
             distance_matrix[i, :] = level
+        # set unvisited nucleotides to the maximum distance
+        distance_matrix[distance_matrix == -1] = max_cd
         # store the distance matrix from the search and return
         return distance_matrix.copy()
 
