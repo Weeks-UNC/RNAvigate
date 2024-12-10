@@ -313,14 +313,14 @@ class Sample:
             metric["values"] = values
         interactions.metric = metric
         if "profile" in kwargs:
-            kwargs["profile"] = self.data[kwargs["profile"]]
+            kwargs["profile"] = self.get_data(kwargs["profile"])
         else:
             try:
                 kwargs["profile"] = self.get_data("default_profile")
             except ValueError:
                 kwargs["profile"] = None
         if "structure" in kwargs:
-            kwargs["structure"] = self.data[kwargs["structure"]]
+            kwargs["structure"] = self.get_data(kwargs["structure"])
         else:
             try:
                 kwargs["structure"] = self.get_data("default_structure")
