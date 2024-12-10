@@ -152,6 +152,8 @@ class Interactions(data.Data):
             true_so_far = keep and (-1 not in [i, j])
             if paired_only and true_so_far:
                 for w in range(self.window):
+                    if i + w - 1 >= structure.length:
+                        continue
                     true_so_far = (
                         structure.pair_nts[i + w - 1] == j + self.window - w - 1
                     )
@@ -474,9 +476,7 @@ class Interactions(data.Data):
         if filters_are_on(exclude_nts, isolate_nts):
             mask &= self.mask_on_position(exclude=exclude_nts, isolate=isolate_nts)
         if filters_are_on(max_distance, min_distance):
-            mask &= self.mask_on_on_distance(
-                max_dist=max_distance, min_dist=min_distance
-            )
+            mask &= self.mask_on_distance(max_dist=max_distance, min_dist=min_distance)
         if filters_are_on(min_profile, max_profile):
             mask &= self.mask_on_profile(
                 profile=profile, min_profile=min_profile, max_profile=max_profile
