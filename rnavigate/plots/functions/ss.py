@@ -263,6 +263,8 @@ def plot_interactions_ss(ax, structure, interactions):
     segments = []
     colors = []
     for i, j, color in zip(*ij_colors):
+        if i < 0 or j > structure.length:
+            continue
         segments.append(
             [
                 [structure.xcoordinates[i - 1], structure.ycoordinates[i - 1]],
