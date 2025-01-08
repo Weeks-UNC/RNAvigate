@@ -303,10 +303,10 @@ class ColorBar(Plot):
         height_ax_in=0.1,
         height_gap_in=0.75,
         width_gap_in=0.5,
-        top_in=None,
-        bottom_in=None,
-        left_in=None,
-        right_in=None,
+        top_in=0.5,
+        bottom_in=0.5,
+        left_in=0.5,
+        right_in=0.5,
     ):
         """Set the figure size.
 
