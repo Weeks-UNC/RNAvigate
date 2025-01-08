@@ -4,6 +4,7 @@ import matplotlib.colors as mpc
 import numpy as np
 import seaborn as sns
 from rnavigate import data
+from pathlib import Path
 
 
 class Interactions(data.Data):
@@ -1171,6 +1172,7 @@ class PairingProbability(Interactions):
     def __init__(
         self,
         input_data,
+        extension=None,
         sequence=None,
         metric="Probability",
         metric_defaults=None,
@@ -1204,13 +1206,32 @@ class PairingProbability(Interactions):
             },
             "Probability_continuous": {
                 "metric_column": "Probability",
-                "cmap": "plasma_r",
+                "cmap": "PuBuGn",
                 "normalization": "min_max",
                 "values": [0.0, 1.0],
                 "extend": "neither",
                 "title": "Pairing probability",
             },
         } | metric_defaults
+        if isinstance(input_data, pd.DataFrame):
+            self.filepath = "dataframe"
+        elif Path(input_data).is_file():
+            self.filepath = input_data
+            if extension is None:
+                extension = input_data.split(".")[-1].lower()
+            if extension == "bps":
+                sequence, input_data = self.read_bps()
+            elif extension in ["txt", "dp"]:
+                input_data = self.read_txt()
+                if sequence is None:
+                    raise ValueError(
+                        "PairingProbability: sequence needed for txt/dotplot files."
+                    )
+            else:
+                raise ValueError(
+                    f"PairingProbabilities: unsupported extension (.{extension})"
+                    "\n\tSupported extensions: .bps, .txt, .dp"
+                )
         super().__init__(
             input_data=input_data,
             sequence=sequence,
@@ -1221,8 +1242,34 @@ class PairingProbability(Interactions):
             name=name,
         )
 
-    def read_file(self, filepath, read_table_kw=None):
-        """Parses a pairing probability file and stores data as a dataframe.
+    def read_bps(self):
+        """Parses a bps file and returns sequence as a string and data as a dataframe.
+
+        Returns
+        -------
+        str
+            the sequence string
+        pandas.DataFrame
+            the pairing probability data
+        """
+        filepath = self.filepath
+        sequence = []
+        df = {"i": [], "j": [], "Probability": []}
+        with open(filepath, "r") as file:
+            for line in file:
+                i, nt, *pairs = line.strip().split()
+                sequence.append(nt)
+                for pair in pairs:
+                    j, p = pair.split(":")
+                    df["i"].append(int(i))
+                    df["j"].append(int(j))
+                    df["Probability"].append(float(p))
+        dataframe = pd.DataFrame(df)
+        sequence = "".join(sequence)
+        return sequence, dataframe
+
+    def read_txt(self):
+        """Parses a pairing probability file and returns data as a dataframe.
 
         Parameters
         ----------
@@ -1236,6 +1283,7 @@ class PairingProbability(Interactions):
         pandas.DataFrame
             the pairing probability data
         """
+        filepath = self.filepath
         with open(filepath, "r") as file:
             self.header = file.readline()
         self.window = 1
@@ -1343,7 +1391,7 @@ class AllPossible(Interactions):
     window : int, defaults to 1
         The window size used to generate the pairing probability data.
     name : str, optional
-        A name for the PairingProbability object.
+        A name for the AllPossible object.
 
     Attributes
     ----------
@@ -1660,7 +1708,7 @@ class StructureCompareMany(Interactions):
                 input_data[columns].sum(axis=1, numeric_only=True) - 1
             )  # to index at 0 for coloring
             input_data = input_data.reset_index(drop=True)
-            total_structures = len(input_data)
+        total_structures = input_data["Num_structures"].max() + 1
         metric_defaults = {
             "Num_structures": {
                 "metric_column": "Num_structures",
