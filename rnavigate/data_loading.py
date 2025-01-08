@@ -17,8 +17,9 @@ data_keyword_defaults = {
     "rnpmap": {"data_class": data.RNPMaP},
     "ringmap": {"data_class": data.RINGMaP, "sequence": "default_profile"},
     "pairmap": {"data_class": data.PAIRMaP, "sequence": "default_profile"},
-    "shapejump": {"data_class": data.SHAPEJuMP, "sequence": _required},
+    "shapejump": {"data_class": data.SHAPEJuMP, "sequence": "default_profile"},
     "pairprob": {"data_class": data.PairingProbability, "sequence": "default_profile"},
+    "pairprob_bps": {"data_class": data.PairingProbability, "extension": "bps"},
     "ss": {"data_class": data.SecondaryStructure},
     "ss_pairs": {
         "data_class": data.SecondaryStructure.from_pairs_list,
