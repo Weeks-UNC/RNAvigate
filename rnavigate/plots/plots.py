@@ -291,7 +291,7 @@ class ColorBar(Plot):
             ax.set_xticklabels(colorbar.tick_labels)
         ax.set_title(colorbar.title)
         cax.outline.set_visible(False)
-        cax.set_alpha(0.7)
+        cax.solids.set_alpha(1)
         self.i += 1
         return (2, self.rows / 2)
 
