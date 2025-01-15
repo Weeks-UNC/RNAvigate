@@ -165,18 +165,23 @@ class Fragmapper(Sample):
             "zscore_min_threshold": 5,
         }
         self.parameters |= parameters
-        fragmap = FragMaP(
+        self.fragmap = FragMaP(
             input_data=[sample1.get_data(profile), sample2.get_data(profile)],
             parameters=self.parameters,
         )
         super().__init__(
             sample=f"FragMaP: {sample1.sample}/{sample2.sample}",
             inherit=[sample1, sample2],
-            fragmap=fragmap,
-            fragmap_sites=fragmap.get_annotation(),
+            fragmap=self.fragmap,
+            fragmap_sites=self.fragmap.get_annotation(),
         )
         self.sample1 = sample1
         self.sample2 = sample2
+        
+    
+    def update_annotation(self):
+        self.data['fragmap_sites']=self.fragmap.get_annotation()
+        
 
     def plot_scatter(self, column="Modified_rate"):
         """Generates scatter plots useful for fragmapper quality control.
@@ -227,14 +232,15 @@ class FragmapperReplicates(Sample):
         # if len(samples_1) != len(samples_2):
         #     raise ValueError("The samples lists must be the same length.")
 
-        for idx in range(len(samples_1)):
-            sequence_1 = samples_1[idx].data[profile].sequence
-            sequence_2 = samples_2[idx].data[profile].sequence
-            if sequence_1 != sequence_2:
-                raise ValueError(
-                    "Profiles must have the same sequence. "
-                    f"{samples_1[idx]} sequence != {samples_2[idx]} sequence"
-                )
+        for idx_1 in range(len(samples_1)):
+            sequence_1 = samples_1[idx_1].data[profile].sequence
+            for idx_2 in range(len(samples_2)):
+                sequence_2 = samples_2[idx_2].data[profile].sequence
+                if sequence_1 != sequence_2:
+                    raise ValueError(
+                        "Profiles must have the same sequence. "
+                        f"{samples_1[idx_1]} sequence != {samples_2[idx_2]} sequence"
+                    )
 
         if parameters is None:
             parameters = {}
@@ -263,7 +269,7 @@ class FragmapperReplicates(Sample):
             shapemap={'shapemap': avg_merged_2}
         )
 
-        fragmap = FragMaP(
+        self.fragmap = FragMaP(
             input_data=[
                 fragmap_rep1.get_data(profile),
                 fragmap_rep2.get_data(profile),
@@ -274,13 +280,17 @@ class FragmapperReplicates(Sample):
         super().__init__(
             sample=f"FragMaP: {samples_1[0].sample}/{samples_2[0].sample}",
             inherit=samples_1 + samples_2,
-            fragmap=fragmap,
-            fragmap_sites=fragmap.get_annotation(),
+            fragmap=self.fragmap,
+            fragmap_sites=self.fragmap.get_annotation(),
         )
 
         self.sample1 = samples_1[0]
         self.sample2 = samples_2[0]
-        
+
+
+    def update_annotation(self):
+        self.data['fragmap_sites']=self.fragmap.get_annotation()
+
 
     def merge_samples(
         self,
