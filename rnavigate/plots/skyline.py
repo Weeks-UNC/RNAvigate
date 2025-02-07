@@ -180,6 +180,7 @@ class Skyline(plots.Plot):
         ax = self.get_ax()
         plots.plot_profile_skyline(ax, profile, label, columns, errors)
         if self.i == 0:
+            self.set_axis(ax=ax, sequence=profile, nt_ticks=nt_ticks)
             if seqbar:
                 plots.plot_sequence_track(
                     ax=ax,
@@ -224,7 +225,6 @@ class Skyline(plots.Plot):
             else:
                 ylabel = columns.replace("_", " ")
             self.set_labels(ax=ax, ylabel=ylabel, axis_title=None, legend_title=None)
-            self.set_axis(ax=ax, sequence=profile, nt_ticks=nt_ticks)
 
     def set_axis(self, ax, sequence, nt_ticks):
         """Set the axis limits and ticks.
