@@ -65,7 +65,7 @@ other optional inputs:
 - ``"autoscale"`` is used to scale coordinates to look good in RNAvigate plots
 - ``"structure_number"`` is used to specify which structure to load if the file
    contains multiple structures (0-indexed). Default is to load the first
-   structure. This currently only works with "ct" files.
+   structure. This currently only works with dotbracket, ct, and NSD files.
 
 typical optional argument examples:
 
