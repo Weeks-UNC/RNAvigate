@@ -188,7 +188,7 @@ class WindowedAUROC:
         ax.set_ylim([-305, 315])
         ax.set_xticks(ticks=[x for x in range(500, stop, 500) if x > start])
         ax.set_xticks(ticks=[x for x in range(100, stop, 100) if x > start], minor=True)
-        ax.tick_params(ax="x", which="major", labelsize=36)
+        ax.tick_params(axis="x", which="major", labelsize=36)
         plots.adjust_spines(ax, ["bottom"])
         ax.grid(ax="x")
 
