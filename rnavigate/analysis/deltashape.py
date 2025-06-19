@@ -211,8 +211,9 @@ class DeltaSHAPEProfile(data.Profile):
             df_1 = profile1.data[columns]
             df_2 = profile2.data[columns]
             input_data = df_1.merge(
-                df_2, how="left", on=["Nucleotide", "Sequence"], suffixes=("_1", "_2")
+                df_2, how="left", on=["Nucleotide"], suffixes=("_1", "_2")
             )
+            input_data = input_data.rename({"Sequence_1": "Sequence"})
         if metric_defaults is None:
             metric_defaults = {}
         metric_defaults = {
