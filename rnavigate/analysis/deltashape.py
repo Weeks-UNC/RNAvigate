@@ -209,11 +209,10 @@ class DeltaSHAPEProfile(data.Profile):
         if isinstance(input_data, (tuple, list)):
             profile1, profile2 = input_data
             df_1 = profile1.data[columns]
-            df_2 = profile2.data[columns]
+            df_2 = profile2.data[columns].rename(columns={"Sequence": "Sequence_2"})
             input_data = df_1.merge(
                 df_2, how="left", on=["Nucleotide"], suffixes=("_1", "_2")
             )
-            input_data = input_data.rename({"Sequence_1": "Sequence"})
         if metric_defaults is None:
             metric_defaults = {}
         metric_defaults = {
