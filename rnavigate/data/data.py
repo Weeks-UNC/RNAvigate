@@ -77,7 +77,7 @@ class Sequence:
         self.name = name
         self.other_info = dict()
         if isinstance(input_data, str):
-            if Path(input_data).is_file():
+            if len(Path(input_data).name) < 255 and Path(input_data).is_file():
                 self.sequence = self.read_fasta(input_data, entry=entry)
             else:
                 self.sequence = input_data
