@@ -95,6 +95,7 @@ class Annotation(data.Sequence):
         rnavigate.data.Annotation
             the new Annotation
         """
+        sequence = data.Sequence(sequence)
         annotations = []
         current_annotation = None
         pad = window // 2
@@ -104,7 +105,7 @@ class Annotation(data.Sequence):
                 annotations.append(position)
             elif value and annotation_type == "spans":
                 start = max(1, position - pad)
-                stop = min(len(sequence), position + pad)
+                stop = min(sequence.length, position + pad)
                 if current_annotation is None:
                     current_annotation = [start, stop]
                 elif start <= current_annotation[1] + 1:
