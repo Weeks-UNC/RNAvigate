@@ -10,6 +10,7 @@
 ###############################################################################
 
 import sys
+from pathlib import Path
 from os.path import isfile
 import numpy as np
 import pandas as pd
@@ -71,27 +72,42 @@ class SecondaryStructure(data.Sequence):
         if isinstance(input_data, pd.DataFrame):
             self.data = input_data
             self.filepath = "dataframe"
-        elif isfile(input_data):
+        elif Path(input_data).is_file():
             if extension is None:
-                extension = input_data.split(".")[-1].lower()
+                extension = Path(input_data).suffix.lower()
             read_file = {
-                "varna": self.read_varna,
-                "xrna": self.read_xrna,
-                "nsd": self.read_nsd,
-                "cte": self.read_cte,
-                "ct": self.read_ct,
-                "db": self.read_dotbracket,
-                "dbn": self.read_dotbracket,
-                "bracket": self.read_dotbracket,
-                "json": self.read_r2dt,
-                "forna": self.read_forna,
+                ".varna": self.read_varna,
+                ".xrna": self.read_xrna,
+                ".nsd": self.read_nsd,
+                ".cte": self.read_cte,
+                ".ct": self.read_ct,
+                ".db": self.read_dotbracket,
+                ".dbn": self.read_dotbracket,
+                ".bracket": self.read_dotbracket,
+                ".json": self.read_r2dt,
+                ".forna": self.read_forna,
             }[extension]
-            self.filepath = input_data
+            self.filepath = str(input_data)
             self.data = read_file(**kwargs)
+        self.normalize_dtypes()
         super().__init__(input_data=self.data, name=name)
         if "X_coordinate" in self.data.columns and autoscale is True:
             self.transform_coordinates(scale=1, center=(0, 0))
         self.distance_matrix = None
+
+    def normalize_dtypes(self):
+        """Convert dtypes of SecondaryStructure dataframe for consistency."""
+        dtypes = {
+            "Nucleotide": "Int32",
+            "Sequence": "string",
+            "Pair": "Int32",
+            "X_coordinate": "Float32",
+            "Y_coordinate": "Float32",
+            "Mask": "Int32",
+        }
+        for col in self.data.columns:
+            if col in dtypes:
+                self.data[col] = self.data[col].astype(dtypes[col])
 
     @classmethod
     def from_sequence(cls, input_data):
@@ -107,9 +123,6 @@ class SecondaryStructure(data.Sequence):
                 "Sequence": list(seq.sequence),
                 "Pair": np.zeros(seq.length),
             }
-        )
-        df = df.astype(
-            dtype={"Nucleotide": "Int32", "Sequence": "string", "Pair": "Int32"}
         )
         return cls(input_data=df)
 
@@ -139,15 +152,15 @@ class SecondaryStructure(data.Sequence):
 
     @property
     def nts(self):
-        return self.data["Nucleotide"].values
+        return self.data["Nucleotide"].to_numpy()
 
     @property
     def pair_nts(self):
-        return self.data["Pair"].values
+        return self.data["Pair"].to_numpy()
 
     @property
     def ycoordinates(self):
-        return self.data["Y_coordinate"].values
+        return self.data["Y_coordinate"].to_numpy()
 
     @ycoordinates.setter
     def ycoordinates(self, values):
@@ -155,7 +168,7 @@ class SecondaryStructure(data.Sequence):
 
     @property
     def xcoordinates(self):
-        return self.data["X_coordinate"].values
+        return self.data["X_coordinate"].to_numpy()
 
     @xcoordinates.setter
     def xcoordinates(self, values):
@@ -259,14 +272,6 @@ class SecondaryStructure(data.Sequence):
                 "Pair": pairs,
                 "X_coordinate": xcoords,
                 "Y_coordinate": ycoords,
-            }
-        ).astype(
-            {
-                "Nucleotide": "Int32",
-                "Sequence": "string",
-                "Pair": "Int32",
-                "X_coordinate": "Float32",
-                "Y_coordinate": "Float32",
             }
         )
         return df
@@ -593,7 +598,7 @@ class SecondaryStructure(data.Sequence):
             A list of 1-indexed positions of paired nucleotides
         """
         paired_idx = self.pair_nts != 0
-        paired_nts = self.data.loc[paired_idx, "Nucleotide"].values.tolist()
+        paired_nts = self.data.loc[paired_idx, "Nucleotide"].to_numpy().tolist()
         return paired_nts
 
     def get_unpaired_nts(self):
@@ -605,7 +610,7 @@ class SecondaryStructure(data.Sequence):
             A list of 1-indexed positions of unpaired nucleotides
         """
         unpaired_idx = self.pair_nts == 0
-        unpaired_nts = self.data.loc[unpaired_idx, "Nucleotide"].values.tolist()
+        unpaired_nts = self.data.loc[unpaired_idx, "Nucleotide"].to_numpy().tolist()
         return unpaired_nts
 
     def get_junction_nts(self):

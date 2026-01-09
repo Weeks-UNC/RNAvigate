@@ -5,7 +5,7 @@ This module contains the base classes for RNAvigate data classes:
     Data: represents a data table with a sequence
 """
 
-from os.path import isfile
+from pathlib import Path
 import Bio.SeqIO
 import numpy as np
 import pandas as pd
@@ -57,6 +57,8 @@ class Sequence:
         "Sequence" column
     name : string, optional
         The name of the sequence, defaults to None
+    entry : int, defaults to 0
+        The index of the sequence in the fasta file if a fasta file is provided
 
     Attributes
     ----------
@@ -70,15 +72,20 @@ class Sequence:
         An alignment of the sequence to itself
     """
 
-    def __init__(self, input_data, name=None):
+    def __init__(self, input_data, name=None, entry=0):
         """Initialize the Sequence object."""
         self.name = name
         self.other_info = dict()
         if isinstance(input_data, str):
-            if isfile(input_data):
-                self.sequence = self.read_fasta(input_data)
+            if Path(input_data).is_file():
+                self.sequence = self.read_fasta(input_data, entry=entry)
             else:
                 self.sequence = input_data
+        elif isinstance(input_data, Path):
+            if input_data.is_file():
+                self.sequence = self.read_fasta(input_data, entry=entry)
+            else:
+                raise ValueError(f"file path ({input_data}) not found.")
         elif isinstance(input_data, pd.DataFrame):
             self.sequence = self.get_seq_from_dataframe(input_data)
         elif isinstance(input_data, Sequence):
@@ -86,43 +93,32 @@ class Sequence:
         if "-" not in self.sequence:
             self.null_alignment = data.SequenceAlignment(self, self)
 
-    @classmethod
-    def from_fasta(cls, fasta, entry=0):
-        """Create a Sequence object from a fasta file.
-
-        Parameters
-        ----------
-        fasta : string
-            path to fasta file
-        entry : int, defaults to 0
-            the index of the sequence in the fasta file
-
-        Returns
-        -------
-        sequence : rnavigate.data.Sequence
-            the sequence object
-        """
-        with open(fasta, "r") as file:
-            fasta = list(Bio.SeqIO.parse(file, "fasta"))
-        return cls(str(fasta[entry].seq).replace("T", "U"))
-
     def __str__(self):
         """Return the name of the sequence."""
         if self.name is None:
             return "seq-object"
         return self.name
 
-    def read_fasta(self, fasta):
+    def read_fasta(self, fasta, entry):
         """Parse a fasta file for the first sequence.
 
         Parameters
         ----------
         fasta : string
             path to fasta file
+        entry : int
+            the index of the sequence in the fasta file
+
+        Returns
+        -------
+        sequence : string
+            the sequence string
         """
         with open(fasta, "r") as file:
-            fasta = list(Bio.SeqIO.parse(file, "fasta"))
-        return str(fasta[0].seq).replace("T", "U")
+            fasta = list(Bio.SeqIO.parse(file, "fasta"))[entry]
+        return str(fasta.seq)
+
+    # TODO: def write_fasta(self, file, name):
 
     def get_seq_from_dataframe(self, dataframe):
         """Parse a dataframe for the sequence string, store as self.sequence.
@@ -467,7 +463,7 @@ class Data(Sequence):
         if isinstance(input_data, pd.DataFrame):
             self.data = input_data
             self.filepath = "dataframe"
-        elif isfile(input_data):
+        elif Path(input_data).is_file():
             self.data = self.read_file(input_data, read_table_kw)
             self.filepath = input_data
         elif isinstance(input_data, str):

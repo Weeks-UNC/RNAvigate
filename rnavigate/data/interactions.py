@@ -1136,6 +1136,11 @@ class PairingProbability(Interactions):
         If dataframe, the dataframe containing pairing probability data. The
         dataframe must contain columns "i", "j", "Probability", and "log10p".
         Dataframe may also include other columns.
+    extension : string, defaults to None
+        The file extension of the input_data. If None, the extension is determined
+        from the input_data string. Options are ".bps", ".txt", and ".dp". If the
+        extension is ".bps", the sequence is parsed from the file. If the extension is
+        ".txt" or ".dp", the sequence must be provided via the sequence argument.
     sequence : string or rnavigate.data.Sequence
         The sequence string corresponding to the pairing probability data.
     metric : string, defaults to "Probability"
@@ -1218,10 +1223,10 @@ class PairingProbability(Interactions):
         elif Path(input_data).is_file():
             self.filepath = input_data
             if extension is None:
-                extension = input_data.split(".")[-1].lower()
-            if extension == "bps":
+                extension = Path(input_data).suffix.lower()
+            if extension == ".bps":
                 sequence, input_data = self.read_bps()
-            elif extension in ["txt", "dp"]:
+            elif extension in [".txt", ".dp"]:
                 input_data = self.read_txt()
                 if sequence is None:
                     raise ValueError(

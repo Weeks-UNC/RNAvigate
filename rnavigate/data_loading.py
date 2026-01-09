@@ -1,6 +1,6 @@
 """Parsing function for rnavigate.Sample data_keywords."""
 
-import os
+from pathlib import Path
 from rnavigate import data
 
 
@@ -206,7 +206,7 @@ def get_sequence(sequence, sample=None, default=None):
         pass
     if isinstance(sequence, data.Sequence):
         return sequence
-    if isinstance(sequence, str) and os.path.isfile(sequence):
+    if isinstance(sequence, str) and Path(sequence).exists():
         return data.Sequence(sequence)
     if isinstance(sequence, str) and all([nt.upper() in "AUCGT.-" for nt in sequence]):
         return data.Sequence(sequence)

@@ -373,6 +373,7 @@ class BaseAlignment(ABC):
         """
         indices = np.array(indices, dtype=int)
         new_indices = self.mapping[indices]
+        new_indices = new_indices.copy()
         if not keep_minus_one:
             new_indices = new_indices[new_indices != -1]
         return new_indices
@@ -395,6 +396,7 @@ class BaseAlignment(ABC):
         """
         positions = np.array(positions, dtype=int)
         new_positions = self.mapping[positions - 1] + 1
+        new_positions = new_positions.copy()
         if not keep_zero:
             new_positions = new_positions[new_positions != 0]
         return new_positions
@@ -761,6 +763,7 @@ class AlignmentChain(BaseAlignment):
             index of starting_sequence is mapping[index] of target sequence
         """
         indices = self.alignments[0].mapping
+        indices = indices.copy()
         for alignment in self.alignments[1:]:
             valid = indices != -1
             indices[valid] = alignment.map_indices(indices[valid])
