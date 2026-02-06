@@ -308,7 +308,7 @@ class Profile(data.Data):
         new_profile=None,
         error_column=None,
         new_error=None,
-        norm_method=None,
+        norm_method="boxplot",
         nt_groups=None,
         profile_factors=None,
         **norm_kwargs,
