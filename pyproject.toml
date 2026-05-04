@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "RNAvigate"
+version = "1.0.0"
+description = "RNA visualization and graphical analysis toolset"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    { name = "Patrick Irving", email = "psirving@gmail.com" },
+]
+keywords = ["RNA", "chemical probing", "visualization", "bioinformatics", "structural biology"]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Topic :: Scientific/Engineering :: Visualization",
+    "Intended Audience :: Science/Research",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "biopython>=1.78",
+    "ipython>=8.18.1",
+    "jedi>=0.19.2",
+    "matplotlib>=3.8",
+    "numpy>=1.20.1",
+    "openpyxl>=3.1.2",
+    "pandas>=1.4.4",
+    "py3dmol>=2.0.0",
+    "requests",
+    "scikit-learn>=1.0.2",
+    "scipy>=1.6.2",
+    "seaborn>=0.13.0",
+    "statsmodels>=0.14.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ipykernel>=6.6.0",
+    "jupyter>=1.0.0",
+]
+docs = [
+    "sphinx",
+    "sphinx-autobuild",
+    "sphinx-rtd-theme",
+    "nbsphinx",
+]
+
+[project.urls]
+Homepage = "https://github.com/Weeks-UNC/RNAvigate"
+Documentation = "https://rnavigate.readthedocs.io/en/latest/"
+"Bug Tracker" = "https://github.com/Weeks-UNC/RNAvigate/issues"
+
+[tool.setuptools.packages.find]
+include = ["rnavigate", "rnavigate.*"]
