@@ -1,16 +1,15 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/miniconda
 {
-    "build": {
-        "dockerfile": "Dockerfile"
-    },
     "name": "RNAvigate",
-    // Features to add to the dev container. More info: https://containers.dev/features.
-    // "features": {},
-    // Use 'forwardPorts' to make a list of ports inside the container available locally.
-    // "forwardPorts": [],
-    // Use 'postCreateCommand' to run commands after the container is created.
-    // "postCreateCommand": "python --version",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": ".."
+    },
+    // Install the project in editable mode after the workspace is mounted.
+    // All dependencies are already baked into /opt/venv by the Dockerfile,
+    // so this step is fast (no network round-trip needed).
+    "postCreateCommand": "uv sync --extra dev --extra docs",
     // Configure tool-specific properties.
     "customizations": {
         "vscode": {
@@ -34,7 +33,11 @@
                     "editor.defaultFormatter": "ms-python.black-formatter",
                     "editor.formatOnSave": true
                 },
-                "pylint.cwd": "${workspaceFolder}"
+                "pylint.cwd": "${workspaceFolder}",
+                "files.eol": "\n",
+                // Point VS Code and the Jupyter extension at the pre-built venv.
+                "python.defaultInterpreterPath": "/opt/venv/bin/python",
+                "jupyter.notebookFileRoot": "${workspaceFolder}"
             }
         }
     }
