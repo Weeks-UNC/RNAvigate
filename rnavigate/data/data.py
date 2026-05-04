@@ -118,7 +118,21 @@ class Sequence:
             fasta = list(Bio.SeqIO.parse(file, "fasta"))[entry]
         return str(fasta.seq)
 
-    # TODO: def write_fasta(self, file, name):
+    def write_fasta(self, file, name):
+        """Write the sequence to a fasta file.
+
+        Parameters
+        ----------
+        file : string
+            path to output fasta file
+        name : string
+            the name of the sequence to write in the fasta file
+        """
+        record = Bio.SeqIO.SeqRecord(
+            Bio.Seq.Seq(self.sequence), id=name, description=""
+        )
+        with open(file, "w") as output_handle:
+            Bio.SeqIO.write(record, output_handle, "fasta")
 
     def get_seq_from_dataframe(self, dataframe):
         """Parse a dataframe for the sequence string, store as self.sequence.
