@@ -5,17 +5,18 @@ This analysis requires replicates.
 
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 from scipy.optimize import minimize_scalar
-from rnavigate.plots import Plot
+from rnavigate import Sample, plots, data
 
 
 # TODO: refactor as a subclass of rnavigate.Sample
-class LogCompare:
+class LogCompare(Sample):
     """Compares 2 experimental samples, given replicates of each sample.
 
     Algorithm
     ---------
-    1. Calculate the log10(modified/untreated) rate for each replicate.
+    1. Calculate the ln(modified/untreated) rate for each replicate.
     2. Scale these values to minimize the median of the absolute difference
     between samples.
     3. Calculate the standard error in these values for each replicate.
@@ -32,7 +33,6 @@ class LogCompare:
         __init__: computes log10(modified/untreated) rates, rescales the data,
             then calls make_plot()
         get_profile_sequence: gets log10(m/u) rate and sequence from sample
-        calc_scale_factor: gets scale factor given two profiles
         rescale: rescales a profile to minimize difference to another profile
         load_replicates: calculates average and standard error of replicates
         make_plots: displays the two panels described above.
@@ -48,7 +48,16 @@ class LogCompare:
             2: same as 1 above, for the second sample
     """
 
-    def __init__(self, samples1, samples2, name1, name2, data="profile", region="all"):
+    def __init__(
+        self,
+        samples1,
+        samples2,
+        name1,
+        name2,
+        profile_kw,
+        sequence=None,
+        inherit=None,
+    ):
         """Takes replicates of two samples for comparison. Replicates are
         required. Calculates the log division profile
         (log10(modified/untreated)) and minimizes the median of the absolute
@@ -59,62 +68,138 @@ class LogCompare:
             samples2 (list of Sample objects): Replicates of the second sample
             name1 (string): name of first sample
             name2 (string): name of second sample
-            data (str, optional): Datatype to compare. Defaults to "profile".
+            profile (str, optional): Datatype to compare. Defaults to "profile".
         """
-        if region == "all":
-            self.region = [0, samples1[0].data["profile"].length]
-        else:
-            self.region = region
-        self.data = data
-        self.groups = {}
-        self.load_replicates(*samples1, group=1)
-        self.load_replicates(*samples2, group=2)
-        sequences_match = self.groups[1]["seq"] == self.groups[2]["seq"]
-        assert sequences_match, "Sample sequences do not match."
-        self.groups[2][self.data] = self.rescale(
-            self.groups[2][self.data], self.groups[1][self.data]
+        super().__init__(
+            sample=f"{name1} vs {name2} - logcompare",
+            inherit=inherit,
         )
-        self.groups[1]["name"] = name1
-        self.groups[2]["name"] = name2
-        self.make_plots()
+        if sequence is None:
+            sequence = samples1[0].get_data(profile_kw)
+        self.set_data(data_keyword="sequence", inputs=sequence)
+        sequence = self.get_data("sequence")
+        profiles1 = []
+        for i, sample in enumerate(samples1):
+            profile = sample.get_data(profile_kw)
+            profile = profile.get_aligned_data(
+                data.SequenceAlignment(profile, sequence)
+            )
+            self.set_data(data_keyword=f"Sample1_{i+1}", inputs=profile)
+            profiles1.append(profile)
+        profiles2 = []
+        for i, sample in enumerate(samples2):
+            profile = sample.get_data(profile_kw).get_aligned_data(
+                data.SequenceAlignment(profile, sequence)
+            )
+            self.set_data(data_keyword=f"Sample2_{i+1}", inputs=profile)
+            profiles2.append(profile)
+        self.set_data(
+            data_keyword="log_compare",
+            inputs=LogProfile(input_data=[profiles1, profiles2]),
+        )
 
-    def get_profile_sequence(self, sample):
-        """retrieves log10(Modified_rate/Untreated_rate) and sequence from
-        sample.data[self.data].
+
+class LogProfile(data.Profile):
+    """A class for log10(Modified_rate/Untreated_rate) profiles."""
+
+    def __init__(
+        self,
+        input_data,
+        metric="mean_diff",
+        metric_defaults=None,
+        sequence=None,
+        **kwargs,
+    ):
+        """Create a new LogProfile object.
+
+        Parameters
+        ----------
+        input_data (list of rnav.data.Profile)
+            list of profiles
+        """
+        if not isinstance(input_data, pd.DataFrame):
+            dfs = []
+            for sample in input_data:
+                df = sample[0].data[["Nucleotide", "Sequence"]].copy()
+                cols = [f"profile{i+1}" for i in range(len(sample))] + ["avg", "stderr"]
+                df[cols] = np.vstack(self.load_replicates(sample)).T
+                dfs.append(df)
+            input_data = pd.merge(
+                left=dfs[0],
+                right=dfs[1],
+                how="outer",
+                on=["Nucleotide", "Sequence"],
+                suffixes=("_1", "_2"),
+            )
+            stack1 = input_data["avg_1"]
+            stack2 = input_data["avg_2"]
+            # calculate mean difference, standard error, and z-scores
+            stack1 = stack1 + 10
+            stack1 = self.rescale(stack1, stack2)
+            meandiff = stack2 - stack1
+            std_err = input_data["stderr_1"] + input_data["stderr_2"]
+            z_scores = meandiff / std_err
+            input_data["avg_1"] = stack1
+            input_data["mean_diff"] = meandiff
+            input_data["std_err"] = std_err
+            input_data["z_scores"] = z_scores
+
+        if metric_defaults is None:
+            metric_defaults = {
+                f"avg_{i}": {
+                    "metric_column": f"avg_{i}",
+                    "error_column": f"stderr_{i}",
+                    "color_column": None,
+                    "cmap": "viridis",
+                    "normalization": "min_max",
+                    "values": [-1, 3],
+                    "extend": "neither",
+                    "title": "ln(Modified/Untreated)",
+                    "alpha": 0.7,
+                }
+                for i in [1, 2]
+            } | {
+                "mean_diff": {
+                    "metric_column": "mean_diff",
+                    "error_column": "std_err",
+                    "color_column": None,
+                    "cmap": "bwr",
+                    "normalization": "min_max",
+                    "values": [-10, 10],
+                    "extend": "neither",
+                    "title": "Standard score of difference",
+                    "alpha": 1.0,
+                },
+            }
+        super().__init__(
+            input_data=input_data,
+            metric=metric,
+            metric_defaults=metric_defaults,
+        )
+
+    def calc_profile(self, profile):
+        """Calculate log10(Modified_rate/Untreated_rate) for the given sample/profile.
 
         Args:
             sample (rnavigate.Sample): an rnavigate sample
 
         Returns:
-            np.array, np.array: log10 profile and sequence
+            np.array: log profile
         """
-        df = sample.data[self.data].data
+        df = profile.data
+        sequence = profile.sequence
         plus = df.Modified_rate.values.copy()
         minus = df.Untreated_rate.values.copy()
-        profile = plus / minus
-        profile = np.log(profile)
+        nans = np.full(len(sequence), np.nan)
+        profile = np.divide(plus, minus, out=nans, where=(0 < minus) & (minus < 0.05))
+        profile[profile == 0] = np.nan
         profile[minus > 0.05] = np.nan
-        return profile, sample.data[self.data].sequence
-
-    def calc_scale_factor(self, profile, target_profile):
-        """Finds the scale factor (x) that minimizes the median value of
-        |profile + x - target_profile|.
-
-        Args:
-            profile (np.array): log10 profile
-            target_profile (np.array): 2nd log10 profile
-        """
-
-        def f(offset):
-            return np.nanmedian(np.abs(profile + offset - target_profile))
-
-        result = minimize_scalar(f, bounds=[-20, 20])
-        offset = result.x
-        return offset
+        profile[sequence.islower()] = np.nan
+        profile = np.log(profile)
+        return profile
 
     def rescale(self, profile, target_profile):
-        """scales profile to minimize difference to target_profile using
-        calc_scale_factor
+        """scales profile to minimize difference to target_profile.
 
         Args:
             profile (np.array): log10 profile to scale
@@ -123,110 +208,29 @@ class LogCompare:
         Returns:
             np.array: scaled profile
         """
-        offset = self.calc_scale_factor(profile, target_profile)
+
+        def f(offset):
+            return np.nanmedian(np.abs(profile + offset - target_profile))
+
+        result = minimize_scalar(f, bounds=[-20, 20])
+        offset = result.x
         return profile + offset
 
-    def load_replicates(self, *samples, group):
-        """calculates average and standard error for a group of replicates,
-        stores these values, along with sequence and a np.array containing
-        all profiles in self.groups[group].
+    def load_replicates(self, profiles):
+        """calculates log profiles, avg and sterr for a group of replicates.
 
         Args:
-            *samples (list of rnavigate.Sample): replicates to load
-            group (int): self.groups key to access replicate data
+            *profiles (list of rnavigate.Sample): replicates to load
         """
-        profile1, seq1 = self.get_profile_sequence(samples[0])
-        primermask = np.array([c.islower() for c in seq1])
-        profile1[primermask] = np.nan
+        profiles = [self.calc_profile(profile) for profile in profiles]
+        rescaled_profiles = []
+        for profile in profiles[1:]:
+            rescaled_profiles.append(self.rescale(profile, profiles[0]))
+        profiles = [profiles[0]] + rescaled_profiles
 
-        profiles = [profile1]
-        for sample in samples[1:]:
-            profile, seq = self.get_profile_sequence(sample)
-            assert seq == seq1, "Replicate sequences do not match."
-            profile[primermask] = np.nan
-            profile = self.rescale(profile, profile1)
-            profiles.append(profile)
         stacked = np.vstack(profiles)
-        avgprofile = np.nanmean(stacked, ax=0)
-        stderr = np.std(stacked, ax=0)
-        self.groups[group] = {
-            self.data: avgprofile,
-            "stderr": stderr,
-            "stacked": stacked,
-            "seq": seq,
-        }
-
-    def make_plots(self):
-        """Visualize this analysis."""
-        # get the replicate data
-        prof1, stderr1, stack1, seq, name1 = self.groups[1].values()
-        prof2, stderr2, stack2, seq, name2 = self.groups[2].values()
-
-        x = np.array(list(range(1, len(prof1) + 1)))
-
-        # create a two row, one column figure, scaled for RNA length
-        _, axes = plt.subplots(2, 1, figsize=(0.1 * len(prof1), 14), sharex=True)
-        # first axes contains raw log10 profiles with error bars
-        ax = axes[0]
-        ax.step(x, prof1, label=name1, color="C0")
-        ax.step(x, prof2, label=name2, color="C1")
-        ax.fill_between(
-            x,
-            prof1 - stderr1,
-            prof1 + stderr1,
-            step="pre",
-            color="C0",
-            alpha=0.25,
-            lw=0,
-        )
-        ax.fill_between(
-            x,
-            prof2 - stderr2,
-            prof2 + stderr2,
-            step="pre",
-            color="C1",
-            alpha=0.25,
-            lw=0,
-        )
-        ax.legend(loc="upper right")
-        ax.axhline(0, color="black", lw=1, zorder=0)
-        ax.set_ylabel("ln(Mod/BG)")
-        Plot.add_sequence(self, ax=ax, sequence=seq)
-
-        # calculate mean difference and standard error for z-scores
-        stack1 = stack1 + 10
-        rescale_dms = self.rescale(stack1, stack2)
-        stack1 = rescale_dms
-        diff = stack2 - stack1
-        meandiff = np.nanmean(diff, ax=0)
-        std_err = np.std(diff, ax=0)
-        # compute z-scores
-        z_scores = meandiff / std_err
-        # normalize to 0-1 (values > 5 = 1, values < -5 = 0)
-        z_scores = (z_scores + 5) / 10
-        z_scores[z_scores > 1] = 1
-        z_scores[z_scores < 0] = 0
-        # get colormapping for differences
-        # blue, white, red gradient from -5 to +5 stderrs
-        colormap = plt.get_cmap("bwr")
-
-        # create 2nd plot of differences colored by z-score
-        ax = axes[1]
-        ax.bar(x - 0.5, meandiff, color=colormap(z_scores), lw=0)
-        ax.axhline(0, color="black", lw=1)
-        ax.set_xlabel("nucleotide")
-        ax.set_ylabel(f"{name2}-{name1}")
-        ax.errorbar(x - 0.5, meandiff, yerr=std_err, fmt="none", color="black", lw=1)
-        Plot.add_sequence(self, ax=ax, sequence=seq)
-
-        # create a color bar scale for z-score differences
-        axin1 = ax.inset_axes([0.8, 0.1, 0.15, 0.15])
-        cmap = plt.get_cmap("bwr")
-        Plot.view_colormap(
-            ax=axin1,
-            ticks=[0, 5, 10],
-            values=[-5, 0, 5],
-            title="Z-score",
-            cmap=list(cmap(np.arange(cmap.N))),
-        )
-        plt.tight_layout()
+        with np.testing.suppress_warnings() as sup:
+            sup.filter(RuntimeWarning, "Mean of empty slice")
+            avgprofile = np.nanmean(stacked, axis=0)
+        stderr = np.std(stacked, axis=0)
+        return profiles + [avgprofile, stderr]
