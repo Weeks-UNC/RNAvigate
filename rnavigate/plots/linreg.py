@@ -60,8 +60,9 @@ class LinReg(plots.Plot):
         for row in range(num_samples - 1):
             for col in range(row, num_samples - 1):
                 linreg_axes.append(self.axes[row, col])
-        self.axes[0, 0].get_shared_x_axes().join(*linreg_axes)
-        self.axes[0, 0].get_shared_y_axes().join(*linreg_axes)
+        for ax in linreg_axes[1:]:
+            ax.sharex(linreg_axes[0])
+            ax.sharey(linreg_axes[0])
         self.lims = [0, 0]
         self.scale = scale
         self.kde = kde

@@ -13,12 +13,11 @@ AlignmentChain (BaseAlignment)
 """
 
 from abc import ABC, abstractmethod
-from Bio.pairwise2 import align
+from Bio import Align
 from Bio import SeqIO
 import numpy as np
 import pandas as pd
 from rnavigate import data
-
 
 # store sequence alignments
 _alignments_cache = {}
@@ -132,6 +131,9 @@ structure_scoring_dict = {
 }
 # fmt: off
 
+substitution_matrix = Align.substitution_matrices.Array("ACDEFGHIKLMNPQRSTVWY", dims=2)
+for (aa1, aa2), score in structure_scoring_dict.items():
+    substitution_matrix[aa1, aa2] = score
 
 def set_alignment(
     sequence1,
@@ -673,18 +675,18 @@ class SequenceAlignment(BaseAlignment):
         # if not already set, do a pairwise alignment and set
         alignments = lookup_alignment(seq1, seq2)
         if alignments is None:
-            alignment = align.globalms(
-                seq1,
-                seq2,
-                penalize_end_gaps=False,
-                one_alignment_only=True,
-                **self.align_kwargs,
-            )
+            aligner = Align.PairwiseAligner(mode="global")
+            aligner.match_score = self.align_kwargs["match"]
+            aligner.mismatch_score = self.align_kwargs["mismatch"]
+            aligner.open_gap_score = self.align_kwargs["open"]
+            aligner.extend_gap_score = self.align_kwargs["extend"]
+            aligner.end_gap_score = 0
+            alignment = aligner.align(seq1, seq2)[0]
             set_alignment(
                 sequence1=seq1,
                 sequence2=seq2,
-                alignment1=alignment[0].seqA,
-                alignment2=alignment[0].seqB,
+                alignment1=alignment[0],
+                alignment2=alignment[1],
             )
             alignments = lookup_alignment(seq1, seq2)
         align1, align2 = alignments["seqA"], alignments["seqB"]
@@ -857,17 +859,15 @@ class StructureAlignment(BaseAlignment):
         if seq1 == seq2:
             return (seq1, seq2)
         else:
-            alignment = align.globalds(
-                seq1,
-                seq2,
-                structure_scoring_dict,
-                -12,
-                -1,
-                penalize_end_gaps=False,
-                one_alignment_only=True,
-            )[0]
-            alignment1 = alignment.seqA
-            alignment2 = alignment.seqB
+            aligner = Align.PairwiseAligner(mode="global")
+            aligner.substitution_matrix = substitution_matrix
+            aligner.open_gap_score = -12
+            aligner.extend_gap_score = -1
+            aligner.end_gap_score = 0
+
+            alignment = aligner.align(seq1, seq2)[0]
+            alignment1 = alignment[0]
+            alignment2 = alignment[1]
             set_alignment(
                 sequence1=seq1,
                 sequence2=seq2,
