@@ -1,7 +1,7 @@
 """Plot distance histograms."""
 
 import numpy as np
-from rnavigate import plots
+from rnavigate import data, plots
 
 
 class DistHist(plots.Plot):
@@ -156,7 +156,10 @@ class DistHist(plots.Plot):
         atom : str
             Atom to compute distances from.
         """
-        matrix = structure.get_distance_matrix(atom=atom)
+        if isinstance(structure, data.SecondaryStructure):
+            matrix = structure.get_distance_matrix()
+        elif isinstance(structure, data.PDB):
+            matrix = structure.get_distance_matrix(atom=atom)
         dists = []
         for i in range(len(matrix) - 6):
             for j in range(i + 6, len(matrix)):
@@ -188,7 +191,7 @@ class DistHist(plots.Plot):
         histtype : "bar" or "step", defaults to "bar"
             Type of histogram to plot.
         """
-        interactions.set_3d_distances(structure, atom)
+        interactions.set_distances(structure)
         ij_dists = interactions.data.loc[interactions.data["mask"], "Distance"]
         ij_dists = ij_dists.dropna()
         if (len(ij_dists) > 0) and (histtype == "bar"):

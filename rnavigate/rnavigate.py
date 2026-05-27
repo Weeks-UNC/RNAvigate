@@ -303,7 +303,7 @@ class Sample:
                 metric, atom = metric.split("_")
             else:
                 atom = "O2'"
-            interactions.set_3d_distances(self.get_data("default_pdb"), atom)
+            interactions.set_distances(self.get_data("default_pdb"), atom)
         metric = {"metric_column": metric}
         if cmap is not None:
             metric["cmap"] = cmap

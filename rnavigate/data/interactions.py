@@ -104,6 +104,7 @@ class Interactions(data.Data):
                 if nts is not None:
                     keep.append(i_nt in nts and j_nt in nts)
             mask.append(all(keep))
+        mask = np.array(mask)
         self.update_mask(mask)
         return mask
 
@@ -577,17 +578,28 @@ class Interactions(data.Data):
             print(self.header, csv)
 
     def set_3d_distances(self, pdb, atom):
-        """Calculates the distance between atoms in i and j in the PDB structure.
+        """Wrapper for set_distances for backwards compatibility."""
+        self.set_distances(pdb, atom)
+
+    def set_distances(self, structure, atom="O2'"):
+        """Sets the Distance column value based on nt distances in the given structure.
+
+        If structure is a SecondaryStructure, contact distances are calculated, and if
+        structure is a PDB, 3D distances are calculated. These distances are averaged
+        across the window and stored in a new "Distance" column in self.data.
 
         Parameters
         ----------
-        pdb : rnavigate.pdb.PDB
-            PDB object to use for calculating distances
+        structure : rnavigate.data.SecondaryStructure or rnavigate.data.PDB
+            Structure object to use for calculating distances
         atom : str
-            atom id to use for calculating distances
+            atom id to use for calculating distances in a PDB structure
         """
-        mapping = data.SequenceAlignment(self, pdb).mapping
-        distance_matrix = pdb.get_distance_matrix(atom=atom)
+        mapping = data.SequenceAlignment(self, structure).mapping
+        if isinstance(structure, data.SecondaryStructure):
+            distance_matrix = structure.get_distance_matrix()
+        elif isinstance(structure, data.PDB):
+            distance_matrix = structure.get_distance_matrix(atom=atom)
         i = self.data["i"].values
         j = self.data["j"].values
         distances = np.zeros(len(i))
