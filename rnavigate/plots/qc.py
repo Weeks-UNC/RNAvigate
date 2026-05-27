@@ -242,7 +242,7 @@ class QC(plots.Plot):
         for i, profile in enumerate(self.profiles):
             data.append(profile.data[cols].copy().assign(Sample=i + 1))
         data = pd.concat(data)
-        data = pd.melt(data, id_vars=["Sample"], var_name=["Rate"])
+        data = pd.melt(data, id_vars=["Sample"], var_name="Rate")
         ax = sns.violinplot(
             x="Sample",
             y="value",
