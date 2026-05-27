@@ -1,6 +1,14 @@
 Version history
 ===============
 
+1.0.1 (June 2026)
+---------------------------
+
+- Updated packaging details and dependencies for PyPI release
+- Created pytest suite with unit and smoke tests data classes and plotting functions
+
+
+
 1.0.0-alpha (November 2023)
 ---------------------------
 

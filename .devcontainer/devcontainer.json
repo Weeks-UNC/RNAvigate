@@ -9,13 +9,12 @@
     // Install the project in editable mode after the workspace is mounted.
     // All dependencies are already baked into /opt/venv by the Dockerfile,
     // so this step is fast (no network round-trip needed).
-    "postCreateCommand": "uv sync --extra dev --extra docs",
+    "postCreateCommand": "source /opt/venv/bin/activate && pip install -e .",
     // Configure tool-specific properties.
     "customizations": {
         "vscode": {
             "extensions": [
                 "ms-python.isort",
-                "njpwerner.autodocstring",
                 "aaron-bond.better-comments",
                 "ms-python.black-formatter",
                 "ms-toolsai.jupyter",
@@ -26,7 +25,8 @@
                 "ms-python.pylint",
                 "ms-python.python",
                 "RomanPeshkov.vscode-text-tables",
-                "vscode-icons-team.vscode-icons"
+                "vscode-icons-team.vscode-icons",
+                "Anthropic.claude-code"
             ],
             "settings": {
                 "[python]": {
@@ -40,7 +40,7 @@
                 "jupyter.notebookFileRoot": "${workspaceFolder}"
             }
         }
-    }
+    },
     // Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
-    // "remoteUser": "root"
+    "remoteUser": "root"
 }

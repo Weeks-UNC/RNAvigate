@@ -48,6 +48,19 @@ figures.
 ## 2. Directory Map
 
 ```
+tests/                       # pytest test suite
+├── conftest.py              # Session-scoped example fixtures; sets Agg backend
+├── test_import.py           # Package-level import smoke tests
+├── data/                    # Unit tests for rnavigate.data classes
+│   ├── test_sequence.py     # Sequence, normalize_sequence
+│   ├── test_profile.py      # Profile, SHAPEMaP
+│   ├── test_secondary_structure.py  # SecondaryStructure
+│   └── test_interactions.py # Interactions, PairingProbability
+├── plots/
+│   └── test_plot_functions.py  # Smoke tests for all plot_*() functions
+└── analysis/
+    └── test_analysis.py     # Smoke tests for DeltaSHAPE, SequenceChecker
+
 rnavigate/
 ├── __init__.py              # Public API surface
 ├── rnavigate.py             # Sample class
@@ -275,7 +288,7 @@ All data classes ultimately inherit from `Sequence`. The hierarchy separates seq
 | `StructureCompareTwo` | `Interactions` | Compares two structures |
 | `StructureCompareMany` | `Interactions` | Compares many structures |
 
-`Interactions` provides a rich filtering API: `filter()`, `mask_on_sequence()`, `mask_on_profile()`, `mask_on_structure()`, `set_3d_distances()`.
+`Interactions` provides a rich filtering API: `filter()`, `mask_on_sequence()`, `mask_on_profile()`, `mask_on_structure()`, `set_distances()`.
 
 #### `secondary_structure.py`
 
@@ -456,7 +469,7 @@ classDiagram
         +mask_on_sequence()
         +mask_on_profile()
         +mask_on_structure()
-        +set_3d_distances()
+        +set_distances()
         +reset_mask()
     }
 

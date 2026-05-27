@@ -4,3 +4,4 @@ __pycache__/
 .ipynb_checkpoints/
 reference_data/
 docs/build/
+.claude/

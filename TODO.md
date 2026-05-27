@@ -34,13 +34,6 @@
 
 ## Infrastructure & Packaging
 
-- [ ] Create `tests/` directory and set up `pytest`
-  - unit tests for data classes (loading, alignment, normalization)
-  - integration tests for each `plot_*` function (smoke tests at minimum)
-  - fixtures using the built-in `examples/` datasets
-  <!-- There are currently zero automated tests. This is the single biggest risk
-       to refactoring safely. Any change to data/ or alignments/ could silently
-       break downstream plots. -->
 - [ ] Set up CI with GitHub Actions
   - run `pytest` on push / pull request
   - lint with `ruff` or `flake8`
