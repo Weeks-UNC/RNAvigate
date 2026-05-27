@@ -39,9 +39,8 @@
   - lint with `ruff` or `flake8`
   - test across Python 3.9, 3.10, 3.11
   <!-- No CI means every merge is manual risk. Pair this with the pytest work above. -->
-- [ ] Add `CHANGELOG.md` and adopt SemVer versioning strategy
-  <!-- __version__ = "1.0.0" is set but not managed. CHANGELOG would give users
-       and contributors a clear history and make releases traceable. -->
+- [ ] Adopt SemVer versioning strategy
+  <!-- __version__ = "1.0.0" is set but not managed. -->
 - [ ] Automate release pipeline
   - version bumping (bump2version or hatch version)
   - build and publish to PyPI and/or conda-forge on git tag

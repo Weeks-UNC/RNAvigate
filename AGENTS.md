@@ -1,7 +1,7 @@
-# AGENTS.md — AI Contributor Guide for RNAvigate
+# AI Contributor Guide for RNAvigate
 
-This file gives AI agents (Claude, Codex, Copilot, etc.) the context and behavioral
-expectations needed to contribute effectively to RNAvigate.
+This file gives AI agents context and behavioral expectations to contribute effectively
+to RNAvigate.
 
 ---
 
@@ -12,7 +12,7 @@ expectations needed to contribute effectively to RNAvigate.
    inter-module dependencies
 3. `TODO.md`: prioritized backlog with inline commentary explaining the *why* behind
    each item
-4. `CHANGELOG.md`: (once created) release history and breaking changes
+4. `docs/source/resources/changelog.rst`: release history and breaking changes
 
 ---
 
@@ -25,7 +25,7 @@ in Jupyter Notebooks.
 and visualizing RNA per-nucleotide and inter-nucleotide data alongside secondary and
 tertiary structure models and annotations.
 
-**Design priorities:** usability & correctness are more important than performance.
+**Design priorities:** usability is more important than performance.
 
 **Primary entry points:** `rnavigate.Sample` and `rnavigate.plot_*()`.
 
