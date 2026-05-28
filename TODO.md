@@ -34,11 +34,7 @@
 
 ## Infrastructure & Packaging
 
-- [ ] Set up CI with GitHub Actions
-  - run `pytest` on push / pull request
-  - lint with `ruff` or `flake8`
-  - test across Python 3.9, 3.10, 3.11
-  <!-- No CI means every merge is manual risk. Pair this with the pytest work above. -->
+- [ ] Test and improve pytest code coverage.
 - [ ] Adopt SemVer versioning strategy
   <!-- __version__ = "1.0.0" is set but not managed. -->
 - [ ] Automate release pipeline
@@ -59,14 +55,10 @@
 ---
 
 ## Refactoring
-<!-- These improve long-term maintainability. Tackle after tests exist so
-     regressions are catchable. -->
+<!-- improve long-term maintainability. -->
 
+- [ ] Fix circular imports between `plots/__init__.py` and subclasses
 - [ ] Fix circular import between `data/data.py` ↔ `data/alignments.py`
-  <!-- Both modules import from each other via `from rnavigate import data`.
-       This works at runtime due to Python's import caching but is fragile.
-       Resolution: move SequenceAlignment construction out of Sequence.__init__
-       or use a lazy import. See ARCHITECTURE.md §8.2 for details. -->
 - [ ] Split `plotting_functions.py` (1,624 lines) into per-plot modules
   <!-- Each plot_*() function is largely independent. Moving them into
        plots/functions/ or a plots/api/ submodule would make the file

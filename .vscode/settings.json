@@ -1,7 +1,8 @@
 {
     "[python]": {
-        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.defaultFormatter": "charliermarsh.ruff",
         "editor.formatOnSave": true
     },
-    "pylint.cwd": "${workspaceFolder}",
+    // Once circular imports are resolved, we can enable this.
+    // "ruff.organizeImports": true,
 }

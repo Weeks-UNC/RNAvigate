@@ -14,15 +14,13 @@
     "customizations": {
         "vscode": {
             "extensions": [
-                "ms-python.isort",
                 "aaron-bond.better-comments",
-                "ms-python.black-formatter",
+                "charliermarsh.ruff",
                 "ms-toolsai.jupyter",
                 "ms-toolsai.vscode-jupyter-cell-tags",
                 "ms-toolsai.jupyter-renderers",
                 "shd101wyy.markdown-preview-enhanced",
                 "ms-python.vscode-pylance",
-                "ms-python.pylint",
                 "ms-python.python",
                 "RomanPeshkov.vscode-text-tables",
                 "vscode-icons-team.vscode-icons",
@@ -30,10 +28,11 @@
             ],
             "settings": {
                 "[python]": {
-                    "editor.defaultFormatter": "ms-python.black-formatter",
+                    "editor.defaultFormatter": "charliermarsh.ruff",
                     "editor.formatOnSave": true
                 },
-                "pylint.cwd": "${workspaceFolder}",
+                // Once circular imports are resolved, we can enable this.
+                // "ruff.organizeImports": true,
                 "files.eol": "\n",
                 // Point VS Code and the Jupyter extension at the pre-built venv.
                 "python.defaultInterpreterPath": "/opt/venv/bin/python",

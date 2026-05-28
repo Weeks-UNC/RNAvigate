@@ -37,11 +37,11 @@ Follow these conventions on every file you write or edit.
 
 ### Style
 
-- Comply with **PEP 8**. Line length limit: **88 characters** (Black-compatible).
-- Use **Black**-compatible formatting, even if Black is not yet configured.
-- Import order: stdlib → third-party → local, separated by blank lines (PEP 8 / isort-compatible).
-- Prefer `pathlib.Path` over `os.path` for all file operations.
-- Use f-strings over `.format()` or `%` formatting (PEP 498).
+- Comply with PEP 8.
+- Line length limit: 88 characters.
+- Use `ruff`-compatible formatting and import order (stdlib → third-party → local).
+- Prefer `pathlib.Path` over `os.path`.
+- Use f-strings over `.format()` or `%` formatting.
 
 ### Naming
 
@@ -55,18 +55,17 @@ Follow these conventions on every file you write or edit.
 
 ### Type hints
 
-- Add **PEP 484** type hints to all new public functions and methods.
+- Add PEP 484 type hints to all new public functions and methods.
 - For existing functions you modify substantially, add hints at the same time.
 - Use `from __future__ import annotations` at the top of the file to allow
   forward references without quotes.
 
 ### Docstrings
 
-- Use **NumPy-style docstrings** (PEP 257 + numpydoc convention) on all
-  public classes, methods, and functions.
-- Required sections: `Parameters`, `Returns`. Add `Raises`, `Notes`,
-  `Examples`, and `References` where appropriate.
+- Use **NumPy-style** docstrings on public classes, methods, and functions.
 - One-line summary on the first line, blank line, then extended description.
+- Required sections: `Parameters`, `Returns`. Add `Raises`, `Notes`,`Examples`, and
+  `References` where appropriate.
 
 ### Error handling
 

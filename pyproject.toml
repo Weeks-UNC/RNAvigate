@@ -45,6 +45,7 @@ dev = [
     "jupyter>=1.0.0",
     "pytest>=7.0",
     "pytest-cov>=4.0",
+    "ruff>=0.4",
 ]
 docs = [
     "sphinx",
@@ -63,6 +64,20 @@ python_functions = ["test_*"]
 Homepage = "https://github.com/Weeks-UNC/RNAvigate"
 Documentation = "https://rnavigate.readthedocs.io/en/latest/"
 "Bug Tracker" = "https://github.com/Weeks-UNC/RNAvigate/issues"
+
+[tool.ruff]
+target-version = "py39"
+line-length = 88
+exclude = ["docs/"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+# Some files have load-order-dependent imports due to circular imports that must be
+# resolved before alphabetical sorting can be enforced.
+# See the high-priority "Fix circular imports" item in TODO.md.
+ignore = ["E501", "I001"]  # line-length and import ordering
+
+[tool.ruff.format]
 
 [tool.setuptools.packages.find]
 include = ["rnavigate", "rnavigate.*"]

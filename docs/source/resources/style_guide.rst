@@ -9,25 +9,8 @@ The goal is to keep things simple, human readable, and consistent.
 Linting and autoformatting
 --------------------------
 
-RNAvigate relies on Black to autoformat code, isort for import sorting, and uses Numpy
-style docstrings.
-
-Linting is performed with Pylint using a .pylintrc configuration file (included in 
-RNAvigate's root directory). This file is taken from
-`Google's pylintrc file <https://google.github.io/styleguide/pylintrc>`_,
-with the following modifications:
-
-- Pylint recommends always using `encoding=` with `open()`. I turned this off.
-- indent string is 4 spaces (Google uses 2). Black enforces 4 spaces anyway.
-- Pylint recommends 80 character line limit. Black uses 88.
-
-.. code-block::
-
-   disable=unspecified-encoding
-   indent-string='    '
-   max-line-length=88
-
-
+RNAvigate uses `ruff <https://docs.astral.sh/ruff/>`_ for linting (`ruff check .`) and
+autoformatting (`ruff format .`).
 
 Commit messages
 ---------------
@@ -58,7 +41,7 @@ parenthesis also on it's own line. similar to
 Long lines
 ----------
 
-Maximum line length is 88 characters. This is enforced by Black, except:
+Maximum line length is 88 characters. This is enforced by `ruff`, except:
 
 - long imports, to keep them explicit
 - long URLs, these should get their own line
@@ -82,7 +65,7 @@ RNAvigate's init files, where many names are imported explicitly.
 Long function calls
 ~~~~~~~~~~~~~~~~~~~
 
-Black will automatically format long function calls appropriately.
+`ruff` will automatically format long function calls appropriately.
 
 Naming
 ------
