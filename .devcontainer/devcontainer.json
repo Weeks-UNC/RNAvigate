@@ -9,7 +9,7 @@
     // Install the project in editable mode after the workspace is mounted.
     // All dependencies are already baked into /opt/venv by the Dockerfile,
     // so this step is fast (no network round-trip needed).
-    "postCreateCommand": "source /opt/venv/bin/activate && pip install -e .",
+    "postCreateCommand": ". /opt/venv/bin/activate && pip install -e . --no-build-isolation",
     // Configure tool-specific properties.
     "customizations": {
         "vscode": {

@@ -75,7 +75,7 @@ data_keyword_defaults = {
 def create_data(data_keyword, inputs, sample=None):
     """Convenience function for creating rnavigate.data objects.
 
-    This function is used to parse \*\*data_keywords passed to
+    This function is used to parse **data_keywords passed to
     rnavigate.Sample, but can also be used on it's own using the same syntax.
 
     Parameters

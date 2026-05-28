@@ -145,7 +145,7 @@ class ScalarMappable(mpl.cm.ScalarMappable):
             cmap.set_bad("grey")
             return cmap
         try:
-            return mpl.cm.get_cmap(cmap)
+            return mpl.colormaps.get_cmap(cmap)
         except ValueError as exception:
             print(
                 "cmap must be one of: valid mpl color, list of mpl colors, or "
