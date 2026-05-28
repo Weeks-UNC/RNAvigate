@@ -5,8 +5,9 @@ profile and interactions data on interactive 3D structures.
 """
 
 import Bio.PDB
-from rnavigate import data
 import numpy as np
+
+from rnavigate import data
 
 
 class PDB(data.Sequence):

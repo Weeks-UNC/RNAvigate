@@ -38,6 +38,7 @@ __all__ = [
     # from data
     "Sequence",
     "Data",
+    "normalize_sequence",
     # from secondary_structure
     "SecondaryStructure",
     "StructureCoordinates",

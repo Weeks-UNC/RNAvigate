@@ -1,8 +1,9 @@
 """Plot linear regression scatter plots."""
 
-from scipy import stats
-import seaborn as sns
 import numpy as np
+import seaborn as sns
+from scipy import stats
+
 from rnavigate import plots
 
 

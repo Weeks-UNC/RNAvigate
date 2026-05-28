@@ -2,6 +2,7 @@
 
 import numpy as np
 import seaborn as sns
+
 from rnavigate import plots, styles
 
 

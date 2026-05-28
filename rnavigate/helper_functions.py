@@ -1,9 +1,8 @@
 """Contains PlottingArgumentParser for plotting_functions.py and fit_data for
 retreiving aligned data objects"""
 
-from rnavigate import data, Sample
+from rnavigate import Sample, data
 from rnavigate.data_loading import get_sequence
-
 
 __all__ = ["fit_data", "PlottingArgumentParser"]
 
@@ -136,8 +135,7 @@ class PlottingArgumentParser:
     def _parse_labels(self, labels):
         """Ensures the value of labels is a list, same length as samples."""
         error = ValueError(
-            "labels must be a list of strings of length equal "
-            "to length of sample list."
+            "labels must be a list of strings of length equal to length of sample list."
         )
         if labels is None:
             labels = [sample.sample for sample in self.samples]

@@ -8,8 +8,6 @@ usable with plot_*() functions.
 
 from __future__ import annotations
 
-import pytest
-
 import rnavigate as rnav
 from rnavigate import analysis
 

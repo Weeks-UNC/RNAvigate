@@ -1,10 +1,12 @@
-from operator import ge, le, gt, lt, eq, ne
-import pandas as pd
+from operator import eq, ge, gt, le, lt, ne
+from pathlib import Path
+
 import matplotlib.colors as mpc
 import numpy as np
+import pandas as pd
 import seaborn as sns
+
 from rnavigate import data
-from pathlib import Path
 
 
 class Interactions(data.Data):
@@ -1340,11 +1342,11 @@ class PairingProbability(Interactions):
         # catch rounding errors:
         entropy_df.loc[entropy_df["Entropy"] < 0, "Entropy"] = 0
         if print_out:
-            print(*[f"{i+1} {s}" for i, s in enumerate(entropy)], sep="\n")
+            print(*[f"{i + 1} {s}" for i, s in enumerate(entropy)], sep="\n")
         if save_file is not None:
             with open(save_file) as outf:
                 for i, s in enumerate(entropy):
-                    outf.write(f"{i+1}\t{s}\n")
+                    outf.write(f"{i + 1}\t{s}\n")
         return data.Profile(
             input_data=entropy_df,
             metric="Entropy",
@@ -1716,7 +1718,7 @@ class StructureCompareMany(Interactions):
             columns = ["Structure_1"]
             input_data = input_data.rename(columns={"Structure": "Structure_1"})
             for i, structure in enumerate(other_structures):
-                col = f"Structure_{i+2}"
+                col = f"Structure_{i + 2}"
                 columns.append(col)
                 structure = structure.rename(columns={"Structure": col})
                 input_data = input_data.merge(structure, how="outer", on=["i", "j"])

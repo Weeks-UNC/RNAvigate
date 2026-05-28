@@ -1,8 +1,10 @@
 """Contains global plot display settings."""
 
 from functools import wraps
+
 import matplotlib as mpl
 import seaborn as sns
+
 from rnavigate import data
 
 # STYLE SHEET

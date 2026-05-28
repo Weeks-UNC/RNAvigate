@@ -154,8 +154,7 @@ class Sample:
         """
         if (data_keyword in self.data) and not overwrite:
             raise ValueError(
-                f"'{data_keyword}' is already a data keyword. "
-                "Choose a different one."
+                f"'{data_keyword}' is already a data keyword. Choose a different one."
             )
         try:
             self.data[data_keyword] = create_data(

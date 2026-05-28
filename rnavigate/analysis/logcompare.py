@@ -4,10 +4,10 @@ This analysis requires replicates.
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.optimize import minimize_scalar
-from rnavigate import Sample, plots, data
+
+from rnavigate import Sample, data
 
 
 # TODO: refactor as a subclass of rnavigate.Sample
@@ -84,14 +84,14 @@ class LogCompare(Sample):
             profile = profile.get_aligned_data(
                 data.SequenceAlignment(profile, sequence)
             )
-            self.set_data(data_keyword=f"Sample1_{i+1}", inputs=profile)
+            self.set_data(data_keyword=f"Sample1_{i + 1}", inputs=profile)
             profiles1.append(profile)
         profiles2 = []
         for i, sample in enumerate(samples2):
             profile = sample.get_data(profile_kw).get_aligned_data(
                 data.SequenceAlignment(profile, sequence)
             )
-            self.set_data(data_keyword=f"Sample2_{i+1}", inputs=profile)
+            self.set_data(data_keyword=f"Sample2_{i + 1}", inputs=profile)
             profiles2.append(profile)
         self.set_data(
             data_keyword="log_compare",
@@ -121,7 +121,10 @@ class LogProfile(data.Profile):
             dfs = []
             for sample in input_data:
                 df = sample[0].data[["Nucleotide", "Sequence"]].copy()
-                cols = [f"profile{i+1}" for i in range(len(sample))] + ["avg", "stderr"]
+                cols = [f"profile{i + 1}" for i in range(len(sample))] + [
+                    "avg",
+                    "stderr",
+                ]
                 df[cols] = np.vstack(self.load_replicates(sample)).T
                 dfs.append(df)
             input_data = pd.merge(

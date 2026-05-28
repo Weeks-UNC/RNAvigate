@@ -9,15 +9,16 @@
 #           Patrick Irving
 ###############################################################################
 
+import json
+import math
+import re
 import sys
+import xml.etree.ElementTree as xmlet
 from pathlib import Path
-from os.path import isfile
+
 import numpy as np
 import pandas as pd
-import math
-import xml.etree.ElementTree as xmlet
-import json
-import re
+
 from rnavigate import data
 
 
@@ -352,8 +353,8 @@ class SecondaryStructure(data.Sequence):
         with open(self.filepath, "r") as f:
             file = "".join(line.strip() for line in f.readlines())
         # Parse the file for this structure number to get list of nucleotides and pairs
-        pos = "(\d+)"
-        coord = "(-?\d+\.\d+)"
+        pos = r"(\d+)"
+        coord = r"(-?\d+\.\d+)"
         nuc = "([ACGTUacgtuc])"
         gap = " .*?"
         nucleotide = re.compile(f"ID:{pos}{gap}Base:{nuc}{gap}X:{coord}{gap}Y:{coord}")
@@ -1259,7 +1260,7 @@ class SecondaryStructure(data.Sequence):
                 sequence=self.sequence,
             )
         raise ValueError(
-            "structure2 must be a SecondaryStructure or list of " "SecondaryStructures"
+            "structure2 must be a SecondaryStructure or list of SecondaryStructures"
         )
 
     ###########################################################################

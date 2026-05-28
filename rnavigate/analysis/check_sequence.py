@@ -5,8 +5,9 @@ samples, which sequences match up perfectly, and inspect the differences
 between sequences.
 """
 
-import pandas as pd
 import numpy as np
+import pandas as pd
+
 from rnavigate import data
 
 

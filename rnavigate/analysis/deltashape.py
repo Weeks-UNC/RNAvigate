@@ -25,8 +25,9 @@ Largely rewritten for RNAvigate by Patrick Irving 2023
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.   #
 ###########################################################################
 
-from rnavigate import data, plots, Sample
 from scipy.stats import zscore
+
+from rnavigate import Sample, data, plots
 
 
 class DeltaSHAPE(Sample):

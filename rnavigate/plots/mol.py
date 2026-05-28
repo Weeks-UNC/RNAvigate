@@ -1,7 +1,8 @@
 """Module for plotting 3Dmol.js viewers"""
 
-import py3Dmol
 import matplotlib.colors as mpc
+import py3Dmol
+
 from rnavigate import plots
 
 
@@ -275,5 +276,5 @@ class Mol(plots.Plot):
                     useScreen: true,
                     backgroundColor: 'black'
                 });
-            }""",
+            }""",  # noqa: E501
         )

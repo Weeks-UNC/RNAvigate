@@ -1,6 +1,7 @@
 """Plot distance histograms."""
 
 import numpy as np
+
 from rnavigate import data, plots
 
 

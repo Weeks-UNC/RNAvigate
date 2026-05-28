@@ -1,8 +1,9 @@
 """Windowed AUROC assesses agreement between reactivities and base-pairing."""
 
-from rnavigate import plots
-from sklearn.metrics import roc_curve, auc
 import numpy as np
+from sklearn.metrics import auc, roc_curve
+
+from rnavigate import plots
 
 
 # TODO: refactor as subclass of rnavigate.Sample

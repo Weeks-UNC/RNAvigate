@@ -1,7 +1,8 @@
-import numpy as np
 import matplotlib as mp
 import matplotlib.patches as mp_patches
-from rnavigate import styles, data
+import numpy as np
+
+from rnavigate import data, styles
 
 
 # 1-dimensional x-axis tracks

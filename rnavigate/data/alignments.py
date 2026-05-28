@@ -13,10 +13,13 @@ AlignmentChain (BaseAlignment)
 """
 
 from abc import ABC, abstractmethod
-from Bio import Align
-from Bio import SeqIO
+
 import numpy as np
 import pandas as pd
+import Bio.Align
+import Bio.Align.substitution_matrices
+import Bio.SeqIO
+
 from rnavigate import data
 
 # store sequence alignments
@@ -74,8 +77,7 @@ def convert_sequence(aas, nts, dbn):
         dbn = "".join([to_db[aa] for aa in aas])
         return dbn
     raise ValueError(
-        "Please specify which sequence to return by setting aas, "
-        "nts, or dbn to  True."
+        "Please specify which sequence to return by setting aas, nts, or dbn to  True."
     )
 
 
@@ -131,7 +133,10 @@ structure_scoring_dict = {
 }
 # fmt: off
 
-substitution_matrix = Align.substitution_matrices.Array("ACDEFGHIKLMNPQRSTVWY", dims=2)
+substitution_matrix = Bio.Align.substitution_matrices.Array(
+    alphabet="ACDEFGHIKLMNPQRSTVWY",
+    dims=2,
+)
 for (aa1, aa2), score in structure_scoring_dict.items():
     substitution_matrix[aa1, aa2] = score
 
@@ -219,7 +224,7 @@ def set_multiple_sequence_alignment(fasta, set_pairwise=False):
         sequence alignment.
     """
     with open(fasta, "r") as file:
-        fasta = list(SeqIO.parse(file, "fasta"))
+        fasta = list(Bio.SeqIO.parse(file, "fasta"))
         fasta = [str(seq.seq).upper().replace("T", "U") for seq in fasta]
     base_sequence = []
     for nts in zip(*fasta):
@@ -675,7 +680,7 @@ class SequenceAlignment(BaseAlignment):
         # if not already set, do a pairwise alignment and set
         alignments = lookup_alignment(seq1, seq2)
         if alignments is None:
-            aligner = Align.PairwiseAligner(mode="global")
+            aligner = Bio.Align.PairwiseAligner(mode="global")
             aligner.match_score = self.align_kwargs["match"]
             aligner.mismatch_score = self.align_kwargs["mismatch"]
             aligner.open_gap_score = self.align_kwargs["open"]
@@ -859,7 +864,7 @@ class StructureAlignment(BaseAlignment):
         if seq1 == seq2:
             return (seq1, seq2)
         else:
-            aligner = Align.PairwiseAligner(mode="global")
+            aligner = Bio.Align.PairwiseAligner(mode="global")
             aligner.substitution_matrix = substitution_matrix
             aligner.open_gap_score = -12
             aligner.extend_gap_score = -1

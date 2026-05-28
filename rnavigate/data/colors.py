@@ -1,5 +1,5 @@
-import numpy as np
 import matplotlib as mpl
+import numpy as np
 
 
 class ScalarMappable(mpl.cm.ScalarMappable):

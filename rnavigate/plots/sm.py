@@ -1,7 +1,8 @@
 import numpy as np
-from rnavigate import plots
 from matplotlib.patches import Rectangle
-from rnavigate.styles import rx_color, bg_color, dc_color
+
+from rnavigate import plots
+from rnavigate.styles import bg_color, dc_color, rx_color
 
 
 class SM(plots.Plot):

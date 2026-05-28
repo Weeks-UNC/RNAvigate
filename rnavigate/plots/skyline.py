@@ -1,5 +1,6 @@
-from rnavigate import plots, styles
 import seaborn as sns
+
+from rnavigate import plots, styles
 
 
 class Skyline(plots.Plot):

@@ -1,7 +1,8 @@
 """Circle plot class."""
 
-from rnavigate import plots, data
 import numpy as np
+
+from rnavigate import data, plots
 
 
 class Circle(plots.Plot):

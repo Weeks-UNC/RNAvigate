@@ -51,7 +51,6 @@ from rnavigate.examples import (
     rrna_fragmap_data,
 )
 
-
 _rnasep_common = None
 _rrna_fragmap_common = None
 

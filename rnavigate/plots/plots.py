@@ -1,6 +1,7 @@
-from abc import ABC, abstractmethod
-import matplotlib.pyplot as plt
 import math
+from abc import ABC, abstractmethod
+
+import matplotlib.pyplot as plt
 
 
 class Plot(ABC):
@@ -285,7 +286,7 @@ class ColorBar(Plot):
             orientation="horizontal",
             aspect=40,
             spacing="proportional",
-            **colorbar.cbar_args
+            **colorbar.cbar_args,
         )
         if colorbar.tick_labels is not None:
             ax.set_xticklabels(colorbar.tick_labels)

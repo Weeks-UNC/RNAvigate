@@ -1,4 +1,5 @@
 import pandas as pd
+
 from rnavigate import data
 
 
@@ -123,7 +124,7 @@ class BedFile:
         profile[self.profile_cols] = 0
         for _, row in bed_df.iterrows():
             site = profile.eval(
-                f'Coordinate > {row["start"]} and Coordinate < {row["end"]}'
+                f"Coordinate > {row['start']} and Coordinate < {row['end']}"
             )
             for col in self.profile_cols:
                 profile.loc[site, col] = row[col]
@@ -157,7 +158,7 @@ class BedFile:
         profile["Density"] = 0
         for _, row in bed_df.iterrows():
             site = profile.eval(
-                f'Coordinate > {row["start"]} and Coordinate < {row["end"]}'
+                f"Coordinate > {row['start']} and Coordinate < {row['end']}"
             )
             profile.loc[site, "Density"] += 1
             for col in self.profile_cols:

@@ -20,7 +20,8 @@ plot.save("lowss_figure.svg")
 """
 
 import numpy as np
-from rnavigate import Sample, plots, data
+
+from rnavigate import Sample, data, plots
 
 
 class LowSS(Sample):

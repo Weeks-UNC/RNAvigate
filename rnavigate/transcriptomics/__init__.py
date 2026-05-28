@@ -16,4 +16,5 @@ __all__ = [
     "Transcript",
     "eCLIPDatabase",
     "download_eclip_peaks",
+    "create_eclip_table",
 ]

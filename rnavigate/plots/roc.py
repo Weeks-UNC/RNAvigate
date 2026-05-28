@@ -1,6 +1,7 @@
 import numpy as np
+from sklearn.metrics import auc, roc_curve
+
 from rnavigate import plots
-from sklearn.metrics import roc_curve, auc
 
 
 class ROC(plots.Plot):

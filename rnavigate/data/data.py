@@ -6,12 +6,13 @@ This module contains the base classes for RNAvigate data classes:
 """
 
 from pathlib import Path
+
 import Bio.SeqIO
+import matplotlib.colors as mpc
 import numpy as np
 import pandas as pd
-import matplotlib.colors as mpc
-from rnavigate import styles
-from rnavigate import data
+
+from rnavigate import data, styles
 
 
 def normalize_sequence(sequence, t_or_u="U", uppercase=True):

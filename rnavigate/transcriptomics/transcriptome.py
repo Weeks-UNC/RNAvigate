@@ -9,12 +9,13 @@ It can be used with Bed objects to convert genome coordinate data to transcript
 coordinate RNAvigate data classes.
 """
 
-import pandas as pd
-import numpy as np
-from Bio import SeqIO
-from rnavigate import data
 from pathlib import Path
 
+import numpy as np
+import pandas as pd
+import Bio.SeqIO
+
+from rnavigate import data
 
 human_chromosome_ids = {
     "chr1": "NC_000001",
@@ -314,7 +315,7 @@ class Transcriptome:
     def get_sequences(self, chromosomes, coordinates, strands):
         """Return a dictionary of transcript sequences."""
         sequences = {tx_id: "" for tx_id in chromosomes}
-        for record in SeqIO.parse(self.genome, "fasta"):
+        for record in Bio.SeqIO.parse(self.genome, "fasta"):
             for tx_id, chromosome in chromosomes.items():
                 if record.id.startswith(self.chr_ids[chromosome]):
                     for start, end in zip(*coordinates[tx_id]):
@@ -331,7 +332,7 @@ class Transcriptome:
         """Return a transcript sequence for a single transcript."""
         seq = ""
         chromosome = self.chr_ids[chromosome]
-        for record in SeqIO.parse(self.genome, "fasta"):
+        for record in Bio.SeqIO.parse(self.genome, "fasta"):
             if record.id.startswith(chromosome):
                 for start, end in zip(*coordinates):
                     seq += str(record.seq[start - 1 : end])

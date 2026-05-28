@@ -11,8 +11,6 @@ environment that is not available in headless CI.
 
 from __future__ import annotations
 
-import pytest
-
 import rnavigate as rnav
 from rnavigate import plots
 

@@ -1,6 +1,7 @@
+import numpy as np
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Path, PathPatch
-import numpy as np
+
 from rnavigate import styles
 
 

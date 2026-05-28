@@ -1,8 +1,9 @@
-import numpy as np
-import matplotlib.patches as mp_patches
 import matplotlib.collections as mp_collections
+import matplotlib.patches as mp_patches
+import numpy as np
 from scipy.spatial.distance import cdist
-from rnavigate import styles, data, plots
+
+from rnavigate import data, plots, styles
 
 
 # Secondary structure diagram ploting functions
@@ -166,7 +167,7 @@ def plot_sequence_ss(ax, structure, colors):
             ycoords,
             marker=marker,
             c=colors[mask],
-            **styles.settings["ss"]["sequence"]
+            **styles.settings["ss"]["sequence"],
         )
 
 
@@ -243,7 +244,7 @@ def plot_positions_ss(ax, structure, xticks=20):
             ha="center",
             va="center",
             bbox=bbox,
-            **styles.settings["ss"]["positions"]
+            **styles.settings["ss"]["positions"],
         )
 
 

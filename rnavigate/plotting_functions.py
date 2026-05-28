@@ -1,14 +1,12 @@
 """Contains all rnavigate convenience plotting functions"""
 
-from rnavigate import plots
-from rnavigate import data
+from rnavigate import data, plots
+from rnavigate.data_loading import get_sequence
 from rnavigate.helper_functions import (
     PlottingArgumentParser,
     _parse_plot_kwargs,
     fit_data,
 )
-from rnavigate.data_loading import get_sequence
-
 
 __all__ = [
     "plot_options",

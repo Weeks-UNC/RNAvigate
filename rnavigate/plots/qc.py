@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import seaborn as sns
+
 from rnavigate import plots
 
 
@@ -81,7 +82,7 @@ class QC(plots.Plot):
             self.ax_muts_mod.set_title("Mutations per Molecule Distribution")
             self.ax_read_mod.set_title("Read Length Distribution")
             self.ax_boxplot.set_title("Mutation rates")
-        xticklabels = [f"{x*50}" for x in range(12)]
+        xticklabels = [f"{x * 50}" for x in range(12)]
         self.ax_read_unt.set_xticklabels(xticklabels, rotation=45)
         self.ax_read_mod.set_xticklabels(xticklabels, rotation=45)
         self.profiles = []

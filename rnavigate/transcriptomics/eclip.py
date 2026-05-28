@@ -1,7 +1,9 @@
-import pandas as pd
-from rnavigate import data, transcriptomics
-import requests
 from pathlib import Path
+
+import pandas as pd
+import requests
+
+from rnavigate import data, transcriptomics
 
 
 def download_eclip_peaks(outpath, assembly="GRCh38"):
@@ -256,5 +258,5 @@ class eCLIPDatabase:  # pylint disable=invalid-name
                 df = annotation.data.sort_values("start")
                 spans = [f"{mn}-{mx}" for _, (mn, mx) in df.iterrows()]
                 print(f"{cell_line:<8} {target:<8} {' '.join(spans)}")
-        except ValueError as e:
+        except ValueError:
             pass

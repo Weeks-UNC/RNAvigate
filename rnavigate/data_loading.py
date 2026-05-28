@@ -1,8 +1,8 @@
 """Parsing function for rnavigate.Sample data_keywords."""
 
 from pathlib import Path
-from rnavigate import data
 
+from rnavigate import data
 
 __all__ = ["data_keyword_defaults", "create_data", "get_sequence"]
 
@@ -164,7 +164,7 @@ def create_data(data_keyword, inputs, sample=None):
     if len(required_arguments) > 0:
         raise ValueError(
             f"{data_keyword} missing required arguments:\n"
-            ", ".join(required_arguments)
+            + (", ".join(required_arguments))
         )
 
     # instantiate and return the data class

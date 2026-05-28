@@ -1,5 +1,6 @@
-from rnavigate import plots
 import numpy as np
+
+from rnavigate import plots
 
 
 class SS(plots.Plot):

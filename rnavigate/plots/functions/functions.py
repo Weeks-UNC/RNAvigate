@@ -1,7 +1,8 @@
-import numpy as np
-import matplotlib.patches as mp_patches
 import matplotlib.collections as mp_collections
 import matplotlib.colors as mp_colors
+import matplotlib.patches as mp_patches
+import numpy as np
+
 from rnavigate import data, plots
 
 

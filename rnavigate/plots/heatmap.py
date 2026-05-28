@@ -1,10 +1,10 @@
 """Heatmap plot class."""
 
-from matplotlib.colors import LinearSegmentedColormap
-import seaborn as sns
 import numpy as np
-from rnavigate import plots
-from rnavigate import data
+import seaborn as sns
+from matplotlib.colors import LinearSegmentedColormap
+
+from rnavigate import data, plots
 
 
 class Heatmap(plots.Plot):
@@ -240,6 +240,6 @@ class Heatmap(plots.Plot):
             cmap=interactions.cmap.cmap,
             common_norm=True,
             weights=weights,
-            **kwargs
+            **kwargs,
         )
         ax.set(xlabel="Nucleotide position", ylabel="Nucleotide position")
