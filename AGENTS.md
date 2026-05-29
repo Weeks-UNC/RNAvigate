@@ -8,10 +8,8 @@ to RNAvigate.
 ## 1. Always read the following files for context:
 
 1. `README.md`: one-paragraph project description and audience
-2. `ARCHITECTURE.md`: authoritative map of modules, classes, design patterns, and
-   inter-module dependencies
-3. `TODO.md`: prioritized backlog with inline commentary explaining the *why* behind
-   each item
+3. `TODO.md`: prioritized backlog with explainations and reasons for each item
+2. `ARCHITECTURE.md`: map of modules, classes, patterns, and dependencies
 4. `docs/source/resources/changelog.rst`: release history and breaking changes
 
 ---

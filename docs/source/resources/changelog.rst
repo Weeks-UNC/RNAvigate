@@ -1,7 +1,7 @@
 Version history
 ===============
 
-1.0.1 (unreleased)
+1.0.1 (May 2026)
 ---------------------------
 
 - Updated packaging details and dependencies for PyPI release
@@ -9,6 +9,7 @@ Version history
 - Set up CI with GitHub Actions on push/PR to main
   - run tests with pytest, lint with ruff, and test across Python 3.9, 3.10, 3.11
 - Migrated from Black/isort/pylint to Ruff for code formatting and linting
+- Fixed minor bugs and added small features to data and plots along the way
 
 1.0.0-alpha (November 2023)
 ---------------------------
