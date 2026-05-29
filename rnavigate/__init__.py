@@ -31,9 +31,9 @@ from rnavigate import plots
 from rnavigate import styles
 from rnavigate import transcriptomics
 
-__version__ = "1.0.0"
-__author__ = "Patrick S. Irving"
-__email__ = "psirving@email.unc.edu"
+from importlib.metadata import version
+
+__version__ = version("rnavigate")
 
 __all__ = [
     "Sample",

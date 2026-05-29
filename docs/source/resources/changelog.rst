@@ -1,13 +1,16 @@
 Version history
 ===============
 
-1.0.1 (May 2026)
+
+
+1.1.0 and 1.1.1 (May 2026)
 ---------------------------
 
 - Updated packaging details and dependencies for PyPI release
 - Created pytest suite with unit and smoke tests data classes and plotting functions
 - Set up CI with GitHub Actions on push/PR to main
   - run tests with pytest, lint with ruff, and test across Python 3.9, 3.10, 3.11
+- Set up CD with GitHub Actions to publish to PyPI on release
 - Migrated from Black/isort/pylint to Ruff for code formatting and linting
 - Fixed minor bugs and added small features to data and plots along the way
 
