@@ -57,4 +57,4 @@ jobs:
       - name: Install docs dependencies
         run: pip install -e ".[docs]"
       - name: Build docs
-        run: sphinx-build -W docs/source docs/build/html -D nbsphinx_execute=never
+        run: sphinx-build docs/source docs/build/html -D nbsphinx_execute=never

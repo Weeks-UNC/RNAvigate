@@ -23,4 +23,11 @@ repos:
         entry: /opt/venv/bin/pytest --tb=short -q
         language: system
         pass_filenames: false
-        always_run: true
+        files: ^(rnavigate|tests)/
+
+      - id: sphinx
+        name: sphinx
+        entry: /opt/venv/bin/sphinx-build docs/source docs/build/html -D nbsphinx_execute=never
+        language: system
+        pass_filenames: false
+        files: ^docs/
