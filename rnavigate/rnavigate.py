@@ -25,7 +25,7 @@ class Sample:
         that are shared between samples.
     keep_inherited_defaults : bool, default = True
         whether to keep inherited default keywords
-    **data_keywords:
+    **kwargs
         There are many built-in data keywords with different expectations and
         behaviors. See :doc:`/get_started/loading_data` for more information.
 
@@ -173,15 +173,13 @@ class Sample:
             If None, returns None.
             If a data keyword, returns associated data from sample
             If Data, returns that data.
-            If a list or dictionary, returns list or dictionary with
-                data keyword values replaced with associated Data
+            If a list or dictionary, returns list or dictionary with data keyword values replaced with associated Data
         data_class : rnavigate.data.Data class or subclass, optional
             If provided, ensures that returned data is of this type.
 
         Returns
         -------
-        Same type as data_keyword argument, but data keywords are replaced
-            with associated data
+        Same type as data_keyword argument, with data keywords replaced by associated data.
 
         Raises
         ------
@@ -269,23 +267,20 @@ class Sample:
             "Distance" will compute 3D distance in "pdb", defaulting to
             2'OH atom. "Distance_DMS" or "Distance_[atom id]" will use
             those atoms to compute distance.
-        cmap (str | list, optional):
+        cmap : str or list, optional
             sets the interactions colormap, used to color interactions
             according to metric values.
-        normalization (str, optional):
-            `"norm"`: extreme values in colormap are given to the extreme
-                values of interactions metric data
-            `"bins"`: data are colored according to which bin they fall in
-                `values` defines bins (list, length = 2 less than cmap)
-            `"min_max"`: extreme values in cmap are given to values beyond
-                minimum and maximum, defined by `values`
-        values:
-            behavior depends on normalization
+        normalization : str, optional
+            `"norm"`: extreme values in colormap are given to the extreme values of interactions metric data
+            `"bins"`: data are colored according to which bin they fall in; `values` defines bins (list, length = 2 less than cmap)
+            `"min_max"`: extreme values in cmap are given to values beyond minimum and maximum, defined by `values`
+        values : varies
+            behavior depends on normalization.
             `"norm"`: values are not needed
-            `"bins"`: list of floats containing the boundaries between bins
-                One fewer than the number of categories
+            `"bins"`: list of floats containing the boundaries between bins (one fewer than the number of categories)
             `"min_max"`: list of floats containing the minimum and maximum
-        **kwargs: Other arguments are passed to interactions.filter()
+        **kwargs
+            Other arguments are passed to interactions.filter()
         """
         # check for valid interactions data
         if interactions is None:

@@ -99,8 +99,7 @@ class SequenceChecker:
             What format to print the alignments in:
             "cigar" prints the cigar string
             "short" prints the numbers of mismatches and indels
-            "long" prints the location and nucleotide identity of all
-                mismatches, insertions and deletions.
+            "long" prints the location and nucleotide identity of all mismatches, insertions and deletions.
         which : tuple of two of integers, defaults to "all" (every pairwise comparison)
             two sequence IDs to compare.
         """
@@ -126,8 +125,7 @@ class SequenceChecker:
         ----------
         base_sequence : string
             a sequence string that represents the longest common sequence.
-            Usually, this is the return value from:
-                rnav.data.set_multiple_sequence_alignment()
+            Usually, this is the return value from rnav.data.set_multiple_sequence_alignment()
         """
         print("Multiple sequence alignment")
         alignments = [
@@ -148,13 +146,13 @@ class SequenceChecker:
 
         This is very useful for using external multiple sequence aligners such
         as ClustalOmega.
-            1) go to https://www.ebi.ac.uk/Tools/msa/clustalo/
-            2) upload new fasta file
-            3) under STEP 2 output format, select Pearson/FASTA
-            4) click 'Submit'
-            5) wait for your alignment to finish
-            6) download the alignment fasta file
-            7) use rnav.data.set_multiple_sequence_alignment()
+        1) go to https://www.ebi.ac.uk/Tools/msa/clustalo/
+        2) upload new fasta file
+        3) under STEP 2 output format, select Pearson/FASTA
+        4) click 'Submit'
+        5) wait for your alignment to finish
+        6) download the alignment fasta file
+        7) use rnav.data.set_multiple_sequence_alignment()
 
         Parameters
         ----------

@@ -1,6 +1,34 @@
 Version history
 ===============
 
+1.1.2 (June 2026)
+---------------------------
+
+- improves documentation and examples
+   - adds developer installation guide
+   - tests notebooks in CI and on ReadTheDocs to ensure they stay functional
+- improves pre-commit
+   - adds nbstripout to remove large output cells from notebooks
+   - adds automatic linting and formatting with Ruff
+   - adds "uv lock" to pre-commit and CI
+   - adds testing with pytest
+- improves CI workflow
+   - adds uv lock check
+   - adds Sphinx documentation build testing
+- improves CD workflow
+   - adds Dockerfile and publish to Docker Hub on release
+- improves packaging and distribution
+   - adds Bioconda recipe
+   - adds environment.yml for conda installation until Bioconda package is available
+- Improves devcontainer setup and documentation
+   - adds ipykernel installation to postCreateCommand for Jupyter notebook support
+   - adds pre-commit install to postCreateCommand for pre-commit hooks
+   - adds port forwarding for documentation building and preview with sphinx-autobuild
+- removes numpy-style docstring formatting issues
+- improves pyproject.toml package structure
+   - makes example data available
+   - adds ipykernel to docs extras for building notebooks
+   - removes unneeded dependencies from main and dev extra
 
 
 1.1.0 and 1.1.1 (May 2026)
@@ -9,7 +37,7 @@ Version history
 - Updated packaging details and dependencies for PyPI release
 - Created pytest suite with unit and smoke tests data classes and plotting functions
 - Set up CI with GitHub Actions on push/PR to main
-  - run tests with pytest, lint with ruff, and test across Python 3.9, 3.10, 3.11
+   - run tests with pytest, lint with ruff, and test across Python 3.9, 3.10, 3.11
 - Set up CD with GitHub Actions to publish to PyPI on release
 - Migrated from Black/isort/pylint to Ruff for code formatting and linting
 - Fixed minor bugs and added small features to data and plots along the way

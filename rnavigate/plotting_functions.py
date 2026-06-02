@@ -883,31 +883,25 @@ def plot_ss(
         a dictionary of element: value pairs that determines how colors
         will be applied to each plot element and if that element is plotted
         only the elements you wish to change need to be included
-        value options and what the colors represent:
-            None: don"t plot this elelement
-            "sequence": nucleotide identity
-            "position": position in sequence
-            "annotations": sequence annotations
-            "profile": per-nucleotide data from profile
-                profile argument must be provided
-            "structure": base-pairing status
-            matplotlib color: all positions plotted in this color
-            array of colors: a different color for each position
-                must be the same length as structure
-        "sequence" may also use "contrast" which automatically chooses
-            white or black, which ever contrasts better with "nucleotide"
-            color
-        Defaults to {"sequence": None,
-                        "nucleotides": "sequence",
-                        "structure": "grey",
-                        "basepairs": "grey"}
+        Keys can be "sequence" (letter labels), "nucleotides" (circles behind letters),
+        "structure" (lines connecting nucleotides), and
+        "basepairs" (lines connecting base-paired nucleotides).
+        Values can be: None (don't plot), "sequence" (color by nucleotide identity),
+        "position" (position in sequence), "annotations" (sequence annotations),
+        "profile" (per-nucleotide data from profile argument),
+        "structure" (base-pairing status), a single matplotlib color for all positions,
+        or an array of one color per position which matches the structure length.
+        "sequence" may also use "contrast" which automatically chooses white or black
+        for each letter to contrast with that "nucleotide" color.
+        Defaults to {"sequence": None, "nucleotides": "sequence", "structure": "grey",
+        "basepairs": "grey"}
     nt_ticks : integer, defaults to None (no labels)
         gap between major tick marks
     bp_style : "dotted", "line", or "conventional", defaults to "dotted"
         "dotted" plots basepairs as a dotted line
         "line" plots basepairs as a solid line
-        "conventional" plots basepairs using Leontis-Westhof conventions
-            for canonical and wobble pairs ("G-A" plotted as solid dot)
+        "conventional" plots basepairs using Leontis-Westhof conventions for canonical
+        and wobble pairs ("G-A" plotted as solid dot)
     colorbars : bool, defaults to True
         Whether to plot color scales for all plot elements
     plot_kwargs : dict, defaults to {}
@@ -1005,13 +999,12 @@ def plot_mol(
         "profile": color by per-nucleotide data from `profile`
         "structure": color by base-pairing status
         matplotlib color: all positions plotted in this color
-        array of colors: a different color for each position
-            must be the same length as structure
+        array of colors: one per position, must match structure length
     atom : string or dictionary, defaults to "O2'"
         which atoms to draw interactions between
         for DMS reactive atoms (N1 for A and G, N3 for U and C) use "DMS"
         use a dictionary to specify a different atom for each nucleotide
-            e.g. "DMS" == {"A": "N1", "G": "N1", "U": "N3", "C": "N3"}
+        e.g. "DMS" == {"A": "N1", "G": "N1", "U": "N3", "C": "N3"}.
     rotation : dictionary, defaults to {"x": 0, "y": 0, "z": 0}
         axis-degrees pairs for setting the starting orientation of the
         molecule, only the axes to be rotated are needed
@@ -1023,10 +1016,10 @@ def plot_mol(
         allows getting the orientation for use with orientation argument
         all other arguments will be ignored and a larger, single panel view
         window is displayed with no title
-            1. adjust the molecule to the desired orientation
-            2. click on the molecule to display the orientation vector
-            3. copy this orientation vector (manually)
-            4. provide this list of values to the orientation argument
+        1. adjust the molecule to the desired orientation
+        2. click on the molecule to display the orientation vector
+        3. copy this orientation vector (manually)
+        4. provide this list of values to the orientation argument
     title : bool, defaults to True
         whether to display the title
     colorbars : bool, defaults to True
@@ -1136,17 +1129,14 @@ def plot_heatmap(
         each inner list defines two regions of the RNA that are interacting
         a box will be drawn around this interaction on the heatmap
         e.g. [[10, 20, 50, 60], [35, 45, 70, 80]] draws 2 boxes
-            the first box will connect nucleotides 10-20 and 50-60
-            the second box will connect nucleotides 35-45 and 70-80
+        the first connects nucleotides 10-20 and 50-60,
+        the second connects nucleotides 35-45 and 70-80
     labels : list of strings, defaults to sample.sample for each sample
         Labels to be used as titles, must be same length as samples list
     levels : list of floats, defaults to [5] contact distance or [20] 3D distance
-        contours are drawn separating nucleotides above and below these
-        distances
-        if structure argument is a secondary structure
-            distance refers to contact distance
-        if structure argument is a 3D structure
-            distance refers to spatial distance in angstroms
+        contours are drawn separating nucleotides above and below these distances.
+        If structure is a secondary structure, distance refers to contact distance.
+        If structure is a 3D structure, distance refers to spatial distance in angstroms.
     interpolation : string, defaults to "nearest"
         one of matplotlib's interpolations for heatmap (used with imshow)
         "nearest" works well for shorter RNAs (under 300 nt)
@@ -1155,7 +1145,7 @@ def plot_heatmap(
         from which atoms to calculate distances
         for DMS reactive atoms (N1 for A and G, N3 for U and C) use "DMS"
         use a dictionary to specify a different atom for each nucleotide
-            e.g. "DMS" == {"A": "N1", "G": "N1", "U": "N3", "C": "N3"}
+        e.g. "DMS" == {"A": "N1", "G": "N1", "U": "N3", "C": "N3"}
     plot_type : "heatmap" or "kde", defaults to "heatmap"
         how to plot interactions data
         "heatmap" will plot raw data, each interaction is a pixel in a grid
@@ -1268,23 +1258,17 @@ def plot_circle(
         a dictionary of element: value pairs that determines how colors
         will be applied to each plot element and if that element is plotted
         only the elements you wish to change need to be included
-        Defaults to {"sequence": None,  # sequence not shown
-                        "nucleotides": "sequence",
-                        "structure": "grey"}
-        value options and what the colors represent:
-            None: don't plot this elelement
-            "sequence": nucleotide identity
-            "position": position in sequence
-            "annotations": sequence annotations
-            "profile": per-nucleotide data from profile
-                profile argument must be provided
-            "structure": base-pairing status
-            matplotlib color: all positions plotted in this color
-            array of colors: a different color for each position
-                must be the same length as structure
-        "sequence" may also use "contrast" which automatically chooses
-            white or black, which ever contrasts better with "nucleotide"
-            color
+        Keys can be "sequence" (letter labels), "nucleotides" (circles behind letters),
+        "structure" (lines connecting nucleotides), and
+        "basepairs" (lines connecting base-paired nucleotides).
+        Values can be: None (don't plot), "sequence" (color by nucleotide identity),
+        "position" (position in sequence), "annotations" (sequence annotations),
+        "profile" (per-nucleotide data from profile argument),
+        "structure" (base-pairing status), a single matplotlib color for all positions,
+        or an array of one color per position which matches the structure length.
+        "sequence" may also use "contrast" which automatically chooses white or black
+        for each letter to contrast with that "nucleotide" color.
+        Defaults to {"sequence": None, "nucleotides": "sequence", "structure": "grey"}
     nt_ticks : tuple of two integers, defaults to (20, 5)
         first integer is the gap between major tick marks
         second integer is the gap between minor tick marks
@@ -1376,16 +1360,11 @@ def plot_linreg(
         "pearson" calculates Pearson R-squared (standard)
         "spearman" calculates Spearman R-squared (rank-order)
     colors : string or list of colors, defaults to "sequence"
-        value options and what the colors represent:
-            "sequence": nucleotide identity
-            "position": position in sequence
-            "annotations": sequence annotations
-            "profile": per-nucleotide data from profile
-                profile argument must be provided
-            "structure": base-pairing status
-            matplotlib color: all positions plotted in this color
-            array of colors: a different color for each position
-                must be the same length as structure
+        Values can be: None (don't plot), "sequence" (color by nucleotide identity),
+        "position" (position in sequence), "annotations" (sequence annotations),
+        "profile" (per-nucleotide data from profile argument),
+        "structure" (base-pairing status), a single matplotlib color for all positions,
+        or an array of one color per position which matches the structure length.
     column : string, defaults to profile.metric
         column name of values from profile to use in regression
     region : list of 2 integers, defaults to [1, length of sequence]
@@ -1535,7 +1514,7 @@ def plot_disthist(
         from which atoms to calculate distances
         for DMS reactive atoms (N1 for A and G, N3 for U and C) use "DMS"
         use a dictionary to specify a different atom for each nucleotide
-            e.g. "DMS" == {"A": "N1", "G": "N1", "U": "N3", "C": "N3"}
+        e.g. "DMS" == {"A": "N1", "G": "N1", "U": "N3", "C": "N3"}
     rows : integer, defaults to None (determined automatically)
         number of rows of plots
     cols : integer, defaults to None (determined automatically)

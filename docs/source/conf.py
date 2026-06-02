@@ -23,7 +23,8 @@ extensions = [
     "sphinx_rtd_theme",
     "sphinx.ext.autosectionlabel",
 ]
-nbsphinx_allow_errors = True
+nbsphinx_execute = "auto"
+nbsphinx_kernel_name = "python3"
 templates_path = ["_templates"]
 exclude_patterns = []
 

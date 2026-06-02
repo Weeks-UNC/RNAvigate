@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y pandoc && rm -rf /var/lib/apt/lists/*
 # Pin the venv to a stable path outside the workspace so it survives rebuilds
 # and is not affected by the workspace mount overwriting it.
 ENV UV_PROJECT_ENVIRONMENT=/opt/venv
+ENV VIRTUAL_ENV=/opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 # Pre-install all Python dependencies at image-build time using the lockfile.

@@ -31,8 +31,7 @@ class WindowedAUROC:
     Methods
     -------
     __init__: Computes the AUROC array and AUROC median.
-    plot_auroc: Displays the AUROC analysis over the given region.
-        Returns Plot object
+    plot_auroc: Displays the AUROC analysis over the given region. Returns Plot object.
 
     Attributes
     ----------

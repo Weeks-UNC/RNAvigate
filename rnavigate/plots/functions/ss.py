@@ -161,7 +161,7 @@ def plot_sequence_ss(ax, structure, colors):
         mask = [nt == nuc for nt in structure.sequence]
         xcoords = x[mask]
         ycoords = y[mask]
-        marker = "$\mathsf{" + nuc + "}$"  # noqa: W605
+        marker = r"$\mathsf{" + nuc + r"}$"
         ax.scatter(
             xcoords,
             ycoords,

@@ -45,21 +45,13 @@ class QC(plots.Plot):
         elif self.length > 1:
             self.ax_muts_unt = self.axes[0, 0]
             self.ax_muts_mod = self.axes[0, 1]
-            self.ax_muts_mod.get_shared_x_axes().join(
-                self.ax_muts_mod, self.ax_muts_unt
-            )
-            self.ax_muts_mod.get_shared_y_axes().join(
-                self.ax_muts_mod, self.ax_muts_unt
-            )
+            self.ax_muts_mod.sharex(self.ax_muts_unt)
+            self.ax_muts_mod.sharey(self.ax_muts_unt)
             self.ax_muts_mod.set_yticklabels([])
             self.ax_read_unt = self.axes[0, 2]
             self.ax_read_mod = self.axes[0, 3]
-            self.ax_muts_mod.get_shared_x_axes().join(
-                self.ax_read_mod, self.ax_read_unt
-            )
-            self.ax_muts_mod.get_shared_y_axes().join(
-                self.ax_read_mod, self.ax_read_unt
-            )
+            self.ax_read_mod.sharex(self.ax_read_unt)
+            self.ax_read_mod.sharey(self.ax_read_unt)
             self.ax_read_mod.set_yticklabels([])
             gs = self.axes[1, 0].get_gridspec()
             for ax in self.axes[1, :]:

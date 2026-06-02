@@ -6,8 +6,11 @@
 Welcome to RNAvigate's documentation!
 =====================================
 
-`Github <https://github.com/Weeks-UNC/RNAvigate>`_ | `Publications <publications>`_
+`Github <https://github.com/Weeks-UNC/RNAvigate>`_ | :doc:`/resources/publications`
 
+.. image:: images/gallery.png
+   :align: center
+   :alt: Gallery of RNAvigate visualizations
 
 .. toctree::
    :maxdepth: 1

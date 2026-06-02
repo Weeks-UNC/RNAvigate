@@ -18,6 +18,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Bio-Informatics",
     "Topic :: Scientific/Engineering :: Visualization",
     "Intended Audience :: Science/Research",
@@ -25,24 +26,19 @@ classifiers = [
 requires-python = ">=3.9"
 dependencies = [
     "biopython>=1.78",
-    "ipython>=8.18.1",
-    "jedi>=0.19.2",
     "matplotlib>=3.8",
     "numpy>=1.20.1",
-    "openpyxl>=3.1.2",
     "pandas>=1.4.4",
     "py3dmol>=2.0.0",
-    "requests",
+    "requests>=2.28.0",
     "scikit-learn>=1.0.2",
     "scipy>=1.6.2",
     "seaborn>=0.13.0",
-    "statsmodels>=0.14.1",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "ipykernel>=6.6.0",
-    "jupyter>=1.0.0",
+    "pre-commit>=3.0",
     "pytest>=7.0",
     "pytest-cov>=4.0",
     "ruff>=0.4",
@@ -52,6 +48,7 @@ docs = [
     "sphinx-autobuild",
     "sphinx-rtd-theme",
     "nbsphinx",
+    "ipykernel",
 ]
 
 [tool.pytest.ini_options]
@@ -77,7 +74,11 @@ select = ["E", "F", "W", "I"]
 # See the high-priority "Fix circular imports" item in TODO.md.
 ignore = ["E501", "I001"]  # line-length and import ordering
 
-[tool.ruff.format]
-
 [tool.setuptools.packages.find]
 include = ["rnavigate", "rnavigate.*"]
+
+[tool.setuptools.package-data]
+"rnavigate.examples.tpp_data" = ["*"]
+"rnavigate.examples.rmrp_data" = ["*"]
+"rnavigate.examples.rnasep_data" = ["*"]
+"rnavigate.examples.rrna_fragmap_data" = ["*"]

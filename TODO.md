@@ -9,14 +9,6 @@
 
 ## In Progress
 
-- [ ] v1.0.0 stable release
-  - [ ] version tag on GitHub
-  - [ ] update Docker image
-  <!-- The __version__ string in __init__.py is already set to "1.0.0" but there
-       is no git tag, no CHANGELOG entry, and no PyPI/conda release yet.
-       Consider whether 1.0.0 is the right milestone or if infra work (below)
-       should land first as a pre-release. -->
-
 ---
 
 ## Bugs
@@ -35,22 +27,11 @@
 ## Infrastructure & Packaging
 
 - [ ] Test and improve pytest code coverage.
-- [ ] Adopt SemVer versioning strategy
-  <!-- __version__ = "1.0.0" is set but not managed. -->
 - [ ] Automate release pipeline
   - version bumping (bump2version or hatch version)
-  - build and publish to PyPI and/or conda-forge on git tag
 - [ ] Write `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`
   <!-- Blocks accepting external contributions. Should describe: how to set up
        dev environment, code style, branching model, PR process. -->
-- [ ] Automate documentation builds
-  - connect `docs/` to Read the Docs (RTD)
-  - add `make docs` target
-  <!-- docs/rtd_env.yaml exists but RTD is not configured to build automatically. -->
-- [ ] Add a `CLAUDE.md` context file to the repo root
-  <!-- A short file describing: project goals, coding conventions, stable branches,
-       test commands, and any AI-specific context. This persists between sessions
-       and keeps AI collaborators calibrated without re-explaining the backlog. -->
 
 ---
 
@@ -86,6 +67,7 @@
 ## New Features
 
 ### Data & I/O
+
 - [ ] Tracks that show continuous data (not just per-nucleotide bars/skylines)
 - [ ] MSA (Multiple Sequence Alignment) tracks
 - [ ] Annotations: support input/output file formats
@@ -104,10 +86,12 @@
 - [ ] Implement SecondaryStructure.get_structure_elements()
 
 ### Analysis
+
 - [ ] Calling significant sites with log-corrected profile min-diff comparison
 - [ ] Structure compatibility analysis
 
 ### Visualization
+
 - [ ] Consistent alpha values for colormaps and colorbars
   <!-- The alpha set on the ScalarMappable in colors.py is not reliably propagated
        to the colorbar artist. Needs investigation in plots/plots.py plot_colorbars(). -->
@@ -117,6 +101,7 @@
 - [ ] `plot_ss` with annotation colorbar (see Bugs above — fix the bug first)
 
 ### Interface & Usability
+
 - [ ] Feature to turn off automatic sequence alignments (keep sub-sequences as-is)
 - [ ] Validate alignments passed to `get_aligned_data()` with informative errors
 - [ ] Simplify `get_aligned_data()` and `AlignmentChain()` interfaces
@@ -138,3 +123,4 @@
   <!-- Update this file whenever: a module's responsibilities change, a class is
        added/moved/removed, a new dependency is introduced, or a design pattern
        changes. Treat it as the design contract between contributors. -->
+- [ ] Fragmapper and Transcriptome notebooks need fixing.

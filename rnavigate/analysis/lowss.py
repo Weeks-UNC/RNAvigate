@@ -2,21 +2,21 @@
 
 Citation:
     Siegfried, N., Busan, S., Rice, G. et al. RNA motif discovery by SHAPE and
-        mutational profiling (SHAPE-MaP). Nat Methods 11, 959-965 (2014).
-        https://doi.org/10.1038/nmeth.3029
+    mutational profiling (SHAPE-MaP). Nat Methods 11, 959-965 (2014).
+    https://doi.org/10.1038/nmeth.3029
 
-Typical usage example:
+Typical usage example::
 
-import rnavigate as rnav
-my_sample = rnav.Sample(
-    sample="example sample",
-    shapemap="my_shape_profile.txt",
-    pairprob="pairing_probabilities.txt",
-    ss="MFE_structure.ct"
+    import rnavigate as rnav
+    my_sample = rnav.Sample(
+        sample="example sample",
+        shapemap="my_shape_profile.txt",
+        pairprob="pairing_probabilities.txt",
+        ss="MFE_structure.ct"
     )
-lowss_sample = rnav.analysis.LowSS(my_sample)
-plot = lowss_sample.plot_lowss()
-plot.save("lowss_figure.svg")
+    lowss_sample = rnav.analysis.LowSS(my_sample)
+    plot = lowss_sample.plot_lowss()
+    plot.save("lowss_figure.svg")
 """
 
 import numpy as np

@@ -16,13 +16,18 @@ and standardizing plots and analyses as part of a bigger workflow.
 ## Reach out
 
 Coders and non-coders, **reach out** if you have any comments or issues at all!
-I love to help users and to learn how you are using this tool.
+I love to help users and to learn how you are using this tool. I may be open to working
+with you on bigger projects or features.
 
 Please, use GitHub Issues **_liberally_** or email me. "Issues" can be:
 
 - a "dumb" question (my favorite kind) or a complicated one.
 - *any* comment or suggestion for the documentation or the code.
 - a cool thing that you did with RNAvigate.
-- a report of a bug or unclear error.
-- a request for help on acheiving a desired vizualization or analysis.
-- a request for advice on any chemical probing matter.
+- an actual issue, such as a bug or an unclear error
+- a request for help:
+    - acheiving a desired vizualization or analysis
+    - performing a chemical probing experiment
+- a feature request, such as:
+    - handling a new file format
+    - creating a new kind visualization

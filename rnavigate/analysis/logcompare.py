@@ -23,29 +23,25 @@ class LogCompare(Sample):
     4. Calculate the difference between samples.
     5. Calculate z-scores between samples.
     6. Plot the results in two panels:
-        (1) the scaled log10(modified/untreated) rate for each sample with
-        error bars, and
-        (2) the difference between samples, colored by z-score.
+    (1) the scaled log10(modified/untreated) rate for each sample with error bars, and
+    (2) the difference between samples, colored by z-score.
 
     Methods
     -------
+    __init__: computes log10(modified/untreated) rates, rescales the data, then calls make_plot()
+    get_profile_sequence: gets log10(m/u) rate and sequence from sample
+    rescale: rescales a profile to minimize difference to another profile
+    load_replicates: calculates average and standard error of replicates
+    make_plots: displays the two panels described above.
 
-        __init__: computes log10(modified/untreated) rates, rescales the data,
-            then calls make_plot()
-        get_profile_sequence: gets log10(m/u) rate and sequence from sample
-        rescale: rescales a profile to minimize difference to another profile
-        load_replicates: calculates average and standard error of replicates
-        make_plots: displays the two panels described above.
-
-    Attributes:
-        data (str): a key of sample.data to retrieve per-nucleotide data
-        groups (dict): a dictionary containing the following key-value pairs:
-            1: a dictionary containing these key-value pairs:
-                self.data: averaged scaled log10(m/u) across replicates
-                "stderr": the standard errors across replicates
-                "stacked": 2d array containing each scaled log10(m/u) array
-                "seq": the sequence string
-            2: same as 1 above, for the second sample
+    Attributes
+    ----------
+    data : str
+        a key of sample.data to retrieve per-nucleotide data
+    groups : dict
+        a dictionary with keys 1 and 2, each containing: self.data (averaged scaled log10(m/u)),
+        "stderr" (standard errors), "stacked" (2d array of scaled log10(m/u) per replicate),
+        "seq" (the sequence string)
     """
 
     def __init__(
