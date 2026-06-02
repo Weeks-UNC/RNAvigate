@@ -10,7 +10,7 @@ RNAvigate can be installed several ways. Choose the option that best fits your e
 - `Pip`_: if you are more comfortable with pip and virtual environments
 - `VS Code`_: a worthwhile workflow improvement with a little more setup required
 - `UNC Longleaf`_: for UNC users working on the Longleaf HPC cluster
-- `Dev Container <../resources/developer_installation>`_: to contribute to the codebase
+- :doc:`/resources/developer_installation`: to contribute to the codebase
 
 Each method follows the same three steps:
 
