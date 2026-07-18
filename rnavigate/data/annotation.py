@@ -294,8 +294,9 @@ class Motif(Annotation):
             "R": "[AG]",
             "Y": "[CTU]",  # purine and pyrimidine
             "N": "[ATUGC]",
+            "I": "I",  # inosine
         }  # any nuc
-        re_pattern = "".join([nuc_codes[n] for n in motif])
+        re_pattern = "".join([nuc_codes.get(n, re.escape(n)) for n in motif])
         spans = []
         for match in re.finditer(re_pattern, sequence):
             start, end = match.span()

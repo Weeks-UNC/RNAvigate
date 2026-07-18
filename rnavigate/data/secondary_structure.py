@@ -73,7 +73,7 @@ class SecondaryStructure(data.Sequence):
         if isinstance(input_data, pd.DataFrame):
             self.data = input_data
             self.filepath = "dataframe"
-        elif Path(input_data).is_file():
+        elif len(Path(input_data).name) < 255 and Path(input_data).is_file():
             if extension is None:
                 extension = Path(input_data).suffix.lower()
             read_file = {
@@ -90,6 +90,10 @@ class SecondaryStructure(data.Sequence):
             }[extension]
             self.filepath = str(input_data)
             self.data = read_file(**kwargs)
+        else:
+            raise ValueError(
+                f"SecondaryStructure input_data is not a valid file path: {input_data}"
+            )
         self.normalize_dtypes()
         super().__init__(input_data=self.data, name=name)
         if "X_coordinate" in self.data.columns and autoscale is True:
@@ -272,7 +276,7 @@ class SecondaryStructure(data.Sequence):
                 "Sequence": list(sequence),
                 "Pair": pairs,
                 "X_coordinate": xcoords,
-                "Y_coordinate": ycoords,
+                "Y_coordinate": [-y for y in ycoords],
             }
         )
         return df
@@ -1370,9 +1374,9 @@ class StructureCoordinates:
             whether to flip structure horizontally, otherwise vertically
         """
         if horizontal:
-            self.x *= -1
+            self.x = self.x * -1
         else:
-            self.y *= -1
+            self.y = self.y * -1
 
     def center(self, x=0, y=0):
         """Center structure on the given x, y coordinate

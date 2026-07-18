@@ -13,14 +13,11 @@
 
 ## Bugs
 
-- [ ] log file specification is not working for ShapeMapper v2.2.0
+- [ ] QC plots and log file parsing broken with ShapeMapper v2.2.0 (issue #33)
   <!-- The read_log() method in SHAPEMaP (data/profile.py) parses the v2
-       histogram format. The ShapeMapper 2.2 log format appears to have changed.
-       This needs a real v2.2 log file to inspect and update the parser. -->
-- [ ] annotation colorbar not added with `plot_ss`
-  <!-- plot_ss calls AP.plot_data() which calls add_colorbar_args(), but the
-       Annotation colormap is not being passed through. Likely a missing
-       add_colorbar_args() call in plots/ss.py plot_data(). -->
+       histogram format. The ShapeMapper 2.2 log format appears to have changed,
+       causing PlotQC to fail entirely. Needs a real v2.2 log file to inspect
+       and update the parser. Works correctly with earlier ShapeMapper versions. -->
 
 ---
 
@@ -70,9 +67,11 @@
 
 - [ ] Tracks that show continuous data (not just per-nucleotide bars/skylines)
 - [ ] MSA (Multiple Sequence Alignment) tracks
-- [ ] Annotations: support input/output file formats
-  - columns: start, end, color, label, track, track height, type
-  - make annotations more flexible generally
+- [ ] Annotations: support input/output file formats (issue #36)
+  <!-- Priority format: GenBank (exported from SnapGene), parseable with
+       biopython Bio.GenBank. Map primer_bind features → primer annotations,
+       misc_feature → spans. Columns needed: start, end, color, label, track,
+       track height, type. Make annotations more flexible generally. -->
 - [ ] mRNA annotation using width, showing splice sites
 - [ ] Region support with sequence alignments
 - [ ] Profiles for interaction data
@@ -80,6 +79,13 @@
   - RING-MaP → RING density per nucleotide
   - store as attribute; retrieve at point of use
     - e.g. `profile.profile` returns profile
+- [ ] Support for `profile.txt` output from Mustoe Lab's msDMS-MaP method
+- [ ] Custom error bars in profile plots (issue #38)
+  <!-- Already supported in skyline plots. Profile plots need the same capability.
+       Users want per-nucleotide error bars on bar/profile chart types. -->
+- [ ] `shapemap_reps` data keyword: accepts a list of `profile.txt` files, averages `Norm_profile` across replicates, and computes replicate stderr (issue #39)
+  <!-- Resolves the manual averaging workflow described in issue #39.
+       FragmapperReplicates in analysis/ may be a reference implementation. -->
 - [ ] Codon usage bias for ORF annotations
 - [ ] Add printable human-readable identifier for all data objects
   - proposed format: `sample + name + datatype + filepath`
@@ -98,7 +104,13 @@
 - [ ] Sequence Analyzer for individual `plot_*` functions
   <!-- Originally listed in triage: a per-plot diagnostic showing which data
        keywords and sequences are present/compatible before plotting. -->
+- [ ] Second profile track in `plot_arcs()`
 - [ ] `plot_ss` with annotation colorbar (see Bugs above — fix the bug first)
+- [ ] `plot_linreg` with per-nucleotide filtering (issue #42)
+  <!-- Users want linear regression between two samples filtered to specific
+       nucleotide types (e.g. all A nucleotides). Currently requires manually
+       setting other nucleotides to NaN. The ROC plot's nucleotide-split logic
+       may be a useful reference for implementing the filter. -->
 
 ### Interface & Usability
 
@@ -114,9 +126,21 @@
 
 - [ ] Numpy-style docstrings across all public classes and functions
   <!-- Coverage is good in data/ but sparse in plots/ and analysis/. -->
+- [ ] Fix ReadTheDocs versioning — retire the deprecated `stable` URL (issue #40)
+  <!-- https://rnavigate.readthedocs.io/en/stable/ serves old content that confuses
+       new users. The correct URL is /en/latest/. Either redirect stable → latest
+       or set latest as the default version in .readthedocs.yaml. -->
+- [ ] Live example notebook with small bundled dataset for new-user onboarding (issue #40)
+  <!-- New users struggle to distinguish placeholder names from real API calls.
+       A minimal executable notebook with real data would lower the entry barrier. -->
+- [ ] Guide: resizing plots (domains, seqbar, etc.) (issue #40)
+- [ ] Guide: exporting and saving plots; mention drag-to-PowerPoint shortcut (issue #40)
+- [ ] Guide: extracting sequence/dotbracket for a sub-region (issue #40)
+  <!-- Already works: sample.get_data("ss").sequence[100:150] and
+       .get_dotbracket()[100:150]. Just needs a docs section so users find it. -->
 - [ ] Guides for custom use cases:
   - [ ] Loading custom annotations
-  - [ ] Sequence alignments (manual and automatic)
+  - [ ] Sequence alignments (manual and automatic), including multi-sample MSA plots (issue #40)
   - [ ] Plot manipulation with matplotlib
   - [ ] Data manipulation with pandas
 - [ ] Keep `ARCHITECTURE.md` current

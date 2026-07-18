@@ -161,7 +161,7 @@ class Sample:
                 sample=self, data_keyword=data_keyword, inputs=inputs
             )
         except BaseException as e:
-            raise ValueError(f"issue while loading {data_keyword}") from e
+            raise ValueError(f"issue while loading {data_keyword}:\n{e}") from e
         self.inputs[data_keyword] = inputs
 
     def get_data(self, data_keyword, data_class=None):

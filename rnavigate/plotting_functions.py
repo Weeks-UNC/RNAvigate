@@ -352,6 +352,7 @@ def plot_skyline(
     seqbar=True,
     region="all",
     # optional plot display
+    colorbars=True,
     plot_kwargs=None,
 ):
     """Plots multiple per-nucleotide datasets on a single axis.
@@ -385,6 +386,8 @@ def plot_skyline(
         whether to display the sequence along the x-axis
     region : list of 2 integers, defaults to [1, length of sequence]
         start and end positions to plot. 1-indexed, inclusive.
+    colorbars : bool, defaults to True
+        Whether to plot color scales for per-nucleotide data
     plot_kwargs : dictionary, defaults to {}
         Keyword-arguments passed to matplotlib.pyplot.subplots
 
@@ -419,7 +422,8 @@ def plot_skyline(
             seqbar=seqbar,
         )
     plot.set_figure_size()
-    plot.plot_colorbars()
+    if colorbars:
+        plot.plot_colorbars()
     return plot
 
 

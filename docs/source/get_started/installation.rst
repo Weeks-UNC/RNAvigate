@@ -3,14 +3,16 @@ Installing RNAvigate
 
 If you have any questions about installation, please submit a `GitHub Issue <https://github.com/Weeks-UNC/RNAvigate/issues>`_.
 
-RNAvigate can be installed several ways. Choose the option that best fits your environment:
+.. contents:: Choose the installation option that best fits your needs:
+   :local:
 
-- `Docker`_: easy, fast setup to work locally on Windows, macOS, or Linux
-- `Conda`_: easy if you are comfortable on the command line or already use conda/mamba
-- `Pip`_: if you are more comfortable with pip and virtual environments
-- `VS Code`_: a worthwhile workflow improvement with a little more setup required
+- `Docker`_: beginner-friendly, local, any OS
+- `Conda`_: command-line, local or remote, flexible but requires dependency management
+- `Pip`_: command-line, local or remote, flexible but requires dependency management
+- `VS Code`_: full IDE, local, worthwhile workflow improvement with more setup
 - `UNC Longleaf`_: for UNC users working on the Longleaf HPC cluster
-- :doc:`/resources/developer_installation`: to contribute to the codebase
+- :doc:`/resources/developer_installation`: VS Code devcontainer for contributing code
+- :doc:`/resources/hpc_vscode`: local VS Code window with access to HPC files and compute resources
 
 Each method follows the same three steps:
 
@@ -18,14 +20,17 @@ Each method follows the same three steps:
 2. **Open a notebook**: launch JupyterLab in a browser or open a notebook in VS Code
 3. **Test the installation**: run a sample plot to confirm everything works
 
+=======================================================================================
+
 Docker
-------
+---------------------------------------------------------------------------------------
 
-The easiest way to get started locally. No dependency management required;
-the container boots with JupyterLab already running.
+With this method, you don't have to worry about managing dependencies or setting up
+JupyterLab: the Docker container takes care of all that for you. The container runs a
+JupyterLab server that you connect to from your browser.
 
-Install Docker
-~~~~~~~~~~~~~~
+Install Docker and Run the Container
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. Install `Docker Desktop <https://www.docker.com/products/docker-desktop/>`_.
 
@@ -68,26 +73,29 @@ Connect to JupyterLab from Docker
 
 8. Open a new Jupyter Notebook.
 
-Test the Installation
-~~~~~~~~~~~~~~~~~~~~~
+Test Docker Installation
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 See `Test Plot`_ below.
 
 Stop and Restart
 ~~~~~~~~~~~~~~~~
 
-- **Stop**: go back to Docker Desktop and click the **Stop** button on the container.
-- **Restart**: go to **Containers**, click **Start** on the RNAvigate container,
-  then click **(...) > View Details** and return to step 6.
+- **Stop**: In Docker Desktop, click the **Stop** button on the container.
+- **Restart**: Open Docker Desktop, go to **Containers**, click **Start** on the
+  RNAvigate container, then click **(...) > View Details** and return to step 6.
+
+=======================================================================================
 
 Conda
------
+---------------------------------------------------------------------------------------
 
-Use this method if you prefer conda or mamba, or if Docker is unavailable. Mamba can be
-used in place of conda.
+Use this method if you prefer conda or mamba, or if Docker is unavailable. Care must be
+taken to ensure environment dependencies are managed correctly, but this method is more
+flexible than Docker and works on HPC clusters.
 
-Install the Environment
-~~~~~~~~~~~~~~~~~~~~~~~
+Install Conda and create the environment
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. Download the ``environment.yml`` file.
 
@@ -105,6 +113,13 @@ Install the Environment
 
    conda env create -f environment.yml
 
+.. note::
+
+   To keep track of the RNAvigate version in the environment name, change the name in
+   ``environment.yml`` before running the command above. For example, change
+   ``name: rnavigate`` to ``name: rnavigate_v0.0.0``. Below, replace
+   ``conda activate rnavigate`` with ``conda activate rnavigate_v0.0.0``.
+
 3. Activate the environment.
 
 .. code-block:: bash
@@ -120,15 +135,19 @@ Connect to JupyterLab
 
    jupyter lab
 
-A browser window will open automatically. If it does not, copy the URL printed in the terminal.
+A browser window will open automatically. If not, copy the URL from the terminal.
 
 Test the Installation
 ~~~~~~~~~~~~~~~~~~~~~
 
 See `Test Plot`_ below.
 
+=======================================================================================
+
 Pip
----
+---------------------------------------------------------------------------------------
+
+Use this method if you prefer pip and virtual environments.
 
 Install RNAvigate and Jupyter
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -159,18 +178,23 @@ Connect to JupyterLab
 
    jupyter lab
 
-A browser window will open automatically. If it does not, copy the URL printed in the terminal.
+A browser window will open automatically. If not, copy/paste the URL from the terminal.
 
 Test the Installation
 ~~~~~~~~~~~~~~~~~~~~~
 
 See `Test Plot`_ below.
 
-VS Code
--------
+=======================================================================================
 
-Use this method if you prefer to work in VS Code rather than a browser-based JupyterLab.
-VS Code runs Jupyter notebooks natively through an extension: no separate server needed.
+VS Code: more setup, local or remote, excellent interface
+---------------------------------------------------------------------------------------
+
+This method requires a little bit more setup than the others, but the experience is
+worth it. VS Code runs Jupyter notebooks natively and can connect to generative AI for
+code completion and debugging. If you are new to VS Code, this is a good way to get
+familiar with it. If you are an experienced VS Code user, this workflow will be a big
+improvement over the JupyterLab interface.
 
 Install VS Code
 ~~~~~~~~~~~~~~~
@@ -183,7 +207,8 @@ Install VS Code
    - `Python <https://marketplace.visualstudio.com/items?itemName=ms-python.python>`_ (``ms-python.python``)
    - `Jupyter <https://marketplace.visualstudio.com/items?itemName=ms-toolsai.jupyter>`_ (``ms-toolsai.jupyter``)
 
-3. Create and activate a virtual environment with pip, then install RNAvigate.
+3. Create an environment with pip or conda to install RNAvigate. 
+   Either method works: VS Code detects pip and conda environments automatically.
 
 .. code-block:: bash
 
@@ -194,16 +219,18 @@ Install VS Code
 .. note::
 
    On Windows, use ``rnavigate-env\Scripts\activate`` instead.
-   A conda environment from the `Conda`_ section also works: VS Code detects conda environments automatically.
+
+or
+
+.. code-block:: bash
+
+   conda env create -f environment.yml
+   conda activate rnavigate
 
 Open a Notebook
 ~~~~~~~~~~~~~~~
 
-4. Open VS Code in your working directory.
-
-.. code-block:: bash
-
-   code /path/to/your/data
+4. Use VS Code to open your working directory.
 
 5. Create a new Jupyter Notebook: press **Ctrl+Shift+P** (**Cmd+Shift+P** on macOS),
    type **Jupyter: Create New Jupyter Notebook**, and press **Enter**.
@@ -231,9 +258,9 @@ This does not change your default modules: they will be restored on your next lo
 
    module rm python pymol pyrosetta
    module load anaconda/2019.10
-   conda env create -f /proj/kweeks/bin/RNAvigate_v1.1.1/environment.yml
-   source activate rnavigate
-   python -m ipykernel install --user --name=rnavigate
+
+Follow the instructions in the `Install Conda and create the environment`_ section
+above (don't run ``jupyter lab``) to create an environment with RNAvigate.
 
 If this completes without errors, exit Longleaf and open UNC's
 `OpenOnDemand Service <https://ondemand.rc.unc.edu/>`_.
@@ -251,6 +278,8 @@ Test the Installation
 ~~~~~~~~~~~~~~~~~~~~~
 
 See `Test Plot`_ below.
+
+=======================================================================================
 
 Test Plot
 ---------

@@ -403,7 +403,9 @@ class Profile(data.Data):
                     profile_factors[nt] = prof
                     error_factors[nt] = err
         # calculate the new profile
-        norm_profile = profile / [profile_factors[nt] for nt in norm_sequence]
+        norm_profile = profile / [
+            profile_factors.get(nt, np.nan) for nt in norm_sequence
+        ]
         self.data[new_profile] = norm_profile
         # calculate the new errors, if appropriate
         if normerr is not None and error_factors is not None:

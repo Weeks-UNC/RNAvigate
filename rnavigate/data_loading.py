@@ -174,7 +174,9 @@ def create_data(data_keyword, inputs, sample=None):
             data_obj.name = label
         return data_obj
     except BaseException as exception:
-        raise ValueError(f"data_keyword={data_keyword}\ninputs={inputs}") from exception
+        raise ValueError(
+            f"data_keyword={data_keyword}\ninputs={inputs}\n{exception}"
+        ) from exception
 
 
 def get_sequence(sequence, sample=None, default=None):

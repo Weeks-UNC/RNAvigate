@@ -169,6 +169,9 @@ class SS(plots.Plot):
             self.add_colorbar_args(interactions2.cmap)
         for annotation in annotations:
             plots.plot_annotation_ss(ax, structure, annotation)
+        if annotations:
+            _, colormap = structure.get_colors_from_annotations(annotations)
+            self.add_colorbar_args(colormap)
         ax.set_title(label)
         x = structure.xcoordinates
         y = structure.ycoordinates

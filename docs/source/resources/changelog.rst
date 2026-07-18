@@ -1,6 +1,17 @@
 Version history
 ===============
 
+1.1.3 (July 2026)
+---------------------------
+
+- fixes ``StructureCoordinates.flip()`` raising ``ValueError: output array is read-only``
+- fixes ``OSError: File name too long`` when a raw sequence string is passed as ``input_data`` to a data object constructor
+- fixes confusing ``AttributeError`` when ``SecondaryStructure`` ``input_data`` is not a valid file path (issue #37)
+- fixes uninformative errors for missing or misnamed input files — the specific error message now surfaces at the top of the traceback (issue #25)
+- fixes annotation colorbar not appearing in ``plot_ss``
+- fixes VARNA secondary structures rendering upside down by default
+- fixes errors caused by non-ACGU nucleotides (e.g. inosine ``I``) in ``Motif`` annotation pattern matching and profile normalization (issue #40)
+
 1.1.2 (June 2026)
 ---------------------------
 
