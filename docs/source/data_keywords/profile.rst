@@ -21,5 +21,6 @@ input explaination:
 
 - These inputs allow a lot of customization in loading data.
 - For a full explaination, see :doc:`/guides/custom_profiles`
+- ``input_data`` can also be a list of replicates. See :doc:`/guides/replicate_averaging`.
 
 back to `standard data keywords`_

@@ -922,6 +922,77 @@ class RINGMaP(Interactions):
             name=name,
         )
 
+    @classmethod
+    def from_N7G(
+        cls,
+        input_data,
+        sequence=None,
+        metric="Statistic",
+        metric_defaults=None,
+        read_table_kw=None,
+        window=1,
+        name=None,
+    ):
+        """Construct a RINGMaP object for msDMS-MaP N7G correlations data.
+
+        Loads an extended ``rings.txt`` file produced by the Mustoe Lab
+        msDMS-MaP pipeline. In this format, positions ``i`` or ``j`` greater
+        than the sequence length indicate N7G (N7 of guanosine) nucleotides,
+        encoded as ``position + sequence_length``. This constructor decodes
+        those positions back to their true nucleotide indices and adds a
+        ``Type`` column classifying each pair as ``"N1N1"``, ``"N7N1"``,
+        ``"N1N7"``, or ``"N7N7"``, where the order indicates which of ``i``
+        (first) and ``j`` (second) is the N7G position.
+
+        Use ``Type_eq`` and ``Type_ne`` filter kwargs when plotting to separate
+        N1/N1 (backbone) and N7G-involving correlations.
+
+        Parameters
+        ----------
+        input_data : str or pandas.DataFrame
+            Path to an msDMS-MaP ``rings.txt`` file, or a DataFrame with
+            the standard RINGMaP column layout plus the extended columns
+            (``Zi``, ``Zj``, ``Mod_Depth``, ``Mod_Comuts``, ``Alpha``,
+            ``Unt_Depth``, ``Unt_Comuts``).
+        sequence : str or rnavigate.Sequence
+            The RNA sequence. Required to decode N7G-encoded positions.
+        metric : str, defaults to "Statistic"
+            The metric column to use for visualization.
+        metric_defaults : dict, optional
+            Additional metric defaults. See ``RINGMaP`` for details.
+        read_table_kw : dict, optional
+            Keyword arguments passed to ``pandas.read_table``. Defaults to None.
+        window : int, defaults to 1
+            Window size. Overwritten by the value in the file header.
+        name : str, optional
+            A name for the data object. Defaults to None.
+
+        Returns
+        -------
+        RINGMaP
+            A RINGMaP object with a ``Type`` column and corrected ``i``/``j``
+            positions.
+        """
+        ringmap = cls(
+            input_data=input_data,
+            sequence=sequence,
+            metric=metric,
+            metric_defaults=metric_defaults,
+            read_table_kw=read_table_kw,
+            window=window,
+            name=name,
+        )
+        length = ringmap.length
+        i_N7G = ringmap.data["i"] > length
+        j_N7G = ringmap.data["j"] > length
+        ringmap.data["Type"] = "N1N1"
+        ringmap.data.loc[i_N7G & j_N7G, "Type"] = "N7N7"
+        ringmap.data.loc[i_N7G & ~j_N7G, "Type"] = "N7N1"
+        ringmap.data.loc[~i_N7G & j_N7G, "Type"] = "N1N7"
+        ringmap.data.loc[i_N7G, "i"] -= length
+        ringmap.data.loc[j_N7G, "j"] -= length
+        return ringmap
+
     def read_file(self, filepath, read_table_kw=None):
         """Parses a RINGMaP correlations file and stores data as a dataframe.
 

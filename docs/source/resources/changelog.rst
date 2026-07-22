@@ -4,6 +4,17 @@ Version history
 1.1.3 (July 2026)
 ---------------------------
 
+- (BREAKING CHANGE) removes ``"dmsmap"`` as a data keyword.
+   - It was not clear that it was a shorthand for ``shapemap`` with ``normalize="DMS"``.
+   - Users should instead use ``shapemap`` with the ``normalize`` argument.
+- adds ability to plot a second profile with ``plot_arcs()`` using ``profile2`` argument
+- adds support for msDMS-MaP files:
+   - ``shapemap_N7G`` data keyword and ``SHAPEMaP.from_N7G()`` classmethod for ``profile.txtga``
+   - ``ringmap_N7G`` data keyword and ``RINGMaP.from_N7G()`` classmethod for ``concat_rings.txt``
+- adds replicate averaging to all ``Profile`` subclasses (issue #39):
+   - If a ``Profile`` subclass receives a list as ``input_data``, it dispatches to the ``.from_replicates()`` constructor
+   - The active metric column is averaged across replicates; SEM is stored as ``<metric_column>_sem`` and registered as the ``error_column``
+- adds ``normalize_kwargs`` parameter to Profile class to allow normalization for any subclass
 - fixes ``StructureCoordinates.flip()`` raising ``ValueError: output array is read-only``
 - fixes ``OSError: File name too long`` when a raw sequence string is passed as ``input_data`` to a data object constructor
 - fixes confusing ``AttributeError`` when ``SecondaryStructure`` ``input_data`` is not a valid file path (issue #37)

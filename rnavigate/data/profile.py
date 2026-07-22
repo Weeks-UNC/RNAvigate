@@ -1,3 +1,4 @@
+import warnings
 import xml.etree.ElementTree as xmlet
 from types import FunctionType
 
@@ -114,8 +115,19 @@ class Profile(data.Data):
         read_table_kw=None,
         sequence=None,
         name=None,
+        normalize_kwargs=None,
     ):
         """Initialize the Profile object."""
+        if isinstance(input_data, list):
+            obj = type(self).from_replicates(
+                input_data,
+                normalize_kwargs=normalize_kwargs,
+                name=name,
+                read_table_kw=read_table_kw,
+                sequence=sequence,
+            )
+            self.__dict__.update(obj.__dict__)
+            return
         if metric_defaults is None:
             metric_defaults = {}
         super().__init__(
@@ -170,6 +182,100 @@ class Profile(data.Data):
             }
         )
         return cls(input_data=df, sequence=sequence, **kwargs)
+
+    @classmethod
+    def from_replicates(
+        cls,
+        input_data,
+        normalize_kwargs=None,
+        name=None,
+        read_table_kw=None,
+        sequence=None,
+    ):
+        """Construct a Profile object by averaging multiple replicates.
+
+        Averages the metric column across replicates. The standard error of the
+        mean is stored as ``<metric_column>_sem`` and registered as the
+        ``error_column`` in ``metric_defaults``.
+
+        Parameters
+        ----------
+        input_data : list of str or Profile
+            File paths or Profile objects (or a mix). Must contain at least 2
+            replicates.
+        normalize_kwargs : dict, optional
+            If provided, ``replicate.normalize(**normalize_kwargs)`` is called on
+            every replicate before averaging. Defaults to None.
+        name : str, optional
+            A name for the combined dataset. Defaults to None.
+        read_table_kw : dict, optional
+            Keyword arguments passed to ``pandas.read_table`` when loading
+            replicates from file paths. Defaults to None.
+        sequence : rnavigate.Sequence or str, optional
+            Reference sequence used when loading replicates from file paths.
+            Defaults to None.
+
+        Returns
+        -------
+        Profile
+            A Profile object with averaged metric and SEM columns.
+        """
+        if len(input_data) < 2:
+            raise ValueError(
+                f"{cls.__name__}.from_replicates requires at least 2 replicates, "
+                f"got {len(input_data)}."
+            )
+        replicates = [
+            item
+            if isinstance(item, cls)
+            else cls(item, read_table_kw=read_table_kw, sequence=sequence)
+            for item in input_data
+        ]
+        if normalize_kwargs is not None:
+            for replicate in replicates:
+                replicate.normalize(**normalize_kwargs)
+        reference = replicates[0]
+        for replicate in replicates[1:]:
+            if replicate.sequence != reference.sequence:
+                raise ValueError(
+                    "All replicates must share the same sequence.\n"
+                    f"{reference.filepath}: {reference.sequence}\n"
+                    f"{replicate.filepath}: {replicate.sequence}"
+                )
+        metric_col = reference.metric
+        sem_col = f"{metric_col}_sem"
+        color_col = reference._metric.get("color_column")
+        if color_col is not None:
+            warnings.warn(
+                f"No {cls.__name__}-specific replicate-combining behavior has been "
+                f"established in RNAvigate. {cls.__name__} from replicates will still "
+                f"display colors using the {color_col} values from the reference "
+                f"replicate (first in the list).",
+                UserWarning,
+                stacklevel=2,
+            )
+        stacked = pd.concat(
+            [replicate.data[metric_col] for replicate in replicates], axis=1
+        )
+        combined_data = pd.DataFrame(
+            {
+                "Nucleotide": reference.data["Nucleotide"],
+                "Sequence": reference.data["Sequence"],
+                metric_col: stacked.mean(axis=1),
+                sem_col: stacked.sem(axis=1),
+            }
+        )
+        if color_col is not None and color_col in reference.data.columns:
+            combined_data[color_col] = reference.data[color_col].values
+        updated_metric_defaults = {
+            metric_col: dict(reference._metric) | {"error_column": sem_col}
+        }
+        return cls(
+            input_data=combined_data,
+            metric=metric_col,
+            metric_defaults=updated_metric_defaults,
+            name=name,
+        )
 
     @property
     def recreation_kwargs(self):
@@ -672,13 +778,13 @@ class SHAPEMaP(Profile):
     def __init__(
         self,
         input_data,
-        normalize=None,
         read_table_kw=None,
         sequence=None,
         metric="Norm_profile",
         metric_defaults=None,
         log=None,
         name=None,
+        normalize_kwargs=None,
     ):
         """Initialize the SHAPEMaP object."""
         self.read_lengths, self.mutations_per_molecule = self.read_log(log)
@@ -712,59 +818,132 @@ class SHAPEMaP(Profile):
             metric=metric,
             metric_defaults=metric_defaults,
             name=name,
+            normalize_kwargs=normalize_kwargs,
         )
-        if normalize is not None:
-            self.normalize(
-                profile_column="HQ_profile",
-                new_profile="Norm_profile",
-                error_column="HQ_stderr",
-                new_error="Norm_stderr",
-                norm_method=normalize,
-            )
 
     @classmethod
-    def from_rnaframework(cls, input_data, normalize=None):
+    def from_rnaframework(cls, input_data, normalize_kwargs=None):
         """Construct a SHAPEMaP object from an RNAFramework output file.
 
         Parameters
         ----------
         input_data : str
             path to an RNAFramework .xml reactivities file
-        normalize : "DMS", "eDMS", "boxplot", "percentiles", or None, defaults to None
-            The normalization method to use.
-            "DMS" uses self.norm_percentile and nt_groups=['AC', 'UG']
-                scales the median of 90th to 95th percentiles to 1
-                As and Cs are normalized seperately from Us and Gs
-            "eDMS" uses self.norm_eDMS and  nt_groups=['A', 'U', 'C', 'G']
-                Applies the new eDMS-MaP normalization.
-                Each nucleotide is normalized seperately.
-            "boxplot" uses self.norm_boxplot and nt_groups=['AUCG']
-                removes outliers (> 1.5 iqr) and scales median to 1
-                scales nucleotides together unless specified with nt_groups
-            "percentiles" uses self.norm_percentile and nt_groups=['AUCG']
-                scales the median of 90th to 95th percentiles to 1
-                scales nucleotides together unless specified with nt_groups
-            Defaults to None: no normalization is performed
+        normalize_kwargs : dict, optional
+            Keyword arguments passed to the normalization function. Defaults to None.
 
         Returns
         -------
         SHAPEMaP
             A SHAPEMaP object with the provided values.
         """
-        tree = xmlet.parse(input_data)
-        root = tree.getroot()
-        sequence = root.find("./transcript/sequence").text
-        sequence = [nt for nt in sequence if nt in "ATCG"]
-        reactivities = root.find("./transcript/reactivity").text
-        reactivities = [float(rx) for rx in reactivities.split(",")]
-        input_data = pd.DataFrame(
-            {
-                "Nucleotide": [n + 1 for n in range(len(sequence))],
-                "Sequence": sequence,
-                "Norm_profile": reactivities,
-            }
+        if type(input_data) is list:
+            input_data = [
+                cls.from_rnaframework(
+                    input_data=input, normalize_kwargs=normalize_kwargs
+                )
+                for input in input_data
+            ]
+        else:
+            tree = xmlet.parse(input_data)
+            root = tree.getroot()
+            sequence = root.find("./transcript/sequence").text
+            sequence = [nt for nt in sequence if nt in "ATCG"]
+            reactivities = root.find("./transcript/reactivity").text
+            reactivities = [float(rx) for rx in reactivities.split(",")]
+            input_data = pd.DataFrame(
+                {
+                    "Nucleotide": [n + 1 for n in range(len(sequence))],
+                    "Sequence": sequence,
+                    "Norm_profile": reactivities,
+                }
+            )
+        return cls(input_data=input_data, normalize_kwargs=normalize_kwargs)
+
+    @classmethod
+    def from_N7G(
+        cls,
+        input_data,
+        normalize_kwargs=None,
+        read_table_kw=None,
+        sequence=None,
+        name=None,
+    ):
+        """Construct a SHAPEMaP object for msDMS-MaP N7G reactivity data.
+
+        Loads a ``profile.txtga`` file produced by the Mustoe Lab msDMS-MaP
+        pipeline. Non-guanosine positions are masked to NaN, and colormap /
+        normalization defaults are set for N7G (N7 of guanosine) reactivity
+        rather than 2′-OH SHAPE chemistry.
+
+        Parameters
+        ----------
+        input_data : str or pandas.DataFrame
+            Path to a ShapeMapper2 ``profile.txtga`` file, or a DataFrame with
+            the same column layout as a ``profile.txt`` file.
+        normalize_kwargs : dict, optional
+            Keyword arguments passed to the normalization function. Defaults to None.
+        read_table_kw : dict, optional
+            Keyword arguments passed to ``pandas.read_table`` when loading from
+            a file path. Defaults to None.
+        sequence : rnavigate.Sequence or str, optional
+            Reference sequence. Not required for ``profile.txtga`` files, which
+            carry their own sequence column. Defaults to None.
+        name : str, optional
+            A name for the data object. Defaults to None.
+
+        Returns
+        -------
+        SHAPEMaP
+            A SHAPEMaP object with N7G-specific metric defaults and non-G
+            positions masked to NaN in ``Reactivity_profile``, ``HQ_profile``,
+            and ``Norm_profile``.
+        """
+        if type(input_data) is list:
+            input_data = [
+                cls.from_N7G(
+                    input_data=input,
+                    normalize_kwargs=normalize_kwargs,
+                    read_table_kw=read_table_kw,
+                    sequence=sequence,
+                    name=name,
+                )
+                for input in input_data
+            ]
+        N7G_metric_defaults = {
+            "Norm_profile": {
+                "metric_column": "Norm_profile",
+                "error_column": None,
+                "cmap": ["grey", "black", "violet", "darkorchid", "darkorchid"],
+                "normalization": "bins",
+                "values": [-0.4, 0.4, 1.6, 2.3],
+                "extend": "both",
+                "title": "N7G Protection",
+                "alpha": 0.7,
+            },
+            "Reactivity_profile": {
+                "metric_column": "Reactivity_profile",
+                "error_column": None,
+                "cmap": ["darkorchid", "violet", "gold"],
+                "normalization": "bins",
+                "values": [0.005, 0.01],
+                "extend": "both",
+                "title": "N7G Protection",
+                "alpha": 0.7,
+            },
+        }
+        profile = cls(
+            input_data=input_data,
+            normalize_kwargs=normalize_kwargs,
+            read_table_kw=read_table_kw,
+            sequence=sequence,
+            metric_defaults=N7G_metric_defaults,
+            name=name,
         )
-        profile = cls(input_data=input_data, normalize=normalize)
+        not_G = profile.data["Sequence"].str.upper() != "G"
+        for col in ["Reactivity_profile", "HQ_profile", "Norm_profile"]:
+            if col in profile.data.columns:
+                profile.data.loc[not_G, col] = np.nan
         return profile
 
     def read_log(self, log):
@@ -996,6 +1175,7 @@ class RNPMaP(Profile):
         metric="NormedP",
         metric_defaults=None,
         name=None,
+        normalize_kwargs=None,
     ):
         if metric_defaults is None:
             metric_defaults = {}
@@ -1018,6 +1198,7 @@ class RNPMaP(Profile):
             metric=metric,
             metric_defaults=metric_defaults,
             name=name,
+            normalize_kwargs=normalize_kwargs,
         )
 
 

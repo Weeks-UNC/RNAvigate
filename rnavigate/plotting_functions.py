@@ -565,6 +565,7 @@ def plot_arcs(
     interactions=None,
     interactions2=None,
     profile=None,
+    profile2=None,
     annotations=None,
     domains=None,
     # optional data display
@@ -613,6 +614,9 @@ def plot_arcs(
             additional filtering options can be added to the dictionary
     profile : data or data keyword, defaults to None
         Profile from which values will be plotted
+    profile2 : data or data keyword, defaults to None
+        Second profile to overlay on the arc plot.
+        Plotted on the bottom panel by default (mirroring profile).
     annotations : list of data keyword strings or data objects, defaults to []
         Annotations used to highlight regions or sites of interest
     domains : data keyword string or data object, defaults to None
@@ -622,10 +626,12 @@ def plot_arcs(
     nt_ticks : tuple of two integers, defaults to (20, 5)
         first integer is the gap between major tick marks
         second integer is the gap between minor tick marks
-    profile_scale_factor : number, defaults to 1
+    profile_scale_factor : number or list of 2 numbers, defaults to 1
         small profile values will be hard to see
         large profile values will overwhelm the plot
         e.g. use 1/10 to scale values down 10-fold, use 10 to scale up
+        if profile2 is provided, a list of 2 values sets independent scale
+        factors: [scale_for_profile, scale_for_profile2]
     plot_error : bool, defaults to False
         Whether to plot error bars, values are determined by profile.metric
     annotation_mode : { "track" | "bars"}, default "track"
@@ -636,7 +642,7 @@ def plot_arcs(
         (above x-axis) or "bottom" (below x-axis)
         Only the values you wish to change from the default are needed
         defaults to {"interactions": "bottom", "interactions2": "bottom",
-        "structure": "top", "profile": "top"}
+        "structure": "top", "profile": "top", "profile2": "bottom"}
     seqbar : bool, default ``True``
         whether to display the sequence along the x-axis
     region : list of 2 integers, defaults to [1, length of sequence]
@@ -653,6 +659,16 @@ def plot_arcs(
     rnavigate.plots.AP
         the ArcPlot object
     """
+    if isinstance(profile_scale_factor, (list, tuple)):
+        if len(profile_scale_factor) != 2:
+            raise ValueError(
+                "profile_scale_factor must be a number or a list of exactly 2 numbers"
+                f" (one per profile), got {len(profile_scale_factor)} values."
+            )
+        psf, psf2 = profile_scale_factor
+    else:
+        psf = profile_scale_factor
+        psf2 = profile_scale_factor
     sequence = get_sequence(sequence, samples[0], structure)
     parsed_args = PlottingArgumentParser(
         samples=samples,
@@ -663,6 +679,7 @@ def plot_arcs(
         structure=structure,
         structure2=structure2,
         profile=profile,
+        profile2=profile2,
         interactions2=interactions2,
         interactions=interactions,
     )
@@ -685,7 +702,8 @@ def plot_arcs(
             plot_error=plot_error,
             annotation_mode=annotation_mode,
             seqbar=seqbar,
-            profile_scale_factor=profile_scale_factor,
+            profile_scale_factor=psf,
+            profile2_scale_factor=psf2,
             nt_ticks=nt_ticks,
         )
     plot.set_figure_size()

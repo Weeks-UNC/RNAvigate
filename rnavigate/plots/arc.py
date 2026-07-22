@@ -57,6 +57,7 @@ class AP(plots.Plot):
         interactions=None,
         interactions2=None,
         profile=None,
+        profile2=None,
         annotations=None,
         domains=None,
         label="",
@@ -67,6 +68,7 @@ class AP(plots.Plot):
         annotation_mode="track",
         track_height=None,
         profile_scale_factor=1,
+        profile2_scale_factor=1,
         plot_error=False,
         nt_ticks=(20, 5),
     ):
@@ -89,6 +91,8 @@ class AP(plots.Plot):
             Interactions object containing other inter-nucleotide data to plot
         profile : rnavigate.data.Profile, optional
             Profile object containing per-nucleotide data to plot
+        profile2 : rnavigate.data.Profile, optional
+            Second profile object to overlay on the arc plot.
         annotations : list of rnavigate.data.Annotation, optional
             List of Annotation objects containing annotations to plot
         domains : list of rnavigate.data.Spans, optional
@@ -104,13 +108,16 @@ class AP(plots.Plot):
         panels : dict, optional
             Dictionary of panels to plot, with keys being the panel name and values
             being the panel location. Default is {"interactions": "bottom",
-            "interactions2": "bottom", "structure": "top", "profile": "top"}
+            "interactions2": "bottom", "structure": "top", "profile": "top",
+            "profile2": "bottom"}
         annotation_mode : "track" or "bar", defaults to "track"
             Mode for plotting annotations.
         track_height : int, optional
             Height of the track. If None, the height is automatically determined.
         profile_scale_factor : float, defaults to 1
             Scale factor for the profile track.
+        profile2_scale_factor : float, defaults to 1
+            Scale factor for the profile2 track.
         plot_error : bool, defaults to False
             Whether to plot the error bars for the profile track.
         nt_ticks : tuple of 2 ints, optional
@@ -124,6 +131,7 @@ class AP(plots.Plot):
             "interactions2": "bottom",
             "structure": "top",
             "profile": "top",
+            "profile2": "bottom",
         } | panels
         if annotations is None:
             annotations = []
@@ -179,6 +187,22 @@ class AP(plots.Plot):
                 region=self.region,
             )
             self.add_colorbar_args(profile.cmap)
+        if profile2 is not None:
+            if panels["profile2"] == "bottom":
+                scale_factor2 = profile2_scale_factor * -1
+                bottom2 = 0
+            else:
+                scale_factor2 = profile2_scale_factor
+                bottom2 = track_height
+            plots.plot_profile_bars(
+                ax=ax,
+                profile=profile2,
+                bottom=bottom2,
+                scale_factor=scale_factor2,
+                plot_error=plot_error,
+                region=self.region,
+            )
+            self.add_colorbar_args(profile2.cmap)
 
         yticks, ylabels = [], []
         if seqbar:

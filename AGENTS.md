@@ -28,7 +28,7 @@
 ### Style
 
 - PEP 8. Line limit: 88 characters.
-- `ruff`-compatible formatting; import order: stdlib → third-party → local.
+- `ruff` strictly enforces formatting and import order.
 - `pathlib.Path` over `os.path`. F-strings over `.format()` or `%`.
 
 ### Naming
@@ -104,7 +104,41 @@ Do not reverse these without explicit discussion. See `ARCHITECTURE.md` for rati
 
 ---
 
-## 7. What to Avoid
+## 7. Documentation Standards (`docs/source/`)
+
+### Directory layout
+
+- `get_started/`: introduces the main workflow: installation, loading data, visualizing data
+- `guides/`: Task-specific Jupyter notebooks (one notebook per guide)
+- `plot_options/`: 1 notebook per `plot_*()` function
+- `analysis_options/`: 1 notebook per analysis type
+- `data_keywords/`: 1 RST per data keyword; `include`d into `get_started/loading_data.rst`
+- `api/`: Autodoc RST files. Stubs only. Any prose belongs in docstrings.
+- `resources/`: Reference material (changelog, style guide, glossary, etc.)
+- `images/`: Static images referenced from RST/notebooks
+
+### Code blocks
+
+- Always use a language specifier: `.. code-block:: python`
+- ``double backticks`` for inline code.
+
+### Jupyter notebooks in Sphinx (nbsphinx)
+
+- The first cell is always a Markdown cell that starts with the page title (e.g. `# Arc plots`). nbsphinx uses this as the document heading.
+- Notebooks are re-executed on every build. Keep examples fast and use `rnavigate.examples` data whenever possible.
+
+### `data_keywords/` snippets
+
+For consistency, copy the structure of the other files in this directory.
+
+### `index.rst` toctrees
+
+- `get_started`, `guides`, `plot_options`, `analysis_options`, and `resources` all use `:glob:` — new files are picked up automatically.
+- `api/` is listed explicitly; add new autodoc RST files there manually.
+
+---
+
+## 8. What to Avoid
 
 - **Silent refactoring** of code outside the requested task.
 - **Adding dependencies** without updating `pyproject.toml`, `environment.yml`, and `ARCHITECTURE.md` §9.

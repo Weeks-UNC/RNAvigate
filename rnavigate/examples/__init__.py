@@ -66,7 +66,10 @@ def __getattr__(name):  # pylint: disable=invalid-name
             sample="TPP in-vitro DMS-MaP",
             pdb={"pdb": str(tpp_dir / "2gdi.pdb"), "chain": "X"},
             ss=str(tpp_dir / "TPP-2GDI.nsd"),
-            dmsmap=str(tpp_dir / "DMS_TPP_profile.txt"),
+            dmsmap={
+                "shapemap": str(tpp_dir / "DMS_TPP_profile.txt"),
+                "normalize_kwargs": {"norm_method": "DMS"},
+            },
             ringmap=str(tpp_dir / "DMS_TPP_rings.txt"),
             pairprob=str(tpp_dir / "TPP-dms-bp.dp"),
         )

@@ -14,6 +14,7 @@ example uses:
 input explaination:
 
 - Input should be the output csv file from RNPMapper
+- ``"rnpmap"`` can also be a list of replicate csv files. See :doc:`/guides/replicate_averaging`.
 
 example inputs:
 

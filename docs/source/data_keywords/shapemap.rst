@@ -8,27 +8,20 @@ SHAPE, DMS, or other reagent per-nucleotide reactivities
 .. _ShapeMapper2 software: https://github.com/Weeks-UNC/shapemapper2
 
 Two similar data keywords:
-- ``dmsmap`` applies DMS-MaP normalization to profile when loaded
-
-   - `PAIR-MaP paper`_
-
 - ``shapemap_rnaframework`` accepts an RNAframework xml file.
 
    - RNAframework files do not contain error estimates or raw data.
    - `RNAframework software`_
 
+- ``shapemap_N7G`` accepts a msDMS-MaP ``profile.txtga`` file.
+
+   - Produced by the msDMS-MaP pipeline.
+   - Non-guanosine positions are masked to NaN, and colormap/normalization
+      defaults are set for N7 of guanosine (N7G) reactivity rather than
+      2'-OH SHAPE chemistry.
+
 .. _RNAframework software: https://github.com/dincarnato/RNAFramework
-.. _PAIR-MaP paper: https://doi.org/10.1073/pnas.1905491116
 
-.. code-block:: python
-
-   dmsmap="path/to/shapemap_profile.txt"
-
-is equivalent to
-
-.. code-block:: python
-
-   dmsmap={'shapemap': "shapemap_profile.txt", "normalize": "DMS"}
 
 example uses:
 
@@ -39,6 +32,7 @@ input explaination:
 
 - Input should be a ShapeMapper2 profile.txt file. This file contains the most
    complete per-nucleotide data from a ShapeMapper2 run.
+- ``"shapemap"`` can also be a list of replicate files. See :doc:`/guides/replicate_averaging`.
 
 example inputs:
 

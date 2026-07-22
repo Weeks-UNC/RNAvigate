@@ -64,21 +64,22 @@ def test_plot_linreg(rnasep_1, rnasep_2):
 # ---------------------------------------------------------------------------
 
 
-def test_plot_arcs_profile_only(tpp):
-    result = rnav.plot_arcs([tpp], sequence="dmsmap", profile="dmsmap")
-    assert isinstance(result, plots.AP)
-
-
-def test_plot_arcs_with_structure(tpp):
+def test_plot_arcs(tpp):
     result = rnav.plot_arcs(
-        [tpp], sequence="ss", structure="ss", profile="dmsmap", interactions="ringmap"
+        samples=[tpp],
+        sequence="dmsmap",
+        structure="ss",
+        interactions="ringmap",
+        profile="dmsmap",
+        profile2="dmsmap",
+        profile_scale_factor=[2, 0.5],
     )
     assert isinstance(result, plots.AP)
 
 
 def test_plot_arcs_compare(rnasep_1, rnasep_2):
     result = rnav.plot_arcs_compare(
-        [rnasep_1, rnasep_2], sequence="ss_pdb", structure="ss_pdb"
+        samples=[rnasep_1, rnasep_2], sequence="ss_pdb", structure="ss_pdb"
     )
     assert isinstance(result, plots.AP)
 
@@ -89,11 +90,6 @@ def test_plot_arcs_compare(rnasep_1, rnasep_2):
 
 
 def test_plot_ss(tpp):
-    result = rnav.plot_ss([tpp], structure="ss")
-    assert isinstance(result, plots.SS)
-
-
-def test_plot_ss_with_profile(tpp):
     result = rnav.plot_ss([tpp], structure="ss", profile="dmsmap")
     assert isinstance(result, plots.SS)
 

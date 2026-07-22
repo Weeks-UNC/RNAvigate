@@ -16,8 +16,8 @@
 - [ ] QC plots and log file parsing broken with ShapeMapper v2.2.0 (issue #33)
   <!-- The read_log() method in SHAPEMaP (data/profile.py) parses the v2
        histogram format. The ShapeMapper 2.2 log format appears to have changed,
-       causing PlotQC to fail entirely. Needs a real v2.2 log file to inspect
-       and update the parser. Works correctly with earlier ShapeMapper versions. -->
+       causing PlotQC to fail. Needs a real v2.2 log file to inspect and update the
+       parser. Works correctly with earlier ShapeMapper versions. -->
 
 ---
 
@@ -65,7 +65,7 @@
 
 ### Data & I/O
 
-- [ ] Tracks that show continuous data (not just per-nucleotide bars/skylines)
+- [ ] Tracks (1-D heatmaps) that show continuous data along the x-axis.
 - [ ] MSA (Multiple Sequence Alignment) tracks
 - [ ] Annotations: support input/output file formats (issue #36)
   <!-- Priority format: GenBank (exported from SnapGene), parseable with
@@ -78,14 +78,10 @@
   - pairing probability → per-nucleotide probability or Shannon entropy
   - RING-MaP → RING density per nucleotide
   - store as attribute; retrieve at point of use
-    - e.g. `profile.profile` returns profile
-- [ ] Support for `profile.txt` output from Mustoe Lab's msDMS-MaP method
+  - e.g. `interactions.profile` returns profile
 - [ ] Custom error bars in profile plots (issue #38)
   <!-- Already supported in skyline plots. Profile plots need the same capability.
        Users want per-nucleotide error bars on bar/profile chart types. -->
-- [ ] `shapemap_reps` data keyword: accepts a list of `profile.txt` files, averages `Norm_profile` across replicates, and computes replicate stderr (issue #39)
-  <!-- Resolves the manual averaging workflow described in issue #39.
-       FragmapperReplicates in analysis/ may be a reference implementation. -->
 - [ ] Codon usage bias for ORF annotations
 - [ ] Add printable human-readable identifier for all data objects
   - proposed format: `sample + name + datatype + filepath`
@@ -104,8 +100,6 @@
 - [ ] Sequence Analyzer for individual `plot_*` functions
   <!-- Originally listed in triage: a per-plot diagnostic showing which data
        keywords and sequences are present/compatible before plotting. -->
-- [ ] Second profile track in `plot_arcs()`
-- [ ] `plot_ss` with annotation colorbar (see Bugs above — fix the bug first)
 - [ ] `plot_linreg` with per-nucleotide filtering (issue #42)
   <!-- Users want linear regression between two samples filtered to specific
        nucleotide types (e.g. all A nucleotides). Currently requires manually
