@@ -1,6 +1,6 @@
 # RNAvigate Architecture
 
-> **Purpose:** This document is the authoritative reference for how RNAvigate is structured. It is intended to be kept up-to-date as the codebase evolves, so that both human developers and AI collaborators can reason about the system quickly. Update this file whenever a module's responsibilities, public API, or inter-module dependencies change.
+> **Purpose:** This document is a reference for how RNAvigate is structured. It is to be kept up-to-date with the codebase to help human and AI contributors make decisions.
 
 ---
 
@@ -220,7 +220,7 @@ The central user-facing object. Responsibilities:
 - Stores raw user inputs in `self.inputs` for reproducibility.
 - Tracks one "default" per data category in `self.defaults`.
 - Supports data inheritance between samples (`inherit=`).
-- Provides `get_data()`, `set_data()`, `set_as_default()`, `filter_interactions()`, and `print_data_keywords()`.
+- Provides `get_data()`, `set_data()`, `set_as_default()`, and `print_data_keywords()`.
 
 Key design constraint: `Sample` does **not** know about plots. It delegates data creation to `data_loading.create_data()`.
 
@@ -243,6 +243,7 @@ Sixteen high-level functions (`plot_arcs`, `plot_ss`, `plot_circle`, etc.). Each
 #### `helper_functions.py`
 
 - `PlottingArgumentParser`: accepts `samples` + data-keyword kwargs, resolves each keyword to a data object per sample, handles optional sequence alignment via `fit_data`.
+- `resolve_data()` (exposed at `rnav.resolve_data`): resolves a single flexible data argument (bare `Data` object, data keyword, or filter/colorscheme dict) into a fully-resolved `Data` object. Used by `PlottingArgumentParser`
 - `fit_data()`: recursively aligns any `Data` object (or list/dict of them) to a target sequence via `AlignmentChain`.
 
 #### `styles.py`
@@ -300,7 +301,7 @@ All data classes ultimately inherit from `Sequence`. The hierarchy separates seq
 
 #### `pdb.py` — `PDB`
 
-Wraps a `Bio.PDB` structure. Provides `get_distance_matrix()` and `get_distances()` for computing inter-residue 3D distances, used by `Sample.filter_interactions()`.
+Wraps a `Bio.PDB` structure. Provides `get_distance_matrix()` and `get_distances()` for computing inter-residue 3D distances, used by `Interactions.set_distances()`.
 
 #### `annotation.py`
 
@@ -597,7 +598,6 @@ classDiagram
         +defaults: dict
         +set_data()
         +get_data()
-        +filter_interactions()
     }
 
     class DeltaSHAPE

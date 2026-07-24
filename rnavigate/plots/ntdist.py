@@ -109,7 +109,9 @@ class NucleotideDistribution(plots.Plot):
             column = profile.metric
         if normalize is not None:
             profile.normalize(**normalize)
-        data = profile.data
+        profile.metric = {"metric_column": column}
+        data = profile.data.copy()
+        data[column] = profile.get_plotting_dataframe()["Values"].to_numpy()
         nt_idx = data[column] > 0
         sns.kdeplot(
             ax=ax,

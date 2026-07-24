@@ -7,6 +7,7 @@ probing data.
 """
 
 from rnavigate.rnavigate import Sample
+from rnavigate.helper_functions import resolve_data
 from rnavigate.plotting_functions import (
     plot_options,
     plot_alignment,
@@ -37,6 +38,7 @@ __version__ = version("rnavigate")
 
 __all__ = [
     "Sample",
+    "resolve_data",
     # plotting functions
     "plot_options",
     "plot_alignment",

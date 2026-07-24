@@ -161,7 +161,10 @@ class LinReg(plots.Plot):
         )
         self.colors.append(colors[start - 1 : end])
         self.add_colorbar_args(colormap)
-        self.profiles.append(profile.data[column].to_numpy(copy=True)[start - 1 : end])
+        plot_profile = profile.copy()
+        plot_profile.metric = {"metric_column": column}
+        values = plot_profile.get_plotting_dataframe()["Values"].to_numpy(copy=True)
+        self.profiles.append(values[start - 1 : end])
         if len(self.profiles) == self.length:
             for row in range(self.length - 1):
                 for col in range(self.length - 1):

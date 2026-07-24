@@ -1,4 +1,3 @@
-import numpy as np
 from sklearn.metrics import auc, roc_curve
 
 from rnavigate import plots
@@ -132,10 +131,10 @@ class ROC(plots.Plot):
         """
         self.i += 1
 
-        metric = profile.metric
-        valid = ~profile.data[metric].isna()
+        data = profile.get_plotting_dataframe()
+        valid = ~data["Values"].isna()
         y = structure.boolean[valid]
-        scores = profile.data.loc[valid, metric]
+        scores = data.loc[valid, "Values"]
         y = y.astype(int)
         scores = scores.astype(float)
         tpr, fpr, _ = roc_curve(y, scores)
@@ -154,14 +153,14 @@ class ROC(plots.Plot):
             ax = axes[nt]
             ax.plot([0, 1], [0, 1], "k--")
             ax.set(title=nt, aspect="equal")
-            valid = ~np.isnan(profile.data[metric])
+            valid = ~data["Values"].isna()
             valid &= profile.data["Sequence"].isin(other_nts[nt])
             if sum(valid) == 0:
                 print(f"RNAvigate warning: {profile} data is missing for {nt}")
                 ax.plot([], [], label="N/A")
                 continue
             y = structure.boolean[valid]
-            scores = profile.data.loc[valid, metric].to_numpy()
+            scores = data.loc[valid, "Values"].to_numpy()
             y = y.astype(int)
             scores = scores.astype(float)
             tpr, fpr, _ = roc_curve(y, scores)

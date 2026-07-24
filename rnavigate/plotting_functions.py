@@ -396,7 +396,8 @@ def plot_skyline(
     rnavigate.plots.Skyline
         the skyline plot object
     """
-    sequence = get_sequence(sequence, samples[0], profile)
+    profile_sequence = profile["profile"] if isinstance(profile, dict) else profile
+    sequence = get_sequence(sequence, samples[0], profile_sequence)
     parsed_args = PlottingArgumentParser(
         samples=samples,
         labels=labels,
@@ -488,7 +489,8 @@ def plot_profile(
     rnavigate.plots.Profile
         the Profile plot object
     """
-    sequence = get_sequence(sequence, samples[0], profile)
+    profile_sequence = profile["profile"] if isinstance(profile, dict) else profile
+    sequence = get_sequence(sequence, samples[0], profile_sequence)
     parsed_args = PlottingArgumentParser(
         samples=samples,
         labels=labels,
@@ -1402,7 +1404,8 @@ def plot_linreg(
         object containing matplotlib figure and axes with additional plotting and
         file saving methods
     """
-    sequence = get_sequence(sequence, samples[0], profile)
+    profile_sequence = profile["profile"] if isinstance(profile, dict) else profile
+    sequence = get_sequence(sequence, samples[0], profile_sequence)
     parsed_args = PlottingArgumentParser(
         samples=samples,
         labels=labels,

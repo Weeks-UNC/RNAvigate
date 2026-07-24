@@ -308,7 +308,6 @@ def plot_profile_skyline(ax, profile, label, columns, errors):
     errors : list of str
         The columns of the profile to use for error bars.
     """
-    values = profile.data
     if columns is None:
         columns = profile.metric
     if isinstance(columns, str) and isinstance(errors, (str, type(None))):
@@ -319,17 +318,23 @@ def plot_profile_skyline(ax, profile, label, columns, errors):
     if len(errors) != len(columns):
         raise ValueError("columns and errors lists must be the same length")
     for column, error in zip(columns, errors):
+        plot_profile = profile.copy()
+        plot_profile.metric = {"metric_column": column, "error_column": error}
+        plotting_dataframe = plot_profile.get_plotting_dataframe()
+        y = plotting_dataframe["Values"]
+        nucleotides = plotting_dataframe["Nucleotide"]
         lines = ax.plot(
-            values["Nucleotide"],
-            values[column],
+            nucleotides,
+            y,
             drawstyle="steps-mid",
             label=f"{label}: {column.replace('_', ' ')}",
         )
         if error is not None:
+            yerr = plotting_dataframe["Errors"]
             ax.fill_between(
-                values["Nucleotide"],
-                values[column] - values[error],
-                values[column] + values[error],
+                nucleotides,
+                y - yerr,
+                y + yerr,
                 step="mid",
                 color=lines[0].get_color(),
                 alpha=0.25,

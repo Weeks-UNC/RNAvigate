@@ -1,10 +1,11 @@
-"""Contains PlottingArgumentParser for plotting_functions.py and fit_data for
-retreiving aligned data objects"""
+"""Contains PlottingArgumentParser for plotting_functions.py, fit_data for
+retreiving aligned data objects, and resolve_data for resolving flexible
+data-keyword arguments into fully-resolved Data objects."""
 
 from rnavigate import Sample, data
 from rnavigate.data_loading import get_sequence
 
-__all__ = ["fit_data", "PlottingArgumentParser"]
+__all__ = ["fit_data", "resolve_data", "PlottingArgumentParser"]
 
 
 def _parse_plot_kwargs(plot_kwargs, plot):
@@ -51,6 +52,87 @@ def fit_data(data_object, alignment):
         return data_object
 
 
+def resolve_data(value, data_class=data.Sequence, sample=None, alignment=None):
+    """Resolves a flexible data argument into a fully-resolved Data object.
+
+    This is the single entry point for RNAvigate's flexible data-keyword
+    input: a bare Data object, a data keyword string (or list/dict of these,
+    resolved via ``sample.get_data``), or -- for `rnavigate.data.Profile` and
+    `rnavigate.data.Interactions` -- a dictionary requesting coloring and/or
+    filtering.
+
+    Parameters
+    ----------
+    value : rnavigate.data.Data, str, dict, list, or None
+        The value to resolve.
+        If None, None is returned.
+        If a Data object, it is validated against `data_class` and returned
+        (aligned, see `alignment` below).
+        If a string (or list/dict of these), it is looked up via
+        ``sample.get_data(value, data_class)``.
+        If a dict (only supported when `data_class` is
+        `rnavigate.data.Profile` or `rnavigate.data.Interactions`, or a
+        subclass of either): the dict must contain a "profile" or
+        "interactions" key (matching `data_class`) whose value is any of the
+        above (a Data object, string, list, or None). The remaining dict keys
+        configure coloring and filtering:
+            "metric", "cmap", "normalization", "values" : set the resolved
+                object's metric/coloring, equivalent to setting `.metric`
+                with a dict.
+            "metric_kwargs" : dict, additional metric dictionary keys (e.g.
+                "color_column", "title", "ticks", "extend"), merged in after
+                "metric"/"cmap"/"normalization"/"values".
+            "structure" (and "profile", for Interactions) : sibling Data used
+                by structure/profile-based filters (`ss_only`, `min_profile`,
+                etc). If omitted, defaults to the sample's
+                "default_structure"/"default_profile", silently falling back
+                to None if the sample has no such default.
+            "sequence" : the coordinate frame for `exclude_nts`/`isolate_nts`,
+                resolved the same way as the top-level `sequence` plotting
+                argument (a data keyword string, a literal sequence string, or
+                a Data object) via `get_sequence`, then passed to `.filter()`.
+            All other keys are passed to the resolved object's `.filter()`
+            method (e.g. `exclude_nts`, `isolate_nts`, `nts`, column
+            comparison filters like `Statistic_ge`).
+        For Interactions, "metric" also accepts "Distance" or
+        "Distance_<atom>", which computes 3D distance using the sample's
+        "default_pdb".
+    data_class : rnavigate.data.Data class or subclass, or tuple of these, optional
+        The expected type of the resolved data. Used to validate bare Data
+        objects, to look up data keywords via `sample.get_data`, and to
+        determine whether dict input is supported. Defaults to
+        `rnavigate.data.Sequence` (i.e. any RNAvigate data object).
+    sample : rnavigate.Sample, optional
+        The sample used to resolve data keywords (strings) and sibling
+        defaults ("default_structure", "default_profile", "default_pdb").
+        Required unless `value` is already a Data object or None.
+    alignment : rnavigate.data.SequenceAlignment, optional
+        If provided, the resolved data is aligned to this alignment's target
+        sequence via `fit_data`. If None, no alignment is performed.
+
+    Returns
+    -------
+    rnavigate.data.Data, list, dict, or None
+        The resolved (and aligned) data, matching the structure of `value`.
+    """
+    if value is None:
+        return None
+    elif isinstance(value, data.Sequence):
+        if not isinstance(value, data_class):
+            raise ValueError(f"{value} is not {data_class}")
+    elif isinstance(value, dict):
+        if "sequence" in value:
+            value["sequence"] = get_sequence(value["sequence"], sample)
+        return data_class.resolve_from_dict(value, sample)
+    elif isinstance(value, str):
+        if sample is None:
+            raise ValueError(f"Cannot resolve data keyword {value} without a sample.")
+        if not isinstance(sample, Sample):
+            raise ValueError(f"sample must be a rnavigate.Sample, not {type(sample)}")
+        value = sample.get_data(value, data_class)
+    return fit_data(value, alignment)
+
+
 class PlottingArgumentParser:
     """Parse arguments for high-level plotting functions.
 
@@ -78,7 +160,7 @@ class PlottingArgumentParser:
             "profile": data.Profile,
             "annotations": data.Annotation,
             "structure": (data.SecondaryStructure, data.PDB),
-            # "interactions": data.Interactions, # _parse_interactions instead
+            "interactions": data.Interactions,
             "domains": list,
         }
         for sample, label in zip(self.samples, self.labels):
@@ -89,19 +171,14 @@ class PlottingArgumentParser:
                     new_value = fit_data(new_value, alignment)
                     this_data_dict[key] = new_value
                     continue
-                if ("interactions" in key) and key != "interactions":
-                    sample.filter_interactions(**value)
-                    new_value = sample.get_data(
-                        value["interactions"], data.Interactions
-                    )
-                    new_value = fit_data(new_value, alignment)
-                    this_data_dict[key] = new_value
+                if key == "interactions":
+                    # skip interactions in this loop in case it is a list.
                     continue
                 for name, data_class in classes.items():
                     if name in key:
-                        new_value = sample.get_data(value, data_class)
-                        new_value = fit_data(new_value, alignment)
-                        this_data_dict[key] = new_value
+                        this_data_dict[key] = resolve_data(
+                            value, data_class, sample=sample, alignment=alignment
+                        )
                         break
                 else:
                     this_data_dict[key] = value
@@ -109,11 +186,13 @@ class PlottingArgumentParser:
                 self.data_dicts.append(this_data_dict)
             else:
                 for each_interaction in data_dict["interactions"]:
-                    sample.filter_interactions(**each_interaction)
-                    new_value = each_interaction["interactions"]
-                    new_value = sample.get_data(new_value, data.Interactions)
-                    new_dict = {"interactions": fit_data(new_value, alignment)}
-                    self.data_dicts.append(this_data_dict | new_dict)
+                    new_value = resolve_data(
+                        each_interaction,
+                        data.Interactions,
+                        sample=sample,
+                        alignment=alignment,
+                    )
+                    self.data_dicts.append(this_data_dict | {"interactions": new_value})
 
     def update_rows_cols(self, plot_kwargs):
         if self.rows > 1 and self.cols > 1:

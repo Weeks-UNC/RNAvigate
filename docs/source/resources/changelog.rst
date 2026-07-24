@@ -1,6 +1,24 @@
 Version history
 ===============
 
+1.1.4 (Coming soon)
+---------------------------
+
+- (BREAKING CHANGE) removes ``Sample.filter_interactions()``. see ``rnav.resolve_data()``
+- adds ``rnav.resolve_data()`` to resolve data keywords, bare ``Data`` object, or a
+  filter/colorscheme dict into a fully-resolved ``Data`` object
+   - used internally by ``PlottingArgumentParser`` for all ``plot_*()`` functions
+   - now processes ``profile`` dicts similar to ``interactions`` dicts
+- adds ``Profile.filter()``, matching ``Interactions.filter()`` behavior
+   - adds ``sequence`` argument to ``Profile/Interactions.filter()`` to interpret position
+     filtering in another sequence's coordinate frame, translated via alignment
+   - adds range support to position filtering in ``Profile/Interactions.filter()``
+   - (BEHAVIOR CHANGE) ``LinReg``, ``ROC``, and ``NucleotideDistribution`` plots now read
+     profile values through ``get_plotting_dataframe()``, so positions previously masked
+     out by ``Profile.filter()`` are excluded from these plots as well
+- fixes ``Data.error_column`` printing a spurious "missing expected error column" warning
+  when no error column is configured
+
 1.1.3 (July 2026)
 ---------------------------
 
