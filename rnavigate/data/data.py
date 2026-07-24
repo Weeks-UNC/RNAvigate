@@ -100,6 +100,71 @@ class Sequence:
             return "seq-object"
         return self.name
 
+    @classmethod
+    def resolve_from_dict(cls, value, sample):
+        """Raises an error if resolve_from_dict is not implemented for the class."""
+        raise NotImplementedError(
+            f"resolve_from_dict is not implemented for {cls.__name__} class."
+        )
+
+    def translate_positions(self, positions, sequence=None):
+        """Translates positions from another sequence's coordinate frame.
+
+        Parameters
+        ----------
+        positions : list of int and/or tuple/list of 2 int
+            1-indexed positions, and/or (start, end) inclusive, 1-indexed
+            ranges, given in `sequence`'s coordinate frame (or in this
+            object's own coordinate frame, if `sequence` is None).
+        sequence : rnavigate.data.Sequence or string, defaults to None
+            The coordinate frame that `positions` are given in. If None,
+            `positions` are returned unchanged.
+
+        Returns
+        -------
+        list of int and/or tuple of 2 int
+            `positions`, translated to this object's native positions via
+            alignment. Positions that fall outside of the alignment are
+            translated to 0, which will not match any real position.
+        """
+        if sequence is None:
+            return positions
+        alignment = data.SequenceAlignment(sequence, self)
+        translated = []
+        for position in positions:
+            if isinstance(position, (tuple, list)):
+                start, end = alignment.map_positions(list(position))
+                translated.append((int(start), int(end)))
+            else:
+                translated.append(int(alignment.map_positions([position])[0]))
+        return translated
+
+    @staticmethod
+    def position_in_ranges(position, ranges):
+        """Checks whether a position matches any entry in a list of ranges.
+
+        Parameters
+        ----------
+        position : int
+            a single 1-indexed position
+        ranges : list of int and/or tuple/list of 2 int
+            1-indexed positions, and/or (start, end) inclusive, 1-indexed
+            ranges, to check `position` against.
+
+        Returns
+        -------
+        bool
+            True if `position` equals or falls within any entry in `ranges`.
+        """
+        for entry in ranges:
+            if isinstance(entry, (tuple, list)):
+                start, end = entry
+                if start <= position <= end:
+                    return True
+            elif position == entry:
+                return True
+        return False
+
     def read_fasta(self, fasta, entry):
         """Parse a fasta file for the first sequence.
 
@@ -573,8 +638,11 @@ class Data(Sequence):
     @property
     def error_column(self):
         """Get the column of the dataframe to use as the error for visualization."""
-        if self._metric["error_column"] in self.data.columns:
-            return self._metric["error_column"]
+        error_column = self._metric["error_column"]
+        if error_column is None:
+            return None
+        if error_column in self.data.columns:
+            return error_column
         print(f"Warning: {self} missing expected error column")
         return None
 

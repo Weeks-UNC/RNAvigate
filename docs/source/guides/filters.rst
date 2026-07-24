@@ -38,12 +38,36 @@ filter one or more datasets on the fly. This argument can take one of three form
 Note that plotting functions typically produce a seperate axis for each sample as well.
 Therefore, the total number of axes will be (number of samples * number of interactions).
 
+The ``profile`` argument of plotting functions accepts the same first two forms above
+(a bare data keyword, or a filter/colorscheme dictionary keyed on ``"profile"`` instead
+of ``"interactions"``); unlike ``interactions``, a single profile is plotted per sample,
+so a list of dictionaries is not supported. For example:
+
+.. code-block:: python
+
+   profile={
+      "profile": "shapemap",
+      "exclude_nts": [(1, 20), 350],
+      "ss_only": True,
+   }
+
+Unlike interactions, `Profile` data is positional (one row per nucleotide), so filtering
+a profile does not drop rows: filtered-out positions are masked (their values become
+``NaN``) rather than removed, keeping every plot aligned to the same sequence axis.
+
 Interactions configuration keys
 -------------------------------
 
 Below is an explanation of all of the available filters and their default behaviors.
 I will use the shorthand *i* and *j* to describe the 5' and 3' ends of an interaction.
 Some defaults depend on the interaction data object, which will be referred to as ``data``.
+
+Most of these keys are specific to interactions (an interaction has two positions, *i*
+and *j*, so filters like ``min_cd``/``max_cd`` and ``paired_only`` only make sense for
+them). ``profile`` dictionaries share only the general-purpose keys: ``prefiltered``,
+``exclude_nts``/``isolate_nts``/``sequence``, ``nts``, ``ss_only``/``ds_only`` (via a
+``structure`` key, same as for interactions), and column-value keyword filters
+(``"ColumnName_operator": value``).
 
 .. contents::
    :local:
@@ -177,6 +201,23 @@ Filtering by position
 
 - A list of nucleotide positions to exclude or to isolate (meaning all other
   positions are excluded).
+- Each item in the list can be a single 1-indexed position (``int``), or a
+  ``(start, end)`` tuple/list of 2 ints giving an inclusive, 1-indexed range
+  of positions, e.g. ``"exclude_nts": [5, (10, 20), 45]``.
+- An interaction is excluded/isolated if either its *i* or its *j* position
+  matches any entry.
+
+``"sequence": None``
+~~~~~~~~~~~~~~~~~~~~
+
+- By default, ``exclude_nts``/``isolate_nts`` positions are interpreted in
+  this data object's own numbering.
+- If ``sequence`` is provided (a data keyword, sequence string, or ``Data``
+  object), positions are instead interpreted in *that* sequence's coordinate
+  frame, and translated to this object's native positions via alignment. This
+  is useful when you know the positions you want to filter in the numbering
+  of a different sequence (e.g. a reference sequence or a different sample's
+  numbering) than the one this data object uses.
 
 Filtering on per-nucleotide data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -1,5 +1,6 @@
 import warnings
 import xml.etree.ElementTree as xmlet
+from operator import eq, ge, gt, le, lt, ne
 from types import FunctionType
 
 import numpy as np
@@ -138,6 +139,7 @@ class Profile(data.Data):
             read_table_kw=read_table_kw,
             name=name,
         )
+        self.reset_mask()
 
     @classmethod
     def from_array(cls, input_data, sequence, **kwargs):
@@ -310,7 +312,8 @@ class Profile(data.Data):
             alignment.
         """
         dataframe = alignment.map_nucleotide_dataframe(self.data)
-        return self.__class__(
+        dataframe = dataframe.drop(columns="mask", errors="ignore")
+        new_profile = self.__class__(
             input_data=dataframe,
             metric=self._metric,
             metric_defaults=self.metric_defaults,
@@ -318,6 +321,10 @@ class Profile(data.Data):
             name=self.name,
             **self.recreation_kwargs,
         )
+        new_profile.data["mask"] = alignment.map_values(
+            self.data["mask"].to_numpy(), fill=True
+        )
+        return new_profile
 
     def copy(self):
         """Returns a copy of the Profile."""
@@ -325,6 +332,11 @@ class Profile(data.Data):
 
     def get_plotting_dataframe(self):
         """Returns a dataframe with the data to be plotted.
+
+        Positions masked out by `filter()` (or its constituent `mask_on_*`
+        methods) have their "Values" (and "Errors", if present) set to NaN,
+        so that masked positions are omitted from plots without
+        desynchronizing the sequence axis.
 
         Returns
         -------
@@ -342,7 +354,301 @@ class Profile(data.Data):
         plotting_dataframe = self.data[old_names].copy()
         plotting_dataframe.columns = new_names
         plotting_dataframe["Colors"] = self.colors
+        masked = ~self.data["mask"].to_numpy()
+        plotting_dataframe.loc[masked, "Values"] = np.nan
+        if "Errors" in plotting_dataframe.columns:
+            plotting_dataframe.loc[masked, "Errors"] = np.nan
         return plotting_dataframe
+
+    def reset_mask(self):
+        """Resets the mask to all True (removes previous filters)."""
+        self.data["mask"] = np.ones(len(self.data), dtype=bool)
+
+    def update_mask(self, mask):
+        """Updates the mask by ANDing the current mask with the given mask."""
+        self.data["mask"] = self.data["mask"] & mask
+
+    def mask_on_values(self, **kwargs):
+        """Mask profile positions based on values in self.data.
+
+        Parameters
+        ----------
+        kwargs : dict
+            Each keyword should have the format "column_operator" where column
+            is a valid column name of the dataframe and operator is one of:
+                "ge": greater than or equal to
+                "le": less than or equal to
+                "gt": greater than
+                "lt": less than
+                "eq": equal to
+                "ne": not equal to
+            The values given to these keywords are then used in the comparison
+            and False comparisons are masked. e.g.:
+                self.mask_on_values(HQ_profile_ge=0.1) evaluates to:
+                self.update_mask(self.data["HQ_profile"] >= 0.1)
+
+        Returns
+        -------
+        mask : numpy array
+            a boolean array of the same length as self.data
+        """
+        mask = np.full(len(self.data), True)
+        for key, value in kwargs.items():
+            if "_" in key:
+                key2, comparison = key.rsplit("_", 1)
+                operators = {"ge": ge, "le": le, "gt": gt, "lt": lt, "eq": eq, "ne": ne}
+                if key2 in self.data.columns and comparison in operators:
+                    operator = operators[comparison]
+                    mask &= operator(self.data[key2], value)
+                else:
+                    print(f"{key}={value} is not a valid filter.")
+            else:
+                print(f"{key}={value} is not a valid filter.")
+        self.update_mask(mask)
+        return mask
+
+    def mask_on_position(self, exclude_nts=None, isolate_nts=None, sequence=None):
+        """Mask profile positions based on their nucleotide position.
+
+        Parameters
+        ----------
+        exclude_nts : list of int and/or tuple/list of 2 int, defaults to None
+            Positions to exclude. An int excludes that single 1-indexed
+            position; a tuple or list of 2 ints (start, end) excludes an
+            inclusive, 1-indexed range of positions. If None, no positions
+            are excluded.
+        isolate_nts : list of int and/or tuple/list of 2 int, defaults to None
+            Positions to keep; all other positions are masked. An int
+            isolates that single 1-indexed position; a tuple or list of 2
+            ints (start, end) isolates an inclusive, 1-indexed range of
+            positions. If None, no positions are masked by isolation.
+        sequence : rnavigate.data.Sequence or string, defaults to None
+            If provided, `exclude_nts` and `isolate_nts` positions are
+            interpreted in this sequence's coordinate frame and translated to
+            this Profile's native positions via alignment. If None, positions
+            are interpreted as this object's native positions.
+
+        Returns
+        -------
+        mask : numpy array
+            a boolean array of the same length as self.data
+        """
+        nucleotide = self.data["Nucleotide"]
+
+        def positions_mask(positions):
+            keep = np.full(len(self.data), False)
+            for position in positions:
+                if isinstance(position, (tuple, list)):
+                    start, end = position
+                    keep |= (nucleotide >= start) & (nucleotide <= end)
+                else:
+                    keep |= nucleotide == position
+            return keep
+
+        mask = np.full(len(self.data), True)
+        if exclude_nts is not None:
+            mask &= ~positions_mask(self.translate_positions(exclude_nts, sequence))
+        if isolate_nts is not None:
+            mask &= positions_mask(self.translate_positions(isolate_nts, sequence))
+        self.update_mask(mask)
+        return mask
+
+    def mask_on_sequence(self, nts=None):
+        """Mask profile positions based on nucleotide identity.
+
+        Parameters
+        ----------
+        nts : str, defaults to None
+            Only keep positions whose nucleotide is in nts. If None, no
+            positions are masked.
+
+        Returns
+        -------
+        mask : numpy array
+            a boolean array of the same length as self.data
+        """
+        mask = np.full(len(self.data), True)
+        if nts is not None:
+            mask &= self.data["Sequence"].str.upper().isin(list(nts.upper()))
+        self.update_mask(mask)
+        return mask
+
+    def mask_on_structure(self, structure, ss_only=False, ds_only=False):
+        """Mask profile positions based on a secondary structure's pairing status.
+
+        Note: If a nucleotide position is inserted relative to the structure's
+        sequence, it is treated as unpaired.
+
+        Parameters
+        ----------
+        structure : rnavigate.data.SecondaryStructure
+            The structure to use for masking.
+        ss_only : bool, defaults to False
+            If True, only keep single-stranded (unpaired) positions.
+        ds_only : bool, defaults to False
+            If True, only keep double-stranded (paired) positions.
+
+        Returns
+        -------
+        mask : numpy array
+            a boolean array of the same length as self.data
+        """
+        alignment = data.SequenceAlignment(structure, self)
+        paired = alignment.map_values(structure.pair_nts != 0, fill=False)
+        mask = np.full(len(self.data), True)
+        if ss_only:
+            mask &= ~paired
+        if ds_only:
+            mask &= paired
+        self.update_mask(mask)
+        return mask
+
+    def filter(
+        self,
+        prefiltered=False,
+        reset_filter=True,
+        # mask on position
+        exclude_nts=None,
+        isolate_nts=None,
+        sequence=None,
+        # mask on sequence
+        nts=None,
+        # mask on structure
+        structure=None,
+        ss_only=False,
+        ds_only=False,
+        **kwargs,
+    ):
+        """Convenience function that applies the above filters simultaneously.
+
+        Values outside of the filters are not removed, but masked: they are
+        not used in downstream analyses or plots. This is because, unlike
+        Interactions, Profile data are positional (one row per nucleotide)
+        and dropping rows would desynchronize plots from the sequence axis.
+
+        Parameters
+        ----------
+        prefiltered : bool, defaults to False
+            If True, the mask is not updated.
+        reset_filter : bool, defaults to True
+            If True, the mask is reset before applying filters.
+        exclude_nts : list of int and/or tuple/list of 2 int, defaults to None
+            Positions to exclude. An int excludes that single 1-indexed
+            position; a tuple or list of 2 ints (start, end) excludes an
+            inclusive, 1-indexed range of positions.
+        isolate_nts : list of int and/or tuple/list of 2 int, defaults to None
+            Positions to keep; all other positions are masked. An int
+            isolates that single 1-indexed position; a tuple or list of 2
+            ints (start, end) isolates an inclusive, 1-indexed range of
+            positions.
+        sequence : rnavigate.data.Sequence or string, defaults to None
+            If provided, `exclude_nts` and `isolate_nts` positions are
+            interpreted in this sequence's coordinate frame and translated to
+            this Profile's native positions via alignment. If None, positions
+            are interpreted as this object's native positions.
+        nts : str, defaults to None
+            Only keep positions whose nucleotide identity is in nts.
+        structure : rnavigate.data.SecondaryStructure, defaults to None
+            The structure to use for ss_only/ds_only masking.
+        ss_only : bool, defaults to False
+            If True, only keep single-stranded (unpaired) positions.
+        ds_only : bool, defaults to False
+            If True, only keep double-stranded (paired) positions.
+        **kwargs : dict
+            Each keyword should have the format "column_operator" where column
+            is a valid column name of the dataframe and operator is one of:
+                "ge": greater than or equal to
+                "le": less than or equal to
+                "gt": greater than
+                "lt": less than
+                "eq": equal to
+                "ne": not equal to
+            The values given to these keywords are then used in the comparison
+            and False comparisons are masked. e.g.:
+                self.filter(HQ_profile_ge=0.1) masks positions where
+                self.data["HQ_profile"] < 0.1.
+
+        Returns
+        -------
+        mask : numpy array
+            a boolean array of the same length as self.data
+        """
+
+        def filters_are_on(*filters):
+            return any(f not in [None, False] for f in filters)
+
+        if prefiltered:
+            return
+        if reset_filter:
+            self.reset_mask()
+        mask = np.full(len(self.data), True)
+        if filters_are_on(exclude_nts, isolate_nts):
+            mask &= self.mask_on_position(
+                exclude_nts=exclude_nts, isolate_nts=isolate_nts, sequence=sequence
+            )
+        if nts is not None:
+            mask &= self.mask_on_sequence(nts=nts)
+        if filters_are_on(ss_only, ds_only):
+            mask &= self.mask_on_structure(
+                structure=structure, ss_only=ss_only, ds_only=ds_only
+            )
+        mask &= self.mask_on_values(**kwargs)
+        return mask
+
+    @classmethod
+    def resolve_from_dict(cls, value, sample):
+        """Resolves a {"profile": ..., filter/metric kwargs} dict into a Profile.
+
+        Parameters
+        ----------
+        value : dict
+            Must contain a "profile" key, whose value is any flexible data
+            argument accepted by `rnavigate.resolve_data` (a Data object,
+            data keyword string, list, dict, or None). The remaining keys
+            configure coloring and filtering, see `rnavigate.resolve_data`
+            for details.
+        sample : rnavigate.Sample
+            The sample used to resolve data keywords and sibling defaults
+            ("default_structure").
+
+        Returns
+        -------
+        Profile or None
+            The resolved, colored, and filtered Profile object, or None if
+            the "profile" key's value resolves to None.
+        """
+        value = dict(value)
+        # check profile is given and resolve it to a Profile object
+        if "profile" not in value:
+            raise ValueError('Profile dict is missing a "profile" key.')
+        profile = sample.get_data(value.pop("profile"), cls)
+        if profile is None:
+            return None
+        # check for structure and resolve to a SecondaryStructure object
+        keys = ["structure", "sequence"]
+        data_classes = [data.SecondaryStructure, data.Sequence]
+        for key, data_class in zip(keys, data_classes):
+            if key in value:
+                value[key] = sample.get_data(value[key], data_class)
+            else:
+                try:
+                    value[key] = sample.get_data(f"default_{key}", data_class)
+                except (KeyError, ValueError):
+                    value[key] = None
+        # set up metric dict for coloring
+        metric_dict = {}
+        for key in ["metric", "cmap", "normalization", "values"]:
+            if key in value:
+                metric_dict[key] = value.pop(key)
+        metric_dict |= value.pop("metric_kwargs", {})
+        metric_dict["metric_column"] = metric_dict.pop("metric", profile.default_metric)
+        profile.metric = metric_dict
+        # perform profile normalization if requested
+        if "normalize_kwargs" in value:
+            profile.normalize(**value.pop("normalize_kwargs"))
+        # any remaining keys are used to filter the profile
+        profile.filter(**value)
+        return profile
 
     def calculate_windows(
         self,

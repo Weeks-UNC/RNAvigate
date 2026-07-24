@@ -224,28 +224,50 @@ class Interactions(data.Data):
         self.update_mask(mask)
         return mask
 
-    def mask_on_position(self, exclude=None, isolate=None):
+    def mask_on_position(self, exclude=None, isolate=None, sequence=None):
         """Mask interactions based on their i and j positions.
+
+        An interaction is excluded (or kept, for isolate) if either its i or
+        its j position matches.
 
         Parameters
         ----------
-        exclude : list of int, defaults to None
-            A list of positions to exclude.
-        isolate : list of int, defaults to None
-            A list of positions to isolate.
+        exclude : list of int and/or tuple/list of 2 int, defaults to None
+            Positions to exclude. An int excludes that single 1-indexed
+            position; a tuple or list of 2 ints (start, end) excludes an
+            inclusive, 1-indexed range of positions.
+        isolate : list of int and/or tuple/list of 2 int, defaults to None
+            Positions to isolate; all other interactions are masked. An int
+            isolates that single 1-indexed position; a tuple or list of 2
+            ints (start, end) isolates an inclusive, 1-indexed range of
+            positions.
+        sequence : rnavigate.data.Sequence or string, defaults to None
+            If provided, `exclude` and `isolate` positions are interpreted in
+            this sequence's coordinate frame and translated to this
+            Interactions object's native positions via alignment. If None,
+            positions are interpreted as this object's native positions.
 
         Returns
         -------
         mask : numpy array
             a boolean array of the same length as self.data
         """
+        if exclude is not None:
+            exclude = self.translate_positions(exclude, sequence)
+        if isolate is not None:
+            isolate = self.translate_positions(isolate, sequence)
         mask = np.full(len(self.data), True)
         for index, (i, j) in self.data[["i", "j"]].iterrows():
             if exclude is not None:
-                if (i in exclude) or (j in exclude):
+                if self.position_in_ranges(i, exclude) or self.position_in_ranges(
+                    j, exclude
+                ):
                     mask[index] = False
             if isolate is not None:
-                if (i not in isolate) and (j not in isolate):
+                if not (
+                    self.position_in_ranges(i, isolate)
+                    or self.position_in_ranges(j, isolate)
+                ):
                     mask[index] = False
         self.update_mask(mask)
         return mask
@@ -399,6 +421,7 @@ class Interactions(data.Data):
         min_distance=None,
         exclude_nts=None,
         isolate_nts=None,
+        sequence=None,
         # others
         resolve_conflicts=None,
         **kwargs,
@@ -439,10 +462,21 @@ class Interactions(data.Data):
             The maximum distance to allow. If None, no maximum distance is set.
         min_distance : int, defaults to None
             The minimum distance to allow. If None, no minimum distance is set.
-        exclude_nts : list of int, defaults to None
-            A list of positions to exclude.
-        isolate_nts : list of int, defaults to None
-            A list of positions to isolate.
+        exclude_nts : list of int and/or tuple/list of 2 int, defaults to None
+            Positions to exclude. An int excludes that single 1-indexed
+            position; a tuple or list of 2 ints (start, end) excludes an
+            inclusive, 1-indexed range of positions.
+        isolate_nts : list of int and/or tuple/list of 2 int, defaults to None
+            Positions to isolate; all other interactions are masked. An int
+            isolates that single 1-indexed position; a tuple or list of 2
+            ints (start, end) isolates an inclusive, 1-indexed range of
+            positions.
+        sequence : rnavigate.data.Sequence or string, defaults to None
+            If provided, `exclude_nts` and `isolate_nts` positions are
+            interpreted in this sequence's coordinate frame and translated to
+            this Interactions object's native positions via alignment. If
+            None, positions are interpreted as this object's native
+            positions.
         resolve_conflicts : str, defaults to None
             If not None, conflicting windows are resolved using the Maximal
             Weighted Independent Set. The weights are taken from the metric
@@ -478,7 +512,9 @@ class Interactions(data.Data):
             self.reset_mask()
         mask = np.full(len(self.data), True)
         if filters_are_on(exclude_nts, isolate_nts):
-            mask &= self.mask_on_position(exclude=exclude_nts, isolate=isolate_nts)
+            mask &= self.mask_on_position(
+                exclude=exclude_nts, isolate=isolate_nts, sequence=sequence
+            )
         if filters_are_on(max_distance, min_distance):
             mask &= self.mask_on_distance(max_dist=max_distance, min_dist=min_distance)
         if filters_are_on(min_profile, max_profile):
@@ -511,6 +547,68 @@ class Interactions(data.Data):
             dict: dictionary of keyword argument pairs
         """
         return kwargs, np.full(len(self.data), True)
+
+    @classmethod
+    def resolve_from_dict(cls, value, sample):
+        """Resolves a {"interactions": ..., filter/metric kwargs} dict.
+
+        Parameters
+        ----------
+        value : dict
+            Must contain an "interactions" key, whose value is any flexible
+            data argument accepted by `rnavigate.resolve_data` (a Data
+            object, data keyword string, list, dict, or None). The remaining
+            keys configure coloring and filtering, see `rnavigate.resolve_data`
+            for details.
+        sample : rnavigate.Sample
+            The sample used to resolve data keywords and sibling defaults
+            ("default_profile", "default_structure", "default_pdb").
+
+        Returns
+        -------
+        Interactions or None
+            The resolved, colored, and filtered Interactions object, or None
+            if the "interactions" key's value resolves to None.
+        """
+        value = dict(value)
+        # check interactions is given and resolve it to a Interactions object
+        if "interactions" not in value:
+            raise ValueError('Interactions dict is missing a "interactions" key.')
+        interactions = sample.get_data(value.pop("interactions"), cls)
+        if interactions is None:
+            return None
+        # check for structure and resolve to a SecondaryStructure object
+        keys = ["structure", "sequence", "profile"]
+        data_classes = [data.SecondaryStructure, data.Sequence, data.Profile]
+        for key, data_class in zip(keys, data_classes):
+            if key in value:
+                value[key] = sample.get_data(value[key], data_class)
+            else:
+                try:
+                    value[key] = sample.get_data(f"default_{key}", data_class)
+                except (KeyError, ValueError):
+                    value[key] = None
+        # set up metric dict for coloring
+        metric_dict = {}
+        for key in ["metric", "cmap", "normalization", "values"]:
+            if key in value:
+                metric_dict[key] = value.pop(key)
+        metric_dict |= value.pop("metric_kwargs", {})
+        metric_str = metric_dict.pop("metric", None)
+        pdb = None
+        if metric_str is not None and metric_str.startswith("Distance"):
+            try:
+                pdb = sample.get_data("default_pdb", data.PDB)
+            except (KeyError, ValueError) as exception:
+                raise ValueError(
+                    f'metric="{metric_str}" requires 3D distance, but sample '
+                    "has no default_pdb"
+                ) from exception
+        metric_dict["metric_column"] = interactions.resolve_metric(metric_str, pdb)
+        interactions.metric = metric_dict
+        # any remaining keys are used to filter the interactions
+        interactions.filter(**value)
+        return interactions
 
     def get_ij_colors(self):
         """Gets i, j, and colors lists for plotting interactions.
@@ -578,6 +676,38 @@ class Interactions(data.Data):
                 out.write(csv)
         else:
             print(self.header, csv)
+
+    def resolve_metric(self, metric, pdb=None):
+        """Resolves a metric string, computing 3D/contact distances if needed.
+
+        "Distance" and "Distance_<atom>" are special metric strings: they
+        request 3D distance (using `pdb`), computed and stored in a new
+        "Distance" column via `set_distances`, using `atom` (or the 2'-OH
+        atom, by default) to compute the distance.
+
+        Parameters
+        ----------
+        metric : str or None
+            The requested metric column name, or a "Distance"/"Distance_<atom>"
+            string. If None, `self.default_metric` is used.
+        pdb : rnavigate.data.PDB, defaults to None
+            The PDB structure to use for 3D distance calculations. Required if
+            `metric` is a "Distance"/"Distance_<atom>" string.
+
+        Returns
+        -------
+        str
+            The resolved metric column name.
+        """
+        if metric is None:
+            return self.default_metric
+        if metric.startswith("Distance"):
+            if len(metric.split("_")) == 2:
+                metric, atom = metric.split("_")
+            else:
+                atom = "O2'"
+            self.set_distances(pdb, atom)
+        return metric
 
     def set_3d_distances(self, pdb, atom):
         """Wrapper for set_distances for backwards compatibility."""
