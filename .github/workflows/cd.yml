@@ -39,6 +39,20 @@ jobs:
         id: version
         run: echo "version=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
 
+      - name: Wait for PyPI to publish the release
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          for i in $(seq 1 30); do
+            if curl -sf "https://pypi.org/pypi/RNAvigate/${version}/json" > /dev/null; then
+              echo "RNAvigate==${version} is available on PyPI"
+              exit 0
+            fi
+            echo "RNAvigate==${version} not yet available on PyPI, retrying in 10s..."
+            sleep 10
+          done
+          echo "Timed out waiting for RNAvigate==${version} on PyPI"
+          exit 1
+
       - name: Build and push
         uses: docker/build-push-action@v6
         with:

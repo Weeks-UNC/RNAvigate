@@ -7,10 +7,6 @@
 
 ---
 
-## In Progress
-
----
-
 ## Bugs
 
 - [ ] QC plots and log file parsing broken with ShapeMapper v2.2.0 (issue #33)
@@ -58,6 +54,9 @@
 - [ ] Refactor analyses (ongoing)
   - [ ] AUROC
   - [ ] log-diff
+- [ ] Add deprecation warnings to `LinReg.region` and `ROC.plot_data(nts=...)` pointing users
+      at `Profile.filter()`, ahead of eventually consolidating those two ad hoc, plot-local
+      filters onto the new generic mechanism.
 
 ---
 
@@ -105,6 +104,13 @@
        nucleotide types (e.g. all A nucleotides). Currently requires manually
        setting other nucleotides to NaN. The ROC plot's nucleotide-split logic
        may be a useful reference for implementing the filter. -->
+- [ ] Allow a custom color palette to be passed through skyline plots (and any
+      other plot that draws multiple labeled lines per axis, e.g. ROC curves,
+      QC plots), instead of relying on matplotlib's default color cycle.
+  <!-- plot_profile_skyline() (plots/functions/functions.py) calls ax.plot()
+       once per column with no color= argument, so colors come from
+       rcParams["axes.prop_cycle"]. Same pattern in ROC.plot_data() (plots/roc.py)
+       and PlotQC (plots/qc.py). -->
 
 ### Interface & Usability
 
@@ -120,10 +126,6 @@
 
 - [ ] Numpy-style docstrings across all public classes and functions
   <!-- Coverage is good in data/ but sparse in plots/ and analysis/. -->
-- [ ] Fix ReadTheDocs versioning — retire the deprecated `stable` URL (issue #40)
-  <!-- https://rnavigate.readthedocs.io/en/stable/ serves old content that confuses
-       new users. The correct URL is /en/latest/. Either redirect stable → latest
-       or set latest as the default version in .readthedocs.yaml. -->
 - [ ] Live example notebook with small bundled dataset for new-user onboarding (issue #40)
   <!-- New users struggle to distinguish placeholder names from real API calls.
        A minimal executable notebook with real data would lower the entry barrier. -->
@@ -135,6 +137,7 @@
 - [ ] Guides for custom use cases:
   - [ ] Loading custom annotations
   - [ ] Sequence alignments (manual and automatic), including multi-sample MSA plots (issue #40)
+    <!-- Plotting multiple arc plots on a shared "base_sequence" generated from MSA. -->
   - [ ] Plot manipulation with matplotlib
   - [ ] Data manipulation with pandas
 - [ ] Keep `ARCHITECTURE.md` current

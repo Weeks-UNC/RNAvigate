@@ -3,6 +3,18 @@
         "editor.defaultFormatter": "charliermarsh.ruff",
         "editor.formatOnSave": true
     },
+    "files.exclude": {
+        "**/.git": true,
+        "**/__pycache__": true,
+        "**/build": true,
+        "**/dist": true,
+        "**/.pytest_cache": true,
+        "**/.ruff_cache": true
+    },
+    "editor.quickSuggestions": { "other": false, "comments": false, "strings": false },
+    "editor.acceptSuggestionOnEnter": "off",
+    "editor.quickSuggestionsDelay": 10,
+    "editor.wordBasedSuggestions": false
     // Once circular imports are resolved, we can enable this.
     // "ruff.organizeImports": true,
 }
