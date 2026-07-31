@@ -168,3 +168,29 @@ For architectural context (module boundaries, data flow, class hierarchy)
 before making non-trivial changes, see [`ARCHITECTURE.md`](https://github.com/Weeks-UNC/RNAvigate/blob/master/ARCHITECTURE.md).
 If you're using an AI coding assistant, [`AGENTS.md`](https://github.com/Weeks-UNC/RNAvigate/blob/master/AGENTS.md) documents
 the same conventions in a form meant for that workflow.
+
+## Releasing a new version
+
+Releases are currently triggered manually. Here are the steps:
+
+1. Bump `version` in `pyproject.toml`.
+2. In `CHANGELOG.md`, rename `## X.Y.Z (Coming soon)` to `## X.Y.Z (Month Day, Year)`.
+3. Commit these changes (e.g. `chore: bump version to X.Y.Z`).
+4. Tag the commit and push the tag:
+
+   ```bash
+   git tag vX.Y.Z
+   git push origin vX.Y.Z
+   ```
+
+Pushing the tag triggers `.github/workflows/cd.yml`, which:
+
+1. Reruns the CI suite (linting, testing, and documentation building).
+2. Builds/publishes to PyPI using trusted publishing (no credentials required).
+3. Waits for the new PyPI tag.
+4. Builds/publishes to Docker Hub with 2 tags: `X.Y.Z` and `latest`.
+5. Bioconda automatically detects the new tag and creates a PR.
+
+If CI fails on the tagged commit, the PyPI publish and Docker build are
+skipped — fix the issue, then delete and re-push the tag (or bump to the
+next patch version and tag again).

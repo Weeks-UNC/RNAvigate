@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.1.4 (Coming soon)
+## 1.1.4 (July 31, 2026)
 
 - (BREAKING CHANGE) removes `Sample.filter_interactions()`. see `rnav.resolve_data()`
 - adds `rnav.resolve_data()` to resolve data keywords, bare `Data` object, or a
