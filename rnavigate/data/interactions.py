@@ -380,14 +380,16 @@ class Interactions(data.Data):
         new_data = alignment.map_dataframe(
             dataframe=dataframe, position_columns=["i", "j"]
         )
-        return self.__class__(
+        new_interactions = self.__class__(
             input_data=new_data,
             sequence=alignment.target_sequence,
-            metric=self._metric,
+            metric=self.default_metric,
             metric_defaults=self.metric_defaults,
             window=self.window,
             name=self.name,
         )
+        new_interactions.metric = self._metric
+        return new_interactions
 
     def update_mask(self, mask):
         """Updates the mask by ANDing the current mask with the given mask."""
@@ -577,6 +579,7 @@ class Interactions(data.Data):
         interactions = sample.get_data(value.pop("interactions"), cls)
         if interactions is None:
             return None
+        interactions = interactions.copy()
         # check for structure and resolve to a SecondaryStructure object
         keys = ["structure", "sequence", "profile"]
         data_classes = [data.SecondaryStructure, data.Sequence, data.Profile]

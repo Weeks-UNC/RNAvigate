@@ -315,12 +315,13 @@ class Profile(data.Data):
         dataframe = dataframe.drop(columns="mask", errors="ignore")
         new_profile = self.__class__(
             input_data=dataframe,
-            metric=self._metric,
+            metric=self.default_metric,
             metric_defaults=self.metric_defaults,
             sequence=alignment.target_sequence,
             name=self.name,
             **self.recreation_kwargs,
         )
+        new_profile.metric = self._metric
         new_profile.data["mask"] = alignment.map_values(
             self.data["mask"].to_numpy(), fill=True
         )
@@ -624,6 +625,7 @@ class Profile(data.Data):
         profile = sample.get_data(value.pop("profile"), cls)
         if profile is None:
             return None
+        profile = profile.copy()
         # check for structure and resolve to a SecondaryStructure object
         keys = ["structure", "sequence"]
         data_classes = [data.SecondaryStructure, data.Sequence]

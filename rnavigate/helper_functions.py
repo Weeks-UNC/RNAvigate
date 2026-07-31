@@ -128,7 +128,7 @@ def resolve_data(value, data_class=data.Sequence, sample=None, alignment=None):
     elif isinstance(value, dict):
         if "sequence" in value:
             value["sequence"] = get_sequence(value["sequence"], sample)
-        return data_class.resolve_from_dict(value, sample)
+        value = data_class.resolve_from_dict(value, sample)
     elif isinstance(value, str):
         if sample is None:
             raise ValueError(f"Cannot resolve data keyword {value} without a sample.")
