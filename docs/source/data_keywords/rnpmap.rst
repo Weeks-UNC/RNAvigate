@@ -9,7 +9,7 @@ RNP-MaP per-nucleotide reactivities.
 
 example uses:
 
-- same as `profile`_
+- same as :doc:`/data_keywords/profile`
 
 input explaination:
 
@@ -31,4 +31,4 @@ other optional inputs:
   explained in :doc:`/guides/custom_interactions`, but are not recommended for standard
   RNPMapper files.
 
-back to `standard data keywords`_
+back to :ref:`Standard data keywords <standard-data-keywords>`

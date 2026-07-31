@@ -5,12 +5,12 @@ All possible inter-nucleotide pairings for a given sequence
 
 example uses:
 
-- same as `interactions`_
+- same as :doc:`/data_keywords/interactions`
 - plus: calculating the expected distance distribution of a filtering scheme
 
 input explanation:
 
-- This keyword has the same expected inputs as the `sequence`_ keyword.
+- This keyword has the same expected inputs as the :doc:`/data_keywords/sequence` keyword.
 - Note: the size of the data increases with the sequence length squared.
 
 example inputs:
@@ -44,4 +44,4 @@ typical optional argument example:
       }
    )
 
-back to `Standard data keywords`_
+back to :ref:`Standard data keywords <standard-data-keywords>`

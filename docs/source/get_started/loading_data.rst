@@ -121,6 +121,8 @@ Example:
       arbitrary_keyword={"standard_keyword": "input_file_2.txt"}
    )
 
+.. _standard-data-keywords:
+
 Standard data keywords
 ``````````````````````
 

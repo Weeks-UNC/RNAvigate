@@ -17,7 +17,7 @@ filter kwargs when plotting to separate backbone (N1/N1) and N7G-involving corre
 
 example uses:
 
-- same as `interactions`_
+- same as :doc:`/data_keywords/interactions`
 
 input explaination:
 
@@ -35,7 +35,7 @@ example inputs:
 other optional inputs:
 
 - ``"sequence"`` is used to specify the sequence, and accepts the same inputs
-   as the `sequence`_ keyword. Defaults to ``"default_profile"``, the first profile
+   as the :doc:`/data_keywords/sequence` keyword. Defaults to ``"default_profile"``, the first profile
    added to the RNAvigate Sample.
 - ``"metric"``, ``"metric_defaults"``, ``"read_table_kw"``, and ``"window"`` are
    explained in :doc:`/guides/custom_interactions`, but are generally not recommended
@@ -53,4 +53,4 @@ typical optional input example:
          }
       )
 
-back to `Standard data keywords`_
+back to :ref:`Standard data keywords <standard-data-keywords>`

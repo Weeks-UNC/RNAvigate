@@ -146,6 +146,7 @@ helping to improve RNAvigate or in using RNAvigate in your own projects.
 
 These developer resources are works-in-progress.
 
+- :doc:`/resources/contributing`
 - :doc:`/resources/changelog`
 - :doc:`/resources/data_sources`
 - :doc:`/resources/style_guide`

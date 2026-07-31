@@ -11,7 +11,7 @@ Reactivity profile of a single component of a DanceMapper model
 
 example uses:
 
-- same as `profile`_
+- same as :doc:`/data_keywords/profile`
 
 input explaination:
 
@@ -45,4 +45,4 @@ other optional inputs:
   explained in :doc:`/guides/custom_profiles`, but are not recommended for standard
   DanceMapper files.
 
-back to `Standard data keywords`_
+back to :ref:`Standard data keywords <standard-data-keywords>`

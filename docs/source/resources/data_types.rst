@@ -5,7 +5,7 @@ RNA structure data can come from databases, experimental measurements, and
 computational analyses or predictions. RNAvigate will accept text files or
 python objects (usually a pandas.DataFrame) as inputs.
 
-See `/dev/data_sources`_ for methods, databases, and software that supply RNA
+See :doc:`/resources/data_sources` for methods, databases, and software that supply RNA
 structure information.
 
 RNA structure data can be analyzed with RNAvigate if it falls into one of these

@@ -117,6 +117,11 @@ def resolve_data(value, data_class=data.Sequence, sample=None, alignment=None):
     """
     if value is None:
         return None
+    elif isinstance(value, list):
+        return [
+            resolve_data(v, data_class, sample=sample, alignment=alignment)
+            for v in value
+        ]
     elif isinstance(value, data.Sequence):
         if not isinstance(value, data_class):
             raise ValueError(f"{value} is not {data_class}")

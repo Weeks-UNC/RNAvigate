@@ -14,7 +14,7 @@ input explaination:
 
    - "pdb": a standard PDB file (.pdb or .cif)
    - "chain": A chain ID
-   - "sequence": same inputs as `sequence`_ keyword
+   - "sequence": same inputs as :doc:`/data_keywords/sequence` keyword
 
       - This is not needed if a sequence is found in the file header.
 
@@ -31,4 +31,4 @@ example inputs:
          }
       )
 
-back to `Standard data keywords`_
+back to :ref:`Standard data keywords <standard-data-keywords>`

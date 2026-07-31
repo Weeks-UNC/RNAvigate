@@ -9,9 +9,9 @@ If you have any questions about installation, please submit a `GitHub Issue <htt
 - `Docker`_: beginner-friendly, local, any OS
 - `Conda`_: command-line, local or remote, flexible but requires dependency management
 - `Pip`_: command-line, local or remote, flexible but requires dependency management
-- `VS Code`_: full IDE, local, worthwhile workflow improvement with more setup
+- :ref:`VS Code <vs-code-install>`: full IDE, local, worthwhile workflow improvement with more setup
 - `UNC Longleaf`_: for UNC users working on the Longleaf HPC cluster
-- :doc:`/resources/developer_installation`: VS Code devcontainer for contributing code
+- :doc:`/resources/contributing`: the contributing developer's setup guide
 - :doc:`/resources/hpc_vscode`: local VS Code window with access to HPC files and compute resources
 
 Each method follows the same three steps:
@@ -186,6 +186,8 @@ Test the Installation
 See `Test Plot`_ below.
 
 =======================================================================================
+
+.. _vs-code-install:
 
 VS Code: more setup, local or remote, excellent interface
 ---------------------------------------------------------------------------------------

@@ -22,9 +22,11 @@
 - [ ] Test and improve pytest code coverage.
 - [ ] Automate release pipeline
   - version bumping (bump2version or hatch version)
-- [ ] Write `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`
-  <!-- Blocks accepting external contributions. Should describe: how to set up
-       dev environment, code style, branching model, PR process. -->
+- [ ] Write `CODE_OF_CONDUCT.md`
+- [ ] Make `pytest`/`sphinx` pre-commit hooks portable outside the devcontainer
+  <!-- .pre-commit-config.yaml hardcodes entry: /opt/venv/bin/pytest and
+       /opt/venv/bin/sphinx-build, which only exist inside the Dev Container. -->
+- [ ] Check current dependencies for vulnerabilities
 
 ---
 
@@ -126,6 +128,10 @@
 
 - [ ] Numpy-style docstrings across all public classes and functions
   <!-- Coverage is good in data/ but sparse in plots/ and analysis/. -->
+- [ ] Reconcile remaining Sphinx build warnings/errors (~200)
+  <!-- Remaining buckets: (1) ~160 docstring formatting errors; (2) ~40 "duplicate
+       object description" warnings from autodoc from classes/functions that are
+       exported twice; (3) some headings within a page are not unique. -->
 - [ ] Live example notebook with small bundled dataset for new-user onboarding (issue #40)
   <!-- New users struggle to distinguish placeholder names from real API calls.
        A minimal executable notebook with real data would lower the entry barrier. -->

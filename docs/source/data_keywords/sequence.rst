@@ -37,4 +37,4 @@ example inputs:
       sequence="data_keyword",
    )
 
-back to `Standard data keywords`_
+back to :ref:`Standard data keywords <standard-data-keywords>`

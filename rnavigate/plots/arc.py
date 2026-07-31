@@ -75,7 +75,7 @@ class AP(plots.Plot):
         """Add data to the next (or specified) plot axes.
 
         This function assumes data has already been aligned to a common sequence.
-        rnavigate.plot_ functions can be used to automatically align data.
+        ``rnavigate.plot_*`` functions can be used to automatically align data.
 
         Parameters
         ----------

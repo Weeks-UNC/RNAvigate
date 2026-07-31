@@ -3,11 +3,11 @@
 
 inter-nucleotide data that does not have a more specific data keyword:
 
-- `ringmap`_ for RingMapper correlations
-- `pairmap`_ for PairMapper correlations
-- `shapejump`_ for ShapeJump deletion events
-- `pairprob`_ for pairing probabilities
-- `allpossible`_ for every possible nucleotide pairing from a sequence
+- :doc:`/data_keywords/ringmap` for RingMapper correlations
+- :doc:`/data_keywords/pairmap` for PairMapper correlations
+- :doc:`/data_keywords/shapejump` for ShapeJump deletion events
+- :doc:`/data_keywords/pairprob` for pairing probabilities
+- :doc:`/data_keywords/allpossible` for every possible nucleotide pairing from a sequence
 - interactions: for everything else
 
 example uses:
@@ -25,4 +25,4 @@ input explaination:
 - These inputs allow a lot of customization in loading data.
 - For a full explaination, see :doc:`/guides/custom_interactions`
 
-back to `standard data keywords`_
+back to :ref:`Standard data keywords <standard-data-keywords>`

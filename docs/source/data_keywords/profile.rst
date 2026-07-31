@@ -23,4 +23,4 @@ input explaination:
 - For a full explaination, see :doc:`/guides/custom_profiles`
 - ``input_data`` can also be a list of replicates. See :doc:`/guides/replicate_averaging`.
 
-back to `standard data keywords`_
+back to :ref:`Standard data keywords <standard-data-keywords>`

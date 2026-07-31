@@ -5,7 +5,7 @@ Annotation of open-reading frames
 
 example uses:
 
-- same as `motif`_
+- same as :doc:`/data_keywords/motif`
 - coming soon: displaying amino acid translation and codon usage scores
 
 input explaination:
@@ -17,7 +17,7 @@ input explaination:
       - ``"all"`` annotates all open-reading frames
       - ``"longest"`` annotates only the longest open reading frame
 
-   - ``"sequence"``: same as `sequence`_ keyword
+   - ``"sequence"``: same as :doc:`/data_keywords/sequence` keyword
    - ``"color"``: a valid color or hexcode, e.g. ``"blue"``, ``"grey"``, or ``"#fa4ce2"``
    - ``"name"``: an arbitrary name to use on plots
 
@@ -35,4 +35,4 @@ example inputs:
          }
       )
 
-back to `Standard data keywords`_
+back to :ref:`Standard data keywords <standard-data-keywords>`

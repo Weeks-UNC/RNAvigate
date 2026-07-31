@@ -9,7 +9,7 @@ inter-nucleotide predicted pairing probabilities
 
 example uses:
 
-- same as `interactions`_
+- same as :doc:`/data_keywords/interactions`
 - plus: calculating shannon entropy
 
 input explaination:
@@ -38,7 +38,7 @@ example inputs:
 other optional inputs:
 
 - ``"sequence"`` is used to specify the sequence, and accepts the same inputs
-  as the `sequence`_ keyword
+  as the :doc:`/data_keywords/sequence` keyword
 - ``"metric"``, ``"metric_defaults"``, ``"read_table_kw"``, and ``"window"`` are
   explained in :doc:`/guides/custom_interactions`, but are generally not recommended
   for "" files
@@ -55,4 +55,4 @@ typical optional argument example:
       }
    )
 
-back to `Standard data keywords`_
+back to :ref:`Standard data keywords <standard-data-keywords>`

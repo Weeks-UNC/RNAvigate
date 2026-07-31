@@ -2,12 +2,12 @@
 
 ---
 
-## 1. Always read for context
+## 1. Read these for context
 
 1. `README.md`: project description and audience
 2. `TODO.md`: prioritized backlog with explanations
 3. `ARCHITECTURE.md`: modules, classes, patterns, dependencies
-4. `docs/source/resources/changelog.rst`: release history and breaking changes
+4. `CHANGELOG.md`: release history
 
 ---
 
@@ -138,7 +138,13 @@ For consistency, copy the structure of the other files in this directory.
 
 ---
 
-## 8. What to Avoid
+## 8. Persisting Decisions Across Sessions
+
+- Don't use Claude's built-in memory system in this repo. It doesn't persist or travel with the repo across computers and containers. Instead, ask the user whether/where to persist it: a relevant skill file (`.claude/skills/`), this file, `TODO.md`, `ARCHITECTURE.md`, or the changelog. Don't decide unilaterally.
+
+---
+
+## 9. What to Avoid
 
 - **Silent refactoring** of code outside the requested task.
 - **Adding dependencies** without updating `pyproject.toml`, `environment.yml`, and `ARCHITECTURE.md` §9.

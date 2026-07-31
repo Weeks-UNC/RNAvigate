@@ -14,7 +14,7 @@
     "editor.quickSuggestions": { "other": false, "comments": false, "strings": false },
     "editor.acceptSuggestionOnEnter": "off",
     "editor.quickSuggestionsDelay": 10,
-    "editor.wordBasedSuggestions": false
+    "editor.wordBasedSuggestions": "off"
     // Once circular imports are resolved, we can enable this.
     // "ruff.organizeImports": true,
 }

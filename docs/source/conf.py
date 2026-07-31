@@ -22,7 +22,17 @@ extensions = [
     "nbsphinx",
     "sphinx_rtd_theme",
     "sphinx.ext.autosectionlabel",
+    "sphinx.ext.napoleon",
+    "myst_parser",
 ]
+napoleon_numpy_docstring = True
+napoleon_google_docstring = False
+napoleon_use_param = False
+autosectionlabel_prefix_document = True
+source_suffix = {
+    ".rst": "restructuredtext",
+    ".md": "markdown",
+}
 nbsphinx_execute = "auto"
 nbsphinx_kernel_name = "python3"
 templates_path = ["_templates"]

@@ -89,4 +89,4 @@ typical optional argument examples:
       }
    )
 
-back to `Standard data keywords`_
+back to :ref:`Standard data keywords <standard-data-keywords>`

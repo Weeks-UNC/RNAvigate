@@ -5,7 +5,7 @@ Annotation of RNA domains
 
 example uses:
 
-- same as `motif`_
+- same as :doc:`/data_keywords/motif`
 - plus: labelling domains across the x-axis of skyline, profile, and arc plots
 
 input explaination:
@@ -14,7 +14,7 @@ input explaination:
 
    - ``"domains"``: a list of lists of 2 integers. Each inner list specifies a
       start and end position of a primer (1-indexed, inclusive).
-   - ``"sequence"``: same as `sequence`_ keyword
+   - ``"sequence"``: same as :doc:`/data_keywords/sequence` keyword
    - ``"colors"``: a valid color or hexcode, e.g. ``"blue"``, ``"grey"``, or ``"#fa4ce2"``
    - ``"names"``: an arbitrary name to use on plots
 
@@ -32,4 +32,4 @@ example inputs:
          }
       )
 
-back to `Standard data keywords`_
+back to :ref:`Standard data keywords <standard-data-keywords>`

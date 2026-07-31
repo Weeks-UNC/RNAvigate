@@ -48,6 +48,7 @@ docs = [
     "sphinx-autobuild",
     "sphinx-rtd-theme",
     "nbsphinx",
+    "myst-parser",
     "ipykernel",
 ]
 

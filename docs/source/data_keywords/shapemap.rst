@@ -25,7 +25,7 @@ Two similar data keywords:
 
 example uses:
 
-- same as `profile`_
+- same as :doc:`/data_keywords/profile`
 - plus: visualizing quality control metrics if a log file is specified
 
 input explaination:
@@ -77,4 +77,4 @@ typical optional input example:
       }
    )
 
-back to `Standard data keywords`_
+back to :ref:`Standard data keywords <standard-data-keywords>`

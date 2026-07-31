@@ -154,7 +154,8 @@ def set_alignment(
     Alignment 1 and 2 must have matching lengths.
     alignment(1,2) and sequence(1,2) must differ only by dashes "-".
 
-    e.g.:
+    e.g.::
+
         sequence1 ="AAGCUUCGGUACAUGCAAGAUGUAC"
         sequence2 ="AUCGAUCGAGCUGCUGUGUACGUAC"
         alignment1="AAGCUUCG---------GUACAUGCAAGAUGUAC"
