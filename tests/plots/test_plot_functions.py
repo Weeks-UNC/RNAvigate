@@ -84,6 +84,28 @@ def test_plot_arcs_compare(rnasep_1, rnasep_2):
     assert isinstance(result, plots.AP)
 
 
+def test_plot_arcs_max_arc_height(rnasep_1):
+    result = rnav.plot_arcs(
+        samples=[rnasep_1],
+        sequence="ss_pdb",
+        structure="ss_pdb",
+        interactions="pairprob",
+        profile="shapemap",
+        max_arc_height=150,
+    )
+    assert isinstance(result, plots.AP)
+
+
+def test_plot_arcs_compare_max_arc_height(rnasep_1, rnasep_2):
+    result = rnav.plot_arcs_compare(
+        samples=[rnasep_1, rnasep_2],
+        sequence="ss_pdb",
+        structure="ss_pdb",
+        max_arc_height=150,
+    )
+    assert isinstance(result, plots.AP)
+
+
 # ---------------------------------------------------------------------------
 # Secondary structure
 # ---------------------------------------------------------------------------

@@ -579,6 +579,7 @@ def plot_arcs(
     panels=None,
     seqbar=True,
     region="all",
+    max_arc_height=None,
     # optional plot display
     colorbars=True,
     title=True,
@@ -649,6 +650,10 @@ def plot_arcs(
         whether to display the sequence along the x-axis
     region : list of 2 integers, defaults to [1, length of sequence]
         start and end positions to plot. 1-indexed, inclusive.
+    max_arc_height : number, defaults to None
+        maximum arc height, in nucleotides
+        None draws arcs as semicircles (height is half the arc's span)
+        a number draws arcs as flat-top pill shapes, good for long RNAs
     colorbars : bool, default ``True``
         Whether to plot colorbars for all plot elements
     title : bool, defaults to True
@@ -692,6 +697,7 @@ def plot_arcs(
         num_samples=parsed_args.num_samples,
         nt_length=sequence.length,
         region=region,
+        max_arc_height=max_arc_height,
         **plot_kwargs,
     )
     # loop through samples and interactions, adding each as a new axis
@@ -729,6 +735,7 @@ def plot_arcs_compare(
     profile_scale_factor=1,
     plot_error=False,
     region="all",
+    max_arc_height=None,
     # optional plot display
     colorbars=True,
     plot_kwargs=None,
@@ -778,6 +785,10 @@ def plot_arcs_compare(
         Whether to plot error bars, values are determined by profile.metric
     region : list of 2 integers, defaults to [1, length of sequence]
         start and end positions to plot. 1-indexed, inclusive.
+    max_arc_height : number, defaults to None
+        maximum arc height, in nucleotides
+        None draws arcs as semicircles (height is half the arc's span)
+        a number draws arcs as flat-top pill shapes, good for long RNAs
     colorbars : bool, defaults to ``True``
         Whether to plot color scales for all plot elements
     plot_kwargs : dict, defaults to {}
@@ -809,6 +820,7 @@ def plot_arcs_compare(
         num_samples=1,
         nt_length=len(alignment.target_sequence),
         region=region,
+        max_arc_height=max_arc_height,
         **plot_kwargs,
     )
     # loop through samples and filters, adding each as a new axis

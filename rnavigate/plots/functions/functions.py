@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 import matplotlib.collections as mp_collections
 import matplotlib.colors as mp_colors
 import matplotlib.patches as mp_patches
 import numpy as np
+from matplotlib.axes import Axes
 
 from rnavigate import data, plots
 
@@ -201,7 +204,106 @@ def plot_sequence_alignment(ax, alignment, labels, top=5, bottom=-5, ytrans="dat
             )
 
 
-def plot_interactions_arcs(ax, interactions, panel, yvalue=0, region="all"):
+def get_arc_height(span: float, max_arc_height: float | None = None) -> float:
+    """Get the height of an arc spanning ``span`` nucleotides.
+
+    Parameters
+    ----------
+    span : float
+        Distance between the arc's endpoints, in nucleotides.
+    max_arc_height : float or None, optional
+        Maximum arc height, ``H``, in nucleotides. If None (default), arcs are
+        semicircles and the height is ``span / 2``.
+
+    Returns
+    -------
+    float
+        The arc's height, in nucleotides.
+
+    Notes
+    -----
+    With ``max_arc_height`` set, the height is ``R = (d/2) / (1 + (d/2) / H)``,
+    where ``d = span`` and ``H = max_arc_height``. ``R`` is close to ``d/2`` for short
+    spans and ``H`` for long spans.
+    """
+    half_span = span / 2.0
+    if max_arc_height is None:
+        return half_span
+    return half_span / (1.0 + half_span / max_arc_height)
+
+
+def _pill_outline(
+    left: float, right: float, height: float, n_points: int = 24
+) -> np.ndarray:
+    """Get vertices of a half-pill outline, ordered from left to right.
+
+    The outline is a quarter circle of radius ``height`` rising from
+    ``(left, 0)``, a flat top at ``height``, and a quarter circle falling to
+    ``(right, 0)``. It is a semicircle if ``height`` is half the width.
+    """
+    theta = np.linspace(np.pi, np.pi / 2, n_points + 1)
+    rise = np.column_stack(
+        [left + height * (1 + np.cos(theta)), height * np.sin(theta)]
+    )
+    fall = rise[::-1] * [-1, 1] + [left + right, 0]
+    return np.concatenate([rise, fall])
+
+
+def get_arc_shape(
+    i: int, j: int, max_arc_height: float | None = None, n_points: int = 24
+) -> tuple[np.ndarray, np.ndarray]:
+    """Get the outer and inner outlines of the shape for an arc from i to j.
+
+    The shape is the area between two half-pill outlines: a quarter circle
+    rising from the baseline, a flat top, and a quarter circle falling back to
+    the baseline. The outer outline runs from ``i - 0.5`` to ``j + 0.5`` with
+    height ``R(d + 1)``, and the inner outline runs from ``i + 0.5`` to
+    ``j - 0.5`` with height ``R(d - 1)``, where ``d = j - i`` and ``R`` is
+    ``get_arc_height``.
+
+    Parameters
+    ----------
+    i : int
+        Position of the left endpoint (``i < j``).
+    j : int
+        Position of the right endpoint.
+    max_arc_height : float or None, optional
+        Maximum arc height, ``H``, in nucleotides. If None (default), the shape is
+        a 1-nt-wide semicircular band.
+    n_points : int, optional
+        Number of line segments per quarter circle. Default is 24.
+
+    Returns
+    -------
+    outer : numpy.ndarray
+        Outer outline vertices, shape (N, 2), ordered from left to right.
+    inner : numpy.ndarray
+        Inner outline vertices, shape (N, 2), ordered from left to right.
+
+    Notes
+    -----
+    The inner outline of (i, j) is identical to the outer outline of
+    (i + 1, j - 1), so stacked base pairs tile into a solid band. Because heights
+    depend only on span, nested arcs never overlap and crossing arcs always cross.
+    """
+    span = j - i
+    outer = _pill_outline(
+        i - 0.5, j + 0.5, get_arc_height(span + 1, max_arc_height), n_points
+    )
+    inner = _pill_outline(
+        i + 0.5, j - 0.5, get_arc_height(span - 1, max_arc_height), n_points
+    )
+    return outer, inner
+
+
+def plot_interactions_arcs(
+    ax: Axes,
+    interactions: data.Interactions,
+    panel: str,
+    yvalue: float = 0,
+    region: tuple[int, int] | str = "all",
+    max_arc_height: float | None = None,
+) -> None:
     """Plot interactions as arcs.
 
     Parameters
@@ -216,6 +318,10 @@ def plot_interactions_arcs(ax, interactions, panel, yvalue=0, region="all"):
         The y-value at which to plot the interactions.
     region : tuple of int, optional
         The region of the sequence to plot interactions for.
+    max_arc_height : float or None, optional
+        Maximum arc height in nucleotides. If None (default), arcs are semicircles.
+        Otherwise, arcs are flat-top pill shapes, good for long RNAs. Their heights
+        approach ``max_arc_height``, see ``get_arc_shape``.
     """
     mn, mx = interactions.get_region(region)
     ij_colors = interactions.get_ij_colors()
@@ -224,6 +330,14 @@ def plot_interactions_arcs(ax, interactions, panel, yvalue=0, region="all"):
         if j < i:  # flip the order
             i, j = j, i
         if not (mn <= i <= mx) and not (mn <= j <= mx):
+            continue
+        if max_arc_height is not None:
+            outer, inner = get_arc_shape(i, j, max_arc_height)
+            vertices = np.concatenate([outer, inner[::-1]])
+            if panel == "bottom":
+                vertices[:, 1] *= -1
+            vertices[:, 1] += yvalue
+            patch_list.append(mp_patches.Polygon(vertices, fc=color, ec="none"))
             continue
         center = ((i + j) / 2.0, yvalue)
         if panel == "top":

@@ -17,6 +17,10 @@ class AP(plots.Plot):
         Default is "all", which plots the entire sequence.
     track_labels : bool, optional
         Whether to plot track labels. Default is True.
+    max_arc_height : float, optional
+        Maximum arc height in nucleotides. If None (default), arcs are semicircles.
+        Otherwise, arcs are flat-top pill shapes, good for long RNAs.
+        See ``rnavigate.plots.get_arc_shape``.
     **kwargs
         Additional keyword arguments are passed to plots.Plot
 
@@ -28,6 +32,8 @@ class AP(plots.Plot):
         starting and ending positions of the region to plot.
     track_labels : bool
         Whether to plot track labels.
+    max_arc_height : float or None
+        Maximum arc height in nucleotides, or None for semicircles.
     fig : matplotlib.figure.Figure
         Figure object containing the plot
     axes : numpy.ndarray of matplotlib.axes.Axes
@@ -37,10 +43,17 @@ class AP(plots.Plot):
     """
 
     def __init__(
-        self, num_samples, nt_length, region="all", track_labels=True, **kwargs
+        self,
+        num_samples,
+        nt_length,
+        region="all",
+        track_labels=True,
+        max_arc_height=None,
+        **kwargs,
     ):
         """Initialize AP object."""
         self.track_labels = track_labels
+        self.max_arc_height = max_arc_height
         if region == "all":
             self.nt_length = nt_length
             self.region = (1, nt_length)
@@ -151,6 +164,7 @@ class AP(plots.Plot):
                 panel=panels["structure"],
                 yvalue=yvalues[panels["structure"]],
                 region=self.region,
+                max_arc_height=self.max_arc_height,
             )
             self.add_colorbar_args(structure.cmap)
         if interactions is not None:
@@ -160,6 +174,7 @@ class AP(plots.Plot):
                 panel=panels["interactions"],
                 yvalue=yvalues[panels["interactions"]],
                 region=self.region,
+                max_arc_height=self.max_arc_height,
             )
             self.add_colorbar_args(interactions.cmap)
         if interactions2 is not None:
@@ -169,6 +184,7 @@ class AP(plots.Plot):
                 panel=panels["interactions2"],
                 yvalue=yvalues[panels["interactions2"]],
                 region=self.region,
+                max_arc_height=self.max_arc_height,
             )
             self.add_colorbar_args(interactions2.cmap)
         if profile is not None:
@@ -294,7 +310,9 @@ class AP(plots.Plot):
         ax.spines["right"].set_color("none")
         ax.spines["bottom"].set(position=("data", 0), visible=False)
         ax.spines["top"].set_color("none")
-        height = min(max_height, self.nt_length / 2)
+        height = min(
+            max_height, plots.get_arc_height(self.nt_length, self.max_arc_height)
+        )
         mn, mx = self.region
         ax.set(
             xlim=(mn - 0.5, mx + 0.5),

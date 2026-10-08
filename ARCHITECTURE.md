@@ -57,6 +57,7 @@ tests/                       # pytest test suite
 │   ├── test_secondary_structure.py  # SecondaryStructure
 │   └── test_interactions.py # Interactions, PairingProbability
 ├── plots/
+│   ├── test_arc_geometry.py    # Arc geometry (nesting, crossing, tiling)
 │   └── test_plot_functions.py  # Smoke tests for all plot_*() functions
 └── analysis/
     └── test_analysis.py     # Smoke tests for DeltaSHAPE, SequenceChecker
@@ -343,7 +344,7 @@ Extends `matplotlib.cm.ScalarMappable`. Supports normalization strategies: `"min
 
 | Class | File | Description |
 |-------|------|-------------|
-| `AP` | `arc.py` | Arc plot: semi-circular arcs connect *i/j* nucleotide interactions above/below a linear sequence track. |
+| `AP` | `arc.py` | Arc plot: semi-circular arcs (or flat-top pill shapes) connect *i/j* nucleotide interactions above/below a linear sequence track. |
 | `Circle` | `circle.py` | Nucleotide positions arranged in a circular layout: *i/j* interactions as chords, annotations as ring segments. |
 | `SS` | `ss.py` | Secondary structure diagram using pre-computed 2D coordinates. |
 | `Skyline` | `skyline.py` | Per-nucleotide skyline (step-bar) chart. |
@@ -361,7 +362,7 @@ Extends `matplotlib.cm.ScalarMappable`. Supports normalization strategies: `"min
 #### `plots/functions/` — Drawing Primitives
 Low-level, stateless functions that draw onto a given `matplotlib.Axes`. Organized by layout type:
 
-- `functions.py`: axes helpers (`adjust_spines`, `clip_spines`, `get_nt_ticks`), arc drawing (`plot_interactions_arcs`), profile bar/skyline drawing.
+- `functions.py`: axes helpers (`adjust_spines`, `clip_spines`, `get_nt_ticks`), arc drawing (`plot_interactions_arcs`, `get_arc_shape`, `get_arc_height`), profile bar/skyline drawing.
 - `tracks.py`: linear track elements — sequence bar, annotation tracks, domain tracks.
 - `ss.py`: secondary structure elements — nucleotide scatter, base-pair lines, interaction lines, annotation highlights.
 - `circle.py`: circular layout elements — chord arcs, ring annotations.

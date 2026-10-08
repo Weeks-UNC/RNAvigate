@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.5 (October 8, 2026)
+
+- adds `max_arc_height` argument to `plot_arcs()` and `plot_arcs_compare()` to limit
+  arc height for long-range arcs in long RNAs
+  - `None` (default) keeps the current semicircles
+  - a number draws arcs as flat-top pill shapes whose height approaches
+    `max_arc_height`
+- adds `rnavigate.plots.get_arc_shape()` and `get_arc_height()` arc geometry
+  helpers
+
 ## 1.1.4 (July 31, 2026)
 
 - (BREAKING CHANGE) removes `Sample.filter_interactions()`. see `rnav.resolve_data()`
